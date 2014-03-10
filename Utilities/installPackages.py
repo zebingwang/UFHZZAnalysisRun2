@@ -44,9 +44,25 @@ def installPackages():
         if f[0].startswith("#"): continue
 
         if len(f) == 2:
+            if os.path.isdir(f[1]):
+                print f[1],"already exists..."
+                continue
             cmd = 'cvs co -r '+f[0]+' '+f[1]
         if len(f) == 3:
-            cmd = 'cvs co -r '+f[0]+' -d '+f[2]+' '+f[1]
+            #cmd = 'cvs co -r '+f[0]+' -d '+f[2]+' '+f[1]
+            if os.path.isdir(f[2]):
+                print f[2],"already exists..."
+                continue
+            cmd = 'cvs co -r '+f[0]+' '+f[1]
+            status = processCmd(cmd)
+            cmd = 'mkdir -p '+f[2]
+            status = processCmd(cmd)
+            cmd = 'mv '+f[1]+'/* '+f[2]
+            status = processCmd(cmd)
+            cmd = 'rm -r UserCode'
+            
+
+            
         status = processCmd(cmd)
         if (status != 0):
             print "Trying again..."
