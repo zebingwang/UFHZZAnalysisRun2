@@ -4035,10 +4035,10 @@ void UFHZZ4LAna::bookPassedEventTree(TString treeName, TTree *tree)
   tree->Branch("GENpZZ1",&GENpZZ1,"GENpZZ1/D");
   tree->Branch("GENpZZ2",&GENpZZ2,"GENpZZ2/D");
 
-  tree->Branch("GENchargeL1_S1",&GENchargeL1_S1,"GENchargeL1_S1/D");
-  tree->Branch("GENchargeL2_S1",&GENchargeL2_S1,"GENchargeL2_S1/D");
-  tree->Branch("GENchargeL3_S1",&GENchargeL3_S1,"GENchargeL3_S1/D");
-  tree->Branch("GENchargeL4_S1",&GENchargeL4_S1,"GENchargeL4_S1/D");
+  tree->Branch("GENchargeL1_S1",&GENchargeL1_S1,"GENchargeL1_S1/I");
+  tree->Branch("GENchargeL2_S1",&GENchargeL2_S1,"GENchargeL2_S1/I");
+  tree->Branch("GENchargeL3_S1",&GENchargeL3_S1,"GENchargeL3_S1/I");
+  tree->Branch("GENchargeL4_S1",&GENchargeL4_S1,"GENchargeL4_S1/I");
   tree->Branch("GENetaL1_S1",&GENetaL1_S1,"GENetaL1_S1/D");
   tree->Branch("GENetaL2_S1",&GENetaL2_S1,"GENetaL2_S1/D");
   tree->Branch("GENetaL3_S1",&GENetaL3_S1,"GENetaL3_S1/D");
@@ -4048,10 +4048,10 @@ void UFHZZ4LAna::bookPassedEventTree(TString treeName, TTree *tree)
   tree->Branch("GENphiL3_S1",&GENphiL3_S1,"GENphiL3_S1/D");
   tree->Branch("GENphiL4_S1",&GENphiL4_S1,"GENphiL4_S1/D");
 
-  tree->Branch("GENchargeL1_S3",&GENchargeL1_S3,"GENchargeL1_S3/D");
-  tree->Branch("GENchargeL2_S3",&GENchargeL2_S3,"GENchargeL2_S3/D");
-  tree->Branch("GENchargeL3_S3",&GENchargeL3_S3,"GENchargeL3_S3/D");
-  tree->Branch("GENchargeL4_S3",&GENchargeL4_S3,"GENchargeL4_S3/D");
+  tree->Branch("GENchargeL1_S3",&GENchargeL1_S3,"GENchargeL1_S3/I");
+  tree->Branch("GENchargeL2_S3",&GENchargeL2_S3,"GENchargeL2_S3/I");
+  tree->Branch("GENchargeL3_S3",&GENchargeL3_S3,"GENchargeL3_S3/I");
+  tree->Branch("GENchargeL4_S3",&GENchargeL4_S3,"GENchargeL4_S3/I");
   tree->Branch("GENetaL1_S3",&GENetaL1_S3,"GENetaL1_S3/D");
   tree->Branch("GENetaL2_S3",&GENetaL2_S3,"GENetaL2_S3/D");
   tree->Branch("GENetaL3_S3",&GENetaL3_S3,"GENetaL3_S3/D");
