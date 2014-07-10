@@ -7,7 +7,7 @@ git clone https://github.com/VBF-HZZ/UFHZZAnalysis8TeV.git
 cd UFHZZAnalysis8TeV
 git checkout -b testProd origin/testProd
 cd ../
-tar xvzf UFHZZAnalysis8TeV/Utilities/requiredPackages.tgz
+tar xvzf UFHZZAnalysis8TeV/requiredPackages.tgz
 scram b -j12
 
 
