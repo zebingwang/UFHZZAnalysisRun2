@@ -15,3 +15,6 @@ curl -O https://raw.githubusercontent.com/VBF-HZZ/UFHZZAnalysis8TeV/testProd/ins
 chmod +x install.sh
 
 ./install.sh
+
+This will also install SubmitArea_8TeV at the same time.
+
