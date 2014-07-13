@@ -15,6 +15,9 @@ cd ../../
 git clone https://github.com/VBF-HZZ/SubmitArea_8TeV.git
 cd SubmitArea_8TeV
 git checkout -b testProd origin/testProd
+cd bin
+gmake
+cd ../
 
 
 
