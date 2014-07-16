@@ -40,3 +40,4 @@
 <use   name="ZZMatrixElement/MEMCalculators"/>
 <use   name="CMGTools/External"/>
 <flags EDM_PLUGIN="1"/>
+<Flags CXXFLAGS="-g"/>
