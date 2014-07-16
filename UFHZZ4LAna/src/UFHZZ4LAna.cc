@@ -5550,7 +5550,6 @@ void UFHZZ4LAna::setGENVariables(std::vector<reco::GenParticle> Higgs,
 
 void UFHZZ4LAna::setGENMatchedVariables(std::vector<pat::Muon> selectedMuons, std::vector<pat::Electron> selectedElectrons)
 {
-
   TLorentzVector m1,m2,m3,m4;
 
   //Muons
@@ -5571,6 +5570,8 @@ void UFHZZ4LAna::setGENMatchedVariables(std::vector<pat::Muon> selectedMuons, st
 	  int charge;
 	  if(mPdgId > 0) charge = -1;
 	  else charge = 1;
+
+          if(m.Pt()<=0.0) continue;
 
 	  if(i == 0)
 	    {
@@ -5665,6 +5666,8 @@ void UFHZZ4LAna::setGENMatchedVariables(std::vector<pat::Muon> selectedMuons, st
 	  int charge;
 	  if(mPdgId > 0) charge = -1;
 	  else charge = 1;
+
+          if(m.Pt()<=0.0) continue;
 
 	  if(i == 0)
 	    {
