@@ -1,4 +1,4 @@
-HZZ Analyzer for 8 TeV
+HZZ Analyzer for CMS Run2
 
 ------
 
@@ -8,7 +8,7 @@ To install:
 
 2.) get the installation script:
 
-curl -O https://raw.githubusercontent.com/VBF-HZZ/UFHZZAnalysis8TeV/testProd/install.sh
+curl -O https://github.com/VBF-HZZ/UFHZZAnalysisRun2/raw/master/install.sh
 
 3.) run it:
 
@@ -16,5 +16,4 @@ chmod +x install.sh
 
 ./install.sh
 
-This will also install SubmitArea_8TeV at the same time.
 
