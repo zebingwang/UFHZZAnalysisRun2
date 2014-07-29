@@ -389,7 +389,7 @@ void HZZ4LSigEff::advanceSigDenCounters(edm::Handle<reco::GenParticleCollection>
 
   using namespace std;
   using namespace pat;
-  using namespace edm;
+  //using namespace edm;
 
   int tauCount=0, nMuon=0, nElec=0, nMuonPseudo=0, nElecPseudo=0;
   //bool Brem = false;
@@ -481,7 +481,7 @@ void HZZ4LSigEff::advanceSigNumCounters_ID(std::string genEvent, double evtWeigh
 
   using namespace std;
   using namespace pat;
-  using namespace edm;
+  //using namespace edm;
 
   if( genEvent == "4mu"  ){ nReco4mu_ID+=evtWeight;   }
   if( genEvent == "4e"   ){ nReco4e_ID+=evtWeight;    }
@@ -497,7 +497,7 @@ void HZZ4LSigEff::advanceSigNumCounters_MZ1(std::string genEvent,  double evtWei
 
   using namespace std;
   using namespace pat;
-  using namespace edm;
+  //using namespace edm;
 
   if( genEvent == "4mu" ){ nReco4mu_MZ1+=evtWeight;   }
   if( genEvent == "4e"    ){ nReco4e_MZ1+=evtWeight;    }
@@ -512,7 +512,7 @@ void HZZ4LSigEff::advanceSigNumCounters_MZ2(std::string genEvent, std::string re
 
   using namespace std;
   using namespace pat;
-  using namespace edm;
+  //using namespace edm;
 
   if( genEvent == "4mu" && recoEvent == "reco4mu" ){ nReco4mu_MZ2+=evtWeight;   }
   if( genEvent == "4e" && recoEvent == "reco4e"   ){ nReco4e_MZ2+=evtWeight;    }
@@ -527,7 +527,7 @@ void HZZ4LSigEff::advanceSigNumCounters_M4L(std::string genEvent, std::string re
 
   using namespace std;
   using namespace pat;
-  using namespace edm;
+  //using namespace edm;
 
   if( genEvent == "4mu" && recoEvent == "reco4mu" ){ nReco4mu_M4L+=evtWeight;   }
   if( genEvent == "4e" && recoEvent == "reco4e"   ){ nReco4e_M4L+=evtWeight;    }
@@ -543,7 +543,7 @@ void HZZ4LSigEff::advanceSigNumCounters_FINAL(std::string genEvent, std::string 
 
   using namespace std;
   using namespace pat;
-  using namespace edm;
+  //using namespace edm;
 
   if( genEvent == "4mu" && recoEvent == "reco4mu" ){ nReco4mu_FINAL+=evtWeight;   }
   if( genEvent == "4e" && recoEvent == "reco4e"   ){ nReco4e_FINAL+=evtWeight;    }
@@ -559,7 +559,7 @@ void HZZ4LSigEff::advanceSigNumCounters_FINAL(std::string genEvent, std::string 
 
   using namespace std;
   using namespace pat;
-  using namespace edm;
+  //using namespace edm;
 
   if( genEvent == "4mu" && recoEvent == "reco4mu" )
     {
@@ -597,7 +597,7 @@ void HZZ4LSigEff::advanceSigNumCounters_PT2010(std::string genEvent,std::string 
 
   using namespace std;
   using namespace pat;
-  using namespace edm;
+  //using namespace edm;
 
   if( genEvent == "4mu" && recoEvent == "reco4mu" ){ nReco4mu_PT2010+=evtWeight;   }
   if( genEvent == "4e" && recoEvent == "reco4e"  ){ nReco4e_PT2010+=evtWeight;    }
@@ -612,7 +612,7 @@ void HZZ4LSigEff::advanceSigNumCounters_4GeV(std::string genEvent, std::string r
 
   using namespace std;
   using namespace pat;
-  using namespace edm;
+  //using namespace edm;
 
   if( genEvent == "4mu" && recoEvent == "reco4mu" ){ nReco4mu_4GeV+=evtWeight;   }
   if( genEvent == "4e" && recoEvent == "reco4e"   ){ nReco4e_4GeV+=evtWeight;    }

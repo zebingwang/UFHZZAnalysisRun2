@@ -35,9 +35,9 @@
 <use   name="RecoEcal/EgammaCoreTools"/>
 <use   name="PhysicsTools/SelectorUtils"/>
 <use   name="MagneticField/Records"/>
-<use   name="ZZMatrixElement/MELA"/>
-<use   name="ZZMatrixElement/MEKD"/>
-<use   name="ZZMatrixElement/MEMCalculators"/>
-<use   name="CMGTools/External"/>
+<!--use   name="ZZMatrixElement/MELA"/-->
+<!--use   name="ZZMatrixElement/MEKD"/-->
+<!--use   name="ZZMatrixElement/MEMCalculators"/-->
+<!--use   name="CMGTools/External"/-->
 <flags EDM_PLUGIN="1"/>
 <Flags CXXFLAGS="-g"/>

@@ -66,8 +66,8 @@
  #include "DataFormats/Candidate/interface/Candidate.h"
  #include "DataFormats/PatCandidates/interface/CompositeCandidate.h"
  #include "UFHZZAnalysis8TeV/UFHZZ4LAna/interface/HZZ4LJets.h"
- #include "CMGTools/External/interface/PileupJetIdAlgo.h"
- #include "CMGTools/External/interface/PileupJetIdentifier.h"
+ //#include "CMGTools/External/interface/PileupJetIdAlgo.h" // for miniAOD
+ //#include "CMGTools/External/interface/PileupJetIdentifier.h" // for miniAOD
 
 
 class HZZ4LJetTree
@@ -134,7 +134,7 @@ void HZZ4LJetTree::fillJetDumpTree(edm::Handle<edm::View<pat::Jet> >  jets, edm:
   //iEvent.getByLabel("puJetMva","fullDiscriminant",puJetIdMva);
 
   edm::Handle<edm::ValueMap<int> > puJetIdFlag;
-  iEvent.getByLabel("puJetMva","full53xId",puJetIdFlag);
+  iEvent.getByLabel("puJetMva","full53xId",puJetIdFlag); 
   //iEvent.getByLabel("puJetMva","fullId",puJetIdFlag);
 
   using namespace std;
@@ -148,9 +148,10 @@ void HZZ4LJetTree::fillJetDumpTree(edm::Handle<edm::View<pat::Jet> >  jets, edm:
     {
       const pat::Jet & patjet = jets->at(i);
       const pat::Jet & correctedjet = correctedJets->at(i);
-      pumva   = (*puJetIdMva)[jets->refAt(i)];
-      puidflag = (*puJetIdFlag)[jets->refAt(i)];
-      puidpass =  PileupJetIdentifier::passJetId( puidflag, PileupJetIdentifier::kLoose );
+      //pumva   = (*puJetIdMva)[jets->refAt(i)]; // for miniAOD
+      //puidflag = (*puJetIdFlag)[jets->refAt(i)]; // for miniAOD
+      //puidpass =  PileupJetIdentifier::passJetId( puidflag, PileupJetIdentifier::kLoose ); // for miniAOD
+      puidpass = patjet.userFloat("pileupJetId:fullDiscriminant"); // for miniAOD
       pfid = JetHelper.patjetID(correctedjet);
       pT = correctedjet.pt();
       eta = patjet.eta();

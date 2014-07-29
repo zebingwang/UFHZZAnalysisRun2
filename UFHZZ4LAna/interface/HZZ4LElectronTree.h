@@ -164,8 +164,8 @@ void HZZ4LElectronTree::fillElectronDumpTree(std::vector<pat::Electron> electron
       isoPhot = electrons[i].photonIso();
       relIso = myHelper.pfIso(electrons[i],electronRho);
       relIsoUncorr = myHelper.pfIso(electrons[i],0);
-      dz = electrons[i].gsfTrack()->dz(vertex->position()); 
-      dxy = electrons[i].gsfTrack()->dxy(vertex->position());
+      //dz = electrons[i].gsfTrack()->dz(vertex->position());  // for miniAOD
+      //dxy = electrons[i].gsfTrack()->dxy(vertex->position()); // for miniAOD
 
       electronTree->Fill();
 

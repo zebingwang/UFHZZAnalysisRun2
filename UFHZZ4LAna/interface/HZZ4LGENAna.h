@@ -319,7 +319,7 @@ void HZZ4LGENAna::fillGenEvent(edm::Handle<reco::GenParticleCollection> genParti
 
   using namespace std;
   using namespace pat;
-  using namespace edm;
+  //using namespace edm;
 
   reco::GenParticleCollection::const_iterator  genPart;
   
@@ -350,7 +350,7 @@ void HZZ4LGENAna::fillGenTree(edm::Handle<reco::GenParticleCollection> genPartic
 
   using namespace std;
   using namespace pat;
-  using namespace edm;
+  //using namespace edm;
 
   reco::GenParticleCollection::const_iterator  genPart;
 

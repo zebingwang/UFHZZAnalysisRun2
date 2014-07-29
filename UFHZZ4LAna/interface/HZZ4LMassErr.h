@@ -30,6 +30,8 @@
 
 #include "DataFormats/PatCandidates/interface/Electron.h"
 #include "DataFormats/PatCandidates/interface/Muon.h"
+#include "DataFormats/ParticleFlowCandidate/interface/PFCandidate.h"
+#include "DataFormats/PatCandidates/interface/PackedCandidate.h"
 
 //Full Error
 #include <cmath>
@@ -37,7 +39,6 @@
 #include "DataFormats/EgammaCandidates/interface/GsfElectron.h"
 #include "DataFormats/MuonReco/interface/Muon.h"
 #include "DataFormats/GsfTrackReco/interface/GsfTrack.h"
-#include "DataFormats/ParticleFlowCandidate/interface/PFCandidate.h"
 #include "FWCore/Framework/interface/EventSetup.h"
 
 #include "TrackingTools/AnalyticalJacobians/interface/JacobianCurvilinearToCartesian.h"
@@ -68,15 +69,15 @@ class HZZ4LMassErr
 		~HZZ4LMassErr();
 
 		double masserror(std::vector<TLorentzVector> Lep, std::vector<double> pterr);
-		double calc4eErr( vector< pat::Electron > electrons, vector< pat::PFParticle > fsrPhotons, bool corr, bool isData);
-		double calc4muErr( vector< pat::Muon > muons, vector< pat::PFParticle > fsrPhotons, bool corr, bool isData);
-		double calc2e2muErr( vector< pat::Electron > electrons, vector< pat::Muon > muons, vector< pat::PFParticle > fsrPhotons, bool corr,       
+		double calc4eErr( vector< pat::Electron > electrons, vector< pat::PackedCandidate > fsrPhotons, bool corr, bool isData); // for miniAOD
+		double calc4muErr( vector< pat::Muon > muons, vector< pat::PackedCandidate > fsrPhotons, bool corr, bool isData); // for miniAOD
+		double calc2e2muErr( vector< pat::Electron > electrons, vector< pat::Muon > muons, vector< pat::PackedCandidate > fsrPhotons, bool corr,        // for miniAOD
 				     bool isData);
 
-		double getMassResolution( std::vector< pat::Electron >& electrons, std::vector< pat::Muon >& muons, vector< pat::PFParticle >& fsrPhotons);
+		double getMassResolution( std::vector< pat::Electron >& electrons, std::vector< pat::Muon >& muons, vector< pat::PackedCandidate >& fsrPhotons); // for miniAOD
                 double getIndividualMassError( const reco::Candidate &c, int order, std::vector< pat::Electron >& electrons, std::vector< pat::Muon >& muons,
-					       vector< pat::PFParticle >& fsrPhotons);
-		double getMassResolutionCorr(std::vector< pat::Electron >& electrons, std::vector< pat::Muon >& muons, vector< pat::PFParticle >& fsrPhotons,
+					       vector< pat::PackedCandidate >& fsrPhotons); // for miniAOD
+		double getMassResolutionCorr(std::vector< pat::Electron >& electrons, std::vector< pat::Muon >& muons, vector< pat::PackedCandidate >& fsrPhotons, // for miniAOD
 					     bool corr, bool isData);
 		void setdebug(int d){debug_= d;};
 
@@ -167,7 +168,7 @@ out.push_back(&c);
 }
 */
 
-double HZZ4LMassErr::getMassResolution( std::vector< pat::Electron >& electrons, std::vector< pat::Muon >& muons, vector< pat::PFParticle >& fsrPhotons)  {
+double HZZ4LMassErr::getMassResolution( std::vector< pat::Electron >& electrons, std::vector< pat::Muon >& muons, vector< pat::PackedCandidate >& fsrPhotons)  { // for miniAOD
 	//std::vector<const reco::Candidate *> leaves;
 	//getLeaves(c, leaves);
 	int nel = electrons.size(); int nmu = muons.size(); int nph = fsrPhotons.size(); 
@@ -223,7 +224,7 @@ double HZZ4LMassErr::getMassResolution( std::vector< pat::Electron >& electrons,
 }
 
 
-double HZZ4LMassErr::getIndividualMassError( const reco::Candidate &c, int offset, std::vector< pat::Electron >& electrons, std::vector< pat::Muon >& muons, vector< pat::PFParticle >& fsrPhotons)  {
+double HZZ4LMassErr::getIndividualMassError( const reco::Candidate &c, int offset, std::vector< pat::Electron >& electrons, std::vector< pat::Muon >& muons, vector< pat::PackedCandidate >& fsrPhotons)  {
 
 	int nel = electrons.size(); int nmu = muons.size(); int nph = fsrPhotons.size(); 
 	int ndim = (nel+nmu+nph)*3;
@@ -284,7 +285,7 @@ double HZZ4LMassErr::getIndividualMassError( const reco::Candidate &c, int offse
 }
 
 
-double HZZ4LMassErr::getMassResolutionCorr(std::vector< pat::Electron >& electrons, std::vector< pat::Muon >& muons, vector< pat::PFParticle >& fsrPhotons, bool corr, bool isData)  {
+double HZZ4LMassErr::getMassResolutionCorr(std::vector< pat::Electron >& electrons, std::vector< pat::Muon >& muons, vector< pat::PackedCandidate >& fsrPhotons, bool corr, bool isData)  {
 
         double dm2 = 0.0;
         int o = 0;   
@@ -519,7 +520,7 @@ double HZZ4LMassErr::masserror( std::vector<TLorentzVector> Lep, std::vector<dou
 	return sqrt(masserr);
 }
 
-double HZZ4LMassErr::calc4muErr( vector< pat::Muon > muons, vector< pat::PFParticle > fsrPhotons, bool corr, bool isData ){
+double HZZ4LMassErr::calc4muErr( vector< pat::Muon > muons, vector< pat::PackedCandidate > fsrPhotons, bool corr, bool isData ){
 	//	if(muons.size() != 4) printf("[calc4muErr] Warning: number of muons is not 4, but %d \n", (int)(muons.size()));
 	vector<TLorentzVector> vtlv; vtlv.clear();
 	vector<double> vpterr; vpterr.clear();
@@ -545,7 +546,7 @@ double HZZ4LMassErr::calc4muErr( vector< pat::Muon > muons, vector< pat::PFParti
 		vtlv.push_back(tlv);
 	}
 	for(unsigned int i=0; i< fsrPhotons.size(); i++){
-		const pat::PFParticle *ph = &(fsrPhotons[i]);
+		const pat::PackedCandidate *ph = &(fsrPhotons[i]);
 		TLorentzVector tlv; tlv.SetPtEtaPhiM(ph->pt(), ph->eta(), ph->phi(), 0 );    		
 		double perr = PFEnergyResolution().getEnergyResolutionEm(ph->energy(), ph->eta());
 		double pterr = perr*ph->pt()/ph->p(); 
@@ -555,7 +556,7 @@ double HZZ4LMassErr::calc4muErr( vector< pat::Muon > muons, vector< pat::PFParti
 	return masserror(vtlv, vpterr);
 }
 
-double HZZ4LMassErr::calc4eErr( vector< pat::Electron > electrons, vector< pat::PFParticle > fsrPhotons, bool corr, bool isData ){
+double HZZ4LMassErr::calc4eErr( vector< pat::Electron > electrons, vector< pat::PackedCandidate > fsrPhotons, bool corr, bool isData ){
 	//	if(electrons.size() != 4) printf("[calc4eErr] Warning: number of electrons is not 4, but %d \n", (int)electrons.size());
 	vector<TLorentzVector> vtlv; vtlv.clear();
 	vector<double> vpterr; vpterr.clear();
@@ -614,7 +615,7 @@ double HZZ4LMassErr::calc4eErr( vector< pat::Electron > electrons, vector< pat::
 	}
 
 	for(unsigned int i=0; i< fsrPhotons.size(); i++){
-		const pat::PFParticle *ph = &(fsrPhotons[i]);
+		const pat::PackedCandidate *ph = &(fsrPhotons[i]);
 		TLorentzVector tlv; tlv.SetPtEtaPhiM(ph->pt(), ph->eta(), ph->phi(), 0 );    		
 		double perr = PFEnergyResolution().getEnergyResolutionEm(ph->energy(), ph->eta());
 		double pterr = perr*ph->pt()/ph->p(); 
@@ -625,7 +626,7 @@ double HZZ4LMassErr::calc4eErr( vector< pat::Electron > electrons, vector< pat::
 	return masserror(vtlv, vpterr);
 }
 
-double HZZ4LMassErr::calc2e2muErr( vector< pat::Electron > electrons, vector< pat::Muon > muons, vector< pat::PFParticle > fsrPhotons, bool corr, bool isData ){
+double HZZ4LMassErr::calc2e2muErr( vector< pat::Electron > electrons, vector< pat::Muon > muons, vector< pat::PackedCandidate > fsrPhotons, bool corr, bool isData ){
 	//	if(muons.size() != 2) printf("[calc2e2muErr] Warning: number of muons is not 2, but %d \n", (int)muons.size());
 	vector<TLorentzVector> vtlv; vtlv.clear();
 	vector<double> vpterr; vpterr.clear();
@@ -697,7 +698,7 @@ double HZZ4LMassErr::calc2e2muErr( vector< pat::Electron > electrons, vector< pa
 	}
 
 	for(unsigned int i=0; i< fsrPhotons.size(); i++){
-		const pat::PFParticle *ph = &(fsrPhotons[i]);
+		const pat::PackedCandidate *ph = &(fsrPhotons[i]);
 		TLorentzVector tlv; tlv.SetPtEtaPhiM(ph->pt(), ph->eta(), ph->phi(), 0 );    		
 		double perr = PFEnergyResolution().getEnergyResolutionEm(ph->energy(), ph->eta());
 		double pterr = perr*ph->pt()/ph->p(); 

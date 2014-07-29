@@ -84,8 +84,9 @@
 #include "DataFormats/ParticleFlowCandidate/interface/PFCandidateFwd.h"
 #include "DataFormats/ParticleFlowCandidate/interface/PFCandidate.h"
 #include "PhysicsTools/SelectorUtils/interface/JetIDSelectionFunctor.h"
-#include "CMGTools/External/interface/PileupJetIdAlgo.h"
-#include "CMGTools/External/interface/PileupJetIdentifier.h"
+#include "DataFormats/PatCandidates/interface/PackedCandidate.h"  // added for miniAOD
+//#include "CMGTools/External/interface/PileupJetIdAlgo.h"  // removed for miniAOD
+//#include "CMGTools/External/interface/PileupJetIdentifier.h"  // removed for miniAOD
 // Reco
 #include "DataFormats/VertexReco/interface/Vertex.h"
 #include "DataFormats/BeamSpot/interface/BeamSpot.h"
@@ -101,17 +102,16 @@
 
 //Angles
 #include "UFHZZAnalysis8TeV/UFHZZ4LAna/interface/HZZ4LAngles.h"
-#include "ZZMatrixElement/MELA/interface/Mela.h"
-#include "ZZMatrixElement/MELA/interface/PseudoMELA.h"
-#include "ZZMatrixElement/MELA/interface/SpinOneEvenMELA.h"
-#include "ZZMatrixElement/MELA/interface/SpinOneOddMELA.h"
-#include "ZZMatrixElement/MELA/interface/SpinTwoMinimalMELA.h"
+//#include "ZZMatrixElement/MELA/interface/Mela.h" // removed for miniAOD
+//#include "ZZMatrixElement/MELA/interface/PseudoMELA.h"  // removed for miniAOD
+//#include "ZZMatrixElement/MELA/interface/SpinOneEvenMELA.h"  // removed for miniAOD
+//#include "ZZMatrixElement/MELA/interface/SpinOneOddMELA.h"  // removed for miniAOD
+//#include "ZZMatrixElement/MELA/interface/SpinTwoMinimalMELA.h"  // removed for miniAOD
 
 //MEKD
-#include "ZZMatrixElement/MEKD/interface/MEKD.h"
-#include "ZZMatrixElement/MEKD/interface/MEKD_MG.h"
-
-#include "ZZMatrixElement/MEMCalculators/interface/MEMCalculators.h"
+//#include "ZZMatrixElement/MEKD/interface/MEKD.h"  // removed for miniAOD
+//#include "ZZMatrixElement/MEKD/interface/MEKD_MG.h"  // removed for miniAOD
+//#include "ZZMatrixElement/MEMCalculators/interface/MEMCalculators.h"  // removed for miniAOD
 
 //Helper
 #include "UFHZZAnalysis8TeV/UFHZZ4LAna/interface/HZZ4LHelper.h"
@@ -171,10 +171,10 @@ private:
   virtual void beginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&);
   virtual void endLuminosityBlock(edm::LuminosityBlock const& lumiSeg,edm::EventSetup const& eSetup);
   
-  void findHiggsCandidate(std::vector<pat::Muon> &candMuons, std::vector<pat::Electron> &candElectrons, std::vector< pat::PFParticle > fsrPhotons,
+  void findHiggsCandidate(std::vector<pat::Muon> &candMuons, std::vector<pat::Electron> &candElectrons, std::vector< pat::PackedCandidate > fsrPhotons,  // changed for miniAOD
 			  std::vector<double> deltaRVec,
                           std::vector<pat::Muon> &selectedMuons, std::vector<pat::Electron> &selectedElectrons,
-                          std::vector<pat::PFParticle > &selectedFsrPhotons, const edm::Event& iEvent);
+                          std::vector<pat::PackedCandidate > &selectedFsrPhotons, const edm::Event& iEvent); // changed for miniAOD
 
   double getMinDeltaR(std::vector<pat::Muon> Muons, std::vector<pat::Electron> Electrons);
   void plotMinDeltaRemu(std::vector<pat::Muon> Muons, std::vector<pat::Electron> Electrons);
@@ -183,10 +183,10 @@ private:
   void fillStepPlots();
   void bookResolutionHistograms();
   void fillResolutionHistograms(edm::Handle<edm::View<pat::Muon> > muons);
-  bool findZ(std::vector<pat::PFParticle> photons, std::vector<double> deltaRVec, pat::Muon &muon1, pat::Muon &muon2,int taken1, int &taken2, 
+  bool findZ(std::vector<pat::PackedCandidate> photons, std::vector<double> deltaRVec, pat::Muon &muon1, pat::Muon &muon2,int taken1, int &taken2, // changed for miniAOD 
 	     int &assocMuon,math::XYZTLorentzVector &ZVec, math::XYZTLorentzVector &photVec, bool &foundPhoton);
   
-  bool findZ(std::vector<pat::PFParticle> photons, std::vector<double> deltaRVec, pat::Electron &electron1, pat::Electron &electron2,int taken1, 
+  bool findZ(std::vector<pat::PackedCandidate> photons, std::vector<double> deltaRVec, pat::Electron &electron1, pat::Electron &electron2,int taken1,  // changed for miniAOD
 	     int &taken2, int &assocElec, math::XYZTLorentzVector &ZVec, math::XYZTLorentzVector &photVec, bool &foundPhoton);
   
   //--------------------------------------------    
@@ -196,9 +196,12 @@ private:
   bool mixedFlavorCharge;
   //--------------------------------------------
   
+
   //MELA
   HZZ4LAngles angles;
-  Mela *mela;
+  // Mela *mela;   // removed for miniAOD
+
+
   //PseudoMELA pseudoMela;
   //SpinOneEvenMELA spin1EvMela;
   //SpinOneOddMELA spin1OddMela;
@@ -241,8 +244,8 @@ private:
   float bkg_m4l;
 
   //MEKD
-  MEMs *MEMsnoPDFs_noFSR;
-  MEMs *MEMsnoPDFs;
+  // MEMs *MEMsnoPDFs_noFSR; // removed for miniAOD
+  // MEMs *MEMsnoPDFs;  // removed for miniAOD
   
   double interferenceWeight;
   double JHUKD_H_qqZZ_noPDF, JHU_ME_H, MCFM_ME_qqZZ;
@@ -476,7 +479,7 @@ private:
   edm::InputTag photonSrc_;
   edm::InputTag elecSrc_;
   edm::InputTag muonSrc_;
-  edm::InputTag correctedJetSrc_;
+  //edm::InputTag correctedJetSrc_; // removed for miniAOD
   edm::InputTag jetSrc_;
   edm::InputTag metSrc_;
   edm::InputTag vertexSrc_;
@@ -620,7 +623,7 @@ UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
   photonSrc_(iConfig.getUntrackedParameter<edm::InputTag>("photonSrc")),
   elecSrc_(iConfig.getUntrackedParameter<edm::InputTag>("electronSrc")),
   muonSrc_(iConfig.getUntrackedParameter<edm::InputTag>("muonSrc")),
-  correctedJetSrc_(iConfig.getUntrackedParameter<edm::InputTag>("correctedJetSrc" )),
+  // correctedJetSrc_(iConfig.getUntrackedParameter<edm::InputTag>("correctedJetSrc" )), // removed for miniAOD
   jetSrc_(iConfig.getUntrackedParameter<edm::InputTag>("jetSrc" )),
   metSrc_(iConfig.getUntrackedParameter<edm::InputTag>("metSrc" )),
   vertexSrc_(iConfig.getUntrackedParameter<edm::InputTag>("vertexSrc")),
@@ -631,7 +634,7 @@ UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
   mZ1High(iConfig.getUntrackedParameter<double>("mZ1High",120)),
   mZ2High(iConfig.getUntrackedParameter<double>("mZ2High",120)),
   m4lLowCut(iConfig.getUntrackedParameter<double>("m4lLowCut",100)),
-  elecID(iConfig.getUntrackedParameter<std::string>("elecID","mvaNonTrigV0")),
+  elecID(iConfig.getUntrackedParameter<std::string>("elecID","eidTight")),
   isMC(iConfig.getUntrackedParameter<bool>("isMC",true)),
   isSignal(iConfig.getUntrackedParameter<bool>("isSignal",false)),
   mH(iConfig.getUntrackedParameter<unsigned int>("mH",0)),
@@ -655,7 +658,7 @@ UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
   PUVersion(iConfig.getUntrackedParameter<std::string>("PUVersion","Legacy53X")),
   doVarDump(iConfig.getUntrackedParameter<bool>("doVarDump",false)),
   doBlinding(iConfig.getUntrackedParameter<bool>("doBlinding",false)),
-  doFsrRecovery(iConfig.getUntrackedParameter<bool>("doFsrRecovery",true)),
+  doFsrRecovery(iConfig.getUntrackedParameter<bool>("doFsrRecovery",false)),
   bStudyResolution(iConfig.getUntrackedParameter<bool>("bStudyResolution",false)),
   bStudyDiLeptonResolution(iConfig.getUntrackedParameter<bool>("bStudyDiLeptonResolution",false)),
   bStudyFourLeptonResolution(iConfig.getUntrackedParameter<bool>("bStudyFourLeptonResolution",false))
@@ -864,8 +867,8 @@ UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
   //MEKDwithPDFs = new MEKD(8,"CTEQ6L");
   //MEKDnoPDFs = new MEKD(8,"");
   //MEKDnoPDFs_noFSR = new MEKD(8,"");
-  MEMsnoPDFs_noFSR = new MEMs(8);
-  MEMsnoPDFs = new MEMs(8);
+  //MEMsnoPDFs_noFSR = new MEMs(8); //removed for miniAOD
+  //MEMsnoPDFs = new MEMs(8);//removed for miniAOD
   
 
   muonDump = new HZZ4LMuonTree("muonDumpTree",fs);
@@ -901,10 +904,10 @@ UFHZZ4LAna::~UFHZZ4LAna()
 void
 UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
-  using namespace edm;
+  //using namespace edm;
   using namespace std;
   using namespace pat;
-  using namespace MEMNames;
+  //using namespace MEMNames; // removed for miniAOD
 
   // ======= Get Collections ======= //
 
@@ -970,29 +973,29 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   elecRho = *eventRhoE;
 
   // Particle Flow Cands
-  edm::Handle<reco::PFCandidateCollection> pfCands;
-  iEvent.getByLabel("particleFlow",pfCands);
+  edm::Handle<edm::View<pat::PackedCandidate> > pfCands; // modified for miniAOD
+  iEvent.getByLabel("packedPFCandidates",pfCands); // modified for miniAOD
 
-  edm::Handle<edm::View<pat::PFParticle> > photonsForFsr;
-  iEvent.getByLabel("boostedFsrPhotons",photonsForFsr);
+  //edm::Handle<edm::View<pat::PackedCandidate> > photonsForFsr;  //remove for miniAOD
+  //iEvent.getByLabel("boostedFsrPhotons",photonsForFsr); //remove for miniAOD
   
   // GEN collection
   edm::Handle<reco::GenParticleCollection> genParticles;
-  iEvent.getByLabel("genParticles", genParticles);
+  iEvent.getByLabel("prunedGenParticles", genParticles); // modified for miniAOD
 
   //VBF 
-  edm::Handle<edm::View<pat::Jet> > correctedJets;
-  iEvent.getByLabel(correctedJetSrc_,correctedJets);
+  //edm::Handle<edm::View<pat::Jet> > correctedJets; //removed for miniAOD
+  //iEvent.getByLabel(correctedJetSrc_,correctedJets); //removed for miniAOD
 
   edm::Handle<edm::View<pat::Jet> > jets;
   iEvent.getByLabel(jetSrc_,jets);
   
-  edm::Handle<edm::ValueMap<float> > puJetIdMva;
-  iEvent.getByLabel("puJetMva","full53xDiscriminant",puJetIdMva);
+  //edm::Handle<edm::ValueMap<float> > puJetIdMva; // removed for miniAOD
+  //iEvent.getByLabel("puJetMva","full53xDiscriminant",puJetIdMva); // removed for miniAOD
   //iEvent.getByLabel("puJetMva","fullDiscriminant",puJetIdMva);
 
-  edm::Handle<edm::ValueMap<int> > puJetIdFlag;
-  iEvent.getByLabel("puJetMva","full53xId",puJetIdFlag);  
+  //edm::Handle<edm::ValueMap<int> > puJetIdFlag; // removed for miniAOD
+  //iEvent.getByLabel("puJetMva","full53xId",puJetIdFlag);  // removed for miniAOD
   //iEvent.getByLabel("puJetMva","fullId",puJetIdFlag);  
   
 
@@ -1302,11 +1305,13 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 	}
 	
       nPhotons = 0;
-      vector<pat::PFParticle> fsrPhotons; vector<double> deltaRVec;
+      vector<pat::PackedCandidate> fsrPhotons; vector<double> deltaRVec; //modified for miniAOD
       if(doFsrRecovery)
 	{
-	  for(edm::View<pat::PFParticle>::const_iterator phot=photonsForFsr->begin(); phot!=photonsForFsr->end(); ++phot)
-	    {
+	  for(edm::View<pat::PackedCandidate>::const_iterator phot=pfCands->begin(); phot!=pfCands->end(); ++phot) // modified for miniAOD
+           {
+              if (phot->pdgId()!=22 || phot->pt()<1.0) continue;
+
 	      bool matched = false; double chosenDeltaRPh = 999;
 	      for(unsigned int i = 0; i < recoElectrons.size(); i++)
 		{
@@ -1450,7 +1455,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 	  
       RecoFourMixEvent = 0;
       //if(mixedFlavorCharge){findHiggsCandidate_MixFlavour(recoMuons,recoElectrons,selectedMuons,selectedElectrons, true);}
-      vector< pat::PFParticle > selectedFsrPhotons;
+      vector< pat::PackedCandidate > selectedFsrPhotons; // modified for miniAOD
       findHiggsCandidate(recoMuons,recoElectrons,fsrPhotons,deltaRVec,selectedMuons,selectedElectrons,selectedFsrPhotons,iEvent);
 	  
       if( foundHiggsCandidate ){
@@ -1458,16 +1463,19 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 	//VBF Jets
 	vector<pat::Jet> selectedVBFJets, correctedVBFJets;
 	double tempDeltaR = -999;
-	if(doVarDump) jetDump->fillJetDumpTree(jets,correctedJets,iEvent);
+	//if(doVarDump) jetDump->fillJetDumpTree(jets,correctedJets,iEvent); // for miniAOD
+	if(doVarDump) jetDump->fillJetDumpTree(jets,jets,iEvent); // for miniAOD
 
 	for(unsigned int i = 0; i < jets->size(); ++i) 
 	  {
 	    const pat::Jet & patjet = jets->at(i);
-	    const pat::Jet & correctedJet = correctedJets->at(i);
+	    //const pat::Jet & correctedJet = correctedJets->at(i); // for miniAOD
+	    const pat::Jet & correctedJet = jets->at(i); // for miniAOD
 	    //float mva   = (*puJetIdMva)[jets->refAt(i)];
-	    int  idflag = (*puJetIdFlag)[jets->refAt(i)];
+	    //int  idflag = (*puJetIdFlag)[jets->refAt(i)]; // for miniAOD
 	    //cout << "jet " << i << " pt " << patjet.pt() << " eta " << patjet.eta() << " PU JetID MVA " << mva << endl; 
-	    if( PileupJetIdentifier::passJetId( idflag, PileupJetIdentifier::kLoose ) ) 
+	    //if( PileupJetIdentifier::passJetId( idflag, PileupJetIdentifier::kLoose ) )  // for miniAOD
+	    if (patjet.userFloat("pileupJetId:fullDiscriminant")) // for miniAOD
 	      {
 		//PF ID
 		bool looseIDPass = false; 
@@ -1712,7 +1720,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
             tmpIDs.push_back(tmpIdL3);
             tmpIDs.push_back(tmpIdL4);
 
-
+            /*  removed for miniAOD , 70 lines below
 	    MEMsnoPDFs->computeMEs(P4s,tmpIDs);
 	    interferenceWeight = MEMsnoPDFs->getMELAWeight();
 	    MEMsnoPDFs->computePm4l(P4s,tmpIDs, MEMNames::kNone, pdfSigM4l, pdfBkgM4l);
@@ -1783,7 +1791,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 	    MEMsnoPDFs_noFSR->computeKD(k1plus,       kJHUGen, kqqZZ, kMCFM, &MEMs::probRatio, JHUKD_h1P_ZZ_noPDF_noFSR,  JHU_ME_h1P_noPDF_noFSR, JHU_ME_ZZ_noPDF_noFSR);
 	    MEMsnoPDFs_noFSR->computeKD(k2mplus_qqbar,kJHUGen, kqqZZ, kMCFM, &MEMs::probRatio, JHUKD_qqh2P_ZZ_noPDF_noFSR,JHU_ME_qqh2P_noPDF_noFSR,JHU_ME_ZZ_noPDF_noFSR);
 	    MEMsnoPDFs_noFSR->computeKD(k2mplus_gg,   kJHUGen, kqqZZ, kMCFM, &MEMs::probRatio, JHUKD_ggh2P_ZZ_noPDF_noFSR,JHU_ME_ggh2P_noPDF_noFSR,JHU_ME_ZZ_noPDF_noFSR);
-	    
+            */	    
 
 
 
@@ -1824,7 +1832,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 		    std::vector<reco::GenParticle> Higgs,Zs,leptonsS1,leptonsS3;
 		    genAna.fillGenEvent(genParticles,Higgs,Zs,leptonsS1,leptonsS3);
 		    setGENVariables(Higgs,Zs,leptonsS1,leptonsS3);
-		    setGENMatchedVariables(selectedMuons,selectedElectrons);
+		    //setGENMatchedVariables(selectedMuons,selectedElectrons); // for miniAOD
 		  }
 		passedEventsTree_All->Fill();
 		  
@@ -2078,7 +2086,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
  void 
  UFHZZ4LAna::beginJob()
  {
-   using namespace edm;
+   //using namespace edm;
    using namespace std;
    using namespace pat;
 
@@ -2116,7 +2124,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
  void 
  UFHZZ4LAna::endJob() 
  {
-   using namespace edm;
+   //using namespace edm;
    using namespace std;
    using namespace pat;
 
@@ -2239,11 +2247,11 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
  void 
  UFHZZ4LAna::endLuminosityBlock(edm::LuminosityBlock const& lumiSeg,edm::EventSetup const& eSetup)
  {
-   using namespace edm;
+   //using namespace edm;
    using namespace std;
 
    // Keep track of all the events run over
-   edm::Handle<MergeableCounter> numEventsCounter;
+   edm::Handle<edm::MergeableCounter> numEventsCounter;
    lumiSeg.getByLabel("nEventsTotal", numEventsCounter);
    if( isMC )
      {
@@ -2252,7 +2260,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 	   nEventsTotal += numEventsCounter->value;
 	 }
      }
-   edm::Handle<MergeableCounter> numEventsSkimmedCounter;
+   edm::Handle<edm::MergeableCounter> numEventsSkimmedCounter;
    lumiSeg.getByLabel("nEvents2LSkim", numEventsSkimmedCounter);
    if(numEventsSkimmedCounter.isValid())
      {
@@ -2261,7 +2269,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
  
    if( !isSignal){
 
-     edm::Handle<MergeableCounter> numEventsAfterSkimCounter;
+     edm::Handle<edm::MergeableCounter> numEventsAfterSkimCounter;
      lumiSeg.getByLabel("nEventsTriLep", numEventsAfterSkimCounter);
 
      if(numEventsAfterSkimCounter.isValid())
@@ -2285,12 +2293,12 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
  // these will be filled in the function and then useable for more analysis.
  void
  UFHZZ4LAna::findHiggsCandidate(std::vector< pat::Muon > &candMuons, std::vector< pat::Electron > &candElectrons,
-                                std::vector< pat::PFParticle > fsrPhotons, std::vector<double> deltaRVec,
-                                std::vector< pat::Muon > &selectedMuons, std::vector< pat::Electron > &selectedElectrons,
-                                std::vector< pat::PFParticle > &selectedFsrPhotons,const edm::Event& iEvent )
+                                std::vector< pat::PackedCandidate > fsrPhotons, std::vector<double> deltaRVec,  // for miniAOD
+                                std::vector< pat::Muon > &selectedMuons, std::vector< pat::Electron > &selectedElectrons, 
+                                std::vector< pat::PackedCandidate > &selectedFsrPhotons,const edm::Event& iEvent )  // for miniAOD
  {
 
-   using namespace edm;
+   //using namespace edm;
    using namespace pat;
    using namespace std;
 
@@ -2864,7 +2872,7 @@ UFHZZ4LAna::findHiggsCandidate_MixFlavour(std::vector<pat::Muon> &candMuons, std
                                           std::vector<pat::Muon> &selectedMuons, std::vector<pat::Electron> &selectedElectrons, bool noChargeReq)
 {
     
-    using namespace edm;
+    //using namespace edm;
     using namespace pat;
     using namespace std;
     
@@ -3347,7 +3355,7 @@ UFHZZ4LAna::findHiggsCandidate_MixFlavour(std::vector<pat::Muon> &candMuons, std
 double UFHZZ4LAna::getMinDeltaR(std::vector<pat::Muon> Muons, std::vector<pat::Electron> Electrons)
 {
 
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
 
@@ -3404,7 +3412,7 @@ void UFHZZ4LAna::plotMinDeltaRemu(std::vector<pat::Muon> Muons, std::vector<pat:
 {
 
 
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
 
@@ -3435,7 +3443,7 @@ void UFHZZ4LAna::plotMinDeltaRemu(std::vector<pat::Muon> Muons, std::vector<pat:
 void UFHZZ4LAna::bookStepPlots()
 {
 
-  using namespace edm;
+  //using namespace edm;
   using namespace std;
   using namespace pat;
 
@@ -3453,7 +3461,7 @@ void UFHZZ4LAna::bookStepPlots()
 void UFHZZ4LAna::fillStepPlots()
 {
 
-  using namespace edm;
+  //using namespace edm;
   using namespace std;
   using namespace pat;
 
@@ -3575,7 +3583,7 @@ void UFHZZ4LAna::fillStepPlots()
 void UFHZZ4LAna::bookPassedEventTree(TString treeName, TTree *tree)
 {     
 
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
 
@@ -4135,7 +4143,7 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
 				   std::vector<pat::Muon> selectedMuons, std::vector<pat::Electron> selectedElectrons, std::vector<pat::Jet> selectedVBFJets, std::vector<pat::Jet> correctedVBFJets)
 {
 
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
 
@@ -4337,7 +4345,7 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
       isoHcalL1 = selectedElectrons[0].dr03HcalTowerSumEt();
       RelIsoL1 =  helper.pfIso(selectedElectrons[0],elecRho);
       RelIsoUCL1 = helper.pfIso(selectedElectrons[0],0);
-      missingHitsL1 = selectedElectrons[0].gsfTrack()->trackerExpectedHitsInner().numberOfLostHits();
+      //missingHitsL1 = selectedElectrons[0].gsfTrack()->trackerExpectedHitsInner().numberOfLostHits(); // for miniAOD
       ecalSeedL1 = selectedElectrons[0].ecalDrivenSeed();
  
       idL2 = selectedElectrons[1].pdgId();
@@ -4361,7 +4369,7 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
       isoHcalL2 = selectedElectrons[1].dr03HcalTowerSumEt();
       RelIsoL2 = helper.pfIso(selectedElectrons[1],elecRho);
       RelIsoUCL2 = helper.pfIso(selectedElectrons[1],0);
-      missingHitsL2 = selectedElectrons[1].gsfTrack()->trackerExpectedHitsInner().numberOfLostHits();
+      //missingHitsL2 = selectedElectrons[1].gsfTrack()->trackerExpectedHitsInner().numberOfLostHits(); // for miniAOD
       ecalSeedL2 = selectedElectrons[1].ecalDrivenSeed();
 
       idL3 = selectedElectrons[2].pdgId();
@@ -4385,7 +4393,7 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
       isoHcalL3 = selectedElectrons[2].dr03HcalTowerSumEt();
       RelIsoL3 = helper.pfIso(selectedElectrons[2],elecRho);
       RelIsoUCL3 = helper.pfIso(selectedElectrons[2],0);
-      missingHitsL3 = selectedElectrons[2].gsfTrack()->trackerExpectedHitsInner().numberOfLostHits();
+      //missingHitsL3 = selectedElectrons[2].gsfTrack()->trackerExpectedHitsInner().numberOfLostHits(); // for miniAOD
       ecalSeedL3 = selectedElectrons[2].ecalDrivenSeed();
 
       idL4 = selectedElectrons[3].pdgId();
@@ -4409,7 +4417,7 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
       isoHcalL4 = selectedElectrons[3].dr03HcalTowerSumEt();
       RelIsoL4 = helper.pfIso(selectedElectrons[3],elecRho);
       RelIsoUCL4 = helper.pfIso(selectedElectrons[3],0);
-      missingHitsL4 = selectedElectrons[3].gsfTrack()->trackerExpectedHitsInner().numberOfLostHits();
+      //missingHitsL4 = selectedElectrons[3].gsfTrack()->trackerExpectedHitsInner().numberOfLostHits(); // for miniAOD
       ecalSeedL4 = selectedElectrons[3].ecalDrivenSeed();
 
     }
@@ -4437,7 +4445,7 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
       isoHcalL1 = selectedElectrons[0].dr03HcalTowerSumEt();
       RelIsoL1 = helper.pfIso(selectedElectrons[0],elecRho);
       RelIsoUCL1 = helper.pfIso(selectedElectrons[0],0);
-      missingHitsL1 = selectedElectrons[0].gsfTrack()->trackerExpectedHitsInner().numberOfLostHits();
+      //missingHitsL1 = selectedElectrons[0].gsfTrack()->trackerExpectedHitsInner().numberOfLostHits(); //for miniAOD
       ecalSeedL1 = selectedElectrons[0].ecalDrivenSeed();
 
       idL2 = selectedElectrons[1].pdgId();
@@ -4461,7 +4469,7 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
       isoHcalL2 = selectedElectrons[1].dr03HcalTowerSumEt();
       RelIsoL2 = helper.pfIso(selectedElectrons[1],elecRho);
       RelIsoUCL2 = helper.pfIso(selectedElectrons[1],0);
-      missingHitsL2 = selectedElectrons[1].gsfTrack()->trackerExpectedHitsInner().numberOfLostHits();
+      //missingHitsL2 = selectedElectrons[1].gsfTrack()->trackerExpectedHitsInner().numberOfLostHits(); // for miniAOD
       ecalSeedL2 = selectedElectrons[1].ecalDrivenSeed();
 
       idL3 = selectedMuons[0].pdgId();
@@ -4581,7 +4589,7 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
       isoHcalL3 = selectedElectrons[0].dr03HcalTowerSumEt();
       RelIsoL3 = helper.pfIso(selectedElectrons[0],elecRho);
       RelIsoUCL3 = helper.pfIso(selectedElectrons[0],0);
-      missingHitsL3 = selectedElectrons[0].gsfTrack()->trackerExpectedHitsInner().numberOfLostHits();
+      //missingHitsL3 = selectedElectrons[0].gsfTrack()->trackerExpectedHitsInner().numberOfLostHits(); // for miniAOD
       ecalSeedL3 = selectedElectrons[0].ecalDrivenSeed();
 
       idL4 = selectedElectrons[1].pdgId();
@@ -4605,7 +4613,7 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
       isoHcalL4 = selectedElectrons[1].dr03HcalTowerSumEt();
       RelIsoL4 = helper.pfIso(selectedElectrons[1],elecRho);
       RelIsoUCL4 = helper.pfIso(selectedElectrons[1],0);
-      missingHitsL4 = selectedElectrons[1].gsfTrack()->trackerExpectedHitsInner().numberOfLostHits();
+      //missingHitsL4 = selectedElectrons[1].gsfTrack()->trackerExpectedHitsInner().numberOfLostHits(); //for miniAOD
       ecalSeedL4 = selectedElectrons[1].ecalDrivenSeed();
 
     } 
@@ -5751,7 +5759,7 @@ void UFHZZ4LAna::setGENMatchedVariables(std::vector<pat::Muon> selectedMuons, st
 void UFHZZ4LAna::bookResolutionHistograms()
 {
 
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
 
@@ -5770,7 +5778,7 @@ void UFHZZ4LAna::bookResolutionHistograms()
 void UFHZZ4LAna::fillResolutionHistograms(edm::Handle<edm::View<pat::Muon> > muons)
 {
 
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
 
@@ -5823,7 +5831,7 @@ void UFHZZ4LAna::fillResolutionHistograms(edm::Handle<edm::View<pat::Muon> > muo
 
 
 ////////////Muons/////////////////
-bool UFHZZ4LAna::findZ(std::vector<pat::PFParticle> photons, std::vector<double> deltaRVec, pat::Muon &muon1, pat::Muon &muon2,int taken1, int &taken2, int &assocMuon, math::XYZTLorentzVector &ZVec, math::XYZTLorentzVector &photVec, bool &foundPhoton)
+bool UFHZZ4LAna::findZ(std::vector<pat::PackedCandidate> photons, std::vector<double> deltaRVec, pat::Muon &muon1, pat::Muon &muon2,int taken1, int &taken2, int &assocMuon, math::XYZTLorentzVector &ZVec, math::XYZTLorentzVector &photVec, bool &foundPhoton) // for miniAOD
 {
 
   using namespace std;
@@ -5838,7 +5846,7 @@ bool UFHZZ4LAna::findZ(std::vector<pat::PFParticle> photons, std::vector<double>
   double coneSize = 0.4;
   double muon1Iso = 999, muon2Iso = 999;
   double assocMuonTmp = 999;
-  double photIsoCut = 1.0;
+  //double photIsoCut = 1.0; // for miniAOD
   bool foundZ = false;
   double isoVetoMuons = 0.00;
 
@@ -5850,9 +5858,11 @@ bool UFHZZ4LAna::findZ(std::vector<pat::PFParticle> photons, std::vector<double>
 	  //pt, eta checks
 	  if( photons[i].pt() < 4 ) continue;
 	  if( photons[i].eta() > 2.4 ) continue;
+          /* removed for miniAOD 3 lines below
 	  if( (photons[i].userFloat("fsrPhotonPFIsoChHad03pt02")+photons[i].userFloat("fsrPhotonPFIsoNHad03")
 	       +photons[i].userFloat("fsrPhotonPFIsoPhoton03")
 	       +photons[i].userFloat("fsrPhotonPFIsoChHadPU03pt02"))/photons[i].pt() > photIsoCut) continue;
+          */
 	  //calc both deltaRs
 	  deltaR1 = deltaR(muon1.eta(),muon1.phi(),photons[i].eta(),photons[i].phi());
 	  deltaR2 = deltaR(muon2.eta(),muon2.phi(),photons[i].eta(),photons[i].phi());
@@ -5985,7 +5995,7 @@ bool UFHZZ4LAna::findZ(std::vector<pat::PFParticle> photons, std::vector<double>
 
 
 ////////////Electrons/////////////////
-bool UFHZZ4LAna::findZ(std::vector<pat::PFParticle> photons, std::vector<double> deltaRVec, pat::Electron &electron1, pat::Electron &electron2,int taken1, int &taken2, int &assocElec, math::XYZTLorentzVector &ZVec, math::XYZTLorentzVector &photVec, bool &foundPhoton)
+bool UFHZZ4LAna::findZ(std::vector<pat::PackedCandidate> photons, std::vector<double> deltaRVec, pat::Electron &electron1, pat::Electron &electron2,int taken1, int &taken2, int &assocElec, math::XYZTLorentzVector &ZVec, math::XYZTLorentzVector &photVec, bool &foundPhoton) // for miniAOD
 {
 
   using namespace std;
@@ -6000,7 +6010,7 @@ bool UFHZZ4LAna::findZ(std::vector<pat::PFParticle> photons, std::vector<double>
   double coneSize = 0.4;
   double elec1Iso = 999, elec2Iso = 999;
   double assocElecTmp = 999;
-  double photIsoCut = 1.0;
+  //double photIsoCut = 1.0; //for miniAOD
   bool foundZ = false;
   foundPhoton = false;
   double isoVetoEE = 0.08;
@@ -6016,9 +6026,11 @@ bool UFHZZ4LAna::findZ(std::vector<pat::PFParticle> photons, std::vector<double>
 	  //pt, eta checks
 	  if( photons[i].pt() < 4 ) continue;
 	  if( photons[i].eta() > 2.4 ) continue;
+          /* removed for miniAOD , 3 lines below
 	  if( (photons[i].userFloat("fsrPhotonPFIsoChHad03pt02")+photons[i].userFloat("fsrPhotonPFIsoNHad03")
 	       +photons[i].userFloat("fsrPhotonPFIsoPhoton03")
 	       +photons[i].userFloat("fsrPhotonPFIsoChHadPU03pt02"))/photons[i].pt() > photIsoCut) continue;
+          */
 	  //calc both deltaRs
 	  deltaR1 = deltaR(electron1.eta(),electron1.phi(),photons[i].eta(),photons[i].phi());
 	  deltaR2 = deltaR(electron2.eta(),electron2.phi(),photons[i].eta(),photons[i].phi());

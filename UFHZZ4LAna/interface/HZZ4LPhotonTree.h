@@ -28,6 +28,7 @@
  #include "FWCore/Framework/interface/MakerMacros.h"
 
  #include "DataFormats/HepMCCandidate/interface/GenParticle.h"
+ #include "DataFormats/PatCandidates/interface/PackedCandidate.h" // for miniAOD
 
  #include "FWCore/ParameterSet/interface/ParameterSet.h"
  #include "FWCore/ServiceRegistry/interface/Service.h"
@@ -76,13 +77,13 @@ class HZZ4LPhotonTree
   ~HZZ4LPhotonTree();
 
 
-  void fillPhotonDumpTree(std::vector<pat::PFParticle> photons,std::vector<double> deltaRVec, const edm::Event& iEvent, const reco::Vertex *&vertex);
+  void fillPhotonDumpTree(std::vector<pat::PackedCandidate> photons,std::vector<double> deltaRVec, const edm::Event& iEvent, const reco::Vertex *&vertex); // miniAOD
 
  private:
   
   double Event, Run, LumiSect;
   double pT, eta, phi, pX, pY, pZ;
-  double relIso, isoNH, isoCH, isoCHPU, isoPhot;
+  //double relIso, isoNH, isoCH, isoCHPU, isoPhot; // miniAOD
   double energy, deltaR;
 
   HZZ4LHelper myHelper;
@@ -111,11 +112,11 @@ HZZ4LPhotonTree::HZZ4LPhotonTree(TString treeName,edm::Service<TFileService> fs)
   photonTree->Branch("pX",&pX,"pX/D");
   photonTree->Branch("pY",&pY,"pY/D");
   photonTree->Branch("pZ",&pZ,"pZ/D");
-  photonTree->Branch("relIso",&relIso,"relIso/D");
-  photonTree->Branch("isoNH",&isoNH,"isoNH/D");
-  photonTree->Branch("isoCH",&isoCH,"isoCH/D");
-  photonTree->Branch("isoCHPU",&isoCHPU,"isoCHPU/D");
-  photonTree->Branch("isoPhot",&isoPhot,"isoPhot/D");
+  //photonTree->Branch("relIso",&relIso,"relIso/D"); // miniAOD
+  //photonTree->Branch("isoNH",&isoNH,"isoNH/D"); // miniAOD
+  //photonTree->Branch("isoCH",&isoCH,"isoCH/D"); // miniAOD
+  //photonTree->Branch("isoCHPU",&isoCHPU,"isoCHPU/D"); // miniAOD
+  //photonTree->Branch("isoPhot",&isoPhot,"isoPhot/D"); // miniAOD
   photonTree->Branch("energy",&energy,"energy/D");
   photonTree->Branch("deltaR",&deltaR,"deltaR/D");
 
@@ -129,7 +130,7 @@ HZZ4LPhotonTree::~HZZ4LPhotonTree()
 }
 
 
-void HZZ4LPhotonTree::fillPhotonDumpTree(std::vector<pat::PFParticle> photons,std::vector<double> deltaRVec,
+void HZZ4LPhotonTree::fillPhotonDumpTree(std::vector<pat::PackedCandidate> photons,std::vector<double> deltaRVec, // miniAOD
 					 const edm::Event& iEvent, const reco::Vertex *&vertex)
 {
 
@@ -149,15 +150,15 @@ void HZZ4LPhotonTree::fillPhotonDumpTree(std::vector<pat::PFParticle> photons,st
       pY = photons[i].py();
       pZ = photons[i].pz();
       energy = photons[i].energy();
-      isoNH = photons[i].userFloat("fsrPhotonPFIsoNHad03");
-      isoCH = photons[i].userFloat("fsrPhotonPFIsoChHad03pt02") ;
-      isoCHPU = photons[i].userFloat("fsrPhotonPFIsoChHadPU03pt02") ;
-      isoPhot = photons[i].userFloat("fsrPhotonPFIsoPhoton03") ;
+      //isoNH = photons[i].userFloat("fsrPhotonPFIsoNHad03"); // miniAOD
+      //isoCH = photons[i].userFloat("fsrPhotonPFIsoChHad03pt02") ; // miniAOD
+      //isoCHPU = photons[i].userFloat("fsrPhotonPFIsoChHadPU03pt02") ; // miniAOD
+      //isoPhot = photons[i].userFloat("fsrPhotonPFIsoPhoton03") ; // miniAOD
       deltaR = deltaRVec[i];
-      relIso = (photons[i].userFloat("fsrPhotonPFIsoChHad03pt02") +
-		photons[i].userFloat("fsrPhotonPFIsoNHad03") +
-		photons[i].userFloat("fsrPhotonPFIsoPhoton03") +
-		photons[i].userFloat("fsrPhotonPFIsoChHadPU03pt02"))/photons[i].pt();
+      //relIso = (photons[i].userFloat("fsrPhotonPFIsoChHad03pt02") + // miniAOD
+      //          photons[i].userFloat("fsrPhotonPFIsoNHad03") + // miniAOD
+      //          photons[i].userFloat("fsrPhotonPFIsoPhoton03") + // miniAOD
+      //          photons[i].userFloat("fsrPhotonPFIsoChHadPU03pt02"))/photons[i].pt();  // miniAOD
 
       photonTree->Fill();
 

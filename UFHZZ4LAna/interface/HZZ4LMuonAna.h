@@ -144,7 +144,7 @@ void HZZ4LMuonAna::plotMuonHistograms(std::map<std::string,TH1F*> &histContainer
 std::vector<pat::Muon> HZZ4LMuonAna::testMuons(edm::Handle<edm::View<pat::Muon> > Muons, double muPtCut)
 {
 
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
   

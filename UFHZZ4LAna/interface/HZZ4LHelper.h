@@ -284,7 +284,7 @@ HZZ4LHelper::~HZZ4LHelper()
 
 std::vector<pat::Muon> HZZ4LHelper::allMuons(edm::Handle<edm::View<pat::Muon> > Muons)
 {
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
   
@@ -307,7 +307,7 @@ std::vector<pat::Muon> HZZ4LHelper::allMuons(edm::Handle<edm::View<pat::Muon> > 
 //Returns vector of good electrons for analysis
 std::vector<pat::Electron> HZZ4LHelper::allElectrons(edm::Handle<edm::View<pat::Electron> > Electrons)
 {
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
   
@@ -329,7 +329,7 @@ std::vector<pat::Electron> HZZ4LHelper::allElectrons(edm::Handle<edm::View<pat::
 //Returns vector of good muons for analysis
 std::vector<pat::Muon> HZZ4LHelper::goodBaselineMuons(edm::Handle<edm::View<pat::Muon> > Muons, double muPtCut)
 {
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
   
@@ -364,7 +364,7 @@ std::vector<pat::Muon> HZZ4LHelper::goodBaselineMuons(edm::Handle<edm::View<pat:
 
 std::vector<pat::Electron> HZZ4LHelper::goodBaselineElectrons(edm::Handle<edm::View<pat::Electron> > Electrons, double elecPtCut, std::string elecID)
 {
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
   
@@ -372,7 +372,7 @@ std::vector<pat::Electron> HZZ4LHelper::goodBaselineElectrons(edm::Handle<edm::V
   
   /****** E L E C T R O N  C U T S ******/
   double elecEtaCut = 2.5;
-  int missingHitsCut = 2;
+  //int missingHitsCut = 2; // for miniAOD
   /**************************************/
   
   for(edm::View<pat::Electron>::const_iterator elec=Electrons->begin(); elec!=Electrons->end(); ++elec)
@@ -383,14 +383,14 @@ std::vector<pat::Electron> HZZ4LHelper::goodBaselineElectrons(edm::Handle<edm::V
 	    {
 	      if( elec->pt() > elecPtCut && abs(elec->eta()) < elecEtaCut)
 		{
-		  if( elec->gsfTrack()->trackerExpectedHitsInner().numberOfLostHits() < missingHitsCut )
-		    {
+		  //if( elec->gsfTrack()->trackerExpectedHitsInner().numberOfLostHits() < missingHitsCut ) // for miniAOD
+		    //{
 		    if (elec->electronID(elecID) == 1 || elec->electronID(elecID) == 3 || elec->electronID(elecID) == 5 || elec->electronID(elecID) == 7 ||
 		       elec->electronID(elecID) == 9 || elec->electronID(elecID) == 11 || elec->electronID(elecID) == 13 || elec->electronID(elecID) == 15)
 		      {
 			bestElectrons.push_back(*elec);
 		      }
-		    }
+		    //}
 		}
 	    }
 	}
@@ -406,7 +406,7 @@ std::vector<pat::Electron> HZZ4LHelper::goodBaselineElectrons(edm::Handle<edm::V
 //Returns vector of good muons for analysis
 std::vector<pat::Muon> HZZ4LHelper::goodMuons(edm::Handle<edm::View<pat::Muon> > Muons, double muPtCut)
 {
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
   
@@ -441,7 +441,7 @@ std::vector<pat::Muon> HZZ4LHelper::goodMuons(edm::Handle<edm::View<pat::Muon> >
 
 std::vector<pat::Electron> HZZ4LHelper::goodElectrons(edm::Handle<edm::View<pat::Electron> > Electrons, double elecPtCut, std::string elecID)
 {
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
   
@@ -449,22 +449,22 @@ std::vector<pat::Electron> HZZ4LHelper::goodElectrons(edm::Handle<edm::View<pat:
   
   /****** E L E C T R O N  C U T S ******/
   double elecEtaCut = 2.5;
-  int missingHitsCuts = 2;
+  // int missingHitsCuts = 2; // for miniAOD
   /**************************************/
   
   for(edm::View<pat::Electron>::const_iterator elec=Electrons->begin(); elec!=Electrons->end(); ++elec)
     {
       if( elec->pt() > elecPtCut && abs(elec->eta()) < elecEtaCut)
 	{
-	  if( elec->gsfTrack()->trackerExpectedHitsInner().numberOfLostHits() < missingHitsCuts )
-	    {
+	  //if( elec->gsfTrack()->trackerExpectedHitsInner().numberOfLostHits() < missingHitsCuts ) // for miniAOD
+	    //{
 	      //if (elec->electronID(elecID) == 1 || elec->electronID(elecID) == 3 || elec->electronID(elecID) == 5 || elec->electronID(elecID) == 7 ||
 	      //  elec->electronID(elecID) == 9 || elec->electronID(elecID) == 11 || elec->electronID(elecID) == 13 || elec->electronID(elecID) == 15)
 	      if(elec->electronID(elecID) == 5 || elec->electronID(elecID) == 7 || elec->electronID(elecID) == 13 || elec->electronID(elecID) == 15)
 		{
 		  bestElectrons.push_back(*elec);
 		}
-	    }
+	    //}
 	}
     }
   
@@ -480,7 +480,7 @@ std::vector<pat::Electron> HZZ4LHelper::goodElectrons(edm::Handle<edm::View<pat:
 //Returns vector of good muons for analysis
 std::vector<pat::Muon> HZZ4LHelper::goodLooseMuons(edm::Handle<edm::View<pat::Muon> > Muons, double muPtCut)
 {
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
   
@@ -509,7 +509,7 @@ std::vector<pat::Muon> HZZ4LHelper::goodLooseMuons(edm::Handle<edm::View<pat::Mu
 
 std::vector<pat::Electron> HZZ4LHelper::goodLooseElectrons(edm::Handle<edm::View<pat::Electron> > Electrons, double elecPtCut, std::string elecID)
 {
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
   
@@ -517,7 +517,7 @@ std::vector<pat::Electron> HZZ4LHelper::goodLooseElectrons(edm::Handle<edm::View
   
   /****** E L E C T R O N  C U T S ******/
   double elecEtaCut = 2.5;
-  int missingHitsCuts = 2;
+  // int missingHitsCuts = 2; // for miniAOD
   /**************************************/
   
   for(edm::View<pat::Electron>::const_iterator elec=Electrons->begin(); elec!=Electrons->end(); ++elec)
@@ -526,14 +526,14 @@ std::vector<pat::Electron> HZZ4LHelper::goodLooseElectrons(edm::Handle<edm::View
 	{
 	  if( elec->pt() > elecPtCut && abs(elec->eta()) < elecEtaCut)
 	    {
-	      if( elec->gsfTrack()->trackerExpectedHitsInner().numberOfLostHits() < missingHitsCuts )
-		{
+	      //if( elec->gsfTrack()->trackerExpectedHitsInner().numberOfLostHits() < missingHitsCuts ) // for miniAOD
+		//{
 		  if (elec->electronID(elecID) == 1 || elec->electronID(elecID) == 3 || elec->electronID(elecID) == 5 || elec->electronID(elecID) == 7 ||
 		      elec->electronID(elecID) == 9 || elec->electronID(elecID) == 11 || elec->electronID(elecID) == 13 || elec->electronID(elecID) == 15)
 		    {
 		      bestElectrons.push_back(*elec);
 		    }
-		}
+		//}
 	    }
 	}
     }
@@ -548,7 +548,7 @@ std::vector<pat::Electron> HZZ4LHelper::goodLooseElectrons(edm::Handle<edm::View
 //Returns vector of good muons for analysis
 std::vector<pat::Muon> HZZ4LHelper::goodTightMuons(edm::Handle<edm::View<pat::Muon> > Muons, double muPtCut)
 {
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
   
@@ -586,7 +586,7 @@ std::vector<pat::Muon> HZZ4LHelper::goodTightMuons(edm::Handle<edm::View<pat::Mu
 
 std::vector<pat::Electron> HZZ4LHelper::goodTightElectrons(edm::Handle<edm::View<pat::Electron> > Electrons, double elecPtCut, std::string elecID)
 {
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
   
@@ -594,7 +594,7 @@ std::vector<pat::Electron> HZZ4LHelper::goodTightElectrons(edm::Handle<edm::View
   
   /****** E L E C T R O N  C U T S ******/
   double elecEtaCut = 2.5;
-  int missingHitsCuts = 2;
+  // int missingHitsCuts = 2; // for miniAOD
   /**************************************/
   
   for(edm::View<pat::Electron>::const_iterator elec=Electrons->begin(); elec!=Electrons->end(); ++elec)
@@ -603,13 +603,13 @@ std::vector<pat::Electron> HZZ4LHelper::goodTightElectrons(edm::Handle<edm::View
 	{
 	  if( elec->pt() > elecPtCut && abs(elec->eta()) < elecEtaCut)
 	    {
-	      if( elec->gsfTrack()->trackerExpectedHitsInner().numberOfLostHits() < missingHitsCuts )
-		{
+	      //if( elec->gsfTrack()->trackerExpectedHitsInner().numberOfLostHits() < missingHitsCuts ) // for miniAOD
+		//{
 		  if(elec->electronID(elecID) == 5 || elec->electronID(elecID) == 7 || elec->electronID(elecID) == 13 || elec->electronID(elecID) == 15)
 		    {
 		      bestElectrons.push_back(*elec);
 		    }
-		}
+		//}
 	    }
 	}
     }
@@ -627,7 +627,7 @@ std::vector<pat::Electron> HZZ4LHelper::goodTightElectrons(edm::Handle<edm::View
 //Returns vector of good muons for analysis
 std::vector<pat::Muon> HZZ4LHelper::goodMuonsAllCuts(edm::Handle<edm::View<pat::Muon> > Muons, double muPtCut)
 {
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
   
@@ -657,7 +657,7 @@ std::vector<pat::Muon> HZZ4LHelper::goodMuonsAllCuts(edm::Handle<edm::View<pat::
 
 std::vector<pat::Electron> HZZ4LHelper::goodElectronsAllCuts(edm::Handle<edm::View<pat::Electron> > Electrons, double elecPtCut, std::string elecID)
 {
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
   
@@ -665,7 +665,7 @@ std::vector<pat::Electron> HZZ4LHelper::goodElectronsAllCuts(edm::Handle<edm::Vi
   
   /****** E L E C T R O N  C U T S ******/
   double elecEtaCut = 2.5;
-  int missingHitsCuts = 2;
+  //int missingHitsCuts = 2; // for miniAOD
   double sipCut = 4.0;
   /**************************************/
   
@@ -675,14 +675,14 @@ std::vector<pat::Electron> HZZ4LHelper::goodElectronsAllCuts(edm::Handle<edm::Vi
 	{
 	  if( elec->pt() > elecPtCut && abs(elec->eta()) < elecEtaCut)
 	    {
-	      if( elec->gsfTrack()->trackerExpectedHitsInner().numberOfLostHits() < missingHitsCuts )
-		{
+	      //if( elec->gsfTrack()->trackerExpectedHitsInner().numberOfLostHits() < missingHitsCuts ) // for miniAOD
+		//{
 		  if (elec->electronID(elecID) == 1 || elec->electronID(elecID) == 3 || elec->electronID(elecID) == 5 || elec->electronID(elecID) == 7 ||
 		      elec->electronID(elecID) == 9 || elec->electronID(elecID) == 11 || elec->electronID(elecID) == 13 || elec->electronID(elecID) == 15)
 		    {
 		      bestElectrons.push_back(*elec);
 		    }
-		}
+		//}
 	    }
 	}
     }
@@ -699,7 +699,7 @@ std::vector<pat::Electron> HZZ4LHelper::goodElectronsAllCuts(edm::Handle<edm::Vi
 //Returns vector of good muons for analysis
 std::vector<pat::Muon> HZZ4LHelper::goodMuons2012(edm::Handle<edm::View<pat::Muon> > Muons, double muPtCut, double muIsoCut, double Rho, std::string isoType, std::string PUCorrType, const reco::Vertex *&vertex)
 {
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
   
@@ -759,7 +759,7 @@ std::vector<pat::Muon> HZZ4LHelper::goodMuons2012(edm::Handle<edm::View<pat::Muo
 
 std::vector<pat::Electron> HZZ4LHelper::goodElectrons2012(edm::Handle<edm::View<pat::Electron> > Electrons, double elecPtCut, std::string elecID, double elecIsoCut,double Rho, std::string isoType, std::string PUCorrType, const reco::Vertex *&vertex)
 {
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
   
@@ -841,8 +841,9 @@ std::vector<pat::Electron> HZZ4LHelper::goodElectrons2012(edm::Handle<edm::View<
 		      if(fabs(elec->superCluster()->eta()) >= 1.479 && fabs(elec->superCluster()->eta()) < elecEtaCut ){ cutVal = bdtCutHiPt_14_25;}
 		    }
 		  if(cutVal == 1000){ cout << "Problem in HZZ4LHelper::goodElectrons2012!" << endl; continue;}
-		  int misHits = elec->gsfTrack()->trackerExpectedHitsInner().numberOfLostHits();
-		  if(elec->electronID(elecID) > cutVal && misHits < missingHitsCuts)
+		  //int misHits = elec->gsfTrack()->trackerExpectedHitsInner().numberOfLostHits(); // for miniAOD
+		  int misHits = 0; // for miniAOD
+                  if(elec->electronID(elecID) > cutVal && misHits < missingHitsCuts) 
 		    {
 		      bestElectrons.push_back(*elec);
 		    }
@@ -861,7 +862,7 @@ std::vector<pat::Electron> HZZ4LHelper::goodElectrons2012(edm::Handle<edm::View<
 
 std::vector<pat::Muon> HZZ4LHelper::goodMuons2012_noIso(edm::Handle<edm::View<pat::Muon> > Muons, double muPtCut, const reco::Vertex *&vertex)
 {
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
   
@@ -899,7 +900,7 @@ std::vector<pat::Muon> HZZ4LHelper::goodMuons2012_noIso(edm::Handle<edm::View<pa
 
 std::vector<pat::Electron> HZZ4LHelper::goodElectrons2012_noIso(edm::Handle<edm::View<pat::Electron> > Electrons, double elecPtCut, std::string elecID, const reco::Vertex *&vertex)
 {
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
   
@@ -974,7 +975,8 @@ std::vector<pat::Electron> HZZ4LHelper::goodElectrons2012_noIso(edm::Handle<edm:
 		  if(fabs(elec->superCluster()->eta()) >= 1.479 && fabs(elec->superCluster()->eta()) < elecEtaCut ){ cutVal = bdtCutHiPt_14_25;}
 		}
 	      if(cutVal == 1000){ cout << "ele->superCluster()->eta() > 2.5" << endl; continue;}
-	      int misHits = elec->gsfTrack()->trackerExpectedHitsInner().numberOfLostHits();
+              //int misHits = elec->gsfTrack()->trackerExpectedHitsInner().numberOfLostHits(); //for miniAOD
+              int misHits = 0;
 	      if(elec->electronID(elecID) > cutVal && misHits < missingHitsCuts)
 		{
 		  bestElectrons.push_back(*elec);
@@ -994,7 +996,7 @@ std::vector<pat::Electron> HZZ4LHelper::goodElectrons2012_noIso(edm::Handle<edm:
 
 std::vector<pat::Muon> HZZ4LHelper::goodMuons2012_noIso(std::vector<pat::Muon> Muons, double muPtCut, const reco::Vertex *&vertex)
 {
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
   
@@ -1035,7 +1037,7 @@ std::vector<pat::Muon> HZZ4LHelper::goodMuons2012_noIso(std::vector<pat::Muon> M
 
 std::vector<pat::Electron> HZZ4LHelper::goodElectrons2012_noIso(std::vector<pat::Electron> Electrons, double elecPtCut, std::string elecID, const reco::Vertex *&vertex,const edm::Event& iEvent)
 {
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
   
@@ -1112,7 +1114,8 @@ std::vector<pat::Electron> HZZ4LHelper::goodElectrons2012_noIso(std::vector<pat:
 		}
 	      //if(cutVal == 1000){ cout << "Electrons[i].superCluster()->eta() > 2.5, event " << iEvent.id().event() 
 	      //<< "pt " << Electrons[i].pt() << " eta " << Electrons[i].eta() << " scEta " << Electrons[i].superCluster()->eta() << endl; continue;}
-	      int misHits = Electrons[i].gsfTrack()->trackerExpectedHitsInner().numberOfLostHits();
+	      //int misHits = Electrons[i].gsfTrack()->trackerExpectedHitsInner().numberOfLostHits(); // for miniADO
+              int misHits = 0; // for miniAOD
 	      if(Electrons[i].electronID(elecID) > cutVal && misHits < missingHitsCuts)
 		{
 		  bestElectrons.push_back(Electrons[i]);
@@ -1137,7 +1140,7 @@ std::vector<pat::Electron> HZZ4LHelper::goodElectrons2012_noIso(std::vector<pat:
 //Returns vector of good muons for analysis
 std::vector<pat::Muon> HZZ4LHelper::goodLooseMuons2012(edm::Handle<edm::View<pat::Muon> > Muons, double muPtCut)
 {
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
   
@@ -1163,7 +1166,7 @@ std::vector<pat::Muon> HZZ4LHelper::goodLooseMuons2012(edm::Handle<edm::View<pat
 
 std::vector<pat::Electron> HZZ4LHelper::goodLooseElectrons2012(edm::Handle<edm::View<pat::Electron> > Electrons, double elPtCut)
 {
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
   
@@ -1190,7 +1193,7 @@ std::vector<pat::Electron> HZZ4LHelper::goodLooseElectrons2012(edm::Handle<edm::
 //Returns vector of good muons for analysis
 std::vector<pat::Muon> HZZ4LHelper::goodLooseMuons(std::vector<pat::Muon> Muons, double muPtCut)
 {
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
   
@@ -1219,7 +1222,7 @@ std::vector<pat::Muon> HZZ4LHelper::goodLooseMuons(std::vector<pat::Muon> Muons,
 
 std::vector<pat::Electron> HZZ4LHelper::goodLooseElectrons(std::vector<pat::Electron> Electrons, double elecPtCut, std::string elecID)
 {
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
   
@@ -1227,7 +1230,7 @@ std::vector<pat::Electron> HZZ4LHelper::goodLooseElectrons(std::vector<pat::Elec
   
   /****** E L E C T R O N  C U T S ******/
   double elecEtaCut = 2.5;
-  int missingHitsCuts = 2;
+  //int missingHitsCuts = 2; // for miniAOD
   /**************************************/
   
   for(unsigned int i = 0; i < Electrons.size(); i++ )
@@ -1236,14 +1239,14 @@ std::vector<pat::Electron> HZZ4LHelper::goodLooseElectrons(std::vector<pat::Elec
 	{
 	  if( Electrons[i].pt() > elecPtCut && abs(Electrons[i].eta()) < elecEtaCut)
 	    {
-	      if( Electrons[i].gsfTrack()->trackerExpectedHitsInner().numberOfLostHits() < missingHitsCuts )
-		{
+	      //if( Electrons[i].gsfTrack()->trackerExpectedHitsInner().numberOfLostHits() < missingHitsCuts ) // for miniAOD
+		//{
 		  if (Electrons[i].electronID(elecID) == 1 || Electrons[i].electronID(elecID) == 3 || Electrons[i].electronID(elecID) == 5 || Electrons[i].electronID(elecID) == 7 ||
 		      Electrons[i].electronID(elecID) == 9 || Electrons[i].electronID(elecID) == 11 || Electrons[i].electronID(elecID) == 13 || Electrons[i].electronID(elecID) == 15)
 		    {
 		      bestElectrons.push_back(Electrons[i]);
 		    }
-		}
+		//}
 	    }
 	}
     }
@@ -1258,7 +1261,7 @@ std::vector<pat::Electron> HZZ4LHelper::goodLooseElectrons(std::vector<pat::Elec
 //Returns vector of good muons for analysis
 std::vector<pat::Muon> HZZ4LHelper::goodTightMuons(std::vector<pat::Muon> Muons, double muPtCut)
 {
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
   
@@ -1296,7 +1299,7 @@ std::vector<pat::Muon> HZZ4LHelper::goodTightMuons(std::vector<pat::Muon> Muons,
 
 std::vector<pat::Electron> HZZ4LHelper::goodTightElectrons(std::vector<pat::Electron> Electrons, double elecPtCut, std::string elecID)
 {
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
   
@@ -1304,7 +1307,7 @@ std::vector<pat::Electron> HZZ4LHelper::goodTightElectrons(std::vector<pat::Elec
   
   /****** E L E C T R O N  C U T S ******/
   double elecEtaCut = 2.5;
-  int missingHitsCuts = 2;
+  //int missingHitsCuts = 2; // for miniAOD
   /**************************************/
   
   for(unsigned int i = 0; i < Electrons.size(); i++ )
@@ -1313,13 +1316,13 @@ std::vector<pat::Electron> HZZ4LHelper::goodTightElectrons(std::vector<pat::Elec
 	{
 	  if( Electrons[i].pt() > elecPtCut && abs(Electrons[i].eta()) < elecEtaCut)
 	    {
-	      if( Electrons[i].gsfTrack()->trackerExpectedHitsInner().numberOfLostHits() < missingHitsCuts )
-		{
+	      //if( Electrons[i].gsfTrack()->trackerExpectedHitsInner().numberOfLostHits() < missingHitsCuts )
+		//{
 		  if(Electrons[i].electronID(elecID) == 5 || Electrons[i].electronID(elecID) == 7 || Electrons[i].electronID(elecID) == 13 || Electrons[i].electronID(elecID) == 15)
 		    {
 		      bestElectrons.push_back(Electrons[i]);
 		    }
-		}
+		//}
 	    }
 	}
     }
@@ -1337,7 +1340,7 @@ void
 HZZ4LHelper::cleanOverlappingLeptons(std::vector<pat::Muon> &Muons, std::vector<pat::Electron> &Electrons,const reco::Vertex *&vertex)
 {
   
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
   
@@ -1347,8 +1350,8 @@ HZZ4LHelper::cleanOverlappingLeptons(std::vector<pat::Muon> &Muons, std::vector<
 
   for( unsigned int i = 0; i < Muons.size(); i++ )
     {
-      if( (Muons[i].isPFMuon() == 1 || Muons[i].isGlobalMuon() == 1) && fabs(Muons[i].innerTrack()->dxy(vertex->position())) < dxyCut 
-	  && fabs(Muons[i].innerTrack()->dz(vertex->position())) < dzCut && Muons[i].pt() > 5)
+      if( (Muons[i].isPFMuon() == 1 || Muons[i].isGlobalMuon() == 1) && fabs(Muons[i].muonBestTrack()->dxy(vertex->position())) < dxyCut  // for miniAOD
+	  && fabs(Muons[i].muonBestTrack()->dz(vertex->position())) < dzCut && Muons[i].pt() > 5)
 	{
 	  for( unsigned int j = 0; j < Electrons.size(); j++ )
 	    {
@@ -1369,7 +1372,7 @@ void
 HZZ4LHelper::m2lCutAt4GeV(std::vector<pat::Muon> &Muons, std::vector<pat::Electron> &Electrons)
 {
 
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
 
@@ -1432,7 +1435,7 @@ void
 HZZ4LHelper::m2lCutAt4GeV(std::vector<pat::Muon> inputMuons, std::vector<pat::Electron> inputElectrons, std::vector<pat::Muon> &outputMuons, std::vector<pat::Electron> &outputElectrons)
 {
 
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
 
@@ -1522,7 +1525,7 @@ bool
 HZZ4LHelper::passedM2lCut(std::vector<pat::Muon> Muons, std::vector<pat::Electron> Electrons, double lowM2lCut, double highM2lCut)
 {
 
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
 
@@ -1560,7 +1563,7 @@ bool
 HZZ4LHelper::passedM2lCut_OS(std::vector<pat::Muon> Muons, std::vector<pat::Electron> Electrons, double lowM2lCut, double highM2lCut)
 {
 
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
 
@@ -1623,7 +1626,7 @@ bool
 HZZ4LHelper::passedM2lAndPtCut(std::vector<pat::Muon> Muons, std::vector<pat::Electron> Electrons, double lowM2lCut, double highM2lCut)
 {
 
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
 
@@ -1678,7 +1681,7 @@ double
 HZZ4LHelper::minMass2l(std::vector<pat::Muon> Muons, std::vector<pat::Electron> Electrons, bool &sameFlavor, bool &sameSign )
 {
 
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
 
@@ -1752,7 +1755,7 @@ double
 HZZ4LHelper::maxMass2l(std::vector<pat::Muon> Muons, std::vector<pat::Electron> Electrons )
 {
 
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
 
@@ -1814,7 +1817,7 @@ double
 HZZ4LHelper::minMass3l(std::vector<pat::Muon> Muons, std::vector<pat::Electron> Electrons )
 {
 
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
 
@@ -1951,7 +1954,7 @@ double
 HZZ4LHelper::getSumOf2LeastIso(std::vector<pat::Muon> Muons, std::vector<pat::Electron> Electrons, double muonRhoCorr, double elecRhoCorr)
 {
 
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
 
@@ -2029,7 +2032,7 @@ double
 HZZ4LHelper::getLeastIso1(std::vector<pat::Muon> Muons, std::vector<pat::Electron> Electrons, double muonRhoCorr, double elecRhoCorr)
 {
 
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
 
@@ -2076,7 +2079,7 @@ double
 HZZ4LHelper::getLeastIso1(std::vector<pat::Muon> Muons, std::vector<pat::Electron> Electrons, double muonRhoCorr, double elecRhoCorr, double &pT)
 {
 
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
 
@@ -2110,7 +2113,7 @@ double
 HZZ4LHelper::getLeastIso2(std::vector<pat::Muon> Muons, std::vector<pat::Electron> Electrons, double muonRhoCorr, double elecRhoCorr)
 {
 
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
   
@@ -2156,7 +2159,7 @@ int
 HZZ4LHelper::passedIsolation(std::vector<pat::Muon> Muons, std::vector<pat::Electron> Electrons, double chosenIsoCut, double muonRhoCorr, double elecRhoCorr )
 {
 
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
 
@@ -2253,7 +2256,7 @@ int
 HZZ4LHelper::passedIsolation(std::vector<pat::Muon> Muons, std::vector<pat::Electron> Electrons, double chosenIsoCut, TString isoType, TString muPUCorr, TString elPUCorr, double Rho)
 {
 
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
 
@@ -2437,7 +2440,7 @@ HZZ4LHelper::passedIsolation(std::vector<pat::Muon> Muons, std::vector<pat::Elec
 int 
 HZZ4LHelper::passedIsolation(std::vector<pat::Muon> Muons, std::vector<pat::Electron> Electrons, double chosenIsoCut, TString isoType, TString muPUCorr, TString elPUCorr, double muonRho,double elecRho,double &leastIso1, double &leastIso2 )
 {
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
 
@@ -2647,7 +2650,7 @@ int
 HZZ4LHelper::passedEarlyIsolation(std::vector<pat::Muon> Muons, std::vector<pat::Electron> Electrons, double muonRhoCorr, double elecRhoCorr, double earlyIsoCut)
 {
 
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
 
@@ -2676,7 +2679,7 @@ int
 HZZ4LHelper::passedInvertedIsolation(std::vector<pat::Muon> Muons, std::vector<pat::Electron> Electrons, double muonRhoCorr, double elecRhoCorr, double chosenIsoCut)
 {
 
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
 
@@ -2773,7 +2776,7 @@ int
 HZZ4LHelper::passedInvertedIsolation(std::vector<pat::Muon> Muons, std::vector<pat::Electron> Electrons, double chosenIsoCut,TString isoType, TString muPUCorr, TString elPUCorr, double Rho)
 {
 
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
 
@@ -3306,7 +3309,7 @@ HZZ4LHelper::passedPtandEarlyIso(std::vector<pat::Muon> Muons, std::vector<pat::
 
 double HZZ4LHelper::getSIP3D(pat::Muon muon)
 {
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
 
@@ -3321,7 +3324,7 @@ double HZZ4LHelper::getSIP3D(pat::Muon muon)
 
 double HZZ4LHelper::getSIP3D(pat::Electron electron)
 {
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
 
@@ -3340,7 +3343,7 @@ double HZZ4LHelper::getSIP3D(pat::Electron electron)
 TString HZZ4LHelper::getStringFromDouble(double number)
 {
 
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
 
@@ -3356,7 +3359,7 @@ TString HZZ4LHelper::getStringFromDouble(double number)
 double HZZ4LHelper::getCorrWeightForSChan(double m4l)
 {
 
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
 
@@ -3379,7 +3382,7 @@ double HZZ4LHelper::getCorrWeightForSChan(double m4l)
 bool HZZ4LHelper::isPFMuon(pat::Muon muon,edm::Handle<edm::View<reco::PFCandidate> > pf)
 {
 
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
 
@@ -3387,7 +3390,7 @@ bool HZZ4LHelper::isPFMuon(pat::Muon muon,edm::Handle<edm::View<reco::PFCandidat
   bool ispf = false;
   bool matchByReference = true;
   
-    View<reco::PFCandidate>::const_iterator pfit, pfbegin = pf->begin(), pfend = pf->end();
+    edm::View<reco::PFCandidate>::const_iterator pfit, pfbegin = pf->begin(), pfend = pf->end();
     /// Now loop
     //for (size_t i = 0, n = muons->size(); i < n; ++i) {
       // read the edm reference to the muon
@@ -3433,7 +3436,7 @@ bool HZZ4LHelper::isPFMuon(pat::Muon muon,edm::Handle<edm::View<reco::PFCandidat
 
 double HZZ4LHelper::pfIso(pat::Muon muon, double Rho)
 {
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
 
@@ -3448,7 +3451,7 @@ double HZZ4LHelper::pfIso(pat::Muon muon, double Rho)
 
 double HZZ4LHelper::pfIso(pat::Electron elec, double Rho)
 {
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
 
@@ -3460,7 +3463,7 @@ double HZZ4LHelper::pfIso(pat::Electron elec, double Rho)
 
 double HZZ4LHelper::pfIsoFSR(pat::Muon muon, double Rho, double photPt)
 {
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
 
@@ -3474,7 +3477,7 @@ double HZZ4LHelper::pfIsoFSR(pat::Muon muon, double Rho, double photPt)
 
 double HZZ4LHelper::pfIsoFSR(pat::Electron elec, double Rho, double photPt)
 {
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
 
@@ -4042,7 +4045,7 @@ void HZZ4LHelper::getElecEffAreaTarget(ElecEffectiveAreaTarget target){target = 
 
 std::vector< pat::Muon > HZZ4LHelper::goodMuons2012_Iso(edm::Handle<edm::View<pat::Muon> > Muons, double muPtCut, double rho, double isocut, const reco::Vertex *&vertex)
 {
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
   
@@ -4061,9 +4064,11 @@ std::vector< pat::Muon > HZZ4LHelper::goodMuons2012_Iso(edm::Handle<edm::View<pa
 	{
 	  if( abs(getSIP3D(*mu)) < sipCut )
 	    {
-	      if( fabs(mu->innerTrack()->dxy(vertex->position())) < dxyCut )
+	      //if( fabs(mu->innerTrack()->dxy(vertex->position())) < dxyCut ) // for miniAOD
+	      if( fabs(mu->muonBestTrack()->dxy(vertex->position())) < dxyCut ) // for miniAOD
 		{ 
-		  if( fabs(mu->innerTrack()->dz(vertex->position())) < dzCut )
+		  //if( fabs(mu->innerTrack()->dz(vertex->position())) < dzCut ) // for miniAOD
+		  if( fabs(mu->muonBestTrack()->dz(vertex->position())) < dzCut ) // for miniAOD
 		    {
                       if(pfIso(*mu,rho) < isocut)
                        {
@@ -4083,7 +4088,7 @@ std::vector< pat::Muon > HZZ4LHelper::goodMuons2012_Iso(edm::Handle<edm::View<pa
 
 std::vector< pat::Electron > HZZ4LHelper::goodElectrons2012_Iso(edm::Handle<edm::View<pat::Electron> > Electrons, double elecPtCut, double rho, double isocut, std::string elecID, const reco::Vertex *&vertex)
 {
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
   
@@ -4147,7 +4152,8 @@ std::vector< pat::Electron > HZZ4LHelper::goodElectrons2012_Iso(edm::Handle<edm:
 		  if(fabs(elec->superCluster()->eta()) >= 1.479 && fabs(elec->superCluster()->eta()) < elecEtaCut ){ cutVal = bdtCutHiPt_14_25;}
 		}
 	      //if(cutVal == 1000){ cout << "ele->superCluster()->eta() > 2.5" << endl; continue;}
-	      int misHits = elec->gsfTrack()->trackerExpectedHitsInner().numberOfLostHits();
+	      //int misHits = elec->gsfTrack()->trackerExpectedHitsInner().numberOfLostHits(); // for miniAOD
+	      int misHits = 0; // for miniAOD
 	      if(elec->electronID(elecID) > cutVal && misHits < missingHitsCuts)
 		{
                   if(pfIso(*elec,rho) < isocut)
@@ -4171,7 +4177,7 @@ std::vector< pat::Electron > HZZ4LHelper::goodElectrons2012_Iso(edm::Handle<edm:
 
 std::vector< pat::Muon > HZZ4LHelper::goodMuons2012_Iso(std::vector< pat::Muon > Muons, double muPtCut, double rho, double isocut, const reco::Vertex *&vertex)
 {
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
 
@@ -4212,7 +4218,7 @@ std::vector< pat::Muon > HZZ4LHelper::goodMuons2012_Iso(std::vector< pat::Muon >
 
 std::vector< pat::Electron > HZZ4LHelper::goodElectrons2012_Iso(std::vector< pat::Electron > Electrons, double elecPtCut, double rho, double isocut, std::string elecID, const reco::Vertex *&vertex)
 {
-  using namespace edm;
+  //using namespace edm;
   using namespace pat;
   using namespace std;
 
@@ -4277,7 +4283,8 @@ std::vector< pat::Electron > HZZ4LHelper::goodElectrons2012_Iso(std::vector< pat
                   if(fabs(elec->superCluster()->eta()) >= 1.479 && fabs(elec->superCluster()->eta()) < elecEtaCut ){ cutVal = bdtCutHiPt_14_25;}
                 }
               //if(cutVal == 1000){ cout << "ele->superCluster()->eta() > 2.5" << endl; continue;}
-              int misHits = elec->gsfTrack()->trackerExpectedHitsInner().numberOfLostHits();
+              //int misHits = elec->gsfTrack()->trackerExpectedHitsInner().numberOfLostHits(); // for miniAOD
+              int misHits = 0; // for miniAOD
               if(elec->electronID(elecID) > cutVal && misHits < missingHitsCuts)
                 {
                   if(pfIso(*elec,rho) < isocut)
