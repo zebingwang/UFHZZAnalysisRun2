@@ -101,7 +101,7 @@
 
 
 //Angles
-#include "UFHZZAnalysis8TeV/UFHZZ4LAna/interface/HZZ4LAngles.h"
+#include "UFHZZAnalysisRun2/UFHZZ4LAna/interface/HZZ4LAngles.h"
 //#include "ZZMatrixElement/MELA/interface/Mela.h" // removed for miniAOD
 //#include "ZZMatrixElement/MELA/interface/PseudoMELA.h"  // removed for miniAOD
 //#include "ZZMatrixElement/MELA/interface/SpinOneEvenMELA.h"  // removed for miniAOD
@@ -114,40 +114,40 @@
 //#include "ZZMatrixElement/MEMCalculators/interface/MEMCalculators.h"  // removed for miniAOD
 
 //Helper
-#include "UFHZZAnalysis8TeV/UFHZZ4LAna/interface/HZZ4LHelper.h"
+#include "UFHZZAnalysisRun2/UFHZZ4LAna/interface/HZZ4LHelper.h"
 //Muons
-#include "UFHZZAnalysis8TeV/UFHZZ4LAna/interface/HZZ4LMuonAna.h"
-#include "UFHZZAnalysis8TeV/UFHZZ4LAna/interface/HZZ4LMuonTree.h"
+#include "UFHZZAnalysisRun2/UFHZZ4LAna/interface/HZZ4LMuonAna.h"
+#include "UFHZZAnalysisRun2/UFHZZ4LAna/interface/HZZ4LMuonTree.h"
 //Electrons
-#include "UFHZZAnalysis8TeV/UFHZZ4LAna/interface/HZZ4LElectronTree.h"
+#include "UFHZZAnalysisRun2/UFHZZ4LAna/interface/HZZ4LElectronTree.h"
 //Photons
-#include "UFHZZAnalysis8TeV/UFHZZ4LAna/interface/HZZ4LPhotonTree.h"
+#include "UFHZZAnalysisRun2/UFHZZ4LAna/interface/HZZ4LPhotonTree.h"
 //Jets
-#include "UFHZZAnalysis8TeV/UFHZZ4LAna/interface/HZZ4LJetTree.h"
+#include "UFHZZAnalysisRun2/UFHZZ4LAna/interface/HZZ4LJetTree.h"
 //Final Leps
-#include "UFHZZAnalysis8TeV/UFHZZ4LAna/interface/HZZ4LFinalLepTree.h"
+#include "UFHZZAnalysisRun2/UFHZZ4LAna/interface/HZZ4LFinalLepTree.h"
 //Sip
-#include "UFHZZAnalysis8TeV/UFHZZ4LAna/interface/HZZ4LSipAna.h"
+#include "UFHZZAnalysisRun2/UFHZZ4LAna/interface/HZZ4LSipAna.h"
 //PU
-#include "UFHZZAnalysis8TeV/UFHZZ4LAna/interface/HZZ4LPileUp.h"
+#include "UFHZZAnalysisRun2/UFHZZ4LAna/interface/HZZ4LPileUp.h"
 #include "PhysicsTools/Utilities/interface/LumiReWeighting.h"
 #include "SimDataFormats/PileupSummaryInfo/interface/PileupSummaryInfo.h"
 //Iso
-#include "UFHZZAnalysis8TeV/UFHZZ4LAna/interface/HZZ4LIsoEff.h"
+#include "UFHZZAnalysisRun2/UFHZZ4LAna/interface/HZZ4LIsoEff.h"
 //Mass Error
-#include "UFHZZAnalysis8TeV/UFHZZ4LAna/interface/HZZ4LMassErr.h"
-#include "UFHZZAnalysis8TeV/UFHZZ4LAna/interface/HZZ4LPerLepResolution.h"
-#include "UFHZZAnalysis8TeV/UFHZZ4LAna/interface/HZZ4LDiLepResolution.h"
-#include "UFHZZAnalysis8TeV/UFHZZ4LAna/interface/HZZ4LResolution.h"
+#include "UFHZZAnalysisRun2/UFHZZ4LAna/interface/HZZ4LMassErr.h"
+#include "UFHZZAnalysisRun2/UFHZZ4LAna/interface/HZZ4LPerLepResolution.h"
+#include "UFHZZAnalysisRun2/UFHZZ4LAna/interface/HZZ4LDiLepResolution.h"
+#include "UFHZZAnalysisRun2/UFHZZ4LAna/interface/HZZ4LResolution.h"
 
 //Signal Efficiency
-#include "UFHZZAnalysis8TeV/UFHZZ4LAna/interface/HZZ4LSigEff.h"
+#include "UFHZZAnalysisRun2/UFHZZ4LAna/interface/HZZ4LSigEff.h"
 //Z->4L
-#include "UFHZZAnalysis8TeV/UFHZZ4LAna/interface/HZZ4LZto4LAna.h"
+#include "UFHZZAnalysisRun2/UFHZZ4LAna/interface/HZZ4LZto4LAna.h"
 //GEN
-#include "UFHZZAnalysis8TeV/UFHZZ4LAna/interface/HZZ4LGENAna.h"
+#include "UFHZZAnalysisRun2/UFHZZ4LAna/interface/HZZ4LGENAna.h"
 //VBF Jets
-#include "UFHZZAnalysis8TeV/UFHZZ4LAna/interface/HZZ4LJets.h"
+#include "UFHZZAnalysisRun2/UFHZZ4LAna/interface/HZZ4LJets.h"
 
 //
 // class declaration
