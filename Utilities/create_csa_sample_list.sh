@@ -19,7 +19,7 @@ do
     do
       for file in `eos ls $eosdir/$sample/MINIAODSIM/$dir1/$dir2`;
       do
-        echo "$prefix$eosdir/$sample/MINIAODSIM/$dir1/$dir2/$file" >> $listfile
+        echo "$prefix$sampledir/$sample/MINIAODSIM/$dir1/$dir2/$file" >> $listfile
       done   
     done
   done
