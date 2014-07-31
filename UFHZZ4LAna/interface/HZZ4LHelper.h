@@ -383,14 +383,18 @@ std::vector<pat::Electron> HZZ4LHelper::goodBaselineElectrons(edm::Handle<edm::V
 	    {
 	      if( elec->pt() > elecPtCut && abs(elec->eta()) < elecEtaCut)
 		{
-		  //if( elec->gsfTrack()->trackerExpectedHitsInner().numberOfLostHits() < missingHitsCut ) // for miniAOD
-		    //{
-		    if (elec->electronID(elecID) == 1 || elec->electronID(elecID) == 3 || elec->electronID(elecID) == 5 || elec->electronID(elecID) == 7 ||
-		       elec->electronID(elecID) == 9 || elec->electronID(elecID) == 11 || elec->electronID(elecID) == 13 || elec->electronID(elecID) == 15)
-		      {
-			bestElectrons.push_back(*elec);
-		      }
-		    //}
+		//if( elec->gsfTrack()->trackerExpectedHitsInner().numberOfLostHits() < missingHitsCut ) // for miniAOD
+                //{
+		  if (elecID=="noEID")
+                  {
+                    bestElectrons.push_back(*elec);
+                  }
+                  else if (elec->electronID(elecID) == 1 || elec->electronID(elecID) == 3 || elec->electronID(elecID) == 5 || elec->electronID(elecID) == 7 ||
+                          elec->electronID(elecID) == 9 || elec->electronID(elecID) == 11 || elec->electronID(elecID) == 13 || elec->electronID(elecID) == 15)
+                  {
+                    bestElectrons.push_back(*elec);
+                  }
+                //}
 		}
 	    }
 	}
@@ -456,15 +460,17 @@ std::vector<pat::Electron> HZZ4LHelper::goodElectrons(edm::Handle<edm::View<pat:
     {
       if( elec->pt() > elecPtCut && abs(elec->eta()) < elecEtaCut)
 	{
-	  //if( elec->gsfTrack()->trackerExpectedHitsInner().numberOfLostHits() < missingHitsCuts ) // for miniAOD
-	    //{
-	      //if (elec->electronID(elecID) == 1 || elec->electronID(elecID) == 3 || elec->electronID(elecID) == 5 || elec->electronID(elecID) == 7 ||
-	      //  elec->electronID(elecID) == 9 || elec->electronID(elecID) == 11 || elec->electronID(elecID) == 13 || elec->electronID(elecID) == 15)
-	      if(elec->electronID(elecID) == 5 || elec->electronID(elecID) == 7 || elec->electronID(elecID) == 13 || elec->electronID(elecID) == 15)
-		{
-		  bestElectrons.push_back(*elec);
-		}
-	    //}
+        //if( elec->gsfTrack()->trackerExpectedHitsInner().numberOfLostHits() < missingHitsCuts ) // for miniAOD
+        //{
+              if (elecID=="noEID")
+              {
+                bestElectrons.push_back(*elec);
+              }
+	      else if(elec->electronID(elecID) == 5 || elec->electronID(elecID) == 7 || elec->electronID(elecID) == 13 || elec->electronID(elecID) == 15)
+              {
+                bestElectrons.push_back(*elec);
+              }
+        //}
 	}
     }
   
@@ -528,12 +534,17 @@ std::vector<pat::Electron> HZZ4LHelper::goodLooseElectrons(edm::Handle<edm::View
 	    {
 	      //if( elec->gsfTrack()->trackerExpectedHitsInner().numberOfLostHits() < missingHitsCuts ) // for miniAOD
 		//{
-		  if (elec->electronID(elecID) == 1 || elec->electronID(elecID) == 3 || elec->electronID(elecID) == 5 || elec->electronID(elecID) == 7 ||
-		      elec->electronID(elecID) == 9 || elec->electronID(elecID) == 11 || elec->electronID(elecID) == 13 || elec->electronID(elecID) == 15)
-		    {
-		      bestElectrons.push_back(*elec);
-		    }
-		//}
+                 if (elecID=="noEID")
+                 {
+                   bestElectrons.push_back(*elec);
+                 }
+                 else
+                 if (elec->electronID(elecID) == 1 || elec->electronID(elecID) == 3 || elec->electronID(elecID) == 5 || elec->electronID(elecID) == 7 || 
+                     elec->electronID(elecID) == 9 || elec->electronID(elecID) == 11 || elec->electronID(elecID) == 13 || elec->electronID(elecID) == 15)
+                 {
+                   bestElectrons.push_back(*elec);
+                 }
+                 //}
 	    }
 	}
     }
@@ -605,11 +616,16 @@ std::vector<pat::Electron> HZZ4LHelper::goodTightElectrons(edm::Handle<edm::View
 	    {
 	      //if( elec->gsfTrack()->trackerExpectedHitsInner().numberOfLostHits() < missingHitsCuts ) // for miniAOD
 		//{
-		  if(elec->electronID(elecID) == 5 || elec->electronID(elecID) == 7 || elec->electronID(elecID) == 13 || elec->electronID(elecID) == 15)
-		    {
-		      bestElectrons.push_back(*elec);
-		    }
-		//}
+              if (elecID=="noEID")
+              {
+                bestElectrons.push_back(*elec);
+              }
+              else
+              if(elec->electronID(elecID) == 5 || elec->electronID(elecID) == 7 || elec->electronID(elecID) == 13 || elec->electronID(elecID) == 15)
+              {
+                bestElectrons.push_back(*elec);
+              }
+            //}
 	    }
 	}
     }
@@ -675,14 +691,19 @@ std::vector<pat::Electron> HZZ4LHelper::goodElectronsAllCuts(edm::Handle<edm::Vi
 	{
 	  if( elec->pt() > elecPtCut && abs(elec->eta()) < elecEtaCut)
 	    {
-	      //if( elec->gsfTrack()->trackerExpectedHitsInner().numberOfLostHits() < missingHitsCuts ) // for miniAOD
-		//{
-		  if (elec->electronID(elecID) == 1 || elec->electronID(elecID) == 3 || elec->electronID(elecID) == 5 || elec->electronID(elecID) == 7 ||
-		      elec->electronID(elecID) == 9 || elec->electronID(elecID) == 11 || elec->electronID(elecID) == 13 || elec->electronID(elecID) == 15)
-		    {
-		      bestElectrons.push_back(*elec);
-		    }
-		//}
+            //if( elec->gsfTrack()->trackerExpectedHitsInner().numberOfLostHits() < missingHitsCuts ) // for miniAOD
+            //{
+              if (elecID=="noEID")
+              {
+                bestElectrons.push_back(*elec);
+              }
+              else
+              if (elec->electronID(elecID) == 1 || elec->electronID(elecID) == 3 || elec->electronID(elecID) == 5 || elec->electronID(elecID) == 7 ||
+                 elec->electronID(elecID) == 9 || elec->electronID(elecID) == 11 || elec->electronID(elecID) == 13 || elec->electronID(elecID) == 15)
+              {
+                bestElectrons.push_back(*elec);
+              }
+            //}
 	    }
 	}
     }
@@ -720,9 +741,9 @@ std::vector<pat::Muon> HZZ4LHelper::goodMuons2012(edm::Handle<edm::View<pat::Muo
 	{
 	  if( abs(getSIP3D(*mu)) < sipCut )
 	    {
-	      if( fabs(mu->innerTrack()->dxy(vertex->position())) < dxyCut )
+	      if( fabs(mu->muonBestTrack()->dxy(vertex->position())) < dxyCut ) // miniAOD
 		{ 
-		  if( fabs(mu->innerTrack()->dz(vertex->position())) < dzCut )
+		  if( fabs(mu->muonBestTrack()->dz(vertex->position())) < dzCut ) // miniAOD
 		    {
 		      
 		      double iso = 999;
@@ -843,10 +864,15 @@ std::vector<pat::Electron> HZZ4LHelper::goodElectrons2012(edm::Handle<edm::View<
 		  if(cutVal == 1000){ cout << "Problem in HZZ4LHelper::goodElectrons2012!" << endl; continue;}
 		  //int misHits = elec->gsfTrack()->trackerExpectedHitsInner().numberOfLostHits(); // for miniAOD
 		  int misHits = 0; // for miniAOD
+                  if (elecID=="noEID" && misHits < missingHitsCuts )
+                  {
+                    bestElectrons.push_back(*elec);
+                  }
+                  else
                   if(elec->electronID(elecID) > cutVal && misHits < missingHitsCuts) 
-		    {
-		      bestElectrons.push_back(*elec);
-		    }
+                  {
+                    bestElectrons.push_back(*elec);
+                  }
 		}
 	    }
 	}
@@ -881,9 +907,9 @@ std::vector<pat::Muon> HZZ4LHelper::goodMuons2012_noIso(edm::Handle<edm::View<pa
 	{
 	  if( abs(getSIP3D(*mu)) < sipCut )
 	    {
-	      if( fabs(mu->innerTrack()->dxy(vertex->position())) < dxyCut )
+	      if( fabs(mu->muonBestTrack()->dxy(vertex->position())) < dxyCut ) // miniAOD
 		{ 
-		  if( fabs(mu->innerTrack()->dz(vertex->position())) < dzCut )
+		  if( fabs(mu->muonBestTrack()->dz(vertex->position())) < dzCut ) // miniAOD
 		    {
 		      bestMuons.push_back(*mu);
 		    }
@@ -977,10 +1003,15 @@ std::vector<pat::Electron> HZZ4LHelper::goodElectrons2012_noIso(edm::Handle<edm:
 	      if(cutVal == 1000){ cout << "ele->superCluster()->eta() > 2.5" << endl; continue;}
               //int misHits = elec->gsfTrack()->trackerExpectedHitsInner().numberOfLostHits(); //for miniAOD
               int misHits = 0;
-	      if(elec->electronID(elecID) > cutVal && misHits < missingHitsCuts)
-		{
-		  bestElectrons.push_back(*elec);
-		}
+              if (elecID=="noEID" && misHits < missingHitsCuts )
+              {
+                bestElectrons.push_back(*elec);
+              }
+              else
+              if(elec->electronID(elecID) > cutVal && misHits < missingHitsCuts)
+              {
+                bestElectrons.push_back(*elec);
+              }
 	    }
 	}
     }
@@ -1018,9 +1049,9 @@ std::vector<pat::Muon> HZZ4LHelper::goodMuons2012_noIso(std::vector<pat::Muon> M
 	{
 	  if( abs(getSIP3D(Muons[i])) < sipCut )
 	    {
-	      if( fabs(Muons[i].innerTrack()->dxy(vertex->position())) < dxyCut )
+	      if( fabs(Muons[i].muonBestTrack()->dxy(vertex->position())) < dxyCut ) // miniAOD
 		{ 
-		  if( fabs(Muons[i].innerTrack()->dz(vertex->position())) < dzCut )
+		  if( fabs(Muons[i].muonBestTrack()->dz(vertex->position())) < dzCut ) // miniAOD
 		    {
 		      bestMuons.push_back(Muons[i]);
 		    }
@@ -1116,11 +1147,16 @@ std::vector<pat::Electron> HZZ4LHelper::goodElectrons2012_noIso(std::vector<pat:
 	      //<< "pt " << Electrons[i].pt() << " eta " << Electrons[i].eta() << " scEta " << Electrons[i].superCluster()->eta() << endl; continue;}
 	      //int misHits = Electrons[i].gsfTrack()->trackerExpectedHitsInner().numberOfLostHits(); // for miniADO
               int misHits = 0; // for miniAOD
-	      if(Electrons[i].electronID(elecID) > cutVal && misHits < missingHitsCuts)
-		{
-		  bestElectrons.push_back(Electrons[i]);
-		}
-	    }
+              if (elecID=="noEID" && misHits < missingHitsCuts )
+              {
+                bestElectrons.push_back(Electrons[i]);
+              }
+              else
+              if(Electrons[i].electronID(elecID) > cutVal && misHits < missingHitsCuts)
+              {
+                bestElectrons.push_back(Electrons[i]);
+              }
+            }
 	}
     }
 
@@ -1239,14 +1275,19 @@ std::vector<pat::Electron> HZZ4LHelper::goodLooseElectrons(std::vector<pat::Elec
 	{
 	  if( Electrons[i].pt() > elecPtCut && abs(Electrons[i].eta()) < elecEtaCut)
 	    {
-	      //if( Electrons[i].gsfTrack()->trackerExpectedHitsInner().numberOfLostHits() < missingHitsCuts ) // for miniAOD
-		//{
-		  if (Electrons[i].electronID(elecID) == 1 || Electrons[i].electronID(elecID) == 3 || Electrons[i].electronID(elecID) == 5 || Electrons[i].electronID(elecID) == 7 ||
-		      Electrons[i].electronID(elecID) == 9 || Electrons[i].electronID(elecID) == 11 || Electrons[i].electronID(elecID) == 13 || Electrons[i].electronID(elecID) == 15)
-		    {
-		      bestElectrons.push_back(Electrons[i]);
-		    }
-		//}
+            //if( Electrons[i].gsfTrack()->trackerExpectedHitsInner().numberOfLostHits() < missingHitsCuts ) // for miniAOD
+            //{
+              if (elecID=="noEID" )
+              {
+                bestElectrons.push_back(Electrons[i]);
+              }
+              else
+              if (Electrons[i].electronID(elecID) == 1 || Electrons[i].electronID(elecID) == 3 || Electrons[i].electronID(elecID) == 5 || Electrons[i].electronID(elecID) == 7 ||
+                  Electrons[i].electronID(elecID) == 9 || Electrons[i].electronID(elecID) == 11 || Electrons[i].electronID(elecID) == 13 || Electrons[i].electronID(elecID) == 15)
+              {
+                bestElectrons.push_back(Electrons[i]);
+              }
+            //}
 	    }
 	}
     }
@@ -1316,13 +1357,18 @@ std::vector<pat::Electron> HZZ4LHelper::goodTightElectrons(std::vector<pat::Elec
 	{
 	  if( Electrons[i].pt() > elecPtCut && abs(Electrons[i].eta()) < elecEtaCut)
 	    {
-	      //if( Electrons[i].gsfTrack()->trackerExpectedHitsInner().numberOfLostHits() < missingHitsCuts )
-		//{
-		  if(Electrons[i].electronID(elecID) == 5 || Electrons[i].electronID(elecID) == 7 || Electrons[i].electronID(elecID) == 13 || Electrons[i].electronID(elecID) == 15)
-		    {
-		      bestElectrons.push_back(Electrons[i]);
-		    }
-		//}
+            //if( Electrons[i].gsfTrack()->trackerExpectedHitsInner().numberOfLostHits() < missingHitsCuts )
+            //{
+              if (elecID=="noEID")
+              {
+                bestElectrons.push_back(Electrons[i]);
+              }
+              else
+              if(Electrons[i].electronID(elecID) == 5 || Electrons[i].electronID(elecID) == 7 || Electrons[i].electronID(elecID) == 13 || Electrons[i].electronID(elecID) == 15)
+              {
+                bestElectrons.push_back(Electrons[i]);
+              }
+            //}
 	    }
 	}
     }
@@ -4154,6 +4200,11 @@ std::vector< pat::Electron > HZZ4LHelper::goodElectrons2012_Iso(edm::Handle<edm:
 	      //if(cutVal == 1000){ cout << "ele->superCluster()->eta() > 2.5" << endl; continue;}
 	      //int misHits = elec->gsfTrack()->trackerExpectedHitsInner().numberOfLostHits(); // for miniAOD
 	      int misHits = 0; // for miniAOD
+              if (elecID=="noEID" && misHits < missingHitsCuts && pfIso(*elec,rho) < isocut)
+              {
+                bestElectrons.push_back(*elec);
+              }
+              else
 	      if(elec->electronID(elecID) > cutVal && misHits < missingHitsCuts)
 		{
                   if(pfIso(*elec,rho) < isocut)
@@ -4197,9 +4248,9 @@ std::vector< pat::Muon > HZZ4LHelper::goodMuons2012_Iso(std::vector< pat::Muon >
         {
           if( abs(getSIP3D(*mu)) < sipCut )
             {
-              if( fabs(mu->innerTrack()->dxy(vertex->position())) < dxyCut )
+              if( fabs(mu->muonBestTrack()->dxy(vertex->position())) < dxyCut ) // miniAOD
                 {
-                  if( fabs(mu->innerTrack()->dz(vertex->position())) < dzCut )
+                  if( fabs(mu->muonBestTrack()->dz(vertex->position())) < dzCut ) // miniAOD
                     {
                       if(pfIso(*mu,rho) < isocut)
                        {
@@ -4285,6 +4336,11 @@ std::vector< pat::Electron > HZZ4LHelper::goodElectrons2012_Iso(std::vector< pat
               //if(cutVal == 1000){ cout << "ele->superCluster()->eta() > 2.5" << endl; continue;}
               //int misHits = elec->gsfTrack()->trackerExpectedHitsInner().numberOfLostHits(); // for miniAOD
               int misHits = 0; // for miniAOD
+              if (elecID=="noEID" && misHits < missingHitsCuts && pfIso(*elec,rho) < isocut)
+              {
+                bestElectrons.push_back(*elec);
+              }
+              else
               if(elec->electronID(elecID) > cutVal && misHits < missingHitsCuts)
                 {
                   if(pfIso(*elec,rho) < isocut)

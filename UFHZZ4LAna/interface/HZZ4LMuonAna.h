@@ -131,7 +131,7 @@ void HZZ4LMuonAna::plotMuonHistograms(std::map<std::string,TH1F*> &histContainer
       histContainer_["MuonNormChi2"]->Fill(muons[i].normChi2());
       histContainer_["MuonValidHits"]->Fill(muons[i].globalTrack()->hitPattern().numberOfValidMuonHits());
       histContainer_["MuonTrackerHits"]->Fill(muons[i].globalTrack()->hitPattern().numberOfValidTrackerHits());
-      histContainer_["MuonInnerTrackHits"]->Fill(muons[i].innerTrack()->numberOfValidHits());
+      histContainer_["MuonInnerTrackHits"]->Fill(muons[i].muonBestTrack()->numberOfValidHits()); // miniAOD
      
       if( muons[i].isGlobalMuon() == 1 && muons[i].isTrackerMuon() == 0 ){tmp = 0;}
       if( muons[i].isTrackerMuon() == 1 && muons[i].isGlobalMuon() == 1){tmp = 1;}

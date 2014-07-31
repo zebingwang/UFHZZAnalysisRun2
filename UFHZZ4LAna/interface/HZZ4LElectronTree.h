@@ -75,8 +75,9 @@ class HZZ4LElectronTree
   HZZ4LElectronTree(TString treeName,edm::Service<TFileService> fs);
   ~HZZ4LElectronTree();
 
-
+  void fillElectronDumpTree(std::vector<pat::Electron> electrons, const edm::Event& iEvent, double electronRho, const reco::Vertex *&vertex, std::string elecID);
   void fillElectronDumpTree(std::vector<pat::Electron> electrons, const edm::Event& iEvent, double electronRho, const reco::Vertex *&vertex);
+
 
  private:
   
@@ -138,10 +139,13 @@ HZZ4LElectronTree::~HZZ4LElectronTree()
 
 void HZZ4LElectronTree::fillElectronDumpTree(std::vector<pat::Electron> electrons, const edm::Event& iEvent, double electronRho, const reco::Vertex *&vertex)
 {
+  this->fillElectronDumpTree(electrons, iEvent, electronRho, vertex, std::string("mvaNonTrigV0")); 
+}
 
-  using namespace std;
+void HZZ4LElectronTree::fillElectronDumpTree(std::vector<pat::Electron> electrons, const edm::Event& iEvent, 
+           double electronRho, const reco::Vertex *&vertex, std::string elecID)
+{
 
-  
   Run = iEvent.id().run();
   Event = iEvent.id().event();
   LumiSect = iEvent.id().luminosityBlock();
@@ -157,7 +161,7 @@ void HZZ4LElectronTree::fillElectronDumpTree(std::vector<pat::Electron> electron
       pY = electrons[i].py();
       pZ = electrons[i].pz();
       id = electrons[i].pdgId();
-      mva = electrons[i].electronID("mvaNonTrigV0");
+      mva = elecID=="noEID" ? -100 :electrons[i].electronID(elecID);
       energy = electrons[i].energy();
       isoNH = electrons[i].neutralHadronIso();
       isoCH = electrons[i].chargedHadronIso();

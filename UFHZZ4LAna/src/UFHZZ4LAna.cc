@@ -1267,7 +1267,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     if(doVarDump)
       {
 	muonDump->fillMuonDumpTree(AllMuons,iEvent,muonRho,PV);
-	electronDump->fillElectronDumpTree(AllElectrons,iEvent,elecRho,PV);
+	electronDump->fillElectronDumpTree(AllElectrons,iEvent,elecRho,PV,elecID);
       }	      
 
     if(twoLep_ID){
@@ -1922,7 +1922,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 	      {
 		if( passedM4lCut)
 		  {
-		    if(doVarDump) finalLepDump->fillFinalLepDumpTree(selectedMuons,selectedElectrons,iEvent,muonRho,elecRho,PV);
+		    if(doVarDump) finalLepDump->fillFinalLepDumpTree(selectedMuons,selectedElectrons,iEvent,muonRho,elecRho,PV,elecID);
 		      
 		    sipAna.advanceSipCounters(highestSip,eventWeight);
 
@@ -4325,7 +4325,7 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
     {
      
       idL1 = selectedElectrons[0].pdgId();
-      mvaL1 = selectedElectrons[0].electronID(elecID);
+      mvaL1 = elecID=="noEID" ? -100 : selectedElectrons[0].electronID(elecID) ;
       EL1 = selectedElectrons[0].energy();
       SipL1 = helper.getSIP3D(selectedElectrons[0]);
       IPL1 = fabs(selectedElectrons[0].dB(pat::Electron::PV3D));
@@ -4349,7 +4349,7 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
       ecalSeedL1 = selectedElectrons[0].ecalDrivenSeed();
  
       idL2 = selectedElectrons[1].pdgId();
-      mvaL2 = selectedElectrons[1].electronID(elecID);
+      mvaL2 = elecID=="noEID" ? -100 : selectedElectrons[1].electronID(elecID);
       EL2 = selectedElectrons[1].energy();
       SipL2 = helper.getSIP3D(selectedElectrons[1]);
       IPL2 = fabs(selectedElectrons[1].dB(pat::Electron::PV3D));
@@ -4373,7 +4373,7 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
       ecalSeedL2 = selectedElectrons[1].ecalDrivenSeed();
 
       idL3 = selectedElectrons[2].pdgId();
-      mvaL3 = selectedElectrons[2].electronID(elecID);
+      mvaL3 = elecID=="noEID" ? -100 : selectedElectrons[2].electronID(elecID);
       EL3 = selectedElectrons[2].energy();
       SipL3 = helper.getSIP3D(selectedElectrons[2]);
       IPL3 = fabs(selectedElectrons[2].dB(pat::Electron::PV3D));
@@ -4397,7 +4397,7 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
       ecalSeedL3 = selectedElectrons[2].ecalDrivenSeed();
 
       idL4 = selectedElectrons[3].pdgId();
-      mvaL4 = selectedElectrons[3].electronID(elecID);
+      mvaL4 = elecID=="noEID" ? -100 : selectedElectrons[3].electronID(elecID);
       EL4 = selectedElectrons[3].energy();
       SipL4 = helper.getSIP3D(selectedElectrons[3]);
       IPL4 = fabs(selectedElectrons[3].dB(pat::Electron::PV3D));
@@ -4425,7 +4425,7 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
     {
 
       idL1 = selectedElectrons[0].pdgId();
-      mvaL1 = selectedElectrons[0].electronID(elecID);
+      mvaL1 = elecID=="noEID" ? -100 : selectedElectrons[0].electronID(elecID);
       EL1 = selectedElectrons[0].energy();
       SipL1 = helper.getSIP3D(selectedElectrons[0]);
       IPL1 = fabs(selectedElectrons[0].dB(pat::Electron::PV3D));
@@ -4449,7 +4449,7 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
       ecalSeedL1 = selectedElectrons[0].ecalDrivenSeed();
 
       idL2 = selectedElectrons[1].pdgId();
-      mvaL2 = selectedElectrons[1].electronID(elecID);
+      mvaL2 = elecID=="noEID" ? -100 : selectedElectrons[1].electronID(elecID);
       EL2 = selectedElectrons[1].energy();
       SipL2 = helper.getSIP3D(selectedElectrons[1]);
       IPL2 = fabs(selectedElectrons[1].dB(pat::Electron::PV3D));
@@ -4569,7 +4569,7 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
       missingHitsL2 = -1;
 
       idL3 = selectedElectrons[0].pdgId();
-      mvaL3 = selectedElectrons[0].electronID(elecID);
+      mvaL3 = elecID=="noEID" ? -100 : selectedElectrons[0].electronID(elecID);
       EL3 = selectedElectrons[0].energy();
       SipL3 = helper.getSIP3D(selectedElectrons[0]);
       IPL3 = fabs(selectedElectrons[0].dB(pat::Electron::PV3D));
@@ -4593,7 +4593,7 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
       ecalSeedL3 = selectedElectrons[0].ecalDrivenSeed();
 
       idL4 = selectedElectrons[1].pdgId();
-      mvaL4 = selectedElectrons[1].electronID(elecID);
+      mvaL4 = elecID=="noEID" ? -100 : selectedElectrons[1].electronID(elecID);
       EL4 = selectedElectrons[1].energy();
       SipL4 = helper.getSIP3D(selectedElectrons[1]);
       IPL4 = fabs(selectedElectrons[1].dB(pat::Electron::PV3D));
@@ -4642,7 +4642,7 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
 	  RelIsoUCL1 = helper.pfIso(selectedMuons[0],0);
 
           idL2 = selectedElectrons[0].pdgId();
-	  mvaL2 = selectedElectrons[0].electronID(elecID);
+	  mvaL2 = elecID=="noEID" ? -100 : selectedElectrons[0].electronID(elecID);
 	  EL2 = selectedElectrons[0].energy();
           SipL2 = helper.getSIP3D(selectedElectrons[0]);
 	  IPL2 = fabs(selectedElectrons[0].dB(pat::Electron::PV3D));
@@ -4664,7 +4664,7 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
 	  RelIsoUCL2 = helper.pfIso(selectedElectrons[0],0);
 
           idL3 = selectedElectrons[1].pdgId();
-	  mvaL3 = selectedElectrons[1].electronID(elecID);
+	  mvaL3 = elecID=="noEID" ? -100 : selectedElectrons[1].electronID(elecID);
 	  EL3 = selectedElectrons[1].energy();
           SipL3 = helper.getSIP3D(selectedElectrons[1]);
 	  IPL3 = fabs(selectedElectrons[1].dB(pat::Electron::PV3D));
@@ -4733,7 +4733,7 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
 	  RelIsoUCL1 = helper.pfIso(selectedMuons[0],0);
 
           idL2 = selectedElectrons[0].pdgId();
-	  mvaL2 = selectedElectrons[0].electronID(elecID);
+	  mvaL2 =  elecID=="noEID" ? -100 : selectedElectrons[0].electronID(elecID);
 	  EL2 = selectedElectrons[0].energy();
           SipL2 = helper.getSIP3D(selectedElectrons[0]);
 	  IPL2 = fabs(selectedElectrons[0].dB(pat::Electron::PV3D));
@@ -4777,7 +4777,7 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
 	  RelIsoUCL3 = helper.pfIso(selectedMuons[1],0);
 
           idL4 = selectedElectrons[1].pdgId();
-	  mvaL4 = selectedElectrons[1].electronID(elecID);
+	  mvaL4 = elecID=="noEID" ? -100 : selectedElectrons[1].electronID(elecID);
 	  EL4 = selectedElectrons[1].energy();
           SipL4 = helper.getSIP3D(selectedElectrons[1]);
 	  IPL4 = fabs(selectedElectrons[1].dB(pat::Electron::PV3D));
@@ -4824,7 +4824,7 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
 	  RelIsoUCL1 = helper.pfIso(selectedMuons[0],0);
 
           idL2 = selectedElectrons[0].pdgId();
-	  mvaL2 = selectedElectrons[0].electronID(elecID);
+	  mvaL2 = elecID=="noEID" ? -100 : selectedElectrons[0].electronID(elecID);
 	  EL2 = selectedElectrons[0].energy();
           SipL2 = helper.getSIP3D(selectedElectrons[0]);
 	  IPL2 = fabs(selectedElectrons[0].dB(pat::Electron::PV3D));
@@ -4868,7 +4868,7 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
 	  RelIsoUCL3 = helper.pfIso(selectedElectrons[1],0);
 
           idL4 = selectedElectrons[2].pdgId();
-	  mvaL4 = selectedElectrons[2].electronID(elecID);
+	  mvaL4 = elecID=="noEID" ? -100 : selectedElectrons[2].electronID(elecID);
 	  EL4 = selectedElectrons[2].energy();
           SipL4 = helper.getSIP3D(selectedElectrons[2]);
 	  IPL4 = fabs(selectedElectrons[2].dB(pat::Electron::PV3D));
@@ -4915,7 +4915,7 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
 	  RelIsoUCL1 = helper.pfIso(selectedMuons[0],0);
 
           idL2 = selectedElectrons[0].pdgId();
-	  mvaL2 = selectedElectrons[0].electronID(elecID);
+	  mvaL2 = elecID=="noEID" ? -100 : selectedElectrons[0].electronID(elecID);
 	  EL2 = selectedElectrons[0].energy();
           SipL2 = helper.getSIP3D(selectedElectrons[0]);
 	  IPL2 = fabs(selectedElectrons[0].dB(pat::Electron::PV3D));
@@ -4984,7 +4984,7 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
       else if (RecoFourMixEvent==5)
       {      
           idL1 = selectedElectrons[0].pdgId();
-	  mvaL1 = selectedElectrons[0].electronID(elecID);
+	  mvaL1 = elecID=="noEID" ? -100 : selectedElectrons[0].electronID(elecID);
 	  EL1 = selectedElectrons[0].energy();
           SipL1 = helper.getSIP3D(selectedElectrons[0]);
 	  IPL1 = fabs(selectedElectrons[0].dB(pat::Electron::PV3D));
@@ -5006,7 +5006,7 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
 	  RelIsoUCL1 = helper.pfIso(selectedElectrons[0],0);
 
           idL2 = selectedElectrons[1].pdgId();
-	  mvaL2 = selectedElectrons[1].electronID(elecID);
+	  mvaL2 = elecID=="noEID" ? -100 : selectedElectrons[1].electronID(elecID);
 	  EL2 = selectedElectrons[1].energy();
           SipL2 = helper.getSIP3D(selectedElectrons[1]);
 	  IPL2 = fabs(selectedElectrons[1].dB(pat::Electron::PV3D));
@@ -5028,7 +5028,7 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
 	  RelIsoUCL2 = helper.pfIso(selectedElectrons[1],0);
 
           idL3 = selectedElectrons[2].pdgId();
-	  mvaL3 = selectedElectrons[2].electronID(elecID);
+	  mvaL3 = elecID=="noEID" ? -100 : selectedElectrons[2].electronID(elecID);
 	  EL3 = selectedElectrons[2].energy();
           SipL3 = helper.getSIP3D(selectedElectrons[2]);
 	  IPL3 = fabs(selectedElectrons[2].dB(pat::Electron::PV3D));
@@ -5075,7 +5075,7 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
       else if (RecoFourMixEvent==6)
       {      
           idL1 = selectedElectrons[0].pdgId();
-	  mvaL1 = selectedElectrons[0].electronID(elecID);
+	  mvaL1 = elecID=="noEID" ? -100 : selectedElectrons[0].electronID(elecID);
 	  EL1 = selectedElectrons[0].energy();
           SipL1 = helper.getSIP3D(selectedElectrons[0]);
 	  IPL1 = fabs(selectedElectrons[0].dB(pat::Electron::PV3D));
@@ -5097,7 +5097,7 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
 	  RelIsoUCL1 = helper.pfIso(selectedElectrons[0],0);
 
           idL2 = selectedElectrons[1].pdgId();
-	  mvaL2 = selectedElectrons[1].electronID(elecID);
+	  mvaL2 = elecID=="noEID" ? -100 : selectedElectrons[1].electronID(elecID);
 	  EL2 = selectedElectrons[1].energy();
           SipL2 = helper.getSIP3D(selectedElectrons[1]);
 	  IPL2 = fabs(selectedElectrons[1].dB(pat::Electron::PV3D));
@@ -5141,7 +5141,7 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
 	  RelIsoUCL3 = helper.pfIso(selectedMuons[0],0);
 
           idL4 = selectedElectrons[2].pdgId();
-	  mvaL4 = selectedElectrons[2].electronID(elecID);
+	  mvaL4 = elecID=="noEID" ? -100 : selectedElectrons[2].electronID(elecID);
 	  EL4 = selectedElectrons[2].energy();
           SipL4 = helper.getSIP3D(selectedElectrons[2]);
 	  IPL4 = fabs(selectedElectrons[2].dB(pat::Electron::PV3D));
@@ -5210,7 +5210,7 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
 	  RelIsoUCL2 = helper.pfIso(selectedMuons[1],0);
 
           idL3 = selectedElectrons[0].pdgId();
-	  mvaL3 = selectedElectrons[0].electronID(elecID);
+	  mvaL3 = elecID=="noEID" ? -100 : selectedElectrons[0].electronID(elecID);
 	  EL3 = selectedElectrons[0].energy();
           SipL3 = helper.getSIP3D(selectedElectrons[0]);
 	  IPL3 = fabs(selectedElectrons[0].dB(pat::Electron::PV3D));
@@ -5323,7 +5323,7 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
 	  RelIsoUCL3 = helper.pfIso(selectedMuons[2],0);
 
           idL4 = selectedElectrons[0].pdgId();
-	  mvaL4 = selectedElectrons[0].electronID(elecID);
+	  mvaL4 = elecID=="noEID" ? -100 : selectedElectrons[0].electronID(elecID);
 	  EL4 = selectedElectrons[0].energy();
           SipL4 = helper.getSIP3D(selectedElectrons[0]);
 	  IPL4 = fabs(selectedElectrons[0].dB(pat::Electron::PV3D));
@@ -5810,7 +5810,7 @@ void UFHZZ4LAna::fillResolutionHistograms(edm::Handle<edm::View<pat::Muon> > muo
 	  double mass = (mu->p4()+mu2->p4()).M();
 	  if(mass<95 and mass>85) {
 	    
-	    double pterr = mu->innerTrack()->ptError();
+	    double pterr = mu->muonBestTrack()->ptError(); // miniAOD
 	    double recpt = mu->pt();
 	    double eta = mu->eta();
 	    histContainer_["ptrelerrorForZ_mu"]->Fill(pterr/recpt,eventWeight);

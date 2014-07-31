@@ -852,9 +852,9 @@ void HZZ4LPerLepResolution::fillHistograms(std::map<TString,TH1F*> &histContaine
 
 	for(unsigned int i=0; i< muons.size(); i++){
 		const pat::Muon *e = &(muons[i]);
-                if(!e->innerTrack()){ cout<<"muon has no tracker"<<endl; continue;}
+                if(!e->muonBestTrack()){ cout<<"muon has no tracker"<<endl; continue;} // miniAOD
 
-		double pterr = e->innerTrack()->ptError(); 
+		double pterr = e->muonBestTrack()->ptError();  // miniAOD
 		double recpt = e->pt();
 		double eta = e->eta();
 

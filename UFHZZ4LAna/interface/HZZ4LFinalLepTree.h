@@ -75,6 +75,9 @@ class HZZ4LFinalLepTree
   HZZ4LFinalLepTree(TString treeName,edm::Service<TFileService> fs);
   ~HZZ4LFinalLepTree();
 
+  void fillFinalLepDumpTree(std::vector<pat::Muon> muons, std::vector<pat::Electron> electrons, 
+			    const edm::Event& iEvent, double muonRho, double elecRho, const reco::Vertex *&vertex,
+                            std::string elecID);
 
   void fillFinalLepDumpTree(std::vector<pat::Muon> muons, std::vector<pat::Electron> electrons, 
 			    const edm::Event& iEvent, double muonRho, double elecRho, const reco::Vertex *&vertex);
@@ -139,10 +142,14 @@ HZZ4LFinalLepTree::~HZZ4LFinalLepTree()
 void HZZ4LFinalLepTree::fillFinalLepDumpTree(std::vector<pat::Muon> muons, std::vector<pat::Electron> electrons, 
 					     const edm::Event& iEvent, double muonRho, double elecRho, const reco::Vertex *&vertex)
 {
+  this->fillFinalLepDumpTree(muons, electrons, iEvent, muonRho, elecRho, vertex, std::string("mvaNonTrigV0"));
+}
 
-  using namespace std;
+void HZZ4LFinalLepTree::fillFinalLepDumpTree(std::vector<pat::Muon> muons, std::vector<pat::Electron> electrons, 
+                       const edm::Event& iEvent, double muonRho, double elecRho, const reco::Vertex *&vertex,
+                        std::string elecID)
+{
 
-  
   Run = iEvent.id().run();
   Event = iEvent.id().event();
   LumiSect = iEvent.id().luminosityBlock();
@@ -183,7 +190,7 @@ void HZZ4LFinalLepTree::fillFinalLepDumpTree(std::vector<pat::Muon> muons, std::
       pY = electrons[i].py();
       pZ = electrons[i].pz();
       id = electrons[i].pdgId();
-      mvaID = electrons[i].electronID("mvaNonTrigV0");
+      mvaID = elecID=="noEID" ? -100 : electrons[i].electronID(elecID);
       energy = electrons[i].energy();
       isoNH = electrons[i].neutralHadronIso();
       isoCH = electrons[i].chargedHadronIso();

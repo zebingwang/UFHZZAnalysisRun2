@@ -407,7 +407,8 @@ void HZZ4LMassErr::fillP3Covariance(const reco::Candidate &c, TMatrixDSym &bigCo
 		fillP3Covariance(*pf, bigCov, offset);
 	} 
 	else {
-		throw cms::Exception("Unknown type") << "Candidate of type " << typeid(c).name() << " and pdgId = " << c.pdgId() << "\n";
+          //throw cms::Exception("Unknown type") << "Candidate of type " << typeid(c).name() << " and pdgId = " << c.pdgId() << "\n";
+          // miniAOD skip exception just do nothing.
 	}
 }
 
