@@ -8,7 +8,7 @@ To install:
 
 2.) get the installation script:
 
-curl -O https://github.com/VBF-HZZ/UFHZZAnalysisRun2/raw/master/install.sh
+curl -O https://raw.githubusercontent.com/VBF-HZZ/UFHZZAnalysisRun2/csa14/install.sh
 
 3.) run it:
 
