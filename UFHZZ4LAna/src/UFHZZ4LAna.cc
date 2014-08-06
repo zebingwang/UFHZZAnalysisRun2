@@ -2818,15 +2818,15 @@ void UFHZZ4LAna::findHiggsCandidate_MixFlavour(std::vector<pat::Muon> &candMuons
         dm = abs(Zmass-EinvMass_Zm);
         if(dm < ZmassDiff)
         {
-                    Z1Vec = candElectrons[i].p4() + candElectrons[j].p4();
-                    ZmassDiff = dm;
-                    Z1isMuons = false;
-                    Z1isElectrons = true;
-                    takenE_1 = i; takenE_2 = j;
-                }
-            }
+          Z1Vec = candElectrons[i].p4() + candElectrons[j].p4();
+          ZmassDiff = dm;
+          Z1isMuons = false;
+          Z1isElectrons = true;
+          takenE_1 = i; takenE_2 = j;
         }
+      }
     }
+  }
     
     
     
