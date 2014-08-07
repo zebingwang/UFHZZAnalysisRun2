@@ -337,12 +337,12 @@ private:
   TTree *passedEventsTree_All;
   void bookPassedEventTree(TString treeName, TTree *tree);
   void setTreeVariables( const edm::Event&, const edm::EventSetup&, 
-			 std::vector<pat::Muon> selectedMuons, std::vector<pat::Electron> selectedElectrons, std::vector<pat::Jet> selectedVBFJets, std::vector<pat::Jet> correctedVBFJets);
+                         std::vector<pat::Muon> selectedMuons, std::vector<pat::Electron> selectedElectrons, 
+                         std::vector<pat::Jet> selectedVBFJets, std::vector<pat::Jet> correctedVBFJets);
   void setGENVariables(std::vector<reco::GenParticle> Higgs, 
-		       std::vector<reco::GenParticle> Zs, 
-		       std::vector<reco::GenParticle> leptonsS1, std::vector<reco::GenParticle> leptonsS3);
+                       std::vector<reco::GenParticle> Zs, 
+                       std::vector<reco::GenParticle> leptonsS1, std::vector<reco::GenParticle> leptonsS3);
   void setGENMatchedVariables(std::vector<pat::Muon> selectedMuons, std::vector<pat::Electron> selectedElectrons);
-
 
   //Variables
   bool notDuplicateEvent;
@@ -2828,404 +2828,363 @@ void UFHZZ4LAna::findHiggsCandidate_MixFlavour(std::vector<pat::Muon> &candMuons
     }
   }
     
-    
-    
-    for( int i = 0; i < nCandMuons; i++ )
+  for( int i = 0; i < nCandMuons; i++ )
+  {
+    for( int j = i; j < nCandElectrons; j++ )
     {
-        for( int j = i; j < nCandElectrons; j++ )
+      if(( candMuons[i].charge() * candElectrons[j].charge() == -1 ) || noChargeReq)
+      {
+        double EMuinvMass_Zm = (candMuons[i].p4()+candElectrons[j].p4()).M();
+        dm = abs(Zmass-EMuinvMass_Zm);
+        if(dm < ZmassDiff)
         {
-            
-            if(( candMuons[i].charge() * candElectrons[j].charge() == -1 ) || noChargeReq)
-            {
-                double EMuinvMass_Zm = (candMuons[i].p4()+candElectrons[j].p4()).M();
-                
-                dm = abs(Zmass-EMuinvMass_Zm);
-                
-                if(dm < ZmassDiff)
-                {
-                    Z1Vec = candMuons[i].p4() + candElectrons[j].p4();
-                    ZmassDiff = dm;
-                    Z1isMuons = false;
-                    Z1isElectrons = false;
-                    Z1isEMu = true;
-                    takenMu_1 = i; takenE_1 = j;
-                }
-                
-            }
+          Z1Vec = candMuons[i].p4() + candElectrons[j].p4();
+          ZmassDiff = dm;
+          Z1isMuons = false;
+          Z1isElectrons = false;
+          Z1isEMu = true;
+          takenMu_1 = i; takenE_1 = j;
         }
+      }
     }
+  }
     
-    
-    // Keep track of whether Z1 is 2xMuons, 2xElectrons or combination Elec-Muon
-    // Assign a tmp variable for pT comparisons
-    if( Z1isMuons )
+  // Keep track of whether Z1 is 2xMuons, 2xElectrons or combination Elec-Muon
+  // Assign a tmp variable for pT comparisons
+  if( Z1isMuons )
+  {
+    takenZ1_1   = takenMu_1; takenZ1_2   = takenMu_2;
+    takenMuTmp1 = takenZ1_1; takenMuTmp2 = takenZ1_2;
+  }
+  if( Z1isElectrons)
+  {
+    takenZ1_1  = takenE_1;  takenZ1_2  = takenE_2;
+    takenETmp1 = takenZ1_1; takenETmp2 = takenZ1_2;
+  }
+  if( Z1isEMu)
+  {
+    takenZ1_1  = takenMu_1;  takenZ1_2  = takenE_1;
+    takenMuTmp1 = takenZ1_1; takenETmp1 = takenZ1_2;
+  }
+   
+  // Variables for finding Z2
+  double biggestPt_Muons = 0;
+  double biggestPt_Electrons = 0;
+  int takenPt_Mu = 1000;
+  int takenPt_E = 1000;
+  
+  int takenPt_Index1 = 1000;
+  double biggestPt2 = 0;
+  double biggestPt3 = 0;
+  int takenPt_Index2 = 1000;
+  
+  bool highestPtisMuon = false;
+  bool highestPtisElectron = false;
+   
+  // Find highest pT muon and electron that remains
+  for( int i = 0; i < nCandMuons; i++)
+  {
+    if( i != takenMuTmp1 && i != takenMuTmp2 )
     {
-        takenZ1_1   = takenMu_1; takenZ1_2   = takenMu_2;
-        takenMuTmp1 = takenZ1_1; takenMuTmp2 = takenZ1_2;
+      if( candMuons[i].pt() > biggestPt_Muons )
+      {
+        takenPt_Mu = i;
+        biggestPt_Muons = candMuons[i].pt();
+      }
     }
-    if( Z1isElectrons)
+  }
+    
+  for( int j = 0; j < nCandElectrons; j++)
+  {
+    if( j != takenETmp1 && j != takenETmp2 )
     {
-        takenZ1_1  = takenE_1;  takenZ1_2  = takenE_2;
-        takenETmp1 = takenZ1_1; takenETmp2 = takenZ1_2;
+      if( candElectrons[j].pt() > biggestPt_Electrons )
+      {
+        takenPt_E = j;
+        biggestPt_Electrons = candElectrons[j].pt();
+      }
     }
-    if( Z1isEMu)
-    {
-        takenZ1_1  = takenMu_1;  takenZ1_2  = takenE_1;
-        takenMuTmp1 = takenZ1_1; takenETmp1 = takenZ1_2;
-    }
+  }
     
     
-    
-    // Variables for finding Z2
-    double biggestPt_Muons = 0;
-    double biggestPt_Electrons = 0;
-    int takenPt_Mu = 1000;
-    int takenPt_E = 1000;
-    
-    int takenPt_Index1 = 1000;
-    double biggestPt2 = 0;
-    double biggestPt3 = 0;
-    int takenPt_Index2 = 1000;
-    
-    bool highestPtisMuon = false;
-    bool highestPtisElectron = false;
-    
-    
-    // Find highest pT muon and electron that remains
+  // Compare highest pT muon and electron
+  if( biggestPt_Muons > biggestPt_Electrons )
+  {
+    highestPtisMuon = true;
+    takenPt_Index1 = takenPt_Mu;
+  }
+  else if( biggestPt_Electrons > biggestPt_Muons )
+  {
+    highestPtisElectron = true;
+    takenPt_Index1 = takenPt_E;
+  }
+   
+  //If the highest pT lepton left is mu 
+  if( highestPtisMuon )
+  {
     for( int i = 0; i < nCandMuons; i++)
     {
-        if( i != takenMuTmp1 && i != takenMuTmp2 )
+      if( i != takenPt_Index1 && i != takenMuTmp1 && i != takenMuTmp2 )
+      {
+        if(( candMuons[takenPt_Index1].charge() * candMuons[i].charge() == -1 ) || noChargeReq)
         {
-            if( candMuons[i].pt() > biggestPt_Muons )
-            {
-                takenPt_Mu = i;
-                biggestPt_Muons = candMuons[i].pt();
-            }
+          if( candMuons[i].pt() > biggestPt2 ){ takenPt_Index2 = i; biggestPt2 = candMuons[i].pt();}
         }
+      }
     }
-    
-    for( int j = 0; j < nCandElectrons; j++)
+    if( biggestPt2 > 0 && ((candMuons[takenPt_Index1].charge() * candMuons[takenPt_Index2].charge() == -1) || noChargeReq) )
     {
-        if( j != takenETmp1 && j != takenETmp2 )
-        {
-            if( candElectrons[j].pt() > biggestPt_Electrons )
-            {
-                takenPt_E = j;
-                biggestPt_Electrons = candElectrons[j].pt();
-            }
-        }
+      Z2Vec = candMuons[takenPt_Index1].p4() + candMuons[takenPt_Index2].p4();
+      takenZ2_1 = takenPt_Index1; takenZ2_2 = takenPt_Index2;
+      Z2isMuons = true;
     }
-    
-    
-    // Compare highest pT muon and electron
-    if( biggestPt_Muons > biggestPt_Electrons )
+    for( int i = 0; i < nCandElectrons; i++)
     {
-        highestPtisMuon = true;
-        takenPt_Index1 = takenPt_Mu;
-        
+      if( i != takenETmp1 && i != takenETmp2 )
+      {
+        if(( candMuons[takenPt_Index1].charge() * candElectrons[i].charge() == -1 ) || noChargeReq)
+        {
+          if( candElectrons[i].pt() > biggestPt3 ){ takenPt_Index2 = i; biggestPt3 = candElectrons[i].pt();}
+        }
+      }
     }
-    else if( biggestPt_Electrons > biggestPt_Muons )
+    if( biggestPt3 > biggestPt2 && ((candMuons[takenPt_Index1].charge() * candElectrons[takenPt_Index2].charge() == -1) || noChargeReq) )
     {
-        highestPtisElectron = true;
-        takenPt_Index1 = takenPt_E;
+      Z2Vec = candMuons[takenPt_Index1].p4() + candElectrons[takenPt_Index2].p4();
+      takenZ2_1 = takenPt_Index1; takenZ2_2 = takenPt_Index2;
+      Z2isMuons = false;
+      Z2isMuE = true;
     }
+  }
     
-    
-    
-    
-    //If the highest pT lepton left is mu 
-    if( highestPtisMuon )
+  //If the highest pT lepton left is e
+  if( highestPtisElectron )
+  {
+    for( int i = 0; i < nCandElectrons; i++)
     {
-        for( int i = 0; i < nCandMuons; i++)
+      if( i != takenPt_Index1 && i != takenETmp1 && i != takenETmp2 )
+      {
+        if(( candElectrons[takenPt_Index1].charge() * candElectrons[i].charge() == -1 ) || noChargeReq)
         {
-            if( i != takenPt_Index1 && i != takenMuTmp1 && i != takenMuTmp2 )
-            {
-                if(( candMuons[takenPt_Index1].charge() * candMuons[i].charge() == -1 ) || noChargeReq)
-                {
-                    if( candMuons[i].pt() > biggestPt2 ){ takenPt_Index2 = i; biggestPt2 = candMuons[i].pt();}
-                }
-            }
+          if( candElectrons[i].pt() > biggestPt2 ){ takenPt_Index2 = i; biggestPt2 = candElectrons[i].pt();}
         }
-        
-        if( biggestPt2 > 0 && ((candMuons[takenPt_Index1].charge() * candMuons[takenPt_Index2].charge() == -1) || noChargeReq) )
-        {
-            Z2Vec = candMuons[takenPt_Index1].p4() + candMuons[takenPt_Index2].p4();
-            takenZ2_1 = takenPt_Index1; takenZ2_2 = takenPt_Index2;
-            Z2isMuons = true;
-        }
-        
-        for( int i = 0; i < nCandElectrons; i++)
-        {
-            if( i != takenETmp1 && i != takenETmp2 )
-            {
-                if(( candMuons[takenPt_Index1].charge() * candElectrons[i].charge() == -1 ) || noChargeReq)
-                {
-                    if( candElectrons[i].pt() > biggestPt3 ){ takenPt_Index2 = i; biggestPt3 = candElectrons[i].pt();}
-                }
-            }
-        }
-        
-        if( biggestPt3 > biggestPt2 && ((candMuons[takenPt_Index1].charge() * candElectrons[takenPt_Index2].charge() == -1) || noChargeReq) )
-        {
-            Z2Vec = candMuons[takenPt_Index1].p4() + candElectrons[takenPt_Index2].p4();
-            takenZ2_1 = takenPt_Index1; takenZ2_2 = takenPt_Index2;
-            Z2isMuons = false;
-            Z2isMuE = true;
-        }
-        
+      }
     }
-    
-    //If the highest pT lepton left is e
-    if( highestPtisElectron )
+    if( biggestPt2 > 0 && ((candElectrons[takenPt_Index1].charge() * candElectrons[takenPt_Index2].charge() == -1) || noChargeReq) )
     {
-        for( int i = 0; i < nCandElectrons; i++)
-        {
-            if( i != takenPt_Index1 && i != takenETmp1 && i != takenETmp2 )
-            {
-                if(( candElectrons[takenPt_Index1].charge() * candElectrons[i].charge() == -1 ) || noChargeReq)
-                {
-                    if( candElectrons[i].pt() > biggestPt2 ){ takenPt_Index2 = i; biggestPt2 = candElectrons[i].pt();}
-                }
-            }
-        }
-        
-        if( biggestPt2 > 0 && ((candElectrons[takenPt_Index1].charge() * candElectrons[takenPt_Index2].charge() == -1) || noChargeReq) )
-        {
-            Z2Vec = candElectrons[takenPt_Index1].p4() + candElectrons[takenPt_Index2].p4();
-            takenZ2_1 = takenPt_Index1; takenZ2_2 = takenPt_Index2;
-            Z2isElectrons = true;
-        }
-        
-        for( int i = 0; i < nCandMuons; i++)
-        {
-            if( i != takenMuTmp1 && i != takenMuTmp2 )
-            {
-                if(( candElectrons[takenPt_Index1].charge() * candMuons[i].charge() == -1 ) || noChargeReq)
-                {
-                    if( candMuons[i].pt() > biggestPt3 ){ takenPt_Index2 = i; biggestPt3 = candMuons[i].pt();}
-                }
-            }
-        }
-        
-        if( biggestPt3 > biggestPt2 && ((candElectrons[takenPt_Index1].charge() * candMuons[takenPt_Index2].charge() == -1) || noChargeReq) )
-        {
-            Z2Vec = candElectrons[takenPt_Index1].p4() + candMuons[takenPt_Index2].p4();
-            takenZ2_1 = takenPt_Index1; takenZ2_2 = takenPt_Index2;
-            Z2isElectrons = false;
-            Z2isEMu = true;
-        }
+      Z2Vec = candElectrons[takenPt_Index1].p4() + candElectrons[takenPt_Index2].p4();
+      takenZ2_1 = takenPt_Index1; takenZ2_2 = takenPt_Index2;
+      Z2isElectrons = true;
     }
-    
-    
-    //Determine whether a Higgs candidate was formed
-    if( Z1isMuons == true && Z2isMuons == true )
+    for( int i = 0; i < nCandMuons; i++)
     {
-        nEvBeforeZCuts += eventWeight;
-        nEvBeforeZCuts_4mu += eventWeight;
-        
-
-        
-        mZ1 = Z1Vec.M();
-        mZ2 = Z2Vec.M();
-        if( mZ1 > mZ1Low && mZ1 < mZ1High )
+      if( i != takenMuTmp1 && i != takenMuTmp2 )
+      {
+        if(( candElectrons[takenPt_Index1].charge() * candMuons[i].charge() == -1 ) || noChargeReq)
         {
-            //nEvAfterZ1Cut += eventWeight;
-            //nEvAfterZ1Cut_4mu += eventWeight;
-            if( mZ2 > mZ2Low && mZ2 < mZ2High)
-            {
-	      if(isSignal) sigEff_4->advanceSigNumCounters_MZ2(eventType, "reco4mu",eventWeight);
-	      nEvAfterZ2Cut += eventWeight;
-	      nEvAfterZ2Cut_4mu += eventWeight;
-            }
+          if( candMuons[i].pt() > biggestPt3 ){ takenPt_Index2 = i; biggestPt3 = candMuons[i].pt();}
         }
-        
-        if( (mZ1 > mZ1Low && mZ1 < mZ1High) && (mZ2 > mZ2Low && mZ2 < mZ2High) )
-        {
-            foundHiggsCandidate = true;
-            RecoFourMuEvent = true;
-            selectedMuons.push_back(candMuons[takenZ1_1]);
-            selectedMuons.push_back(candMuons[takenZ1_2]);
-            selectedMuons.push_back(candMuons[takenZ2_1]);
-            selectedMuons.push_back(candMuons[takenZ2_2]);
-        }
+      }
     }
-    else if( Z1isMuons == true && Z2isElectrons == true )
+    if( biggestPt3 > biggestPt2 && ((candElectrons[takenPt_Index1].charge() * candMuons[takenPt_Index2].charge() == -1) || noChargeReq) )
     {
-        nEvBeforeZCuts += eventWeight;
-        nEvBeforeZCuts_2e2mu += eventWeight;
-        
-
-        
-        
-        mZ1 = Z1Vec.M();
-        mZ2 = Z2Vec.M();
-        if( mZ1 > mZ1Low && mZ1 < mZ1High)
-        {
-            
-            //nEvAfterZ1Cut += eventWeight;
-            //nEvAfterZ1Cut_2e2mu += eventWeight;
-            if( mZ2 >mZ2Low && mZ2 < mZ2High)
-            {
-	      if(isSignal) sigEff_4->advanceSigNumCounters_MZ2(eventType, "reco2e2mu",eventWeight);
-	      
-	      nEvAfterZ2Cut += eventWeight;
-	      nEvAfterZ2Cut_2e2mu += eventWeight;
-            }
-        }
-        
-        if( (mZ1 > mZ1Low && mZ1 < mZ1High) && (mZ2 > mZ2Low && mZ2 < mZ2High) )
-        {
-            foundHiggsCandidate = true;
-            RecoTwoMuTwoEEvent = true;
-            selectedMuons.push_back(candMuons[takenZ1_1]);
-            selectedMuons.push_back(candMuons[takenZ1_2]);
-            selectedElectrons.push_back(candElectrons[takenZ2_1]);
-            selectedElectrons.push_back(candElectrons[takenZ2_2]);
-        }
-    }    
-    else if( Z1isElectrons == true && Z2isMuons == true )
-    {
-        nEvBeforeZCuts += eventWeight;
-        nEvBeforeZCuts_2e2mu += eventWeight;
-        
-
-        
-        
-        mZ1 = Z1Vec.M();
-        mZ2 = Z2Vec.M();
-        if( mZ1 > mZ1Low && mZ1 < mZ1High )
-        {
-            
-            //nEvAfterZ1Cut += eventWeight;
-            //nEvAfterZ1Cut_2e2mu += eventWeight;
-            if( mZ2 >mZ2Low && mZ2 < mZ2High)
-            {
-	      if(isSignal) sigEff_4->advanceSigNumCounters_MZ2(eventType, "reco2e2mu",eventWeight);
-                
-	      nEvAfterZ2Cut += eventWeight;
-	      nEvAfterZ2Cut_2e2mu += eventWeight;
-            }
-        }
-        
-        if( (mZ1 > mZ1Low && mZ1 < mZ1High) && (mZ2 > mZ2Low && mZ2 < mZ2High) )
-        {
-            foundHiggsCandidate = true;
-            RecoTwoETwoMuEvent = true;
-            selectedMuons.push_back(candMuons[takenZ2_1]);
-            selectedMuons.push_back(candMuons[takenZ2_2]);
-            selectedElectrons.push_back(candElectrons[takenZ1_1]);
-            selectedElectrons.push_back(candElectrons[takenZ1_2]);
-        }
+      Z2Vec = candElectrons[takenPt_Index1].p4() + candMuons[takenPt_Index2].p4();
+      takenZ2_1 = takenPt_Index1; takenZ2_2 = takenPt_Index2;
+      Z2isElectrons = false;
+      Z2isEMu = true;
     }
-    else if( Z1isElectrons == true && Z2isElectrons == true )
+  }
+  
+  //Determine whether a Higgs candidate was formed
+  if( Z1isMuons == true && Z2isMuons == true )
+  {
+    nEvBeforeZCuts += eventWeight;
+    nEvBeforeZCuts_4mu += eventWeight;
+    mZ1 = Z1Vec.M();
+    mZ2 = Z2Vec.M();
+    if( mZ1 > mZ1Low && mZ1 < mZ1High )
     {
-        nEvBeforeZCuts += eventWeight;
-        nEvBeforeZCuts_4e += eventWeight;
-        
-
-        
-        mZ1 = Z1Vec.M();
-        mZ2 = Z2Vec.M();
-        if( mZ1 > mZ1Low && mZ1 < mZ1High)
-        {
-            
-            //nEvAfterZ1Cut += eventWeight;
-            //nEvAfterZ1Cut_4e += eventWeight;
-            if( mZ2 >mZ2Low && mZ2 < mZ2High)
-            {
-	      if(isSignal) sigEff_4->advanceSigNumCounters_MZ2(eventType, "reco4e",eventWeight);
-	      
-	      nEvAfterZ2Cut += eventWeight;
-	      nEvAfterZ2Cut_4e += eventWeight;
-            }
-        }
-        
-        if( (mZ1 > mZ1Low && mZ1 < mZ1High) && (mZ2 > mZ2Low && mZ2 < mZ2High) )
-        {
-            foundHiggsCandidate = true;
-            RecoFourEEvent = true;
-            selectedElectrons.push_back(candElectrons[takenZ1_1]);
-            selectedElectrons.push_back(candElectrons[takenZ1_2]);
-            selectedElectrons.push_back(candElectrons[takenZ2_1]);
-            selectedElectrons.push_back(candElectrons[takenZ2_2]);
-        }
+      //nEvAfterZ1Cut += eventWeight;
+      //nEvAfterZ1Cut_4mu += eventWeight;
+      if( mZ2 > mZ2Low && mZ2 < mZ2High)
+      {
+        if(isSignal) sigEff_4->advanceSigNumCounters_MZ2(eventType, "reco4mu",eventWeight);
+        nEvAfterZ2Cut += eventWeight;
+        nEvAfterZ2Cut_4mu += eventWeight;
+      }
     }
-    else if( (Z1isEMu && (Z2isElectrons || Z2isMuons || Z2isMuE || Z2isEMu)) || ((Z1isElectrons || Z1isMuons || Z1isEMu) && (Z2isEMu || Z2isMuE)) )
+        
+    if( (mZ1 > mZ1Low && mZ1 < mZ1High) && (mZ2 > mZ2Low && mZ2 < mZ2High) )
     {
-        mZ1 = Z1Vec.M();
-        mZ2 = Z2Vec.M();
-        
-        if( (mZ1 > mZ1Low && mZ1 < mZ1High) && (mZ2 > mZ2Low && mZ2 < mZ2High) )
-        {
-            foundHiggsCandidate = true;
-            if( Z1isEMu && Z2isEMu ){
-                selectedMuons.push_back(candMuons[takenZ1_1]);
-                selectedElectrons.push_back(candElectrons[takenZ1_2]);
-                selectedElectrons.push_back(candElectrons[takenZ2_1]);
-                selectedMuons.push_back(candMuons[takenZ2_2]);
-                RecoFourMixEvent = 1;
-            }
-            if( Z1isEMu && Z2isMuE ){
-                selectedMuons.push_back(candMuons[takenZ1_1]);
-                selectedElectrons.push_back(candElectrons[takenZ1_2]);
-                selectedMuons.push_back(candMuons[takenZ2_1]);
-                selectedElectrons.push_back(candElectrons[takenZ2_2]);
-                RecoFourMixEvent = 2;
-            }
-            if( Z1isEMu && Z2isElectrons ){
-                selectedMuons.push_back(candMuons[takenZ1_1]);
-                selectedElectrons.push_back(candElectrons[takenZ1_2]);
-                selectedElectrons.push_back(candElectrons[takenZ2_1]);
-                selectedElectrons.push_back(candElectrons[takenZ2_2]);
-                RecoFourMixEvent = 3;
-            }
-            if( Z1isEMu && Z2isMuons ){
-                selectedMuons.push_back(candMuons[takenZ1_1]);
-                selectedElectrons.push_back(candElectrons[takenZ1_2]);
-                selectedMuons.push_back(candMuons[takenZ2_1]);
-                selectedMuons.push_back(candMuons[takenZ2_2]);
-                RecoFourMixEvent = 4;
-            }
-            if( Z1isElectrons && Z2isEMu ){
-                selectedElectrons.push_back(candElectrons[takenZ1_1]);
-                selectedElectrons.push_back(candElectrons[takenZ1_2]);
-                selectedElectrons.push_back(candElectrons[takenZ2_1]);
-                selectedMuons.push_back(candMuons[takenZ2_2]);
-                RecoFourMixEvent = 5;
-            }
-            if( Z1isElectrons && Z2isMuE ){
-                selectedElectrons.push_back(candElectrons[takenZ1_1]);
-                selectedElectrons.push_back(candElectrons[takenZ1_2]);
-                selectedMuons.push_back(candMuons[takenZ2_1]);
-                selectedElectrons.push_back(candElectrons[takenZ2_2]);
-                RecoFourMixEvent = 6;
-            }
-            if( Z1isMuons && Z2isEMu ){
-                selectedMuons.push_back(candMuons[takenZ1_1]);
-                selectedMuons.push_back(candMuons[takenZ1_2]);
-                selectedElectrons.push_back(candElectrons[takenZ2_1]);
-                selectedMuons.push_back(candMuons[takenZ2_2]);
-                RecoFourMixEvent = 7;
-            }
-            if( Z1isMuons && Z2isMuE ){
-                selectedMuons.push_back(candMuons[takenZ1_1]);
-                selectedMuons.push_back(candMuons[takenZ1_2]);
-                selectedMuons.push_back(candMuons[takenZ2_1]);
-                selectedElectrons.push_back(candElectrons[takenZ2_2]);
-                RecoFourMixEvent = 8;
-            }
-            
-        }
+      foundHiggsCandidate = true;
+      RecoFourMuEvent = true;
+      selectedMuons.push_back(candMuons[takenZ1_1]);
+      selectedMuons.push_back(candMuons[takenZ1_2]);
+      selectedMuons.push_back(candMuons[takenZ2_1]);
+      selectedMuons.push_back(candMuons[takenZ2_2]);
     }
+  }
+  else if( Z1isMuons == true && Z2isElectrons == true )
+  {
+    nEvBeforeZCuts += eventWeight;
+    nEvBeforeZCuts_2e2mu += eventWeight;
+    mZ1 = Z1Vec.M();
+    mZ2 = Z2Vec.M();
+    if( mZ1 > mZ1Low && mZ1 < mZ1High)
+    {
+      //nEvAfterZ1Cut += eventWeight;
+      //nEvAfterZ1Cut_2e2mu += eventWeight;
+      if( mZ2 >mZ2Low && mZ2 < mZ2High)
+      {
+        if(isSignal) sigEff_4->advanceSigNumCounters_MZ2(eventType, "reco2e2mu",eventWeight);
+        nEvAfterZ2Cut += eventWeight;
+        nEvAfterZ2Cut_2e2mu += eventWeight;
+      }
+    }
+    if( (mZ1 > mZ1Low && mZ1 < mZ1High) && (mZ2 > mZ2Low && mZ2 < mZ2High) )
+    {
+      foundHiggsCandidate = true;
+      RecoTwoMuTwoEEvent = true;
+      selectedMuons.push_back(candMuons[takenZ1_1]);
+      selectedMuons.push_back(candMuons[takenZ1_2]);
+      selectedElectrons.push_back(candElectrons[takenZ2_1]);
+      selectedElectrons.push_back(candElectrons[takenZ2_2]);
+    }
+  }    
+  else if( Z1isElectrons == true && Z2isMuons == true )
+  {
+    nEvBeforeZCuts += eventWeight;
+    nEvBeforeZCuts_2e2mu += eventWeight;
+    mZ1 = Z1Vec.M();
+    mZ2 = Z2Vec.M();
+    if( mZ1 > mZ1Low && mZ1 < mZ1High )
+    {
+      //nEvAfterZ1Cut += eventWeight;
+      //nEvAfterZ1Cut_2e2mu += eventWeight;
+      if( mZ2 >mZ2Low && mZ2 < mZ2High)
+      {
+        if(isSignal) sigEff_4->advanceSigNumCounters_MZ2(eventType, "reco2e2mu",eventWeight);
+        nEvAfterZ2Cut += eventWeight;
+        nEvAfterZ2Cut_2e2mu += eventWeight;
+      }
+    }
+    if( (mZ1 > mZ1Low && mZ1 < mZ1High) && (mZ2 > mZ2Low && mZ2 < mZ2High) )
+    {
+      foundHiggsCandidate = true;
+      RecoTwoETwoMuEvent = true;
+      selectedMuons.push_back(candMuons[takenZ2_1]);
+      selectedMuons.push_back(candMuons[takenZ2_2]);
+      selectedElectrons.push_back(candElectrons[takenZ1_1]);
+      selectedElectrons.push_back(candElectrons[takenZ1_2]);
+    }
+  }
+  else if( Z1isElectrons == true && Z2isElectrons == true )
+  {
+    nEvBeforeZCuts += eventWeight;
+    nEvBeforeZCuts_4e += eventWeight;
+    mZ1 = Z1Vec.M();
+    mZ2 = Z2Vec.M();
+    if( mZ1 > mZ1Low && mZ1 < mZ1High)
+    {
+      //nEvAfterZ1Cut += eventWeight;
+      //nEvAfterZ1Cut_4e += eventWeight;
+      if( mZ2 >mZ2Low && mZ2 < mZ2High)
+      {
+        if(isSignal) sigEff_4->advanceSigNumCounters_MZ2(eventType, "reco4e",eventWeight);
+        nEvAfterZ2Cut += eventWeight;  
+        nEvAfterZ2Cut_4e += eventWeight;
+      }
+    }
+    if( (mZ1 > mZ1Low && mZ1 < mZ1High) && (mZ2 > mZ2Low && mZ2 < mZ2High) )
+    {
+      foundHiggsCandidate = true;
+      RecoFourEEvent = true;
+      selectedElectrons.push_back(candElectrons[takenZ1_1]);
+      selectedElectrons.push_back(candElectrons[takenZ1_2]);
+      selectedElectrons.push_back(candElectrons[takenZ2_1]);
+      selectedElectrons.push_back(candElectrons[takenZ2_2]);
+    }
+  }
+  else if( (Z1isEMu && (Z2isElectrons || Z2isMuons || Z2isMuE || Z2isEMu)) || ((Z1isElectrons || Z1isMuons || Z1isEMu) && (Z2isEMu || Z2isMuE)) )
+  {
+    mZ1 = Z1Vec.M();
+    mZ2 = Z2Vec.M();
+    if( (mZ1 > mZ1Low && mZ1 < mZ1High) && (mZ2 > mZ2Low && mZ2 < mZ2High) )
+    {
+      foundHiggsCandidate = true;
+      if( Z1isEMu && Z2isEMu )
+      {
+        selectedMuons.push_back(candMuons[takenZ1_1]);
+        selectedElectrons.push_back(candElectrons[takenZ1_2]);
+        selectedElectrons.push_back(candElectrons[takenZ2_1]);
+        selectedMuons.push_back(candMuons[takenZ2_2]);
+        RecoFourMixEvent = 1;
+      }
+      if( Z1isEMu && Z2isMuE )
+      {
+        selectedMuons.push_back(candMuons[takenZ1_1]);
+        selectedElectrons.push_back(candElectrons[takenZ1_2]);
+        selectedMuons.push_back(candMuons[takenZ2_1]);
+        selectedElectrons.push_back(candElectrons[takenZ2_2]);
+        RecoFourMixEvent = 2;
+      }
+      if( Z1isEMu && Z2isElectrons )
+      {
+        selectedMuons.push_back(candMuons[takenZ1_1]);
+        electedElectrons.push_back(candElectrons[takenZ1_2]);
+        selectedElectrons.push_back(candElectrons[takenZ2_1]);
+        selectedElectrons.push_back(candElectrons[takenZ2_2]);
+        RecoFourMixEvent = 3;
+      }
+      if( Z1isEMu && Z2isMuons )
+      {
+        selectedMuons.push_back(candMuons[takenZ1_1]);
+        selectedElectrons.push_back(candElectrons[takenZ1_2]);
+        selectedMuons.push_back(candMuons[takenZ2_1]);
+        selectedMuons.push_back(candMuons[takenZ2_2]);
+        RecoFourMixEvent = 4;
+      }
+      if( Z1isElectrons && Z2isEMu )
+      {
+        selectedElectrons.push_back(candElectrons[takenZ1_1]);
+        selectedElectrons.push_back(candElectrons[takenZ1_2]);
+        selectedElectrons.push_back(candElectrons[takenZ2_1]);
+        selectedMuons.push_back(candMuons[takenZ2_2]);
+        RecoFourMixEvent = 5;
+      }
+      if( Z1isElectrons && Z2isMuE )
+      {
+        selectedElectrons.push_back(candElectrons[takenZ1_1]);
+        selectedElectrons.push_back(candElectrons[takenZ1_2]);
+        selectedMuons.push_back(candMuons[takenZ2_1]);
+        selectedElectrons.push_back(candElectrons[takenZ2_2]);
+        RecoFourMixEvent = 6;
+      }
+      if( Z1isMuons && Z2isEMu )
+      {
+        selectedMuons.push_back(candMuons[takenZ1_1]);
+        selectedMuons.push_back(candMuons[takenZ1_2]);
+        selectedElectrons.push_back(candElectrons[takenZ2_1]);
+        selectedMuons.push_back(candMuons[takenZ2_2]);
+        RecoFourMixEvent = 7;
+      }
+      if( Z1isMuons && Z2isMuE )
+      {
+        selectedMuons.push_back(candMuons[takenZ1_1]);
+        selectedMuons.push_back(candMuons[takenZ1_2]);
+        selectedMuons.push_back(candMuons[takenZ2_1]);
+        selectedElectrons.push_back(candElectrons[takenZ2_2]);
+        RecoFourMixEvent = 8;
+      }
+    }
+  }
     
-    // If a Higgs candidate is formed, save its information
-    if( foundHiggsCandidate )
-    {
-        HiggsCandVec = Z1Vec + Z2Vec;
-        m4l = HiggsCandVec.M();
-    }
-    
-    
+  // If a Higgs candidate is formed, save its information
+  if( foundHiggsCandidate )
+  {
+    HiggsCandVec = Z1Vec + Z2Vec;
+    m4l = HiggsCandVec.M();
+  }
 }
 
 double UFHZZ4LAna::getMinDeltaR(std::vector<pat::Muon> Muons, std::vector<pat::Electron> Electrons)
@@ -4800,277 +4759,274 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
   } 
   else if (RecoFourMixEvent==5) // eeemu
   {      
-          idL1 = selectedElectrons[0].pdgId();
-	  mvaL1 = elecID=="noEID" ? -100 : selectedElectrons[0].electronID(elecID);
-	  EL1 = selectedElectrons[0].energy();
-          SipL1 = helper.getSIP3D(selectedElectrons[0]);
-	  IPL1 = fabs(selectedElectrons[0].dB(pat::Electron::PV3D));
-	  dIPL1 = selectedElectrons[0].edB(pat::Electron::PV3D);
-          pTL1 = selectedElectrons[0].pt();
-          pXL1 = selectedElectrons[0].px();
-          pYL1 = selectedElectrons[0].py();
-          pZL1 = selectedElectrons[0].pz();
-          chargeL1 = selectedElectrons[0].charge();
-          etaL1 = selectedElectrons[0].eta();
-          phiL1 = selectedElectrons[0].phi();
-	  isoNHL1 = selectedElectrons[0].neutralHadronIso();
-	  isoCHL1 = selectedElectrons[0].chargedHadronIso();
-	  isoPhotL1 = selectedElectrons[0].photonIso();
-	  isoTrackL1 = selectedElectrons[0].dr03TkSumPt();
-          isoEcalL1 = selectedElectrons[0].dr03EcalRecHitSumEt();
-          isoHcalL1 = selectedElectrons[0].dr03HcalTowerSumEt();
-          RelIsoL1 = helper.pfIso(selectedElectrons[0],elecRho);
-	  RelIsoUCL1 = helper.pfIso(selectedElectrons[0],0);
+    idL1 = selectedElectrons[0].pdgId();
+    mvaL1 = elecID=="noEID" ? -100 : selectedElectrons[0].electronID(elecID);
+    EL1 = selectedElectrons[0].energy();
+    SipL1 = helper.getSIP3D(selectedElectrons[0]);
+    IPL1 = fabs(selectedElectrons[0].dB(pat::Electron::PV3D));
+    dIPL1 = selectedElectrons[0].edB(pat::Electron::PV3D);
+    pTL1 = selectedElectrons[0].pt();
+    pXL1 = selectedElectrons[0].px();
+    pYL1 = selectedElectrons[0].py();
+    pZL1 = selectedElectrons[0].pz();
+    chargeL1 = selectedElectrons[0].charge();
+    etaL1 = selectedElectrons[0].eta();
+    phiL1 = selectedElectrons[0].phi();
+    isoNHL1 = selectedElectrons[0].neutralHadronIso();
+    isoCHL1 = selectedElectrons[0].chargedHadronIso();
+    isoPhotL1 = selectedElectrons[0].photonIso();
+    isoTrackL1 = selectedElectrons[0].dr03TkSumPt();
+    isoEcalL1 = selectedElectrons[0].dr03EcalRecHitSumEt();
+    isoHcalL1 = selectedElectrons[0].dr03HcalTowerSumEt();
+    RelIsoL1 = helper.pfIso(selectedElectrons[0],elecRho);
+    RelIsoUCL1 = helper.pfIso(selectedElectrons[0],0);
 
-          idL2 = selectedElectrons[1].pdgId();
-	  mvaL2 = elecID=="noEID" ? -100 : selectedElectrons[1].electronID(elecID);
-	  EL2 = selectedElectrons[1].energy();
-          SipL2 = helper.getSIP3D(selectedElectrons[1]);
-	  IPL2 = fabs(selectedElectrons[1].dB(pat::Electron::PV3D));
-	  dIPL2 = selectedElectrons[1].edB(pat::Electron::PV3D);
-          pTL2 = selectedElectrons[1].pt();
-          pXL2 = selectedElectrons[1].px();
-          pYL2 = selectedElectrons[1].py();
-          pZL2 = selectedElectrons[1].pz();
-          chargeL2 = selectedElectrons[1].charge();
-          etaL2 = selectedElectrons[1].eta();
-          phiL2 = selectedElectrons[1].phi();
-          isoNHL2 = selectedElectrons[1].neutralHadronIso();
-	  isoCHL2 = selectedElectrons[1].chargedHadronIso();
-	  isoPhotL2 = selectedElectrons[1].photonIso();
-	  isoTrackL2 = selectedElectrons[1].dr03TkSumPt();
-          isoEcalL2 = selectedElectrons[1].dr03EcalRecHitSumEt();
-          isoHcalL2 = selectedElectrons[1].dr03HcalTowerSumEt();
-          RelIsoL2 = helper.pfIso(selectedElectrons[1],elecRho);
-	  RelIsoUCL2 = helper.pfIso(selectedElectrons[1],0);
+    idL2 = selectedElectrons[1].pdgId();
+    mvaL2 = elecID=="noEID" ? -100 : selectedElectrons[1].electronID(elecID);
+    EL2 = selectedElectrons[1].energy();
+    SipL2 = helper.getSIP3D(selectedElectrons[1]);
+    IPL2 = fabs(selectedElectrons[1].dB(pat::Electron::PV3D));
+    dIPL2 = selectedElectrons[1].edB(pat::Electron::PV3D);
+    pTL2 = selectedElectrons[1].pt();
+    pXL2 = selectedElectrons[1].px();
+    pYL2 = selectedElectrons[1].py();
+    pZL2 = selectedElectrons[1].pz();
+    chargeL2 = selectedElectrons[1].charge();
+    etaL2 = selectedElectrons[1].eta();
+    phiL2 = selectedElectrons[1].phi();
+    isoNHL2 = selectedElectrons[1].neutralHadronIso();
+    isoCHL2 = selectedElectrons[1].chargedHadronIso();
+    isoPhotL2 = selectedElectrons[1].photonIso();
+    isoTrackL2 = selectedElectrons[1].dr03TkSumPt();
+    isoEcalL2 = selectedElectrons[1].dr03EcalRecHitSumEt();
+    isoHcalL2 = selectedElectrons[1].dr03HcalTowerSumEt();
+    RelIsoL2 = helper.pfIso(selectedElectrons[1],elecRho);
+    RelIsoUCL2 = helper.pfIso(selectedElectrons[1],0);
 
-          idL3 = selectedElectrons[2].pdgId();
-	  mvaL3 = elecID=="noEID" ? -100 : selectedElectrons[2].electronID(elecID);
-	  EL3 = selectedElectrons[2].energy();
-          SipL3 = helper.getSIP3D(selectedElectrons[2]);
-	  IPL3 = fabs(selectedElectrons[2].dB(pat::Electron::PV3D));
-	  dIPL3 = selectedElectrons[2].edB(pat::Electron::PV3D);
-          pTL3 = selectedElectrons[2].pt();
-          pXL3 = selectedElectrons[2].px();
-          pYL3 = selectedElectrons[2].py();
-          pZL3 = selectedElectrons[2].pz();
-          chargeL3 = selectedElectrons[2].charge();
-          etaL3 = selectedElectrons[2].eta();
-          phiL3 = selectedElectrons[2].phi();
-          isoNHL3 = selectedElectrons[2].neutralHadronIso();
-	  isoCHL3 = selectedElectrons[2].chargedHadronIso();
-	  isoPhotL3 = selectedElectrons[2].photonIso();
-	  isoTrackL3 = selectedElectrons[2].dr03TkSumPt();
-          isoEcalL3 = selectedElectrons[2].dr03EcalRecHitSumEt();
-          isoHcalL3 = selectedElectrons[2].dr03HcalTowerSumEt();
-          RelIsoL3 = helper.pfIso(selectedElectrons[2],elecRho);
-	  RelIsoUCL3 = helper.pfIso(selectedElectrons[2],0);
+    idL3 = selectedElectrons[2].pdgId();
+    mvaL3 = elecID=="noEID" ? -100 : selectedElectrons[2].electronID(elecID);
+    EL3 = selectedElectrons[2].energy();
+    SipL3 = helper.getSIP3D(selectedElectrons[2]);
+    IPL3 = fabs(selectedElectrons[2].dB(pat::Electron::PV3D));
+    dIPL3 = selectedElectrons[2].edB(pat::Electron::PV3D);
+    pTL3 = selectedElectrons[2].pt();
+    pXL3 = selectedElectrons[2].px();
+    pYL3 = selectedElectrons[2].py();
+    pZL3 = selectedElectrons[2].pz();
+    chargeL3 = selectedElectrons[2].charge();
+    etaL3 = selectedElectrons[2].eta();
+    phiL3 = selectedElectrons[2].phi();
+    isoNHL3 = selectedElectrons[2].neutralHadronIso();
+    isoCHL3 = selectedElectrons[2].chargedHadronIso();
+    isoPhotL3 = selectedElectrons[2].photonIso();
+    isoTrackL3 = selectedElectrons[2].dr03TkSumPt();
+    isoEcalL3 = selectedElectrons[2].dr03EcalRecHitSumEt();
+    isoHcalL3 = selectedElectrons[2].dr03HcalTowerSumEt();
+    RelIsoL3 = helper.pfIso(selectedElectrons[2],elecRho);
+    RelIsoUCL3 = helper.pfIso(selectedElectrons[2],0);
 
-          idL4 = selectedMuons[0].pdgId();
-	  mvaL4 = selectedMuons[0].isPFMuon();
-	  EL4 = selectedMuons[0].energy();
-          SipL4 = helper.getSIP3D(selectedMuons[0]);
-	  IPL4 = fabs(selectedMuons[0].dB(pat::Muon::PV3D));
-	  dIPL4 = selectedMuons[0].edB(pat::Muon::PV3D);
-          pTL4 = selectedMuons[0].pt();
-          pXL4 = selectedMuons[0].px();
-          pYL4 = selectedMuons[0].py();
-          pZL4 = selectedMuons[0].pz();
-          chargeL4 = selectedMuons[0].charge();
-          etaL4 = selectedMuons[0].eta();
-          phiL4 = selectedMuons[0].phi();
-          isoNHL4 = selectedMuons[0].neutralHadronIso();
-	  isoCHL4 = selectedMuons[0].chargedHadronIso();
-	  isoPhotL4 = selectedMuons[0].photonIso();
-	  isoTrackL4 = selectedMuons[0].trackIso();
-          isoEcalL4 = selectedMuons[0].ecalIso();
-          isoHcalL4 = selectedMuons[0].hcalIso();
-          RelIsoL4 = helper.pfIso(selectedMuons[0],muonRho);
-	  RelIsoUCL4 = helper.pfIso(selectedMuons[0],0);
- 
-      } 
-      else if (RecoFourMixEvent==6) // eemue
-      {      
-          idL1 = selectedElectrons[0].pdgId();
-	  mvaL1 = elecID=="noEID" ? -100 : selectedElectrons[0].electronID(elecID);
-	  EL1 = selectedElectrons[0].energy();
-          SipL1 = helper.getSIP3D(selectedElectrons[0]);
-	  IPL1 = fabs(selectedElectrons[0].dB(pat::Electron::PV3D));
-	  dIPL1 = selectedElectrons[0].edB(pat::Electron::PV3D);
-          pTL1 = selectedElectrons[0].pt();
-          pXL1 = selectedElectrons[0].px();
-          pYL1 = selectedElectrons[0].py();
-          pZL1 = selectedElectrons[0].pz();
-          chargeL1 = selectedElectrons[0].charge();
-          etaL1 = selectedElectrons[0].eta();
-          phiL1 = selectedElectrons[0].phi();
-          isoNHL1 = selectedElectrons[0].neutralHadronIso();
-	  isoCHL1 = selectedElectrons[0].chargedHadronIso();
-	  isoPhotL1 = selectedElectrons[0].photonIso();
-	  isoTrackL1 = selectedElectrons[0].dr03TkSumPt();
-          isoEcalL1 = selectedElectrons[0].dr03EcalRecHitSumEt();
-          isoHcalL1 = selectedElectrons[0].dr03HcalTowerSumEt();
-          RelIsoL1 = helper.pfIso(selectedElectrons[0],elecRho);
-	  RelIsoUCL1 = helper.pfIso(selectedElectrons[0],0);
+    idL4 = selectedMuons[0].pdgId();
+    mvaL4 = selectedMuons[0].isPFMuon();
+    EL4 = selectedMuons[0].energy();
+    SipL4 = helper.getSIP3D(selectedMuons[0]);
+    IPL4 = fabs(selectedMuons[0].dB(pat::Muon::PV3D));
+    dIPL4 = selectedMuons[0].edB(pat::Muon::PV3D);
+    pTL4 = selectedMuons[0].pt();
+    pXL4 = selectedMuons[0].px();
+    pYL4 = selectedMuons[0].py();
+    pZL4 = selectedMuons[0].pz();
+    chargeL4 = selectedMuons[0].charge();
+    etaL4 = selectedMuons[0].eta();
+    phiL4 = selectedMuons[0].phi();
+    isoNHL4 = selectedMuons[0].neutralHadronIso();
+    isoCHL4 = selectedMuons[0].chargedHadronIso();
+    isoPhotL4 = selectedMuons[0].photonIso();
+    isoTrackL4 = selectedMuons[0].trackIso();
+    isoEcalL4 = selectedMuons[0].ecalIso();
+    isoHcalL4 = selectedMuons[0].hcalIso();
+    RelIsoL4 = helper.pfIso(selectedMuons[0],muonRho);
+    RelIsoUCL4 = helper.pfIso(selectedMuons[0],0); 
+  } 
+  else if (RecoFourMixEvent==6) // eemue
+  {      
+    idL1 = selectedElectrons[0].pdgId();
+    mvaL1 = elecID=="noEID" ? -100 : selectedElectrons[0].electronID(elecID);
+    EL1 = selectedElectrons[0].energy();
+    SipL1 = helper.getSIP3D(selectedElectrons[0]);
+    IPL1 = fabs(selectedElectrons[0].dB(pat::Electron::PV3D));
+    dIPL1 = selectedElectrons[0].edB(pat::Electron::PV3D);
+    pTL1 = selectedElectrons[0].pt();
+    pXL1 = selectedElectrons[0].px();
+    pYL1 = selectedElectrons[0].py();
+    pZL1 = selectedElectrons[0].pz();
+    chargeL1 = selectedElectrons[0].charge();
+    etaL1 = selectedElectrons[0].eta();
+    phiL1 = selectedElectrons[0].phi();
+    isoNHL1 = selectedElectrons[0].neutralHadronIso();
+    isoCHL1 = selectedElectrons[0].chargedHadronIso();
+    isoPhotL1 = selectedElectrons[0].photonIso();
+    isoTrackL1 = selectedElectrons[0].dr03TkSumPt();
+    isoEcalL1 = selectedElectrons[0].dr03EcalRecHitSumEt();
+    isoHcalL1 = selectedElectrons[0].dr03HcalTowerSumEt();
+    RelIsoL1 = helper.pfIso(selectedElectrons[0],elecRho);
+    RelIsoUCL1 = helper.pfIso(selectedElectrons[0],0);
 
-          idL2 = selectedElectrons[1].pdgId();
-	  mvaL2 = elecID=="noEID" ? -100 : selectedElectrons[1].electronID(elecID);
-	  EL2 = selectedElectrons[1].energy();
-          SipL2 = helper.getSIP3D(selectedElectrons[1]);
-	  IPL2 = fabs(selectedElectrons[1].dB(pat::Electron::PV3D));
-	  dIPL2 = selectedElectrons[1].edB(pat::Electron::PV3D);
-          pTL2 = selectedElectrons[1].pt();
-          pXL2 = selectedElectrons[1].px();
-          pYL2 = selectedElectrons[1].py();
-          pZL2 = selectedElectrons[1].pz();
-          chargeL2 = selectedElectrons[1].charge();
-          etaL2 = selectedElectrons[1].eta();
-          phiL2 = selectedElectrons[1].phi();
-          isoNHL2 = selectedElectrons[1].neutralHadronIso();
-	  isoCHL2 = selectedElectrons[1].chargedHadronIso();
-	  isoPhotL2 = selectedElectrons[1].photonIso();
-	  isoTrackL2 = selectedElectrons[1].dr03TkSumPt();
-          isoEcalL2 = selectedElectrons[1].dr03EcalRecHitSumEt();
-          isoHcalL2 = selectedElectrons[1].dr03HcalTowerSumEt();
-          RelIsoL2 = helper.pfIso(selectedElectrons[1],elecRho);
-	  RelIsoUCL2 = helper.pfIso(selectedElectrons[1],0);
+    idL2 = selectedElectrons[1].pdgId();
+    mvaL2 = elecID=="noEID" ? -100 : selectedElectrons[1].electronID(elecID);
+    EL2 = selectedElectrons[1].energy();
+    SipL2 = helper.getSIP3D(selectedElectrons[1]);
+    IPL2 = fabs(selectedElectrons[1].dB(pat::Electron::PV3D));
+    dIPL2 = selectedElectrons[1].edB(pat::Electron::PV3D);
+    pTL2 = selectedElectrons[1].pt();
+    pXL2 = selectedElectrons[1].px();
+    pYL2 = selectedElectrons[1].py();
+    pZL2 = selectedElectrons[1].pz();
+    chargeL2 = selectedElectrons[1].charge();
+    etaL2 = selectedElectrons[1].eta();
+    phiL2 = selectedElectrons[1].phi();
+    isoNHL2 = selectedElectrons[1].neutralHadronIso();
+    isoCHL2 = selectedElectrons[1].chargedHadronIso();
+    isoPhotL2 = selectedElectrons[1].photonIso();
+    isoTrackL2 = selectedElectrons[1].dr03TkSumPt();
+    isoEcalL2 = selectedElectrons[1].dr03EcalRecHitSumEt();
+    isoHcalL2 = selectedElectrons[1].dr03HcalTowerSumEt();
+    RelIsoL2 = helper.pfIso(selectedElectrons[1],elecRho);
+    RelIsoUCL2 = helper.pfIso(selectedElectrons[1],0);
 
-          idL3 = selectedMuons[0].pdgId();
-	  mvaL3 = selectedMuons[0].isPFMuon();
-	  EL3 = selectedMuons[0].energy();
-          SipL3 = helper.getSIP3D(selectedMuons[0]);
-	  IPL3 = fabs(selectedMuons[0].dB(pat::Muon::PV3D));
-	  dIPL3 = selectedMuons[0].edB(pat::Muon::PV3D);
-          pTL3 = selectedMuons[0].pt();
-          pXL3 = selectedMuons[0].px();
-          pYL3 = selectedMuons[0].py();
-          pZL3 = selectedMuons[0].pz();
-          chargeL3 = selectedMuons[0].charge();
-          etaL3 = selectedMuons[0].eta();
-          phiL3 = selectedMuons[0].phi();
-          isoNHL3 = selectedMuons[0].neutralHadronIso();
-	  isoCHL3 = selectedMuons[0].chargedHadronIso();
-	  isoPhotL3 = selectedMuons[0].photonIso();
-	  isoTrackL3 = selectedMuons[0].trackIso();
-          isoEcalL3 = selectedMuons[0].ecalIso();
-          isoHcalL3 = selectedMuons[0].hcalIso();
-          RelIsoL3 = helper.pfIso(selectedMuons[0],muonRho);
-	  RelIsoUCL3 = helper.pfIso(selectedMuons[0],0);
+    idL3 = selectedMuons[0].pdgId();
+    mvaL3 = selectedMuons[0].isPFMuon();
+    EL3 = selectedMuons[0].energy();
+    SipL3 = helper.getSIP3D(selectedMuons[0]);
+    IPL3 = fabs(selectedMuons[0].dB(pat::Muon::PV3D));
+    dIPL3 = selectedMuons[0].edB(pat::Muon::PV3D);
+    pTL3 = selectedMuons[0].pt();
+    pXL3 = selectedMuons[0].px();
+    pYL3 = selectedMuons[0].py();
+    pZL3 = selectedMuons[0].pz();
+    chargeL3 = selectedMuons[0].charge();
+    etaL3 = selectedMuons[0].eta();
+    phiL3 = selectedMuons[0].phi();
+    isoNHL3 = selectedMuons[0].neutralHadronIso();
+    isoCHL3 = selectedMuons[0].chargedHadronIso();
+    isoPhotL3 = selectedMuons[0].photonIso();
+    isoTrackL3 = selectedMuons[0].trackIso();
+    isoEcalL3 = selectedMuons[0].ecalIso();
+    isoHcalL3 = selectedMuons[0].hcalIso();
+    RelIsoL3 = helper.pfIso(selectedMuons[0],muonRho);
+    RelIsoUCL3 = helper.pfIso(selectedMuons[0],0);
 
-          idL4 = selectedElectrons[2].pdgId();
-	  mvaL4 = elecID=="noEID" ? -100 : selectedElectrons[2].electronID(elecID);
-	  EL4 = selectedElectrons[2].energy();
-          SipL4 = helper.getSIP3D(selectedElectrons[2]);
-	  IPL4 = fabs(selectedElectrons[2].dB(pat::Electron::PV3D));
-	  dIPL4 = selectedElectrons[2].edB(pat::Electron::PV3D);
-          pTL4 = selectedElectrons[2].pt();
-          pXL4 = selectedElectrons[2].px();
-          pYL4 = selectedElectrons[2].py();
-          pZL4 = selectedElectrons[2].pz();
-          chargeL4 = selectedElectrons[2].charge();
-          etaL4 = selectedElectrons[2].eta();
-          phiL4 = selectedElectrons[2].phi();
-          isoNHL4 = selectedElectrons[2].neutralHadronIso();
-	  isoCHL4 = selectedElectrons[2].chargedHadronIso();
-	  isoPhotL4 = selectedElectrons[2].photonIso();
-	  isoTrackL4 = selectedElectrons[2].dr03TkSumPt();
-          isoEcalL4 = selectedElectrons[2].dr03EcalRecHitSumEt();
-          isoHcalL4 = selectedElectrons[2].dr03HcalTowerSumEt();
-          RelIsoL4 = helper.pfIso(selectedElectrons[0],elecRho);
-	  RelIsoUCL4 = helper.pfIso(selectedElectrons[0],0);
- 
-      } 
-      else if (RecoFourMixEvent==7) // mumuemu
-      {      
-          idL1 = selectedMuons[0].pdgId();
-	  mvaL1 = selectedMuons[0].isPFMuon();
-	  EL1 = selectedMuons[0].energy();
-          SipL1 = helper.getSIP3D(selectedMuons[0]);
-	  IPL1 = fabs(selectedMuons[0].dB(pat::Muon::PV3D));
-	  dIPL1 = selectedMuons[0].edB(pat::Muon::PV3D);
-          pTL1 = selectedMuons[0].pt();
-          pXL1 = selectedMuons[0].px();
-          pYL1 = selectedMuons[0].py();
-          pZL1 = selectedMuons[0].pz();
-          chargeL1 = selectedMuons[0].charge();
-          etaL1 = selectedMuons[0].eta();
-          phiL1 = selectedMuons[0].phi();
-          isoNHL1 = selectedMuons[0].neutralHadronIso();
-	  isoCHL1 = selectedMuons[0].chargedHadronIso();
-	  isoPhotL1 = selectedMuons[0].photonIso();
-	  isoTrackL1 = selectedMuons[0].trackIso();
-          isoEcalL1 = selectedMuons[0].ecalIso();
-          isoHcalL1 = selectedMuons[0].hcalIso();
-          RelIsoL1 = helper.pfIso(selectedMuons[0],muonRho);
-	  RelIsoUCL1 = helper.pfIso(selectedMuons[0],0);
+    idL4 = selectedElectrons[2].pdgId();
+    mvaL4 = elecID=="noEID" ? -100 : selectedElectrons[2].electronID(elecID);
+    EL4 = selectedElectrons[2].energy();
+    SipL4 = helper.getSIP3D(selectedElectrons[2]);
+    IPL4 = fabs(selectedElectrons[2].dB(pat::Electron::PV3D));
+    dIPL4 = selectedElectrons[2].edB(pat::Electron::PV3D);
+    pTL4 = selectedElectrons[2].pt();
+    pXL4 = selectedElectrons[2].px();
+    pYL4 = selectedElectrons[2].py();
+    pZL4 = selectedElectrons[2].pz();
+    chargeL4 = selectedElectrons[2].charge();
+    etaL4 = selectedElectrons[2].eta();
+    phiL4 = selectedElectrons[2].phi();
+    isoNHL4 = selectedElectrons[2].neutralHadronIso();
+    isoCHL4 = selectedElectrons[2].chargedHadronIso();
+    isoPhotL4 = selectedElectrons[2].photonIso();
+    isoTrackL4 = selectedElectrons[2].dr03TkSumPt();
+    isoEcalL4 = selectedElectrons[2].dr03EcalRecHitSumEt();
+    isoHcalL4 = selectedElectrons[2].dr03HcalTowerSumEt();
+    RelIsoL4 = helper.pfIso(selectedElectrons[0],elecRho);
+    RelIsoUCL4 = helper.pfIso(selectedElectrons[0],0);
+  } 
+  else if (RecoFourMixEvent==7) // mumuemu
+  {      
+    idL1 = selectedMuons[0].pdgId();
+    mvaL1 = selectedMuons[0].isPFMuon();
+    EL1 = selectedMuons[0].energy();
+    SipL1 = helper.getSIP3D(selectedMuons[0]);
+    IPL1 = fabs(selectedMuons[0].dB(pat::Muon::PV3D));
+    dIPL1 = selectedMuons[0].edB(pat::Muon::PV3D);
+    pTL1 = selectedMuons[0].pt();
+    pXL1 = selectedMuons[0].px();
+    pYL1 = selectedMuons[0].py();
+    pZL1 = selectedMuons[0].pz();
+    chargeL1 = selectedMuons[0].charge();
+    etaL1 = selectedMuons[0].eta();
+    phiL1 = selectedMuons[0].phi();
+    isoNHL1 = selectedMuons[0].neutralHadronIso();
+    isoCHL1 = selectedMuons[0].chargedHadronIso();
+    isoPhotL1 = selectedMuons[0].photonIso();
+    isoTrackL1 = selectedMuons[0].trackIso();
+    isoEcalL1 = selectedMuons[0].ecalIso();
+    isoHcalL1 = selectedMuons[0].hcalIso();
+    RelIsoL1 = helper.pfIso(selectedMuons[0],muonRho);
+    RelIsoUCL1 = helper.pfIso(selectedMuons[0],0);
 
-          idL2 = selectedMuons[1].pdgId();
-	  mvaL2 = selectedMuons[1].isPFMuon();
-	  EL2 = selectedMuons[1].energy();
-          SipL2 = helper.getSIP3D(selectedMuons[1]);
-	  IPL2 = fabs(selectedMuons[1].dB(pat::Muon::PV3D));
-	  dIPL2 = selectedMuons[1].edB(pat::Muon::PV3D);
-          pTL2 = selectedMuons[1].pt();
-          pXL2 = selectedMuons[1].px();
-          pYL2 = selectedMuons[1].py();
-          pZL2 = selectedMuons[1].pz();
-          chargeL2 = selectedMuons[1].charge();
-          etaL2 = selectedMuons[1].eta();
-          phiL2 = selectedMuons[1].phi();
-          isoNHL2 = selectedMuons[1].neutralHadronIso();
-	  isoCHL2 = selectedMuons[1].chargedHadronIso();
-	  isoPhotL2 = selectedMuons[1].photonIso();
-	  isoTrackL2 = selectedMuons[1].trackIso();
-          isoEcalL2 = selectedMuons[1].ecalIso();
-          isoHcalL2 = selectedMuons[1].hcalIso();
-          RelIsoL2 = helper.pfIso(selectedMuons[1],muonRho);
-	  RelIsoUCL2 = helper.pfIso(selectedMuons[1],0);
+    idL2 = selectedMuons[1].pdgId();
+    mvaL2 = selectedMuons[1].isPFMuon();
+    EL2 = selectedMuons[1].energy();
+    SipL2 = helper.getSIP3D(selectedMuons[1]);
+    IPL2 = fabs(selectedMuons[1].dB(pat::Muon::PV3D));
+    dIPL2 = selectedMuons[1].edB(pat::Muon::PV3D);
+    pTL2 = selectedMuons[1].pt();
+    pXL2 = selectedMuons[1].px();
+    pYL2 = selectedMuons[1].py();
+    pZL2 = selectedMuons[1].pz();
+    chargeL2 = selectedMuons[1].charge();
+    etaL2 = selectedMuons[1].eta();
+    phiL2 = selectedMuons[1].phi();
+    isoNHL2 = selectedMuons[1].neutralHadronIso();
+    isoCHL2 = selectedMuons[1].chargedHadronIso();
+    isoPhotL2 = selectedMuons[1].photonIso();
+    isoTrackL2 = selectedMuons[1].trackIso();
+    isoEcalL2 = selectedMuons[1].ecalIso();
+    isoHcalL2 = selectedMuons[1].hcalIso();
+    RelIsoL2 = helper.pfIso(selectedMuons[1],muonRho);
+    RelIsoUCL2 = helper.pfIso(selectedMuons[1],0);
 
-          idL3 = selectedElectrons[0].pdgId();
-	  mvaL3 = elecID=="noEID" ? -100 : selectedElectrons[0].electronID(elecID);
-	  EL3 = selectedElectrons[0].energy();
-          SipL3 = helper.getSIP3D(selectedElectrons[0]);
-	  IPL3 = fabs(selectedElectrons[0].dB(pat::Electron::PV3D));
-	  dIPL3 = selectedElectrons[0].edB(pat::Electron::PV3D);
-          pTL3 = selectedElectrons[0].pt();
-          pXL3 = selectedElectrons[0].px();
-          pYL3 = selectedElectrons[0].py();
-          pZL3 = selectedElectrons[0].pz();
-          chargeL3 = selectedElectrons[0].charge();
-          etaL3 = selectedElectrons[0].eta();
-          phiL3 = selectedElectrons[0].phi();
-          isoNHL3 = selectedElectrons[0].neutralHadronIso();
-	  isoCHL3 = selectedElectrons[0].chargedHadronIso();
-	  isoPhotL3 = selectedElectrons[0].photonIso();
-	  isoTrackL3 = selectedElectrons[0].dr03TkSumPt();
-          isoEcalL3 = selectedElectrons[0].dr03EcalRecHitSumEt();
-          isoHcalL3 = selectedElectrons[0].dr03HcalTowerSumEt();
-          RelIsoL3 = helper.pfIso(selectedElectrons[0],elecRho);
-	  RelIsoUCL3 = helper.pfIso(selectedElectrons[0],0);
+    idL3 = selectedElectrons[0].pdgId();
+    mvaL3 = elecID=="noEID" ? -100 : selectedElectrons[0].electronID(elecID);
+    EL3 = selectedElectrons[0].energy();
+    SipL3 = helper.getSIP3D(selectedElectrons[0]);
+    IPL3 = fabs(selectedElectrons[0].dB(pat::Electron::PV3D));
+    dIPL3 = selectedElectrons[0].edB(pat::Electron::PV3D);
+    pTL3 = selectedElectrons[0].pt();
+    pXL3 = selectedElectrons[0].px();
+    pYL3 = selectedElectrons[0].py();
+    pZL3 = selectedElectrons[0].pz();
+    chargeL3 = selectedElectrons[0].charge();
+    etaL3 = selectedElectrons[0].eta();
+    phiL3 = selectedElectrons[0].phi();
+    isoNHL3 = selectedElectrons[0].neutralHadronIso();
+    isoCHL3 = selectedElectrons[0].chargedHadronIso();
+    isoPhotL3 = selectedElectrons[0].photonIso();
+    isoTrackL3 = selectedElectrons[0].dr03TkSumPt();
+    isoEcalL3 = selectedElectrons[0].dr03EcalRecHitSumEt();
+    isoHcalL3 = selectedElectrons[0].dr03HcalTowerSumEt();
+    RelIsoL3 = helper.pfIso(selectedElectrons[0],elecRho);
+    RelIsoUCL3 = helper.pfIso(selectedElectrons[0],0);
 
-          idL4 = selectedMuons[2].pdgId();
-	  mvaL4 = selectedMuons[2].isPFMuon();
-	  EL4 = selectedMuons[2].energy();
-          SipL4 = helper.getSIP3D(selectedMuons[2]);
-	  IPL4 = fabs(selectedMuons[2].dB(pat::Muon::PV3D));
-	  dIPL4 = selectedMuons[2].edB(pat::Muon::PV3D);
-          pTL4 = selectedMuons[2].pt();
-          pXL4 = selectedMuons[2].px();
-          pYL4 = selectedMuons[2].py();
-          pZL4 = selectedMuons[2].pz();
-          chargeL4 = selectedMuons[2].charge();
-          etaL4 = selectedMuons[2].eta();
-          phiL4 = selectedMuons[2].phi();
-          isoNHL4 = selectedMuons[2].neutralHadronIso();
-	  isoCHL4 = selectedMuons[2].chargedHadronIso();
-	  isoPhotL4 = selectedMuons[2].photonIso();
-	  isoTrackL4 = selectedMuons[2].trackIso();
-          isoEcalL4 = selectedMuons[2].ecalIso();
-          isoHcalL4 = selectedMuons[2].hcalIso();
-          RelIsoL4 = helper.pfIso(selectedMuons[2],muonRho);
-	  RelIsoUCL4 = helper.pfIso(selectedMuons[2],0);
- 
-      } 
+    idL4 = selectedMuons[2].pdgId();
+    mvaL4 = selectedMuons[2].isPFMuon();
+    EL4 = selectedMuons[2].energy();
+    SipL4 = helper.getSIP3D(selectedMuons[2]);
+    IPL4 = fabs(selectedMuons[2].dB(pat::Muon::PV3D));
+    dIPL4 = selectedMuons[2].edB(pat::Muon::PV3D);
+    pTL4 = selectedMuons[2].pt();
+    pXL4 = selectedMuons[2].px();
+    pYL4 = selectedMuons[2].py();
+    pZL4 = selectedMuons[2].pz();
+    chargeL4 = selectedMuons[2].charge();
+    etaL4 = selectedMuons[2].eta();
+    phiL4 = selectedMuons[2].phi();
+    isoNHL4 = selectedMuons[2].neutralHadronIso();
+    isoCHL4 = selectedMuons[2].chargedHadronIso();
+    isoPhotL4 = selectedMuons[2].photonIso();
+    isoTrackL4 = selectedMuons[2].trackIso();
+    isoEcalL4 = selectedMuons[2].ecalIso();
+    isoHcalL4 = selectedMuons[2].hcalIso();
+    RelIsoL4 = helper.pfIso(selectedMuons[2],muonRho);
+    RelIsoUCL4 = helper.pfIso(selectedMuons[2],0);
+  } 
   else if (RecoFourMixEvent==8) // mumumue
   {      
     idL1 = selectedMuons[0].pdgId();
@@ -5160,7 +5116,6 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
     isoHcalL4 = selectedElectrons[0].dr03HcalTowerSumEt();
     RelIsoL4 = helper.pfIso(selectedElectrons[0],elecRho);
     RelIsoUCL4 = helper.pfIso(selectedElectrons[0],0);
- 
   } 
   else
   {      
@@ -5226,9 +5181,15 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
     isoEcalL4 = -999.99;
     isoHcalL4 = -999.99;
     RelIsoL4 = -999.99;
-    RelIsoUCL4 = -999.99;
- 
+    RelIsoUCL4 = -999.99; 
   } 
+
+  // Hengne: There are still 4 combinations leading with electron that are not considered above:
+  // e m m m 
+  // e m m e
+  // e m e m
+  // e m e e
+  // Why not consider them?
 
 
   double tempDeltaR = 999;
@@ -5289,278 +5250,245 @@ void UFHZZ4LAna::setGENVariables(std::vector<reco::GenParticle> Higgs,
 		     std::vector<reco::GenParticle> leptonsS1, std::vector<reco::GenParticle> leptonsS3)
 {
 
-
   if( Higgs.size() == 1) GENMH = Higgs[0].mass();
-
   if( leptonsS1.size() == 4)
-    {
-      GENidL1_S1 = leptonsS1[0].pdgId(); GENidL2_S1 = leptonsS1[1].pdgId(); 
-      GENidL3_S1 = leptonsS1[2].pdgId(); GENidL4_S1 = leptonsS1[3].pdgId();
-      
-      GENpTL1_S1 = leptonsS1[0].pt(); GENpTL2_S1 = leptonsS1[1].pt(); 
-      GENpTL3_S1 = leptonsS1[2].pt(); GENpTL4_S1 = leptonsS1[3].pt();
-
-      GENpXL1_S1 = leptonsS1[0].px(); GENpXL2_S1 = leptonsS1[1].px(); 
-      GENpXL3_S1 = leptonsS1[2].px(); GENpXL4_S1 = leptonsS1[3].px();
-
-      GENpYL1_S1 = leptonsS1[0].py(); GENpYL2_S1 = leptonsS1[1].py(); 
-      GENpYL3_S1 = leptonsS1[2].py(); GENpYL4_S1 = leptonsS1[3].py();
-
-      GENpZL1_S1 = leptonsS1[0].pz(); GENpZL2_S1 = leptonsS1[1].pz(); 
-      GENpZL3_S1 = leptonsS1[2].pz(); GENpZL4_S1 = leptonsS1[3].pz();
-
-      GENEL1_S1 = leptonsS1[0].energy(); GENEL2_S1 = leptonsS1[1].energy(); 
-      GENEL3_S1 = leptonsS1[2].energy(); GENEL4_S1 = leptonsS1[3].energy();
-
-      GENchargeL1_S1 = leptonsS1[0].charge(); GENchargeL2_S1 = leptonsS1[1].charge();
-      GENchargeL3_S1 = leptonsS1[2].charge(); GENchargeL4_S1 = leptonsS1[3].charge();
-   
-      GENetaL1_S1 = leptonsS1[0].eta(); GENetaL2_S1 = leptonsS1[1].eta();
-      GENetaL3_S1 = leptonsS1[2].eta(); GENetaL4_S1 = leptonsS1[3].eta();
-     
-      GENphiL1_S1 = leptonsS1[0].phi(); GENphiL2_S1 = leptonsS1[1].phi();
-      GENphiL3_S1 = leptonsS1[2].phi(); GENphiL4_S1 = leptonsS1[3].phi();
-      
-      GENM4L = (leptonsS1[0].p4()+leptonsS1[1].p4()+leptonsS1[2].p4()+leptonsS1[3].p4()).M();
-
-    }
+  {
+    GENidL1_S1 = leptonsS1[0].pdgId(); GENidL2_S1 = leptonsS1[1].pdgId(); 
+    GENidL3_S1 = leptonsS1[2].pdgId(); GENidL4_S1 = leptonsS1[3].pdgId();
+    GENpTL1_S1 = leptonsS1[0].pt(); GENpTL2_S1 = leptonsS1[1].pt(); 
+    GENpTL3_S1 = leptonsS1[2].pt(); GENpTL4_S1 = leptonsS1[3].pt();
+    GENpXL1_S1 = leptonsS1[0].px(); GENpXL2_S1 = leptonsS1[1].px(); 
+    GENpXL3_S1 = leptonsS1[2].px(); GENpXL4_S1 = leptonsS1[3].px();
+    GENpYL1_S1 = leptonsS1[0].py(); GENpYL2_S1 = leptonsS1[1].py(); 
+    GENpYL3_S1 = leptonsS1[2].py(); GENpYL4_S1 = leptonsS1[3].py();
+    GENpZL1_S1 = leptonsS1[0].pz(); GENpZL2_S1 = leptonsS1[1].pz(); 
+    GENpZL3_S1 = leptonsS1[2].pz(); GENpZL4_S1 = leptonsS1[3].pz();
+    GENEL1_S1 = leptonsS1[0].energy(); GENEL2_S1 = leptonsS1[1].energy(); 
+    GENEL3_S1 = leptonsS1[2].energy(); GENEL4_S1 = leptonsS1[3].energy();
+    GENchargeL1_S1 = leptonsS1[0].charge(); GENchargeL2_S1 = leptonsS1[1].charge();
+    GENchargeL3_S1 = leptonsS1[2].charge(); GENchargeL4_S1 = leptonsS1[3].charge();
+    GENetaL1_S1 = leptonsS1[0].eta(); GENetaL2_S1 = leptonsS1[1].eta();
+    GENetaL3_S1 = leptonsS1[2].eta(); GENetaL4_S1 = leptonsS1[3].eta();
+    GENphiL1_S1 = leptonsS1[0].phi(); GENphiL2_S1 = leptonsS1[1].phi();
+    GENphiL3_S1 = leptonsS1[2].phi(); GENphiL4_S1 = leptonsS1[3].phi();
+    GENM4L = (leptonsS1[0].p4()+leptonsS1[1].p4()+leptonsS1[2].p4()+leptonsS1[3].p4()).M();
+  }
 
   if( Zs.size() == 2)
-    {
-      GENEZ1 = Zs[0].energy(); GENEZ2 = Zs[1].energy();
-      GENpTZ1 = Zs[0].pt();    GENpTZ2 = Zs[1].pt();
-      GENpXZ1 = Zs[0].px();    GENpXZ2 = Zs[1].px();
-      GENpYZ1 = Zs[0].py();    GENpYZ2 = Zs[1].py();
-      GENpZZ1 = Zs[0].pz();    GENpZZ2 = Zs[1].pz();
-      GENMZ1  = Zs[0].mass();  GENMZ2  = Zs[1].mass();
-    
-    }
-
+  {
+    GENEZ1 = Zs[0].energy(); GENEZ2 = Zs[1].energy();
+    GENpTZ1 = Zs[0].pt();    GENpTZ2 = Zs[1].pt();
+    GENpXZ1 = Zs[0].px();    GENpXZ2 = Zs[1].px();
+    GENpYZ1 = Zs[0].py();    GENpYZ2 = Zs[1].py();
+    GENpZZ1 = Zs[0].pz();    GENpZZ2 = Zs[1].pz();
+    GENMZ1  = Zs[0].mass();  GENMZ2  = Zs[1].mass();
+  }
   if( leptonsS3.size() == 4)
-    {
-      GENidL1_S3 = leptonsS3[0].pdgId(); GENidL2_S3 = leptonsS3[1].pdgId(); 
-      GENidL3_S3 = leptonsS3[2].pdgId(); GENidL4_S3 = leptonsS3[3].pdgId();
-      
-      GENpTL1_S3 = leptonsS3[0].pt(); GENpTL2_S3 = leptonsS3[1].pt(); 
-      GENpTL3_S3 = leptonsS3[2].pt(); GENpTL4_S3 = leptonsS3[3].pt();
-
-      GENpXL1_S3 = leptonsS3[0].px(); GENpXL2_S3 = leptonsS3[1].px(); 
-      GENpXL3_S3 = leptonsS3[2].px(); GENpXL4_S3 = leptonsS3[3].px();
-
-      GENpYL1_S3 = leptonsS3[0].py(); GENpYL2_S3 = leptonsS3[1].py(); 
-      GENpYL3_S3 = leptonsS3[2].py(); GENpYL4_S3 = leptonsS3[3].py();
-
-      GENpZL1_S3 = leptonsS3[0].pz(); GENpZL2_S3 = leptonsS3[1].pz(); 
-      GENpZL3_S3 = leptonsS3[2].pz(); GENpZL4_S3 = leptonsS3[3].pz();
-
-      GENEL1_S3 = leptonsS3[0].energy(); GENEL2_S3 = leptonsS3[1].energy(); 
-      GENEL3_S3 = leptonsS3[2].energy(); GENEL4_S3 = leptonsS3[3].energy();
-
-      GENchargeL1_S3 = leptonsS3[0].charge(); GENchargeL2_S3 = leptonsS3[1].charge();
-      GENchargeL3_S3 = leptonsS3[2].charge(); GENchargeL4_S3 = leptonsS3[3].charge();
-   
-      GENetaL1_S3 = leptonsS3[0].eta(); GENetaL2_S3 = leptonsS3[1].eta();
-      GENetaL3_S3 = leptonsS3[2].eta(); GENetaL4_S3 = leptonsS3[3].eta();
-     
-      GENphiL1_S3 = leptonsS3[0].phi(); GENphiL2_S3 = leptonsS3[1].phi();
-      GENphiL3_S3 = leptonsS3[2].phi(); GENphiL4_S3 = leptonsS3[3].phi();
-    
-    }
-
+  {
+    GENidL1_S3 = leptonsS3[0].pdgId(); GENidL2_S3 = leptonsS3[1].pdgId(); 
+    GENidL3_S3 = leptonsS3[2].pdgId(); GENidL4_S3 = leptonsS3[3].pdgId();
+    GENpTL1_S3 = leptonsS3[0].pt(); GENpTL2_S3 = leptonsS3[1].pt(); 
+    GENpTL3_S3 = leptonsS3[2].pt(); GENpTL4_S3 = leptonsS3[3].pt();
+    GENpXL1_S3 = leptonsS3[0].px(); GENpXL2_S3 = leptonsS3[1].px(); 
+    GENpXL3_S3 = leptonsS3[2].px(); GENpXL4_S3 = leptonsS3[3].px();
+    GENpYL1_S3 = leptonsS3[0].py(); GENpYL2_S3 = leptonsS3[1].py(); 
+    GENpYL3_S3 = leptonsS3[2].py(); GENpYL4_S3 = leptonsS3[3].py();
+    GENpZL1_S3 = leptonsS3[0].pz(); GENpZL2_S3 = leptonsS3[1].pz(); 
+    GENpZL3_S3 = leptonsS3[2].pz(); GENpZL4_S3 = leptonsS3[3].pz();
+    GENEL1_S3 = leptonsS3[0].energy(); GENEL2_S3 = leptonsS3[1].energy(); 
+    GENEL3_S3 = leptonsS3[2].energy(); GENEL4_S3 = leptonsS3[3].energy();
+    GENchargeL1_S3 = leptonsS3[0].charge(); GENchargeL2_S3 = leptonsS3[1].charge();
+    GENchargeL3_S3 = leptonsS3[2].charge(); GENchargeL4_S3 = leptonsS3[3].charge();
+    GENetaL1_S3 = leptonsS3[0].eta(); GENetaL2_S3 = leptonsS3[1].eta();
+    GENetaL3_S3 = leptonsS3[2].eta(); GENetaL4_S3 = leptonsS3[3].eta();
+    GENphiL1_S3 = leptonsS3[0].phi(); GENphiL2_S3 = leptonsS3[1].phi();
+    GENphiL3_S3 = leptonsS3[2].phi(); GENphiL4_S3 = leptonsS3[3].phi();
+  }
 }
 
 
 void UFHZZ4LAna::setGENMatchedVariables(std::vector<pat::Muon> selectedMuons, std::vector<pat::Electron> selectedElectrons)
 {
   TLorentzVector m1,m2,m3,m4;
-
   //Muons
   for(unsigned int i = 0; i < selectedMuons.size(); i++)
+  {
+    for(unsigned int j = 0; j < selectedMuons[i].genParticleRefs().size(); j++)
     {
-      for(unsigned int j = 0; j < selectedMuons[i].genParticleRefs().size(); j++)
-	{
-	  if( selectedMuons[i].genParticle(j)->status() != 1 ) continue;
-	  if( abs(selectedMuons[i].genParticle(j)->pdgId()) != 13 ) continue;
-	  if( !genAna.IsMotherZ(selectedMuons[i].genParticle(j)) ) continue;
-	  
-	  double genZpx, genZpy, genZpz, genZE;
-	  TLorentzVector m; int mPdgId=0;
-	  TLorentzVector *genZ1 = new TLorentzVector();
-	  genAna.getStatusThree(selectedMuons[i].genParticle(j),m,13,mPdgId);
-	  genAna.getMotherZ(selectedMuons[i].genParticle(j),genZpx,genZpy,genZpz,genZE);
-	  genZ1->SetPxPyPzE(genZpx,genZpy,genZpz,genZE);
-	  int charge;
-	  if(mPdgId > 0) charge = -1;
-	  else charge = 1;
-
-          if(m.Pt()<=0.0) continue;
-
-	  if(i == 0)
-	    {
-	      if(!RecoTwoETwoMuEvent)
-		{
-		  m1 = m;
-		  idL1_GENMatched = mPdgId; pTL1_GENMatched = m.Pt(); 
-		  pXL1_GENMatched = m.Px(); pYL1_GENMatched = m.Py(); pZL1_GENMatched = m.Pz(); EL1_GENMatched = m.Energy(); 
-		  chargeL1_GENMatched = charge;
-		  etaL1_GENMatched = m.Eta(); phiL1_GENMatched = m.Phi();
-		  if(genZ1 != NULL)
-		    {
-		      EZ1_GENMatched = genZ1->Energy();  pTZ1_GENMatched = genZ1->Pt(); pXZ1_GENMatched = genZ1->Px(); 
-		      pYZ1_GENMatched = genZ1->Py();   pZZ1_GENMatched = genZ1->Pz();
-		    } 
-		}
-	      else{
-		m3 = m;
-		idL3_GENMatched = mPdgId; pTL3_GENMatched = m.Pt();
-		pXL3_GENMatched = m.Px(); pYL3_GENMatched = m.Py(); pZL3_GENMatched = m.Pz(); EL3_GENMatched = m.Energy();
-		chargeL3_GENMatched = charge; 
-		etaL3_GENMatched = m.Eta(); phiL3_GENMatched = m.Phi();
-		if(genZ1 != NULL)
-		  {
-		    EZ2_GENMatched = genZ1->Energy();  pTZ2_GENMatched = genZ1->Pt(); pXZ2_GENMatched = genZ1->Px();
-		    pYZ2_GENMatched = genZ1->Py();   pZZ2_GENMatched = genZ1->Pz();
-		  }
-	      }
-   
-	    }
-	  if(i == 1)
-	    {
-	      if(!RecoTwoETwoMuEvent)
-		{
-		  m2 = m;
-		  idL2_GENMatched = mPdgId; pTL2_GENMatched = m.Pt(); 
-		  pXL2_GENMatched = m.Px(); pYL2_GENMatched = m.Py(); pZL2_GENMatched = m.Pz(); EL2_GENMatched = m.Energy(); 
-		  chargeL2_GENMatched = charge; 
-		  etaL2_GENMatched = m.Eta(); phiL2_GENMatched = m.Phi();
-		}
-	      else{
-		m4 = m;
-		idL4_GENMatched = mPdgId; pTL4_GENMatched = m.Pt();
-		pXL4_GENMatched = m.Px(); pYL4_GENMatched = m.Py(); pZL4_GENMatched = m.Pz(); EL4_GENMatched = m.Energy();
-		chargeL4_GENMatched = charge;
-		etaL4_GENMatched = m.Eta(); phiL4_GENMatched = m.Phi();
-	      }
-	    }
-	  if(i == 2)
-	    {
-	      m3 = m;
-	      idL3_GENMatched = mPdgId; pTL3_GENMatched = m.Pt(); 
-	      pXL3_GENMatched = m.Px(); pYL3_GENMatched = m.Py(); pZL3_GENMatched = m.Pz(); EL3_GENMatched = m.Energy(); 
-	      chargeL3_GENMatched = charge;
-	      etaL3_GENMatched = m.Eta(); phiL3_GENMatched = m.Phi();
-	      if(genZ1 != NULL)
-		{
-		  EZ2_GENMatched = genZ1->Energy();  pTZ2_GENMatched = genZ1->Pt(); pXZ2_GENMatched = genZ1->Px();
-		  pYZ2_GENMatched = genZ1->Py(); pZZ2_GENMatched = genZ1->Pz();
-		}
-	    }
-	  if(i == 3)
-	    {
-	      m4 = m;
-	      idL4_GENMatched = mPdgId; pTL4_GENMatched = m.Pt(); 
-	      pXL4_GENMatched = m.Px(); pYL4_GENMatched = m.Py(); pZL4_GENMatched = m.Pz(); EL4_GENMatched = m.Energy(); 
-	      chargeL4_GENMatched = charge; 
-	      etaL4_GENMatched = m.Eta(); phiL4_GENMatched = m.Phi();
-	    }
-	  
-	}
-    
+      if( selectedMuons[i].genParticle(j)->status() != 1 ) continue;
+      if( abs(selectedMuons[i].genParticle(j)->pdgId()) != 13 ) continue;
+      if( !genAna.IsMotherZ(selectedMuons[i].genParticle(j)) ) continue;
+      double genZpx, genZpy, genZpz, genZE;
+      TLorentzVector m; int mPdgId=0;
+      TLorentzVector *genZ1 = new TLorentzVector();
+      genAna.getStatusThree(selectedMuons[i].genParticle(j),m,13,mPdgId);
+      genAna.getMotherZ(selectedMuons[i].genParticle(j),genZpx,genZpy,genZpz,genZE);
+      genZ1->SetPxPyPzE(genZpx,genZpy,genZpz,genZE);
+      int charge;
+      if(mPdgId > 0) charge = -1;
+      else charge = 1;
+      if(m.Pt()<=0.0) continue;
+      if(i == 0)
+      {
+        if(!RecoTwoETwoMuEvent)
+        {
+          m1 = m;
+          idL1_GENMatched = mPdgId; pTL1_GENMatched = m.Pt(); 
+          pXL1_GENMatched = m.Px(); pYL1_GENMatched = m.Py(); pZL1_GENMatched = m.Pz(); EL1_GENMatched = m.Energy(); 
+          chargeL1_GENMatched = charge;
+          etaL1_GENMatched = m.Eta(); phiL1_GENMatched = m.Phi();
+          if(genZ1 != NULL)
+          {
+            EZ1_GENMatched = genZ1->Energy();  pTZ1_GENMatched = genZ1->Pt(); pXZ1_GENMatched = genZ1->Px(); 
+            pYZ1_GENMatched = genZ1->Py();   pZZ1_GENMatched = genZ1->Pz();
+          } 
+        }
+        else
+        {
+          m3 = m;
+          idL3_GENMatched = mPdgId; pTL3_GENMatched = m.Pt();
+          pXL3_GENMatched = m.Px(); pYL3_GENMatched = m.Py(); pZL3_GENMatched = m.Pz(); EL3_GENMatched = m.Energy();
+          chargeL3_GENMatched = charge; 
+          etaL3_GENMatched = m.Eta(); phiL3_GENMatched = m.Phi();
+          if(genZ1 != NULL)
+          {
+            EZ2_GENMatched = genZ1->Energy();  pTZ2_GENMatched = genZ1->Pt(); pXZ2_GENMatched = genZ1->Px();
+            pYZ2_GENMatched = genZ1->Py();   pZZ2_GENMatched = genZ1->Pz();
+          }
+        }
+      }
+      if(i == 1)
+      {
+        if(!RecoTwoETwoMuEvent)
+        {
+          m2 = m;
+          idL2_GENMatched = mPdgId; pTL2_GENMatched = m.Pt(); 
+          pXL2_GENMatched = m.Px(); pYL2_GENMatched = m.Py(); pZL2_GENMatched = m.Pz(); EL2_GENMatched = m.Energy(); 
+          chargeL2_GENMatched = charge; 
+          etaL2_GENMatched = m.Eta(); phiL2_GENMatched = m.Phi();
+        }
+        else
+        {
+          m4 = m;
+          idL4_GENMatched = mPdgId; pTL4_GENMatched = m.Pt();
+          pXL4_GENMatched = m.Px(); pYL4_GENMatched = m.Py(); pZL4_GENMatched = m.Pz(); EL4_GENMatched = m.Energy();
+          chargeL4_GENMatched = charge;
+          etaL4_GENMatched = m.Eta(); phiL4_GENMatched = m.Phi();
+        }
+      }
+      if(i == 2)
+      {
+        m3 = m;
+        idL3_GENMatched = mPdgId; pTL3_GENMatched = m.Pt(); 
+        pXL3_GENMatched = m.Px(); pYL3_GENMatched = m.Py(); pZL3_GENMatched = m.Pz(); EL3_GENMatched = m.Energy(); 
+        chargeL3_GENMatched = charge;
+        etaL3_GENMatched = m.Eta(); phiL3_GENMatched = m.Phi();
+        if(genZ1 != NULL)
+        {
+          EZ2_GENMatched = genZ1->Energy();  pTZ2_GENMatched = genZ1->Pt(); pXZ2_GENMatched = genZ1->Px();
+          pYZ2_GENMatched = genZ1->Py(); pZZ2_GENMatched = genZ1->Pz();
+        }
+      }
+      if(i == 3)
+      {
+        m4 = m;
+        idL4_GENMatched = mPdgId; pTL4_GENMatched = m.Pt(); 
+        pXL4_GENMatched = m.Px(); pYL4_GENMatched = m.Py(); pZL4_GENMatched = m.Pz(); EL4_GENMatched = m.Energy(); 
+        chargeL4_GENMatched = charge; 
+        etaL4_GENMatched = m.Eta(); phiL4_GENMatched = m.Phi();
+      }
     }
-       
-      
+  }
 
   //Electrons
   for(unsigned int i = 0; i < selectedElectrons.size(); i++)
+  {
+    for(unsigned int j = 0; j < selectedElectrons[i].genParticleRefs().size(); j++)
     {
-      for(unsigned int j = 0; j < selectedElectrons[i].genParticleRefs().size(); j++)
-	{
-	  if( selectedElectrons[i].genParticle(j)->status() != 1 ) continue;
-	  if( abs(selectedElectrons[i].genParticle(j)->pdgId()) != 11 ) continue;
-	  if( !genAna.IsMotherZ(selectedElectrons[i].genParticle(j)) ) continue;
-	  
-          double genZpx, genZpy, genZpz, genZE;
-	  TLorentzVector m; int mPdgId=0; 
-	  TLorentzVector *genZ1 = new TLorentzVector();
-	  genAna.getStatusThree(selectedElectrons[i].genParticle(j),m,11,mPdgId);
-	  genAna.getMotherZ(selectedElectrons[i].genParticle(j),genZpx,genZpy,genZpz,genZE);
-          genZ1->SetPxPyPzE(genZpx,genZpy,genZpz,genZE);
-	  int charge;
-	  if(mPdgId > 0) charge = -1;
-	  else charge = 1;
-
-          if(m.Pt()<=0.0) continue;
-
-	  if(i == 0)
-	    {
-	      if(!RecoTwoMuTwoEEvent)
-		{
-		  m1 = m;
-		  idL1_GENMatched = mPdgId; pTL1_GENMatched = m.Pt(); 
-		  pXL1_GENMatched = m.Px(); pYL1_GENMatched = m.Py(); pZL1_GENMatched = m.Pz(); EL1_GENMatched = m.Energy(); 
-		  chargeL1_GENMatched = charge; 
-		  etaL1_GENMatched = m.Eta(); phiL1_GENMatched = m.Phi();
-		  if(genZ1 != NULL)
-		    {
-		      EZ1_GENMatched = genZ1->Energy();  pTZ1_GENMatched = genZ1->Pt(); pXZ1_GENMatched = genZ1->Px(); 
-		      pYZ1_GENMatched = genZ1->Py(); pZZ1_GENMatched = genZ1->Pz();
-		    } 
-		}
-	      else {
-		m3 = m;
-		idL3_GENMatched = mPdgId; pTL3_GENMatched = m.Pt();
-		pXL3_GENMatched = m.Px(); pYL3_GENMatched = m.Py(); pZL3_GENMatched = m.Pz(); EL3_GENMatched = m.Energy();
-		chargeL3_GENMatched = charge; 
-		etaL3_GENMatched = m.Eta(); phiL3_GENMatched = m.Phi();
-		if(genZ1 != NULL)
-		  {
-		    EZ2_GENMatched = genZ1->Energy();  pTZ2_GENMatched = genZ1->Pt(); pXZ2_GENMatched = genZ1->Px();
-		    pYZ2_GENMatched = genZ1->Py(); pZZ2_GENMatched = genZ1->Pz();
-		  }
-	      }
-	    }
-	  if(i == 1)
-	    {
-	      if(!RecoTwoMuTwoEEvent)
-		{
-		  m2 = m;
-		  idL2_GENMatched = mPdgId; pTL2_GENMatched = m.Pt(); 
-		  pXL2_GENMatched = m.Px(); pYL2_GENMatched = m.Py(); pZL2_GENMatched = m.Pz(); EL2_GENMatched = m.Energy(); 
-		  chargeL2_GENMatched = charge; 
-		  etaL2_GENMatched = m.Eta(); phiL2_GENMatched = m.Phi();
-		}
-	      else{
-		m4 = m;
-		idL4_GENMatched = mPdgId; pTL4_GENMatched = m.Pt();
-		pXL4_GENMatched = m.Px(); pYL4_GENMatched = m.Py(); pZL4_GENMatched = m.Pz(); EL4_GENMatched = m.Energy();
-		chargeL4_GENMatched = charge; 
-		etaL4_GENMatched = m.Eta(); phiL4_GENMatched = m.Phi();
-	      }
-	    }
-	  if(i == 2)
-	    {
-	      m3 = m;
-	      idL3_GENMatched = mPdgId; pTL3_GENMatched = m.Pt(); 
-	      pXL3_GENMatched = m.Px(); pYL3_GENMatched = m.Py(); pZL3_GENMatched = m.Pz(); EL3_GENMatched = m.Energy(); 
-	      chargeL3_GENMatched = charge; 
-	      etaL3_GENMatched = m.Eta(); phiL3_GENMatched = m.Phi();
-	      if(genZ1 != NULL)
-		{
-		  EZ2_GENMatched = genZ1->Energy();  pTZ2_GENMatched = genZ1->Pt(); pXZ2_GENMatched = genZ1->Px();
-		  pYZ2_GENMatched = genZ1->Py(); pZZ2_GENMatched = genZ1->Pz();
-		}
-	    }
-	  if(i == 3)
-	    {
-	      m4 = m;
-	      idL4_GENMatched = mPdgId; pTL4_GENMatched = m.Pt(); 
-	      pXL4_GENMatched = m.Px(); pYL4_GENMatched = m.Py(); pZL4_GENMatched = m.Pz(); EL4_GENMatched = m.Energy(); 
-	      chargeL4_GENMatched = charge;
-	      etaL4_GENMatched = m.Eta(); phiL4_GENMatched = m.Phi();
-	    }
-	  
-	}
+      if( selectedElectrons[i].genParticle(j)->status() != 1 ) continue;
+      if( abs(selectedElectrons[i].genParticle(j)->pdgId()) != 11 ) continue;
+      if( !genAna.IsMotherZ(selectedElectrons[i].genParticle(j)) ) continue;
+      double genZpx, genZpy, genZpz, genZE;
+      TLorentzVector m; int mPdgId=0; 
+      TLorentzVector *genZ1 = new TLorentzVector();
+      genAna.getStatusThree(selectedElectrons[i].genParticle(j),m,11,mPdgId);
+      genAna.getMotherZ(selectedElectrons[i].genParticle(j),genZpx,genZpy,genZpz,genZE);
+      genZ1->SetPxPyPzE(genZpx,genZpy,genZpz,genZE);
+      int charge;
+      if(mPdgId > 0) charge = -1;
+      else charge = 1;
+      if(m.Pt()<=0.0) continue;
+      if(i == 0)
+      {
+        if(!RecoTwoMuTwoEEvent)
+        {
+          m1 = m;
+          idL1_GENMatched = mPdgId; pTL1_GENMatched = m.Pt(); 
+          pXL1_GENMatched = m.Px(); pYL1_GENMatched = m.Py(); pZL1_GENMatched = m.Pz(); EL1_GENMatched = m.Energy(); 
+          chargeL1_GENMatched = charge; 
+          etaL1_GENMatched = m.Eta(); phiL1_GENMatched = m.Phi();
+          if(genZ1 != NULL)
+          {
+            EZ1_GENMatched = genZ1->Energy();  pTZ1_GENMatched = genZ1->Pt(); pXZ1_GENMatched = genZ1->Px(); 
+            pYZ1_GENMatched = genZ1->Py(); pZZ1_GENMatched = genZ1->Pz();
+          } 
+        }
+        else 
+        {
+          m3 = m;
+          idL3_GENMatched = mPdgId; pTL3_GENMatched = m.Pt();
+          pXL3_GENMatched = m.Px(); pYL3_GENMatched = m.Py(); pZL3_GENMatched = m.Pz(); EL3_GENMatched = m.Energy();
+          chargeL3_GENMatched = charge; 
+          etaL3_GENMatched = m.Eta(); phiL3_GENMatched = m.Phi();
+          if(genZ1 != NULL)
+          {
+            EZ2_GENMatched = genZ1->Energy();  pTZ2_GENMatched = genZ1->Pt(); pXZ2_GENMatched = genZ1->Px();
+            pYZ2_GENMatched = genZ1->Py(); pZZ2_GENMatched = genZ1->Pz();
+          }
+        }
+      }
+      if(i == 1)
+      {
+        if(!RecoTwoMuTwoEEvent)
+        {
+          m2 = m;
+          idL2_GENMatched = mPdgId; pTL2_GENMatched = m.Pt(); 
+          pXL2_GENMatched = m.Px(); pYL2_GENMatched = m.Py(); pZL2_GENMatched = m.Pz(); EL2_GENMatched = m.Energy(); 
+          chargeL2_GENMatched = charge; 
+          etaL2_GENMatched = m.Eta(); phiL2_GENMatched = m.Phi();
+        }
+        else
+        {
+          m4 = m;
+          idL4_GENMatched = mPdgId; pTL4_GENMatched = m.Pt();
+          pXL4_GENMatched = m.Px(); pYL4_GENMatched = m.Py(); pZL4_GENMatched = m.Pz(); EL4_GENMatched = m.Energy();
+          chargeL4_GENMatched = charge; 
+          etaL4_GENMatched = m.Eta(); phiL4_GENMatched = m.Phi();
+        }
+      }
+      if(i == 2)
+      {
+        m3 = m;
+        idL3_GENMatched = mPdgId; pTL3_GENMatched = m.Pt(); 
+        pXL3_GENMatched = m.Px(); pYL3_GENMatched = m.Py(); pZL3_GENMatched = m.Pz(); EL3_GENMatched = m.Energy(); 
+        chargeL3_GENMatched = charge; 
+        etaL3_GENMatched = m.Eta(); phiL3_GENMatched = m.Phi();
+        if(genZ1 != NULL)
+        {
+          EZ2_GENMatched = genZ1->Energy();  pTZ2_GENMatched = genZ1->Pt(); pXZ2_GENMatched = genZ1->Px();
+          pYZ2_GENMatched = genZ1->Py(); pZZ2_GENMatched = genZ1->Pz();
+        }
+      }
+      if(i == 3)
+      {
+        m4 = m;
+        idL4_GENMatched = mPdgId; pTL4_GENMatched = m.Pt(); 
+        pXL4_GENMatched = m.Px(); pYL4_GENMatched = m.Py(); pZL4_GENMatched = m.Pz(); EL4_GENMatched = m.Energy(); 
+        chargeL4_GENMatched = charge;
+        etaL4_GENMatched = m.Eta(); phiL4_GENMatched = m.Phi();
+      }	  
     }
+  }
 
   m4l_GENMatched = (m1+m2+m3+m4).M();
 
@@ -5572,12 +5500,6 @@ void UFHZZ4LAna::setGENMatchedVariables(std::vector<pat::Muon> selectedMuons, st
 
 void UFHZZ4LAna::bookResolutionHistograms()
 {
-
-  //using namespace edm;
-  using namespace pat;
-  using namespace std;
-
-
   //Resolution
   histContainer_["ptrelerrorForZ_mu_barrel"]=fs->make<TH1F>("ptrelerrorForZ_mu_barrel","muon pt relative error; #sigma_{p_{T}}^{RECO}/p_{T}; N Events", 
 							    1000, -1, 1);
@@ -5586,17 +5508,10 @@ void UFHZZ4LAna::bookResolutionHistograms()
   histContainer_["ptrelerrorForZ_mu"]=fs->make<TH1F>("ptrelerrorForZ_mu","muon pt relative error; #sigma_{p_{T}}^{RECO}/p_{T}; N Events", 1000, -1, 1);
   histContainer2D_["ptrelerrorForZ_mu_vs_eta"]=fs->make<TH2F>("ptrelerrorForZ_mu_vs_eta","muon pt relative error; #sigma_{p_{T}}^{RECO}/p_{T}; N Events", 
 							      1000, -1, 1, 24, 0, 2.4);
-
 }
 
 void UFHZZ4LAna::fillResolutionHistograms(edm::Handle<edm::View<pat::Muon> > muons)
 {
-
-  //using namespace edm;
-  using namespace pat;
-  using namespace std;
-
-
   //  For Muon Pt Resolution  start
   /********** M U O N  C U T S **********/
   double muPtCut = 5;
@@ -5605,47 +5520,44 @@ void UFHZZ4LAna::fillResolutionHistograms(edm::Handle<edm::View<pat::Muon> > muo
   int muMuonHits = 0;
   int muNumMatches = 0;
   for(edm::View<pat::Muon>::const_iterator mu=muons->begin(); mu!=muons->end(); ++mu)
+  {
+    if( mu->isGlobalMuon() != 1 || mu->isTrackerMuon() != 1) continue;
+    if(mu->normChi2() >= muChi2Cut ||  mu->globalTrack()->hitPattern().numberOfValidMuonHits() <= muMuonHits)  continue;
+    if( mu->numberOfMatches() <= muNumMatches ) continue;
+    double iso =  (mu->trackIso() + mu->ecalIso() + mu->hcalIso() )/mu->pt() ;
+    if ( iso > 0.15 ) continue;
+    if( mu->pt() < muPtCut || abs(mu->eta()) > muEtaCut ) continue;
+    for(edm::View<pat::Muon>::const_iterator mu2=mu+1; mu2!=muons->end(); ++mu2)
     {
-      if( mu->isGlobalMuon() != 1 || mu->isTrackerMuon() != 1) continue;
-      if(mu->normChi2() >= muChi2Cut ||  mu->globalTrack()->hitPattern().numberOfValidMuonHits() <= muMuonHits)  continue;
-      if( mu->numberOfMatches() <= muNumMatches ) continue;
-      double iso =  (mu->trackIso() + mu->ecalIso() + mu->hcalIso() )/mu->pt() ;
-      if ( iso > 0.15 ) continue;
-      if( mu->pt() < muPtCut || abs(mu->eta()) > muEtaCut ) continue;
-      for(edm::View<pat::Muon>::const_iterator mu2=mu+1; mu2!=muons->end(); ++mu2)
-	{
-	  if( mu2->isGlobalMuon() != 1 || mu2->isTrackerMuon() != 1) continue;
-	  if(mu2->normChi2() >= muChi2Cut ||  mu2->globalTrack()->hitPattern().numberOfValidMuonHits() <= muMuonHits)  continue;
-	  if( mu2->numberOfMatches() <= muNumMatches ) continue;
-	  double iso2 =  (mu2->trackIso() + mu2->ecalIso() + mu2->hcalIso() )/mu2->pt() ;
-	  if ( iso2 > 0.15 ) continue;
-	  if( mu2->pt() < muPtCut || abs(mu2->eta()) > muEtaCut ) continue;
-      
-	  double mass = (mu->p4()+mu2->p4()).M();
-	  if(mass<95 and mass>85) {
-	    
-	    double pterr = mu->muonBestTrack()->ptError(); // miniAOD
-	    double recpt = mu->pt();
-	    double eta = mu->eta();
-	    histContainer_["ptrelerrorForZ_mu"]->Fill(pterr/recpt,eventWeight);
-	    histContainer2D_["ptrelerrorForZ_mu_vs_eta"]->Fill(pterr/recpt, fabs(eta));
-	    if(abs(eta)>1.2){
-	      histContainer_["ptrelerrorForZ_mu_endcap"]->Fill(pterr/recpt,eventWeight);
-	    }else{
-	      histContainer_["ptrelerrorForZ_mu_barrel"]->Fill(pterr/recpt,eventWeight);
-	    }
-	  }
-	}
+      if( mu2->isGlobalMuon() != 1 || mu2->isTrackerMuon() != 1) continue;
+      if(mu2->normChi2() >= muChi2Cut ||  mu2->globalTrack()->hitPattern().numberOfValidMuonHits() <= muMuonHits)  continue;
+      if( mu2->numberOfMatches() <= muNumMatches ) continue;
+      double iso2 =  (mu2->trackIso() + mu2->ecalIso() + mu2->hcalIso() )/mu2->pt() ;
+      if ( iso2 > 0.15 ) continue;
+      if( mu2->pt() < muPtCut || abs(mu2->eta()) > muEtaCut ) continue;
+      double mass = (mu->p4()+mu2->p4()).M();
+      if(mass<95 and mass>85) 
+      {
+        double pterr = mu->muonBestTrack()->ptError(); // miniAOD
+        double recpt = mu->pt();
+        double eta = mu->eta();
+        histContainer_["ptrelerrorForZ_mu"]->Fill(pterr/recpt,eventWeight);
+        histContainer2D_["ptrelerrorForZ_mu_vs_eta"]->Fill(pterr/recpt, fabs(eta));
+        if(abs(eta)>1.2) histContainer_["ptrelerrorForZ_mu_endcap"]->Fill(pterr/recpt,eventWeight);
+        else histContainer_["ptrelerrorForZ_mu_barrel"]->Fill(pterr/recpt,eventWeight);
+      }
     }
+  }
   //  For Muon Pt Resolution  end
-  
 
 }
 
 
 
 ////////////Muons/////////////////
-bool UFHZZ4LAna::findZ(std::vector<pat::PackedCandidate> photons, std::vector<double> deltaRVec, pat::Muon &muon1, pat::Muon &muon2,int taken1, int &taken2, int &assocMuon, math::XYZTLorentzVector &ZVec, math::XYZTLorentzVector &photVec, bool &foundPhoton) // for miniAOD
+bool UFHZZ4LAna::findZ(std::vector<pat::PackedCandidate> photons, std::vector<double> deltaRVec, 
+                       pat::Muon &muon1, pat::Muon &muon2,int taken1, int &taken2, int &assocMuon, 
+                       math::XYZTLorentzVector &ZVec, math::XYZTLorentzVector &photVec, bool &foundPhoton) // for miniAOD
 {
 
   using namespace std;
