@@ -3231,7 +3231,6 @@ void UFHZZ4LAna::findHiggsCandidate_MixFlavour(std::vector<pat::Muon> &candMuons
 double UFHZZ4LAna::getMinDeltaR(std::vector<pat::Muon> Muons, std::vector<pat::Electron> Electrons)
 {
 
-  //using namespace edm;
   using namespace pat;
   using namespace std;
 
@@ -3240,55 +3239,49 @@ double UFHZZ4LAna::getMinDeltaR(std::vector<pat::Muon> Muons, std::vector<pat::E
   double tmpDeltaR = 1000;
   
   for( unsigned int i = 0; i < Muons.size(); i++ )
+  {
+    for( unsigned int j = i; j < Muons.size(); j++ )
     {
-      for( unsigned int j = i; j < Muons.size(); j++ )
-	{
-	  if( i != j )
-	    {
-	      tmpDeltaR = deltaR(Muons[i].eta(),Muons[i].phi(),Muons[j].eta(),Muons[j].phi());
-	      deltaR_.push_back(tmpDeltaR);
-	    }
-	}
+      if( i != j )
+      {
+        tmpDeltaR = deltaR(Muons[i].eta(),Muons[i].phi(),Muons[j].eta(),Muons[j].phi());
+        deltaR_.push_back(tmpDeltaR);
+      }
     }
+  }
       
   for( unsigned int i = 0; i < Electrons.size(); i++ )
+  {
+    for( unsigned int j = i; j < Electrons.size(); j++ )
     {
-      for( unsigned int j = i; j < Electrons.size(); j++ )
-	{
-	  if( i != j )
-	    {
-	      tmpDeltaR = deltaR(Electrons[i].eta(), Electrons[i].phi(), Electrons[j].eta(),Electrons[j].phi());
-	      deltaR_.push_back(tmpDeltaR);
-	    }
-	}
+      if( i != j )
+      {
+        tmpDeltaR = deltaR(Electrons[i].eta(), Electrons[i].phi(), Electrons[j].eta(),Electrons[j].phi());
+        deltaR_.push_back(tmpDeltaR);
+      }
     }
+  }
 
   for( unsigned int i = 0; i < Electrons.size(); i++ )
+  {
+    for( unsigned int j = 0; j < Muons.size(); j++ )
     {
-      for( unsigned int j = 0; j < Muons.size(); j++ )
-	{
-	  tmpDeltaR = deltaR(Electrons[i].eta(), Electrons[i].phi(), Muons[j].eta(),Muons[j].phi());
-	  deltaR_.push_back(tmpDeltaR);
-	}
+      tmpDeltaR = deltaR(Electrons[i].eta(), Electrons[i].phi(), Muons[j].eta(),Muons[j].phi());
+      deltaR_.push_back(tmpDeltaR);
     }
-
+  }
 
   for( unsigned int i = 0; i < deltaR_.size(); i++)
-    {
-      if( deltaR_[i] < minDeltaR ){ minDeltaR = deltaR_[i]; }
-    }
-
+  {
+    if( deltaR_[i] < minDeltaR ){ minDeltaR = deltaR_[i]; }
+  }
 
   return minDeltaR;
-
 }
 
 
 void UFHZZ4LAna::plotMinDeltaRemu(std::vector<pat::Muon> Muons, std::vector<pat::Electron> Electrons)
 {
-
-
-  //using namespace edm;
   using namespace pat;
   using namespace std;
 
@@ -3297,51 +3290,36 @@ void UFHZZ4LAna::plotMinDeltaRemu(std::vector<pat::Muon> Muons, std::vector<pat:
   double tmpDeltaR = 1000;
 
   for( unsigned int i = 0; i < Electrons.size(); i++ )
+  {
+    for( unsigned int j = 0; j < Muons.size(); j++ )
     {
-      for( unsigned int j = 0; j < Muons.size(); j++ )
-	{
-	  tmpDeltaR = deltaR(Electrons[i].eta(), Electrons[i].phi(), Muons[j].eta(),Muons[j].phi());
-	  deltaR_emu.push_back(tmpDeltaR);
-	}
+      tmpDeltaR = deltaR(Electrons[i].eta(), Electrons[i].phi(), Muons[j].eta(),Muons[j].phi());
+      deltaR_emu.push_back(tmpDeltaR);
     }
+  }
 
   for( unsigned int i = 0; i < deltaR_emu.size(); i++)
-    {
-      if( deltaR_emu[i] < minDeltaR ){ minDeltaR = deltaR_emu[i]; }
-    }
+  {
+    if( deltaR_emu[i] < minDeltaR ){ minDeltaR = deltaR_emu[i]; }
+  }
 
   //histContainer_["minDeltaRemu"]->Fill(minDeltaR,eventWeight);
-  
 
 }
 
 
 void UFHZZ4LAna::bookStepPlots()
 {
-
-  //using namespace edm;
-  using namespace std;
-  using namespace pat;
-
-
   int nSteps = 9;
-  
   histContainer_["stepPlot_w"]=fs->make<TH1F>("stepPlotWeighted", "Events After Cuts in H->ZZ->4l; ;N Events", nSteps, 0, nSteps);
   histContainer_["stepPlot_w_4mu"]=fs->make<TH1F>("stepPlotWeighted_4mu", "Events After Cuts in H->ZZ->4mu; ;N Events", nSteps, 0, nSteps);
   histContainer_["stepPlot_w_4e"]=fs->make<TH1F>("stepPlotWeighted_4e", "Events After Cuts in H->ZZ->4e; ;N Events", nSteps, 0, nSteps);
   histContainer_["stepPlot_w_2e2mu"]=fs->make<TH1F>("stepPlotWeighted_2e2mu", "Events After Cuts in H->ZZ->2e2mu; ;N Events", nSteps, 0, nSteps);
-
 }
 
 
 void UFHZZ4LAna::fillStepPlots()
 {
-
-  //using namespace edm;
-  using namespace std;
-  using namespace pat;
-
-
   TString skim  = "Skim";
   TString trig = "HLT";
   TString ID = "2L ID";
@@ -3355,17 +3333,16 @@ void UFHZZ4LAna::fillStepPlots()
   if(nEvAfterSkim == 0){ nEvAfterSkim = nEvPassedHlt;}
   if( isMC ){ nEvAfterSkim = nEvPassedHlt;}
   if(!isMC && doBlinding)
-    {
-      nEvAfterZ4lCut = -1;
-      nEvAfterM4lCut = -1;
-      nEvAfterZ4lCut_4mu = -1;
-      nEvAfterM4lCut_4mu = -1;
-      nEvAfterZ4lCut_4e = -1;
-      nEvAfterM4lCut_4e = -1;
-      nEvAfterZ4lCut_2e2mu = -1;
-      nEvAfterM4lCut_2e2mu = -1;
-    }
-
+  {
+    nEvAfterZ4lCut = -1;
+    nEvAfterM4lCut = -1;
+    nEvAfterZ4lCut_4mu = -1;
+    nEvAfterM4lCut_4mu = -1;
+    nEvAfterZ4lCut_4e = -1;
+    nEvAfterM4lCut_4e = -1;
+    nEvAfterZ4lCut_2e2mu = -1;
+    nEvAfterM4lCut_2e2mu = -1;
+  }
 
   //4L
   histContainer_["stepPlot_w"]->SetBinContent(1,nEvAfterSkim*scaleWeight);
@@ -3409,7 +3386,6 @@ void UFHZZ4LAna::fillStepPlots()
   histContainer_["stepPlot_w_4mu"]->GetXaxis()->SetBinLabel(8,m4l70cut);
   histContainer_["stepPlot_w_4mu"]->GetXaxis()->SetBinLabel(9,m4l100cut);
 
-
   //4e
   histContainer_["stepPlot_w_4e"]->SetBinContent(1,nEvAfterSkim*scaleWeight);
   histContainer_["stepPlot_w_4e"]->SetBinContent(2,nEvPassedHlt*scaleWeight);  
@@ -3452,18 +3428,11 @@ void UFHZZ4LAna::fillStepPlots()
   histContainer_["stepPlot_w_2e2mu"]->GetXaxis()->SetBinLabel(8,m4l70cut);
   histContainer_["stepPlot_w_2e2mu"]->GetXaxis()->SetBinLabel(9,m4l100cut);
 
-
 }
 
 
 void UFHZZ4LAna::bookPassedEventTree(TString treeName, TTree *tree)
 {     
-
-  //using namespace edm;
-  using namespace pat;
-  using namespace std;
-
-
   tree->Branch("Run",&Run,"Run/l");
   tree->Branch("Event",&Event,"Event/l");
   tree->Branch("LumiSect",&LumiSect,"LumiSect/l");
@@ -3579,7 +3548,6 @@ void UFHZZ4LAna::bookPassedEventTree(TString treeName, TTree *tree)
   tree->Branch("pZL2FSR",&pZL2FSR,"pZL2FSR/D");
   tree->Branch("pZL3FSR",&pZL3FSR,"pZL3FSR/D");
   tree->Branch("pZL4FSR",&pZL4FSR,"pZL4FSR/D");
-
 
   tree->Branch("pTZ1",&pTZ1,"pTZ1/D");
   tree->Branch("pTZ2",&pTZ2,"pTZ2/D");
@@ -3707,7 +3675,6 @@ void UFHZZ4LAna::bookPassedEventTree(TString treeName, TTree *tree)
   tree->Branch("pdfSigM4l_ResDown_noFSR",&pdfSigM4l_ResDown_noFSR,"pdfSigM4l_ResDown_noFSR/D");
   tree->Branch("pdfBkgM4l_ResDown",&pdfBkgM4l_ResDown,"pdfBkgM4l_ResDown/D");
   tree->Branch("pdfBkgM4l_ResDown_noFSR",&pdfBkgM4l_ResDown_noFSR,"pdfBkgM4l_ResDown_noFSR/D");
-
 
   //MELA
   tree->Branch("melaLD",&melaLD,"melaLD/D");
@@ -4016,10 +3983,9 @@ void UFHZZ4LAna::bookPassedEventTree(TString treeName, TTree *tree)
 
 
 void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSetup& iSetup,
-				   std::vector<pat::Muon> selectedMuons, std::vector<pat::Electron> selectedElectrons, std::vector<pat::Jet> selectedVBFJets, std::vector<pat::Jet> correctedVBFJets)
+                                   std::vector<pat::Muon> selectedMuons, std::vector<pat::Electron> selectedElectrons, 
+                                   std::vector<pat::Jet> selectedVBFJets, std::vector<pat::Jet> correctedVBFJets)
 {
-
-  //using namespace edm;
   using namespace pat;
   using namespace std;
 
@@ -4083,782 +4049,757 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
   pZL4FSR = Lep4.Pz();
   EL4FSR = Lep4.E();
 
-
-  if(RecoFourMuEvent){
-    tmpEvent = "4mu";
-  }
-  if(RecoTwoMuTwoEEvent){
-    tmpEvent = "2mu2e";
-  }
-  if(RecoTwoETwoMuEvent){
-    tmpEvent = "2e2mu";
-  }
-  if(RecoFourEEvent){
-    tmpEvent = "4e";
-  }
-
-
-
+  if(RecoFourMuEvent) tmpEvent = "4mu";
+  if(RecoTwoMuTwoEEvent) tmpEvent = "2mu2e";
+  if(RecoTwoETwoMuEvent)  tmpEvent = "2e2mu";
+  if(RecoFourEEvent)  tmpEvent = "4e";
 
   if( RecoFourMuEvent )
-    {
+  {
+    idL1 = selectedMuons[0].pdgId();
+    mvaL1 = selectedMuons[0].isPFMuon();
+    EL1 = selectedMuons[0].energy();
+    SipL1 = helper.getSIP3D(selectedMuons[0]);
+    IPL1 = fabs(selectedMuons[0].dB(pat::Muon::PV3D));
+    dIPL1 = selectedMuons[0].edB(pat::Muon::PV3D);
+    pTL1 = selectedMuons[0].pt();
+    pXL1 = selectedMuons[0].px();
+    pYL1 = selectedMuons[0].py();
+    pZL1 = selectedMuons[0].pz();
+    chargeL1 = selectedMuons[0].charge();
+    etaL1 = selectedMuons[0].eta();
+    phiL1 = selectedMuons[0].phi();
+    isoTrackL1 = selectedMuons[0].trackIso();
+    isoEcalL1 = selectedMuons[0].ecalIso();
+    isoHcalL1 = selectedMuons[0].hcalIso();
+    isoNHL1 = selectedMuons[0].neutralHadronIso();
+    isoCHL1 = selectedMuons[0].chargedHadronIso();
+    isoPhotL1 = selectedMuons[0].photonIso();
+    RelIsoL1 = helper.pfIso(selectedMuons[0],muonRho);
+    RelIsoUCL1 = helper.pfIso(selectedMuons[0],0);
+    missingHitsL1 = -1;
 
+    idL2 = selectedMuons[1].pdgId();
+    mvaL2 = selectedMuons[1].isPFMuon();
+    EL2 = selectedMuons[1].energy();
+    SipL2 = helper.getSIP3D(selectedMuons[1]);
+    IPL2 = fabs(selectedMuons[1].dB(pat::Muon::PV3D));
+    dIPL2 = selectedMuons[1].edB(pat::Muon::PV3D);
+    pTL2 = selectedMuons[1].pt();
+    pXL2 = selectedMuons[1].px();
+    pYL2 = selectedMuons[1].py();
+    pZL2 = selectedMuons[1].pz();
+    chargeL2 = selectedMuons[1].charge();
+    etaL2 = selectedMuons[1].eta();
+    phiL2 = selectedMuons[1].phi();
+    isoNHL2 = selectedMuons[1].neutralHadronIso();
+    isoCHL2 = selectedMuons[1].chargedHadronIso();
+    isoPhotL2 = selectedMuons[1].photonIso();
+    isoTrackL2 = selectedMuons[1].trackIso();
+    isoEcalL2 = selectedMuons[1].ecalIso();
+    isoHcalL2 = selectedMuons[1].hcalIso();
+    RelIsoL2 = helper.pfIso(selectedMuons[1],muonRho);
+    RelIsoUCL2 = helper.pfIso(selectedMuons[1],0);
+    missingHitsL2 = -1;
 
-      idL1 = selectedMuons[0].pdgId();
-      mvaL1 = selectedMuons[0].isPFMuon();
-      EL1 = selectedMuons[0].energy();
-      SipL1 = helper.getSIP3D(selectedMuons[0]);
-      IPL1 = fabs(selectedMuons[0].dB(pat::Muon::PV3D));
-      dIPL1 = selectedMuons[0].edB(pat::Muon::PV3D);
-      pTL1 = selectedMuons[0].pt();
-      pXL1 = selectedMuons[0].px();
-      pYL1 = selectedMuons[0].py();
-      pZL1 = selectedMuons[0].pz();
-      chargeL1 = selectedMuons[0].charge();
-      etaL1 = selectedMuons[0].eta();
-      phiL1 = selectedMuons[0].phi();
-      isoTrackL1 = selectedMuons[0].trackIso();
-      isoEcalL1 = selectedMuons[0].ecalIso();
-      isoHcalL1 = selectedMuons[0].hcalIso();
-      isoNHL1 = selectedMuons[0].neutralHadronIso();
-      isoCHL1 = selectedMuons[0].chargedHadronIso();
-      isoPhotL1 = selectedMuons[0].photonIso();
-      RelIsoL1 = helper.pfIso(selectedMuons[0],muonRho);
-      RelIsoUCL1 = helper.pfIso(selectedMuons[0],0);
-      missingHitsL1 = -1;
+    idL3 = selectedMuons[2].pdgId();
+    mvaL3 = selectedMuons[2].isPFMuon();
+    EL3 = selectedMuons[2].energy();
+    SipL3 = helper.getSIP3D(selectedMuons[2]);
+    IPL3 = fabs(selectedMuons[2].dB(pat::Muon::PV3D));
+    dIPL3 = selectedMuons[2].edB(pat::Muon::PV3D);
+    pTL3 = selectedMuons[2].pt();
+    pXL3 = selectedMuons[2].px();
+    pYL3 = selectedMuons[2].py();
+    pZL3 = selectedMuons[2].pz();
+    chargeL3 = selectedMuons[2].charge();
+    etaL3 = selectedMuons[2].eta();
+    phiL3 = selectedMuons[2].phi();
+    isoNHL3 = selectedMuons[2].neutralHadronIso();
+    isoCHL3 = selectedMuons[2].chargedHadronIso();
+    isoPhotL3 = selectedMuons[2].photonIso();
+    isoTrackL3 = selectedMuons[2].trackIso();
+    isoEcalL3 = selectedMuons[2].ecalIso();
+    isoHcalL3 = selectedMuons[2].hcalIso();
+    RelIsoL3 = helper.pfIso(selectedMuons[2],muonRho);
+    RelIsoUCL3 = helper.pfIso(selectedMuons[2],0);
+    missingHitsL3 = -1;
 
-      idL2 = selectedMuons[1].pdgId();
-      mvaL2 = selectedMuons[1].isPFMuon();
-      EL2 = selectedMuons[1].energy();
-      SipL2 = helper.getSIP3D(selectedMuons[1]);
-      IPL2 = fabs(selectedMuons[1].dB(pat::Muon::PV3D));
-      dIPL2 = selectedMuons[1].edB(pat::Muon::PV3D);
-      pTL2 = selectedMuons[1].pt();
-      pXL2 = selectedMuons[1].px();
-      pYL2 = selectedMuons[1].py();
-      pZL2 = selectedMuons[1].pz();
-      chargeL2 = selectedMuons[1].charge();
-      etaL2 = selectedMuons[1].eta();
-      phiL2 = selectedMuons[1].phi();
-      isoNHL2 = selectedMuons[1].neutralHadronIso();
-      isoCHL2 = selectedMuons[1].chargedHadronIso();
-      isoPhotL2 = selectedMuons[1].photonIso();
-      isoTrackL2 = selectedMuons[1].trackIso();
-      isoEcalL2 = selectedMuons[1].ecalIso();
-      isoHcalL2 = selectedMuons[1].hcalIso();
-      RelIsoL2 = helper.pfIso(selectedMuons[1],muonRho);
-      RelIsoUCL2 = helper.pfIso(selectedMuons[1],0);
-      missingHitsL2 = -1;
-
-      idL3 = selectedMuons[2].pdgId();
-      mvaL3 = selectedMuons[2].isPFMuon();
-      EL3 = selectedMuons[2].energy();
-      SipL3 = helper.getSIP3D(selectedMuons[2]);
-      IPL3 = fabs(selectedMuons[2].dB(pat::Muon::PV3D));
-      dIPL3 = selectedMuons[2].edB(pat::Muon::PV3D);
-      pTL3 = selectedMuons[2].pt();
-      pXL3 = selectedMuons[2].px();
-      pYL3 = selectedMuons[2].py();
-      pZL3 = selectedMuons[2].pz();
-      chargeL3 = selectedMuons[2].charge();
-      etaL3 = selectedMuons[2].eta();
-      phiL3 = selectedMuons[2].phi();
-      isoNHL3 = selectedMuons[2].neutralHadronIso();
-      isoCHL3 = selectedMuons[2].chargedHadronIso();
-      isoPhotL3 = selectedMuons[2].photonIso();
-      isoTrackL3 = selectedMuons[2].trackIso();
-      isoEcalL3 = selectedMuons[2].ecalIso();
-      isoHcalL3 = selectedMuons[2].hcalIso();
-      RelIsoL3 = helper.pfIso(selectedMuons[2],muonRho);
-      RelIsoUCL3 = helper.pfIso(selectedMuons[2],0);
-      missingHitsL3 = -1;
-
-      idL4 = selectedMuons[3].pdgId();
-      mvaL4 = selectedMuons[3].isPFMuon();
-      IPL4 = fabs(selectedMuons[3].dB(pat::Muon::PV3D));
-      dIPL4 = selectedMuons[3].edB(pat::Muon::PV3D);
-      SipL4 = helper.getSIP3D(selectedMuons[3]);
-      EL4 = selectedMuons[3].energy();
-      pTL4 = selectedMuons[3].pt();
-      pXL4 = selectedMuons[3].px();
-      pYL4 = selectedMuons[3].py();
-      pZL4 = selectedMuons[3].pz();
-      chargeL4 = selectedMuons[3].charge();
-      etaL4 = selectedMuons[3].eta();
-      phiL4 = selectedMuons[3].phi();
-      isoNHL4 = selectedMuons[3].neutralHadronIso();
-      isoCHL4 = selectedMuons[3].chargedHadronIso();
-      isoPhotL4 = selectedMuons[3].photonIso();
-      isoTrackL4 = selectedMuons[3].trackIso();
-      isoEcalL4 = selectedMuons[3].ecalIso();
-      isoHcalL4 = selectedMuons[3].hcalIso();
-      RelIsoL4 =  helper.pfIso(selectedMuons[3],muonRho);
-      RelIsoUCL4 =  helper.pfIso(selectedMuons[3],0);
-      missingHitsL4 = -1;
-
-    }
+    idL4 = selectedMuons[3].pdgId();
+    mvaL4 = selectedMuons[3].isPFMuon();
+    IPL4 = fabs(selectedMuons[3].dB(pat::Muon::PV3D));
+    dIPL4 = selectedMuons[3].edB(pat::Muon::PV3D);
+    SipL4 = helper.getSIP3D(selectedMuons[3]);
+    EL4 = selectedMuons[3].energy();
+    pTL4 = selectedMuons[3].pt();
+    pXL4 = selectedMuons[3].px();
+    pYL4 = selectedMuons[3].py();
+    pZL4 = selectedMuons[3].pz();
+    chargeL4 = selectedMuons[3].charge();
+    etaL4 = selectedMuons[3].eta();
+    phiL4 = selectedMuons[3].phi();
+    isoNHL4 = selectedMuons[3].neutralHadronIso();
+    isoCHL4 = selectedMuons[3].chargedHadronIso();
+    isoPhotL4 = selectedMuons[3].photonIso();
+    isoTrackL4 = selectedMuons[3].trackIso();
+    isoEcalL4 = selectedMuons[3].ecalIso();
+    isoHcalL4 = selectedMuons[3].hcalIso();
+    RelIsoL4 =  helper.pfIso(selectedMuons[3],muonRho);
+    RelIsoUCL4 =  helper.pfIso(selectedMuons[3],0);
+    missingHitsL4 = -1;
+  }
   else if( RecoFourEEvent )
-    {
-     
-      idL1 = selectedElectrons[0].pdgId();
-      mvaL1 = elecID=="noEID" ? -100 : selectedElectrons[0].electronID(elecID) ;
-      EL1 = selectedElectrons[0].energy();
-      SipL1 = helper.getSIP3D(selectedElectrons[0]);
-      IPL1 = fabs(selectedElectrons[0].dB(pat::Electron::PV3D));
-      dIPL1 = selectedElectrons[0].edB(pat::Electron::PV3D);
-      pTL1 = selectedElectrons[0].pt();
-      pXL1 = selectedElectrons[0].px();
-      pYL1 = selectedElectrons[0].py();
-      pZL1 = selectedElectrons[0].pz();
-      chargeL1 = selectedElectrons[0].charge();
-      etaL1 = selectedElectrons[0].eta();
-      phiL1 = selectedElectrons[0].phi();
-      isoNHL1 = selectedElectrons[0].neutralHadronIso();
-      isoCHL1 = selectedElectrons[0].chargedHadronIso();
-      isoPhotL1 = selectedElectrons[0].photonIso();
-      isoTrackL1 = selectedElectrons[0].dr03TkSumPt();
-      isoEcalL1 = selectedElectrons[0].dr03EcalRecHitSumEt();
-      isoHcalL1 = selectedElectrons[0].dr03HcalTowerSumEt();
-      RelIsoL1 =  helper.pfIso(selectedElectrons[0],elecRho);
-      RelIsoUCL1 = helper.pfIso(selectedElectrons[0],0);
-      //missingHitsL1 = selectedElectrons[0].gsfTrack()->trackerExpectedHitsInner().numberOfLostHits(); // for miniAOD
-      ecalSeedL1 = selectedElectrons[0].ecalDrivenSeed();
- 
-      idL2 = selectedElectrons[1].pdgId();
-      mvaL2 = elecID=="noEID" ? -100 : selectedElectrons[1].electronID(elecID);
-      EL2 = selectedElectrons[1].energy();
-      SipL2 = helper.getSIP3D(selectedElectrons[1]);
-      IPL2 = fabs(selectedElectrons[1].dB(pat::Electron::PV3D));
-      dIPL2 = selectedElectrons[1].edB(pat::Electron::PV3D);
-      pTL2 = selectedElectrons[1].pt();
-      pXL2 = selectedElectrons[1].px();
-      pYL2 = selectedElectrons[1].py();
-      pZL2 = selectedElectrons[1].pz();
-      chargeL2 = selectedElectrons[1].charge();
-      etaL2 = selectedElectrons[1].eta();
-      phiL2 = selectedElectrons[1].phi();
-      isoNHL2 = selectedElectrons[1].neutralHadronIso();
-      isoCHL2 = selectedElectrons[1].chargedHadronIso();
-      isoPhotL2 = selectedElectrons[1].photonIso();
-      isoTrackL2 = selectedElectrons[1].dr03TkSumPt();
-      isoEcalL2 = selectedElectrons[1].dr03EcalRecHitSumEt();
-      isoHcalL2 = selectedElectrons[1].dr03HcalTowerSumEt();
-      RelIsoL2 = helper.pfIso(selectedElectrons[1],elecRho);
-      RelIsoUCL2 = helper.pfIso(selectedElectrons[1],0);
-      //missingHitsL2 = selectedElectrons[1].gsfTrack()->trackerExpectedHitsInner().numberOfLostHits(); // for miniAOD
-      ecalSeedL2 = selectedElectrons[1].ecalDrivenSeed();
+  {
+    idL1 = selectedElectrons[0].pdgId();
+    mvaL1 = elecID=="noEID" ? -100 : selectedElectrons[0].electronID(elecID) ;
+    EL1 = selectedElectrons[0].energy();
+    SipL1 = helper.getSIP3D(selectedElectrons[0]);
+    IPL1 = fabs(selectedElectrons[0].dB(pat::Electron::PV3D));
+    dIPL1 = selectedElectrons[0].edB(pat::Electron::PV3D);
+    pTL1 = selectedElectrons[0].pt();
+    pXL1 = selectedElectrons[0].px();
+    pYL1 = selectedElectrons[0].py();
+    pZL1 = selectedElectrons[0].pz();
+    chargeL1 = selectedElectrons[0].charge();
+    etaL1 = selectedElectrons[0].eta();
+    phiL1 = selectedElectrons[0].phi();
+    isoNHL1 = selectedElectrons[0].neutralHadronIso();
+    isoCHL1 = selectedElectrons[0].chargedHadronIso();
+    isoPhotL1 = selectedElectrons[0].photonIso();
+    isoTrackL1 = selectedElectrons[0].dr03TkSumPt();
+    isoEcalL1 = selectedElectrons[0].dr03EcalRecHitSumEt();
+    isoHcalL1 = selectedElectrons[0].dr03HcalTowerSumEt();
+    RelIsoL1 =  helper.pfIso(selectedElectrons[0],elecRho);
+    RelIsoUCL1 = helper.pfIso(selectedElectrons[0],0);
+    //missingHitsL1 = selectedElectrons[0].gsfTrack()->trackerExpectedHitsInner().numberOfLostHits(); // for miniAOD
+    ecalSeedL1 = selectedElectrons[0].ecalDrivenSeed();
 
-      idL3 = selectedElectrons[2].pdgId();
-      mvaL3 = elecID=="noEID" ? -100 : selectedElectrons[2].electronID(elecID);
-      EL3 = selectedElectrons[2].energy();
-      SipL3 = helper.getSIP3D(selectedElectrons[2]);
-      IPL3 = fabs(selectedElectrons[2].dB(pat::Electron::PV3D));
-      dIPL3 = selectedElectrons[2].edB(pat::Electron::PV3D);
-      pTL3 = selectedElectrons[2].pt();
-      pXL3 = selectedElectrons[2].px();
-      pYL3 = selectedElectrons[2].py();
-      pZL3 = selectedElectrons[2].pz();
-      chargeL3 = selectedElectrons[2].charge();
-      etaL3 = selectedElectrons[2].eta();
-      phiL3 = selectedElectrons[2].phi();
-      isoNHL3 = selectedElectrons[2].neutralHadronIso();
-      isoCHL3 = selectedElectrons[2].chargedHadronIso();
-      isoPhotL3 = selectedElectrons[2].photonIso();
-      isoTrackL3 = selectedElectrons[2].dr03TkSumPt();
-      isoEcalL3 = selectedElectrons[2].dr03EcalRecHitSumEt();
-      isoHcalL3 = selectedElectrons[2].dr03HcalTowerSumEt();
-      RelIsoL3 = helper.pfIso(selectedElectrons[2],elecRho);
-      RelIsoUCL3 = helper.pfIso(selectedElectrons[2],0);
-      //missingHitsL3 = selectedElectrons[2].gsfTrack()->trackerExpectedHitsInner().numberOfLostHits(); // for miniAOD
-      ecalSeedL3 = selectedElectrons[2].ecalDrivenSeed();
+    idL2 = selectedElectrons[1].pdgId();
+    mvaL2 = elecID=="noEID" ? -100 : selectedElectrons[1].electronID(elecID);
+    EL2 = selectedElectrons[1].energy();
+    SipL2 = helper.getSIP3D(selectedElectrons[1]);
+    IPL2 = fabs(selectedElectrons[1].dB(pat::Electron::PV3D));
+    dIPL2 = selectedElectrons[1].edB(pat::Electron::PV3D);
+    pTL2 = selectedElectrons[1].pt();
+    pXL2 = selectedElectrons[1].px();
+    pYL2 = selectedElectrons[1].py();
+    pZL2 = selectedElectrons[1].pz();
+    chargeL2 = selectedElectrons[1].charge();
+    etaL2 = selectedElectrons[1].eta();
+    phiL2 = selectedElectrons[1].phi();
+    isoNHL2 = selectedElectrons[1].neutralHadronIso();
+    isoCHL2 = selectedElectrons[1].chargedHadronIso();
+    isoPhotL2 = selectedElectrons[1].photonIso();
+    isoTrackL2 = selectedElectrons[1].dr03TkSumPt();
+    isoEcalL2 = selectedElectrons[1].dr03EcalRecHitSumEt();
+    isoHcalL2 = selectedElectrons[1].dr03HcalTowerSumEt();
+    RelIsoL2 = helper.pfIso(selectedElectrons[1],elecRho);
+    RelIsoUCL2 = helper.pfIso(selectedElectrons[1],0);
+    //missingHitsL2 = selectedElectrons[1].gsfTrack()->trackerExpectedHitsInner().numberOfLostHits(); // for miniAOD
+    ecalSeedL2 = selectedElectrons[1].ecalDrivenSeed();
 
-      idL4 = selectedElectrons[3].pdgId();
-      mvaL4 = elecID=="noEID" ? -100 : selectedElectrons[3].electronID(elecID);
-      EL4 = selectedElectrons[3].energy();
-      SipL4 = helper.getSIP3D(selectedElectrons[3]);
-      IPL4 = fabs(selectedElectrons[3].dB(pat::Electron::PV3D));
-      dIPL4 = selectedElectrons[3].edB(pat::Electron::PV3D);
-      pTL4 = selectedElectrons[3].pt();
-      pXL4 = selectedElectrons[3].px();
-      pYL4 = selectedElectrons[3].py();
-      pZL4 = selectedElectrons[3].pz();
-      chargeL4 = selectedElectrons[3].charge();
-      etaL4 = selectedElectrons[3].eta();
-      phiL4 = selectedElectrons[3].phi();
-      isoNHL4 = selectedElectrons[3].neutralHadronIso();
-      isoCHL4 = selectedElectrons[3].chargedHadronIso();
-      isoPhotL4 = selectedElectrons[3].photonIso();
-      isoTrackL4 = selectedElectrons[3].dr03TkSumPt();
-      isoEcalL4 = selectedElectrons[3].dr03EcalRecHitSumEt();
-      isoHcalL4 = selectedElectrons[3].dr03HcalTowerSumEt();
-      RelIsoL4 = helper.pfIso(selectedElectrons[3],elecRho);
-      RelIsoUCL4 = helper.pfIso(selectedElectrons[3],0);
-      //missingHitsL4 = selectedElectrons[3].gsfTrack()->trackerExpectedHitsInner().numberOfLostHits(); // for miniAOD
-      ecalSeedL4 = selectedElectrons[3].ecalDrivenSeed();
+    idL3 = selectedElectrons[2].pdgId();
+    mvaL3 = elecID=="noEID" ? -100 : selectedElectrons[2].electronID(elecID);
+    EL3 = selectedElectrons[2].energy();
+    SipL3 = helper.getSIP3D(selectedElectrons[2]);
+    IPL3 = fabs(selectedElectrons[2].dB(pat::Electron::PV3D));
+    dIPL3 = selectedElectrons[2].edB(pat::Electron::PV3D);
+    pTL3 = selectedElectrons[2].pt();
+    pXL3 = selectedElectrons[2].px();
+    pYL3 = selectedElectrons[2].py();
+    pZL3 = selectedElectrons[2].pz();
+    chargeL3 = selectedElectrons[2].charge();
+    etaL3 = selectedElectrons[2].eta();
+    phiL3 = selectedElectrons[2].phi();
+    isoNHL3 = selectedElectrons[2].neutralHadronIso();
+    isoCHL3 = selectedElectrons[2].chargedHadronIso();
+    isoPhotL3 = selectedElectrons[2].photonIso();
+    isoTrackL3 = selectedElectrons[2].dr03TkSumPt();
+    isoEcalL3 = selectedElectrons[2].dr03EcalRecHitSumEt();
+    isoHcalL3 = selectedElectrons[2].dr03HcalTowerSumEt();
+    RelIsoL3 = helper.pfIso(selectedElectrons[2],elecRho);
+    RelIsoUCL3 = helper.pfIso(selectedElectrons[2],0);
+    //missingHitsL3 = selectedElectrons[2].gsfTrack()->trackerExpectedHitsInner().numberOfLostHits(); // for miniAOD
+    ecalSeedL3 = selectedElectrons[2].ecalDrivenSeed();
 
-    }
+    idL4 = selectedElectrons[3].pdgId();
+    mvaL4 = elecID=="noEID" ? -100 : selectedElectrons[3].electronID(elecID);
+    EL4 = selectedElectrons[3].energy();
+    SipL4 = helper.getSIP3D(selectedElectrons[3]);
+    IPL4 = fabs(selectedElectrons[3].dB(pat::Electron::PV3D));
+    dIPL4 = selectedElectrons[3].edB(pat::Electron::PV3D);
+    pTL4 = selectedElectrons[3].pt();
+    pXL4 = selectedElectrons[3].px();
+    pYL4 = selectedElectrons[3].py();
+    pZL4 = selectedElectrons[3].pz();
+    chargeL4 = selectedElectrons[3].charge();
+    etaL4 = selectedElectrons[3].eta();
+    phiL4 = selectedElectrons[3].phi();
+    isoNHL4 = selectedElectrons[3].neutralHadronIso();
+    isoCHL4 = selectedElectrons[3].chargedHadronIso();
+    isoPhotL4 = selectedElectrons[3].photonIso();
+    isoTrackL4 = selectedElectrons[3].dr03TkSumPt();
+    isoEcalL4 = selectedElectrons[3].dr03EcalRecHitSumEt();
+    isoHcalL4 = selectedElectrons[3].dr03HcalTowerSumEt();
+    RelIsoL4 = helper.pfIso(selectedElectrons[3],elecRho);
+    RelIsoUCL4 = helper.pfIso(selectedElectrons[3],0);
+    //missingHitsL4 = selectedElectrons[3].gsfTrack()->trackerExpectedHitsInner().numberOfLostHits(); // for miniAOD
+    ecalSeedL4 = selectedElectrons[3].ecalDrivenSeed();
+  }
   else if( RecoTwoETwoMuEvent )
-    {
+  {
+    idL1 = selectedElectrons[0].pdgId();
+    mvaL1 = elecID=="noEID" ? -100 : selectedElectrons[0].electronID(elecID);
+    EL1 = selectedElectrons[0].energy();
+    SipL1 = helper.getSIP3D(selectedElectrons[0]);
+    IPL1 = fabs(selectedElectrons[0].dB(pat::Electron::PV3D));
+    dIPL1 = selectedElectrons[0].edB(pat::Electron::PV3D);
+    pTL1 = selectedElectrons[0].pt();
+    pXL1 = selectedElectrons[0].px();
+    pYL1 = selectedElectrons[0].py();
+    pZL1 = selectedElectrons[0].pz();
+    chargeL1 = selectedElectrons[0].charge();
+    etaL1 = selectedElectrons[0].eta();
+    phiL1 = selectedElectrons[0].phi();
+    isoNHL1 = selectedElectrons[0].neutralHadronIso();
+    isoCHL1 = selectedElectrons[0].chargedHadronIso();
+    isoPhotL1 = selectedElectrons[0].photonIso();
+    isoTrackL1 = selectedElectrons[0].dr03TkSumPt();
+    isoEcalL1 = selectedElectrons[0].dr03EcalRecHitSumEt();
+    isoHcalL1 = selectedElectrons[0].dr03HcalTowerSumEt();
+    RelIsoL1 = helper.pfIso(selectedElectrons[0],elecRho);
+    RelIsoUCL1 = helper.pfIso(selectedElectrons[0],0);
+    //missingHitsL1 = selectedElectrons[0].gsfTrack()->trackerExpectedHitsInner().numberOfLostHits(); //for miniAOD
+    ecalSeedL1 = selectedElectrons[0].ecalDrivenSeed();
 
-      idL1 = selectedElectrons[0].pdgId();
-      mvaL1 = elecID=="noEID" ? -100 : selectedElectrons[0].electronID(elecID);
-      EL1 = selectedElectrons[0].energy();
-      SipL1 = helper.getSIP3D(selectedElectrons[0]);
-      IPL1 = fabs(selectedElectrons[0].dB(pat::Electron::PV3D));
-      dIPL1 = selectedElectrons[0].edB(pat::Electron::PV3D);
-      pTL1 = selectedElectrons[0].pt();
-      pXL1 = selectedElectrons[0].px();
-      pYL1 = selectedElectrons[0].py();
-      pZL1 = selectedElectrons[0].pz();
-      chargeL1 = selectedElectrons[0].charge();
-      etaL1 = selectedElectrons[0].eta();
-      phiL1 = selectedElectrons[0].phi();
-      isoNHL1 = selectedElectrons[0].neutralHadronIso();
-      isoCHL1 = selectedElectrons[0].chargedHadronIso();
-      isoPhotL1 = selectedElectrons[0].photonIso();
-      isoTrackL1 = selectedElectrons[0].dr03TkSumPt();
-      isoEcalL1 = selectedElectrons[0].dr03EcalRecHitSumEt();
-      isoHcalL1 = selectedElectrons[0].dr03HcalTowerSumEt();
-      RelIsoL1 = helper.pfIso(selectedElectrons[0],elecRho);
-      RelIsoUCL1 = helper.pfIso(selectedElectrons[0],0);
-      //missingHitsL1 = selectedElectrons[0].gsfTrack()->trackerExpectedHitsInner().numberOfLostHits(); //for miniAOD
-      ecalSeedL1 = selectedElectrons[0].ecalDrivenSeed();
+    idL2 = selectedElectrons[1].pdgId();
+    mvaL2 = elecID=="noEID" ? -100 : selectedElectrons[1].electronID(elecID);
+    EL2 = selectedElectrons[1].energy();
+    SipL2 = helper.getSIP3D(selectedElectrons[1]);
+    IPL2 = fabs(selectedElectrons[1].dB(pat::Electron::PV3D));
+    dIPL2 = selectedElectrons[1].edB(pat::Electron::PV3D);
+    pTL2 = selectedElectrons[1].pt();
+    pXL2 = selectedElectrons[1].px();
+    pYL2 = selectedElectrons[1].py();
+    pZL2 = selectedElectrons[1].pz();
+    chargeL2 = selectedElectrons[1].charge();
+    etaL2 = selectedElectrons[1].eta();
+    phiL2 = selectedElectrons[1].phi();
+    isoNHL2 = selectedElectrons[1].neutralHadronIso();
+    isoCHL2 = selectedElectrons[1].chargedHadronIso();
+    isoPhotL2 = selectedElectrons[1].photonIso();
+    isoTrackL2 = selectedElectrons[1].dr03TkSumPt();
+    isoEcalL2 = selectedElectrons[1].dr03EcalRecHitSumEt();
+    isoHcalL2 = selectedElectrons[1].dr03HcalTowerSumEt();
+    RelIsoL2 = helper.pfIso(selectedElectrons[1],elecRho);
+    RelIsoUCL2 = helper.pfIso(selectedElectrons[1],0);
+    //missingHitsL2 = selectedElectrons[1].gsfTrack()->trackerExpectedHitsInner().numberOfLostHits(); // for miniAOD
+    ecalSeedL2 = selectedElectrons[1].ecalDrivenSeed();
 
-      idL2 = selectedElectrons[1].pdgId();
-      mvaL2 = elecID=="noEID" ? -100 : selectedElectrons[1].electronID(elecID);
-      EL2 = selectedElectrons[1].energy();
-      SipL2 = helper.getSIP3D(selectedElectrons[1]);
-      IPL2 = fabs(selectedElectrons[1].dB(pat::Electron::PV3D));
-      dIPL2 = selectedElectrons[1].edB(pat::Electron::PV3D);
-      pTL2 = selectedElectrons[1].pt();
-      pXL2 = selectedElectrons[1].px();
-      pYL2 = selectedElectrons[1].py();
-      pZL2 = selectedElectrons[1].pz();
-      chargeL2 = selectedElectrons[1].charge();
-      etaL2 = selectedElectrons[1].eta();
-      phiL2 = selectedElectrons[1].phi();
-      isoNHL2 = selectedElectrons[1].neutralHadronIso();
-      isoCHL2 = selectedElectrons[1].chargedHadronIso();
-      isoPhotL2 = selectedElectrons[1].photonIso();
-      isoTrackL2 = selectedElectrons[1].dr03TkSumPt();
-      isoEcalL2 = selectedElectrons[1].dr03EcalRecHitSumEt();
-      isoHcalL2 = selectedElectrons[1].dr03HcalTowerSumEt();
-      RelIsoL2 = helper.pfIso(selectedElectrons[1],elecRho);
-      RelIsoUCL2 = helper.pfIso(selectedElectrons[1],0);
-      //missingHitsL2 = selectedElectrons[1].gsfTrack()->trackerExpectedHitsInner().numberOfLostHits(); // for miniAOD
-      ecalSeedL2 = selectedElectrons[1].ecalDrivenSeed();
+    idL3 = selectedMuons[0].pdgId();
+    mvaL3 = selectedMuons[0].isPFMuon();
+    EL3 = selectedMuons[0].energy();
+    SipL3 = helper.getSIP3D(selectedMuons[0]);
+    IPL3 = fabs(selectedMuons[0].dB(pat::Muon::PV3D));
+    dIPL3 = selectedMuons[0].edB(pat::Muon::PV3D);
+    pTL3 = selectedMuons[0].pt();
+    pXL3 = selectedMuons[0].px();
+    pYL3 = selectedMuons[0].py();
+    pZL3 = selectedMuons[0].pz();
+    chargeL3 = selectedMuons[0].charge();
+    etaL3 = selectedMuons[0].eta();
+    phiL3 = selectedMuons[0].phi();
+    isoNHL3 = selectedMuons[0].neutralHadronIso();
+    isoCHL3 = selectedMuons[0].chargedHadronIso();
+    isoPhotL3 = selectedMuons[0].photonIso();
+    isoTrackL3 = selectedMuons[0].trackIso();
+    isoEcalL3 = selectedMuons[0].ecalIso();
+    isoHcalL3 = selectedMuons[0].hcalIso();
+    RelIsoL3 = helper.pfIso(selectedMuons[0],muonRho);
+    RelIsoUCL3 = helper.pfIso(selectedMuons[0],0);
+    missingHitsL3 = -1;
 
-      idL3 = selectedMuons[0].pdgId();
-      mvaL3 = selectedMuons[0].isPFMuon();
-      EL3 = selectedMuons[0].energy();
-      SipL3 = helper.getSIP3D(selectedMuons[0]);
-      IPL3 = fabs(selectedMuons[0].dB(pat::Muon::PV3D));
-      dIPL3 = selectedMuons[0].edB(pat::Muon::PV3D);
-      pTL3 = selectedMuons[0].pt();
-      pXL3 = selectedMuons[0].px();
-      pYL3 = selectedMuons[0].py();
-      pZL3 = selectedMuons[0].pz();
-      chargeL3 = selectedMuons[0].charge();
-      etaL3 = selectedMuons[0].eta();
-      phiL3 = selectedMuons[0].phi();
-      isoNHL3 = selectedMuons[0].neutralHadronIso();
-      isoCHL3 = selectedMuons[0].chargedHadronIso();
-      isoPhotL3 = selectedMuons[0].photonIso();
-      isoTrackL3 = selectedMuons[0].trackIso();
-      isoEcalL3 = selectedMuons[0].ecalIso();
-      isoHcalL3 = selectedMuons[0].hcalIso();
-      RelIsoL3 = helper.pfIso(selectedMuons[0],muonRho);
-      RelIsoUCL3 = helper.pfIso(selectedMuons[0],0);
-      missingHitsL3 = -1;
-
-      idL4 = selectedMuons[1].pdgId();
-      mvaL4 = selectedMuons[1].isPFMuon();
-      EL4 = selectedMuons[1].energy();
-      SipL4 = helper.getSIP3D(selectedMuons[1]);
-      IPL4 = fabs(selectedMuons[1].dB(pat::Muon::PV3D));
-      dIPL4 = selectedMuons[1].edB(pat::Muon::PV3D);
-      pTL4 = selectedMuons[1].pt();
-      pXL4 = selectedMuons[1].px();
-      pYL4 = selectedMuons[1].py();
-      pZL4 = selectedMuons[1].pz();
-      chargeL4 = selectedMuons[1].charge();
-      etaL4 = selectedMuons[1].eta();
-      phiL4 = selectedMuons[1].phi();
-      isoNHL4 = selectedMuons[1].neutralHadronIso();
-      isoCHL4 = selectedMuons[1].chargedHadronIso();
-      isoPhotL4 = selectedMuons[1].photonIso();
-      isoTrackL4 = selectedMuons[1].trackIso();
-      isoEcalL4 = selectedMuons[1].ecalIso();
-      isoHcalL4 = selectedMuons[1].hcalIso();
-      RelIsoL4 = helper.pfIso(selectedMuons[1],muonRho);
-      RelIsoUCL4 = helper.pfIso(selectedMuons[1],0);
-      missingHitsL4 = -1;
-
-    }
+    idL4 = selectedMuons[1].pdgId();
+    mvaL4 = selectedMuons[1].isPFMuon();
+    EL4 = selectedMuons[1].energy();
+    SipL4 = helper.getSIP3D(selectedMuons[1]);
+    IPL4 = fabs(selectedMuons[1].dB(pat::Muon::PV3D));
+    dIPL4 = selectedMuons[1].edB(pat::Muon::PV3D);
+    pTL4 = selectedMuons[1].pt();
+    pXL4 = selectedMuons[1].px();
+    pYL4 = selectedMuons[1].py();
+    pZL4 = selectedMuons[1].pz();
+    chargeL4 = selectedMuons[1].charge();
+    etaL4 = selectedMuons[1].eta();
+    phiL4 = selectedMuons[1].phi();
+    isoNHL4 = selectedMuons[1].neutralHadronIso();
+    isoCHL4 = selectedMuons[1].chargedHadronIso();
+    isoPhotL4 = selectedMuons[1].photonIso();
+    isoTrackL4 = selectedMuons[1].trackIso();
+    isoEcalL4 = selectedMuons[1].ecalIso();
+    isoHcalL4 = selectedMuons[1].hcalIso();
+    RelIsoL4 = helper.pfIso(selectedMuons[1],muonRho);
+    RelIsoUCL4 = helper.pfIso(selectedMuons[1],0);
+    missingHitsL4 = -1;
+  }
   else if( RecoTwoMuTwoEEvent )
-    {
+  {
+    idL1 = selectedMuons[0].pdgId();
+    mvaL1 = selectedMuons[0].isPFMuon();
+    EL1 = selectedMuons[0].energy();
+    SipL1 = helper.getSIP3D(selectedMuons[0]);
+    IPL1 = fabs(selectedMuons[0].dB(pat::Muon::PV3D));
+    dIPL1 = selectedMuons[0].edB(pat::Muon::PV3D);
+    pTL1 = selectedMuons[0].pt();
+    pXL1 = selectedMuons[0].px();
+    pYL1 = selectedMuons[0].py();
+    pZL1 = selectedMuons[0].pz();
+    chargeL1 = selectedMuons[0].charge();
+    etaL1 = selectedMuons[0].eta();
+    phiL1 = selectedMuons[0].phi();
+    isoNHL1 = selectedMuons[0].neutralHadronIso();
+    isoCHL1 = selectedMuons[0].chargedHadronIso();
+    isoPhotL1 = selectedMuons[0].photonIso();
+    isoTrackL1 = selectedMuons[0].trackIso();
+    isoEcalL1 = selectedMuons[0].ecalIso();
+    isoHcalL1 = selectedMuons[0].hcalIso();
+    RelIsoL1 = helper.pfIso(selectedMuons[0],muonRho);
+    RelIsoUCL1 = helper.pfIso(selectedMuons[0],0);
+    missingHitsL1 = -1;
 
-      idL1 = selectedMuons[0].pdgId();
-      mvaL1 = selectedMuons[0].isPFMuon();
-      EL1 = selectedMuons[0].energy();
-      SipL1 = helper.getSIP3D(selectedMuons[0]);
-      IPL1 = fabs(selectedMuons[0].dB(pat::Muon::PV3D));
-      dIPL1 = selectedMuons[0].edB(pat::Muon::PV3D);
-      pTL1 = selectedMuons[0].pt();
-      pXL1 = selectedMuons[0].px();
-      pYL1 = selectedMuons[0].py();
-      pZL1 = selectedMuons[0].pz();
-      chargeL1 = selectedMuons[0].charge();
-      etaL1 = selectedMuons[0].eta();
-      phiL1 = selectedMuons[0].phi();
-      isoNHL1 = selectedMuons[0].neutralHadronIso();
-      isoCHL1 = selectedMuons[0].chargedHadronIso();
-      isoPhotL1 = selectedMuons[0].photonIso();
-      isoTrackL1 = selectedMuons[0].trackIso();
-      isoEcalL1 = selectedMuons[0].ecalIso();
-      isoHcalL1 = selectedMuons[0].hcalIso();
-      RelIsoL1 = helper.pfIso(selectedMuons[0],muonRho);
-      RelIsoUCL1 = helper.pfIso(selectedMuons[0],0);
-      missingHitsL1 = -1;
+    idL2 = selectedMuons[1].pdgId();
+    mvaL2 = selectedMuons[1].isPFMuon();
+    EL2 = selectedMuons[1].energy();
+    SipL2 = helper.getSIP3D(selectedMuons[1]);
+    IPL2 = fabs(selectedMuons[1].dB(pat::Muon::PV3D));
+    dIPL2 = selectedMuons[1].edB(pat::Muon::PV3D);
+    pTL2 = selectedMuons[1].pt();
+    pXL2 = selectedMuons[1].px();
+    pYL2 = selectedMuons[1].py();
+    pZL2 = selectedMuons[1].pz();
+    chargeL2 = selectedMuons[1].charge();
+    etaL2 = selectedMuons[1].eta();
+    phiL2 = selectedMuons[1].phi();
+    isoNHL2 = selectedMuons[1].neutralHadronIso();
+    isoCHL2 = selectedMuons[1].chargedHadronIso();
+    isoPhotL2 = selectedMuons[1].photonIso();
+    isoTrackL2 = selectedMuons[1].trackIso();
+    isoEcalL2 = selectedMuons[1].ecalIso();
+    isoHcalL2 = selectedMuons[1].hcalIso();
+    RelIsoL2 = helper.pfIso(selectedMuons[1],muonRho);
+    RelIsoUCL2 = helper.pfIso(selectedMuons[1],0);
+    missingHitsL2 = -1;
 
-      idL2 = selectedMuons[1].pdgId();
-      mvaL2 = selectedMuons[1].isPFMuon();
-      EL2 = selectedMuons[1].energy();
-      SipL2 = helper.getSIP3D(selectedMuons[1]);
-      IPL2 = fabs(selectedMuons[1].dB(pat::Muon::PV3D));
-      dIPL2 = selectedMuons[1].edB(pat::Muon::PV3D);
-      pTL2 = selectedMuons[1].pt();
-      pXL2 = selectedMuons[1].px();
-      pYL2 = selectedMuons[1].py();
-      pZL2 = selectedMuons[1].pz();
-      chargeL2 = selectedMuons[1].charge();
-      etaL2 = selectedMuons[1].eta();
-      phiL2 = selectedMuons[1].phi();
-      isoNHL2 = selectedMuons[1].neutralHadronIso();
-      isoCHL2 = selectedMuons[1].chargedHadronIso();
-      isoPhotL2 = selectedMuons[1].photonIso();
-      isoTrackL2 = selectedMuons[1].trackIso();
-      isoEcalL2 = selectedMuons[1].ecalIso();
-      isoHcalL2 = selectedMuons[1].hcalIso();
-      RelIsoL2 = helper.pfIso(selectedMuons[1],muonRho);
-      RelIsoUCL2 = helper.pfIso(selectedMuons[1],0);
-      missingHitsL2 = -1;
+    idL3 = selectedElectrons[0].pdgId();
+    mvaL3 = elecID=="noEID" ? -100 : selectedElectrons[0].electronID(elecID);
+    EL3 = selectedElectrons[0].energy();
+    SipL3 = helper.getSIP3D(selectedElectrons[0]);
+    IPL3 = fabs(selectedElectrons[0].dB(pat::Electron::PV3D));
+    dIPL3 = selectedElectrons[0].edB(pat::Electron::PV3D);
+    pTL3 = selectedElectrons[0].pt();
+    pXL3 = selectedElectrons[0].px();
+    pYL3 = selectedElectrons[0].py();
+    pZL3 = selectedElectrons[0].pz();
+    chargeL3 = selectedElectrons[0].charge();
+    etaL3 = selectedElectrons[0].eta();
+    phiL3 = selectedElectrons[0].phi();
+    isoNHL3 = selectedElectrons[0].neutralHadronIso();
+    isoCHL3 = selectedElectrons[0].chargedHadronIso();
+    isoPhotL3 = selectedElectrons[0].photonIso();
+    isoTrackL3 = selectedElectrons[0].dr03TkSumPt();
+    isoEcalL3 = selectedElectrons[0].dr03EcalRecHitSumEt();
+    isoHcalL3 = selectedElectrons[0].dr03HcalTowerSumEt();
+    RelIsoL3 = helper.pfIso(selectedElectrons[0],elecRho);
+    RelIsoUCL3 = helper.pfIso(selectedElectrons[0],0);
+    //missingHitsL3 = selectedElectrons[0].gsfTrack()->trackerExpectedHitsInner().numberOfLostHits(); // for miniAOD
+    ecalSeedL3 = selectedElectrons[0].ecalDrivenSeed();
 
-      idL3 = selectedElectrons[0].pdgId();
-      mvaL3 = elecID=="noEID" ? -100 : selectedElectrons[0].electronID(elecID);
-      EL3 = selectedElectrons[0].energy();
-      SipL3 = helper.getSIP3D(selectedElectrons[0]);
-      IPL3 = fabs(selectedElectrons[0].dB(pat::Electron::PV3D));
-      dIPL3 = selectedElectrons[0].edB(pat::Electron::PV3D);
-      pTL3 = selectedElectrons[0].pt();
-      pXL3 = selectedElectrons[0].px();
-      pYL3 = selectedElectrons[0].py();
-      pZL3 = selectedElectrons[0].pz();
-      chargeL3 = selectedElectrons[0].charge();
-      etaL3 = selectedElectrons[0].eta();
-      phiL3 = selectedElectrons[0].phi();
-      isoNHL3 = selectedElectrons[0].neutralHadronIso();
-      isoCHL3 = selectedElectrons[0].chargedHadronIso();
-      isoPhotL3 = selectedElectrons[0].photonIso();
-      isoTrackL3 = selectedElectrons[0].dr03TkSumPt();
-      isoEcalL3 = selectedElectrons[0].dr03EcalRecHitSumEt();
-      isoHcalL3 = selectedElectrons[0].dr03HcalTowerSumEt();
-      RelIsoL3 = helper.pfIso(selectedElectrons[0],elecRho);
-      RelIsoUCL3 = helper.pfIso(selectedElectrons[0],0);
-      //missingHitsL3 = selectedElectrons[0].gsfTrack()->trackerExpectedHitsInner().numberOfLostHits(); // for miniAOD
-      ecalSeedL3 = selectedElectrons[0].ecalDrivenSeed();
+    idL4 = selectedElectrons[1].pdgId();
+    mvaL4 = elecID=="noEID" ? -100 : selectedElectrons[1].electronID(elecID);
+    EL4 = selectedElectrons[1].energy();
+    SipL4 = helper.getSIP3D(selectedElectrons[1]);
+    IPL4 = fabs(selectedElectrons[1].dB(pat::Electron::PV3D));
+    dIPL4 = selectedElectrons[1].edB(pat::Electron::PV3D);
+    pTL4 = selectedElectrons[1].pt();
+    pXL4 = selectedElectrons[1].px();
+    pYL4 = selectedElectrons[1].py();
+    pZL4 = selectedElectrons[1].pz();
+    chargeL4 = selectedElectrons[1].charge();
+    etaL4 = selectedElectrons[1].eta();
+    phiL4 = selectedElectrons[1].phi();
+    isoNHL4 = selectedElectrons[1].neutralHadronIso();
+    isoCHL4 = selectedElectrons[1].chargedHadronIso();
+    isoPhotL4 = selectedElectrons[1].photonIso();
+    isoTrackL4 = selectedElectrons[1].dr03TkSumPt();
+    isoEcalL4 = selectedElectrons[1].dr03EcalRecHitSumEt();
+    isoHcalL4 = selectedElectrons[1].dr03HcalTowerSumEt();
+    RelIsoL4 = helper.pfIso(selectedElectrons[1],elecRho);
+    RelIsoUCL4 = helper.pfIso(selectedElectrons[1],0);
+    //missingHitsL4 = selectedElectrons[1].gsfTrack()->trackerExpectedHitsInner().numberOfLostHits(); //for miniAOD
+    ecalSeedL4 = selectedElectrons[1].ecalDrivenSeed();
+  } 
+  else if (RecoFourMixEvent==1) // mueemu
+  {      
+    idL1 = selectedMuons[0].pdgId();
+    mvaL1 = selectedMuons[0].isPFMuon();
+    EL1 = selectedMuons[0].energy();
+    SipL1 = helper.getSIP3D(selectedMuons[0]);
+    IPL1 = fabs(selectedMuons[0].dB(pat::Muon::PV3D));
+    dIPL1 = selectedMuons[0].edB(pat::Muon::PV3D);
+    pTL1 = selectedMuons[0].pt();
+    pXL1 = selectedMuons[0].px();
+    pYL1 = selectedMuons[0].py();
+    pZL1 = selectedMuons[0].pz();
+    chargeL1 = selectedMuons[0].charge();
+    etaL1 = selectedMuons[0].eta();
+    phiL1 = selectedMuons[0].phi();
+    isoNHL1 = selectedMuons[0].neutralHadronIso();
+    isoCHL1 = selectedMuons[0].chargedHadronIso();
+    isoPhotL1 = selectedMuons[0].photonIso();
+    isoTrackL1 = selectedMuons[0].trackIso();
+    isoEcalL1 = selectedMuons[0].ecalIso();
+    isoHcalL1 = selectedMuons[0].hcalIso();
+    RelIsoL1 = helper.pfIso(selectedMuons[0],muonRho);
+    RelIsoUCL1 = helper.pfIso(selectedMuons[0],0);
 
-      idL4 = selectedElectrons[1].pdgId();
-      mvaL4 = elecID=="noEID" ? -100 : selectedElectrons[1].electronID(elecID);
-      EL4 = selectedElectrons[1].energy();
-      SipL4 = helper.getSIP3D(selectedElectrons[1]);
-      IPL4 = fabs(selectedElectrons[1].dB(pat::Electron::PV3D));
-      dIPL4 = selectedElectrons[1].edB(pat::Electron::PV3D);
-      pTL4 = selectedElectrons[1].pt();
-      pXL4 = selectedElectrons[1].px();
-      pYL4 = selectedElectrons[1].py();
-      pZL4 = selectedElectrons[1].pz();
-      chargeL4 = selectedElectrons[1].charge();
-      etaL4 = selectedElectrons[1].eta();
-      phiL4 = selectedElectrons[1].phi();
-      isoNHL4 = selectedElectrons[1].neutralHadronIso();
-      isoCHL4 = selectedElectrons[1].chargedHadronIso();
-      isoPhotL4 = selectedElectrons[1].photonIso();
-      isoTrackL4 = selectedElectrons[1].dr03TkSumPt();
-      isoEcalL4 = selectedElectrons[1].dr03EcalRecHitSumEt();
-      isoHcalL4 = selectedElectrons[1].dr03HcalTowerSumEt();
-      RelIsoL4 = helper.pfIso(selectedElectrons[1],elecRho);
-      RelIsoUCL4 = helper.pfIso(selectedElectrons[1],0);
-      //missingHitsL4 = selectedElectrons[1].gsfTrack()->trackerExpectedHitsInner().numberOfLostHits(); //for miniAOD
-      ecalSeedL4 = selectedElectrons[1].ecalDrivenSeed();
+    idL2 = selectedElectrons[0].pdgId();
+    mvaL2 = elecID=="noEID" ? -100 : selectedElectrons[0].electronID(elecID);
+    EL2 = selectedElectrons[0].energy();
+    SipL2 = helper.getSIP3D(selectedElectrons[0]);
+    IPL2 = fabs(selectedElectrons[0].dB(pat::Electron::PV3D));
+    dIPL2 = selectedElectrons[0].edB(pat::Electron::PV3D);
+    pTL2 = selectedElectrons[0].pt();
+    pXL2 = selectedElectrons[0].px();
+    pYL2 = selectedElectrons[0].py();
+    pZL2 = selectedElectrons[0].pz();
+    chargeL2 = selectedElectrons[0].charge();
+    etaL2 = selectedElectrons[0].eta();
+    phiL2 = selectedElectrons[0].phi();
+    isoNHL2 = selectedElectrons[0].neutralHadronIso();
+    isoCHL2 = selectedElectrons[0].chargedHadronIso();
+    isoPhotL2 = selectedElectrons[0].photonIso();
+    isoTrackL2 = selectedElectrons[0].dr03TkSumPt();
+    isoEcalL2 = selectedElectrons[0].dr03EcalRecHitSumEt();
+    isoHcalL2 = selectedElectrons[0].dr03HcalTowerSumEt();
+    RelIsoL2 = helper.pfIso(selectedElectrons[0],elecRho);
+    RelIsoUCL2 = helper.pfIso(selectedElectrons[0],0);
 
-    } 
-  else if (RecoFourMixEvent==1)
-      {      
-          idL1 = selectedMuons[0].pdgId();
-	  mvaL1 = selectedMuons[0].isPFMuon();
-	  EL1 = selectedMuons[0].energy();
-          SipL1 = helper.getSIP3D(selectedMuons[0]);
-	  IPL1 = fabs(selectedMuons[0].dB(pat::Muon::PV3D));
-	  dIPL1 = selectedMuons[0].edB(pat::Muon::PV3D);
-          pTL1 = selectedMuons[0].pt();
-          pXL1 = selectedMuons[0].px();
-          pYL1 = selectedMuons[0].py();
-          pZL1 = selectedMuons[0].pz();
-          chargeL1 = selectedMuons[0].charge();
-          etaL1 = selectedMuons[0].eta();
-          phiL1 = selectedMuons[0].phi();
-          isoNHL1 = selectedMuons[0].neutralHadronIso();
-	  isoCHL1 = selectedMuons[0].chargedHadronIso();
-	  isoPhotL1 = selectedMuons[0].photonIso();
-	  isoTrackL1 = selectedMuons[0].trackIso();
-          isoEcalL1 = selectedMuons[0].ecalIso();
-          isoHcalL1 = selectedMuons[0].hcalIso();
-          RelIsoL1 = helper.pfIso(selectedMuons[0],muonRho);
-	  RelIsoUCL1 = helper.pfIso(selectedMuons[0],0);
+    idL3 = selectedElectrons[1].pdgId();
+    mvaL3 = elecID=="noEID" ? -100 : selectedElectrons[1].electronID(elecID);
+    EL3 = selectedElectrons[1].energy();
+    SipL3 = helper.getSIP3D(selectedElectrons[1]);
+    IPL3 = fabs(selectedElectrons[1].dB(pat::Electron::PV3D));
+    dIPL3 = selectedElectrons[1].edB(pat::Electron::PV3D);
+    pTL3 = selectedElectrons[1].pt();
+    pXL3 = selectedElectrons[1].px();
+    pYL3 = selectedElectrons[1].py();
+    pZL3 = selectedElectrons[1].pz();
+    chargeL3 = selectedElectrons[1].charge();
+    etaL3 = selectedElectrons[1].eta();
+    phiL3 = selectedElectrons[1].phi();
+    isoNHL3 = selectedElectrons[1].neutralHadronIso();
+    isoCHL3 = selectedElectrons[1].chargedHadronIso();
+    isoPhotL3 = selectedElectrons[1].photonIso();
+    isoTrackL3 = selectedElectrons[1].dr03TkSumPt();
+    isoEcalL3 = selectedElectrons[1].dr03EcalRecHitSumEt();
+    isoHcalL3 = selectedElectrons[1].dr03HcalTowerSumEt();
+    RelIsoL3 = helper.pfIso(selectedElectrons[1],elecRho);
+    RelIsoUCL3 = helper.pfIso(selectedElectrons[1],0);
 
-          idL2 = selectedElectrons[0].pdgId();
-	  mvaL2 = elecID=="noEID" ? -100 : selectedElectrons[0].electronID(elecID);
-	  EL2 = selectedElectrons[0].energy();
-          SipL2 = helper.getSIP3D(selectedElectrons[0]);
-	  IPL2 = fabs(selectedElectrons[0].dB(pat::Electron::PV3D));
-	  dIPL2 = selectedElectrons[0].edB(pat::Electron::PV3D);
-          pTL2 = selectedElectrons[0].pt();
-          pXL2 = selectedElectrons[0].px();
-          pYL2 = selectedElectrons[0].py();
-          pZL2 = selectedElectrons[0].pz();
-          chargeL2 = selectedElectrons[0].charge();
-          etaL2 = selectedElectrons[0].eta();
-          phiL2 = selectedElectrons[0].phi();
-          isoNHL2 = selectedElectrons[0].neutralHadronIso();
-	  isoCHL2 = selectedElectrons[0].chargedHadronIso();
-	  isoPhotL2 = selectedElectrons[0].photonIso();
-	  isoTrackL2 = selectedElectrons[0].dr03TkSumPt();
-          isoEcalL2 = selectedElectrons[0].dr03EcalRecHitSumEt();
-          isoHcalL2 = selectedElectrons[0].dr03HcalTowerSumEt();
-          RelIsoL2 = helper.pfIso(selectedElectrons[0],elecRho);
-	  RelIsoUCL2 = helper.pfIso(selectedElectrons[0],0);
+    idL4 = selectedMuons[1].pdgId();
+    mvaL4 = selectedMuons[1].isPFMuon();
+    EL4 = selectedMuons[1].energy();
+    SipL4 = helper.getSIP3D(selectedMuons[1]);
+    IPL4 = fabs(selectedMuons[1].dB(pat::Muon::PV3D));
+    dIPL4 = selectedMuons[1].edB(pat::Muon::PV3D);
+    pTL4 = selectedMuons[1].pt();
+    pXL4 = selectedMuons[1].px();
+    pYL4 = selectedMuons[1].py();
+    pZL4 = selectedMuons[1].pz();
+    chargeL4 = selectedMuons[1].charge();
+    etaL4 = selectedMuons[1].eta();
+    phiL4 = selectedMuons[1].phi();
+    isoNHL4 = selectedMuons[1].neutralHadronIso();
+    isoCHL4 = selectedMuons[1].chargedHadronIso();
+    isoPhotL4 = selectedMuons[1].photonIso();
+    isoTrackL4 = selectedMuons[1].trackIso();
+    isoEcalL4 = selectedMuons[1].ecalIso();
+    isoHcalL4 = selectedMuons[1].hcalIso();
+    RelIsoL4 = helper.pfIso(selectedMuons[1],muonRho);
+    RelIsoUCL4 = helper.pfIso(selectedMuons[1],0); 
+  } 
+  else if (RecoFourMixEvent==2) // muemue
+  {      
+    idL1 = selectedMuons[0].pdgId();
+    mvaL1 = selectedMuons[0].isPFMuon();
+    EL1 = selectedMuons[0].energy();
+    SipL1 = helper.getSIP3D(selectedMuons[0]);
+    IPL1 = fabs(selectedMuons[0].dB(pat::Muon::PV3D));
+    dIPL1 = selectedMuons[0].edB(pat::Muon::PV3D);
+    pTL1 = selectedMuons[0].pt();
+    pXL1 = selectedMuons[0].px();
+    pYL1 = selectedMuons[0].py();
+    pZL1 = selectedMuons[0].pz();
+    chargeL1 = selectedMuons[0].charge();
+    etaL1 = selectedMuons[0].eta();
+    phiL1 = selectedMuons[0].phi();
+    isoNHL1 = selectedMuons[0].neutralHadronIso();
+    isoCHL1 = selectedMuons[0].chargedHadronIso();
+    isoPhotL1 = selectedMuons[0].photonIso();
+    isoTrackL1 = selectedMuons[0].trackIso();
+    isoEcalL1 = selectedMuons[0].ecalIso();
+    isoHcalL1 = selectedMuons[0].hcalIso();
+    RelIsoL1 = helper.pfIso(selectedMuons[0],muonRho);
+    RelIsoUCL1 = helper.pfIso(selectedMuons[0],0);
 
-          idL3 = selectedElectrons[1].pdgId();
-	  mvaL3 = elecID=="noEID" ? -100 : selectedElectrons[1].electronID(elecID);
-	  EL3 = selectedElectrons[1].energy();
-          SipL3 = helper.getSIP3D(selectedElectrons[1]);
-	  IPL3 = fabs(selectedElectrons[1].dB(pat::Electron::PV3D));
-	  dIPL3 = selectedElectrons[1].edB(pat::Electron::PV3D);
-          pTL3 = selectedElectrons[1].pt();
-          pXL3 = selectedElectrons[1].px();
-          pYL3 = selectedElectrons[1].py();
-          pZL3 = selectedElectrons[1].pz();
-          chargeL3 = selectedElectrons[1].charge();
-          etaL3 = selectedElectrons[1].eta();
-          phiL3 = selectedElectrons[1].phi();
-          isoNHL3 = selectedElectrons[1].neutralHadronIso();
-	  isoCHL3 = selectedElectrons[1].chargedHadronIso();
-	  isoPhotL3 = selectedElectrons[1].photonIso();
-	  isoTrackL3 = selectedElectrons[1].dr03TkSumPt();
-          isoEcalL3 = selectedElectrons[1].dr03EcalRecHitSumEt();
-          isoHcalL3 = selectedElectrons[1].dr03HcalTowerSumEt();
-          RelIsoL3 = helper.pfIso(selectedElectrons[1],elecRho);
-	  RelIsoUCL3 = helper.pfIso(selectedElectrons[1],0);
+    idL2 = selectedElectrons[0].pdgId();
+    mvaL2 =  elecID=="noEID" ? -100 : selectedElectrons[0].electronID(elecID);
+    EL2 = selectedElectrons[0].energy();
+    SipL2 = helper.getSIP3D(selectedElectrons[0]);
+    IPL2 = fabs(selectedElectrons[0].dB(pat::Electron::PV3D));
+    dIPL2 = selectedElectrons[0].edB(pat::Electron::PV3D);
+    pTL2 = selectedElectrons[0].pt();
+    pXL2 = selectedElectrons[0].px();
+    pYL2 = selectedElectrons[0].py();
+    pZL2 = selectedElectrons[0].pz();
+    chargeL2 = selectedElectrons[0].charge();
+    etaL2 = selectedElectrons[0].eta();
+    phiL2 = selectedElectrons[0].phi();
+    isoNHL2 = selectedElectrons[0].neutralHadronIso();
+    isoCHL2 = selectedElectrons[0].chargedHadronIso();
+    isoPhotL2 = selectedElectrons[0].photonIso();
+    isoTrackL2 = selectedElectrons[0].dr03TkSumPt();
+    isoEcalL2 = selectedElectrons[0].dr03EcalRecHitSumEt();
+    isoHcalL2 = selectedElectrons[0].dr03HcalTowerSumEt();
+    RelIsoL2 = helper.pfIso(selectedElectrons[0],elecRho);
+    RelIsoUCL2 = helper.pfIso(selectedElectrons[0],0);
 
-          idL4 = selectedMuons[1].pdgId();
-	  mvaL4 = selectedMuons[1].isPFMuon();
-	  EL4 = selectedMuons[1].energy();
-          SipL4 = helper.getSIP3D(selectedMuons[1]);
-	  IPL4 = fabs(selectedMuons[1].dB(pat::Muon::PV3D));
-	  dIPL4 = selectedMuons[1].edB(pat::Muon::PV3D);
-          pTL4 = selectedMuons[1].pt();
-          pXL4 = selectedMuons[1].px();
-          pYL4 = selectedMuons[1].py();
-          pZL4 = selectedMuons[1].pz();
-          chargeL4 = selectedMuons[1].charge();
-          etaL4 = selectedMuons[1].eta();
-          phiL4 = selectedMuons[1].phi();
-          isoNHL4 = selectedMuons[1].neutralHadronIso();
-	  isoCHL4 = selectedMuons[1].chargedHadronIso();
-	  isoPhotL4 = selectedMuons[1].photonIso();
-	  isoTrackL4 = selectedMuons[1].trackIso();
-          isoEcalL4 = selectedMuons[1].ecalIso();
-          isoHcalL4 = selectedMuons[1].hcalIso();
-          RelIsoL4 = helper.pfIso(selectedMuons[1],muonRho);
-	  RelIsoUCL4 = helper.pfIso(selectedMuons[1],0);
- 
-      } 
-      else if (RecoFourMixEvent==2)
-      {      
-          idL1 = selectedMuons[0].pdgId();
-	  mvaL1 = selectedMuons[0].isPFMuon();
-	  EL1 = selectedMuons[0].energy();
-          SipL1 = helper.getSIP3D(selectedMuons[0]);
-	  IPL1 = fabs(selectedMuons[0].dB(pat::Muon::PV3D));
-	  dIPL1 = selectedMuons[0].edB(pat::Muon::PV3D);
-          pTL1 = selectedMuons[0].pt();
-          pXL1 = selectedMuons[0].px();
-          pYL1 = selectedMuons[0].py();
-          pZL1 = selectedMuons[0].pz();
-          chargeL1 = selectedMuons[0].charge();
-          etaL1 = selectedMuons[0].eta();
-          phiL1 = selectedMuons[0].phi();
-          isoNHL1 = selectedMuons[0].neutralHadronIso();
-	  isoCHL1 = selectedMuons[0].chargedHadronIso();
-	  isoPhotL1 = selectedMuons[0].photonIso();
-	  isoTrackL1 = selectedMuons[0].trackIso();
-          isoEcalL1 = selectedMuons[0].ecalIso();
-          isoHcalL1 = selectedMuons[0].hcalIso();
-          RelIsoL1 = helper.pfIso(selectedMuons[0],muonRho);
-	  RelIsoUCL1 = helper.pfIso(selectedMuons[0],0);
+    idL3 = selectedMuons[1].pdgId();
+    mvaL3 = selectedMuons[1].isPFMuon();
+    EL3 = selectedMuons[1].energy();
+    SipL3 = helper.getSIP3D(selectedMuons[1]);
+    IPL3 = fabs(selectedMuons[1].dB(pat::Muon::PV3D));
+    dIPL3 = selectedMuons[1].edB(pat::Muon::PV3D);
+    pTL3 = selectedMuons[1].pt();
+    pXL3 = selectedMuons[1].px();
+    pYL3 = selectedMuons[1].py();
+    pZL3 = selectedMuons[1].pz();
+    chargeL3 = selectedMuons[1].charge();
+    etaL3 = selectedMuons[1].eta();
+    phiL3 = selectedMuons[1].phi();
+    isoNHL3 = selectedMuons[1].neutralHadronIso();
+    isoCHL3 = selectedMuons[1].chargedHadronIso();
+    isoPhotL3 = selectedMuons[1].photonIso();
+    isoTrackL3 = selectedMuons[1].trackIso();
+    isoEcalL3 = selectedMuons[1].ecalIso();
+    isoHcalL3 = selectedMuons[1].hcalIso();
+    RelIsoL3 = helper.pfIso(selectedMuons[1],muonRho);
+    RelIsoUCL3 = helper.pfIso(selectedMuons[1],0);
 
-          idL2 = selectedElectrons[0].pdgId();
-	  mvaL2 =  elecID=="noEID" ? -100 : selectedElectrons[0].electronID(elecID);
-	  EL2 = selectedElectrons[0].energy();
-          SipL2 = helper.getSIP3D(selectedElectrons[0]);
-	  IPL2 = fabs(selectedElectrons[0].dB(pat::Electron::PV3D));
-	  dIPL2 = selectedElectrons[0].edB(pat::Electron::PV3D);
-          pTL2 = selectedElectrons[0].pt();
-          pXL2 = selectedElectrons[0].px();
-          pYL2 = selectedElectrons[0].py();
-          pZL2 = selectedElectrons[0].pz();
-          chargeL2 = selectedElectrons[0].charge();
-          etaL2 = selectedElectrons[0].eta();
-          phiL2 = selectedElectrons[0].phi();
-          isoNHL2 = selectedElectrons[0].neutralHadronIso();
-	  isoCHL2 = selectedElectrons[0].chargedHadronIso();
-	  isoPhotL2 = selectedElectrons[0].photonIso();
-	  isoTrackL2 = selectedElectrons[0].dr03TkSumPt();
-          isoEcalL2 = selectedElectrons[0].dr03EcalRecHitSumEt();
-          isoHcalL2 = selectedElectrons[0].dr03HcalTowerSumEt();
-          RelIsoL2 = helper.pfIso(selectedElectrons[0],elecRho);
-	  RelIsoUCL2 = helper.pfIso(selectedElectrons[0],0);
+    idL4 = selectedElectrons[1].pdgId();
+    mvaL4 = elecID=="noEID" ? -100 : selectedElectrons[1].electronID(elecID);
+    EL4 = selectedElectrons[1].energy();
+    SipL4 = helper.getSIP3D(selectedElectrons[1]);
+    IPL4 = fabs(selectedElectrons[1].dB(pat::Electron::PV3D));
+    dIPL4 = selectedElectrons[1].edB(pat::Electron::PV3D);
+    pTL4 = selectedElectrons[1].pt();
+    pXL4 = selectedElectrons[1].px();
+    pYL4 = selectedElectrons[1].py();
+    pZL4 = selectedElectrons[1].pz();
+    chargeL4 = selectedElectrons[1].charge();
+    etaL4 = selectedElectrons[1].eta();
+    phiL4 = selectedElectrons[1].phi();
+    isoNHL4 = selectedElectrons[1].neutralHadronIso();
+    isoCHL4 = selectedElectrons[1].chargedHadronIso();
+    isoPhotL4 = selectedElectrons[1].photonIso();
+    isoTrackL4 = selectedElectrons[1].dr03TkSumPt();
+    isoEcalL4 = selectedElectrons[1].dr03EcalRecHitSumEt();
+    isoHcalL4 = selectedElectrons[1].dr03HcalTowerSumEt();
+    RelIsoL4 = helper.pfIso(selectedElectrons[1],elecRho);
+    RelIsoUCL4 = helper.pfIso(selectedElectrons[1],0); 
+  } 
+  else if (RecoFourMixEvent==3) // mueee
+  {      
+    idL1 = selectedMuons[0].pdgId();
+    mvaL1 = selectedMuons[0].isPFMuon();
+    EL1 = selectedMuons[0].energy();
+    SipL1 = helper.getSIP3D(selectedMuons[0]);
+    IPL1 = fabs(selectedMuons[0].dB(pat::Muon::PV3D));
+    dIPL1 = selectedMuons[0].edB(pat::Muon::PV3D);
+    pTL1 = selectedMuons[0].pt();
+    pXL1 = selectedMuons[0].px();
+    pYL1 = selectedMuons[0].py();
+    pZL1 = selectedMuons[0].pz();
+    chargeL1 = selectedMuons[0].charge();
+    etaL1 = selectedMuons[0].eta();
+    phiL1 = selectedMuons[0].phi();
+    isoNHL1 = selectedMuons[0].neutralHadronIso();
+    isoCHL1 = selectedMuons[0].chargedHadronIso();
+    isoPhotL1 = selectedMuons[0].photonIso();
+    isoTrackL1 = selectedMuons[0].trackIso();
+    isoEcalL1 = selectedMuons[0].ecalIso();
+    isoHcalL1 = selectedMuons[0].hcalIso();
+    RelIsoL1 = helper.pfIso(selectedMuons[0],muonRho);
+    RelIsoUCL1 = helper.pfIso(selectedMuons[0],0);
 
-          idL3 = selectedMuons[1].pdgId();
-	  mvaL3 = selectedMuons[1].isPFMuon();
-	  EL3 = selectedMuons[1].energy();
-          SipL3 = helper.getSIP3D(selectedMuons[1]);
-	  IPL3 = fabs(selectedMuons[1].dB(pat::Muon::PV3D));
-	  dIPL3 = selectedMuons[1].edB(pat::Muon::PV3D);
-          pTL3 = selectedMuons[1].pt();
-          pXL3 = selectedMuons[1].px();
-          pYL3 = selectedMuons[1].py();
-          pZL3 = selectedMuons[1].pz();
-          chargeL3 = selectedMuons[1].charge();
-          etaL3 = selectedMuons[1].eta();
-          phiL3 = selectedMuons[1].phi();
-          isoNHL3 = selectedMuons[1].neutralHadronIso();
-	  isoCHL3 = selectedMuons[1].chargedHadronIso();
-	  isoPhotL3 = selectedMuons[1].photonIso();
-	  isoTrackL3 = selectedMuons[1].trackIso();
-          isoEcalL3 = selectedMuons[1].ecalIso();
-          isoHcalL3 = selectedMuons[1].hcalIso();
-          RelIsoL3 = helper.pfIso(selectedMuons[1],muonRho);
-	  RelIsoUCL3 = helper.pfIso(selectedMuons[1],0);
+    idL2 = selectedElectrons[0].pdgId();
+    mvaL2 = elecID=="noEID" ? -100 : selectedElectrons[0].electronID(elecID);
+    EL2 = selectedElectrons[0].energy();
+    SipL2 = helper.getSIP3D(selectedElectrons[0]);
+    IPL2 = fabs(selectedElectrons[0].dB(pat::Electron::PV3D));
+    dIPL2 = selectedElectrons[0].edB(pat::Electron::PV3D);
+    pTL2 = selectedElectrons[0].pt();
+    pXL2 = selectedElectrons[0].px();
+    pYL2 = selectedElectrons[0].py();
+    pZL2 = selectedElectrons[0].pz();
+    chargeL2 = selectedElectrons[0].charge();
+    etaL2 = selectedElectrons[0].eta();
+    phiL2 = selectedElectrons[0].phi();
+    isoNHL2 = selectedElectrons[0].neutralHadronIso();
+    isoCHL2 = selectedElectrons[0].chargedHadronIso();
+    isoPhotL2 = selectedElectrons[0].photonIso();
+    isoTrackL2 = selectedElectrons[0].dr03TkSumPt();
+    isoEcalL2 = selectedElectrons[0].dr03EcalRecHitSumEt();
+    isoHcalL2 = selectedElectrons[0].dr03HcalTowerSumEt();
+    RelIsoL2 = helper.pfIso(selectedElectrons[0],elecRho);
+    RelIsoUCL2 = helper.pfIso(selectedElectrons[0],0);
 
-          idL4 = selectedElectrons[1].pdgId();
-	  mvaL4 = elecID=="noEID" ? -100 : selectedElectrons[1].electronID(elecID);
-	  EL4 = selectedElectrons[1].energy();
-          SipL4 = helper.getSIP3D(selectedElectrons[1]);
-	  IPL4 = fabs(selectedElectrons[1].dB(pat::Electron::PV3D));
-	  dIPL4 = selectedElectrons[1].edB(pat::Electron::PV3D);
-          pTL4 = selectedElectrons[1].pt();
-          pXL4 = selectedElectrons[1].px();
-          pYL4 = selectedElectrons[1].py();
-          pZL4 = selectedElectrons[1].pz();
-          chargeL4 = selectedElectrons[1].charge();
-          etaL4 = selectedElectrons[1].eta();
-          phiL4 = selectedElectrons[1].phi();
-          isoNHL4 = selectedElectrons[1].neutralHadronIso();
-	  isoCHL4 = selectedElectrons[1].chargedHadronIso();
-	  isoPhotL4 = selectedElectrons[1].photonIso();
-	  isoTrackL4 = selectedElectrons[1].dr03TkSumPt();
-          isoEcalL4 = selectedElectrons[1].dr03EcalRecHitSumEt();
-          isoHcalL4 = selectedElectrons[1].dr03HcalTowerSumEt();
-          RelIsoL4 = helper.pfIso(selectedElectrons[1],elecRho);
-	  RelIsoUCL4 = helper.pfIso(selectedElectrons[1],0);
- 
-      } 
-      else if (RecoFourMixEvent==3)
-      {      
-          idL1 = selectedMuons[0].pdgId();
-	  mvaL1 = selectedMuons[0].isPFMuon();
-	  EL1 = selectedMuons[0].energy();
-          SipL1 = helper.getSIP3D(selectedMuons[0]);
-	  IPL1 = fabs(selectedMuons[0].dB(pat::Muon::PV3D));
-	  dIPL1 = selectedMuons[0].edB(pat::Muon::PV3D);
-          pTL1 = selectedMuons[0].pt();
-          pXL1 = selectedMuons[0].px();
-          pYL1 = selectedMuons[0].py();
-          pZL1 = selectedMuons[0].pz();
-          chargeL1 = selectedMuons[0].charge();
-          etaL1 = selectedMuons[0].eta();
-          phiL1 = selectedMuons[0].phi();
-          isoNHL1 = selectedMuons[0].neutralHadronIso();
-	  isoCHL1 = selectedMuons[0].chargedHadronIso();
-	  isoPhotL1 = selectedMuons[0].photonIso();
-	  isoTrackL1 = selectedMuons[0].trackIso();
-          isoEcalL1 = selectedMuons[0].ecalIso();
-          isoHcalL1 = selectedMuons[0].hcalIso();
-          RelIsoL1 = helper.pfIso(selectedMuons[0],muonRho);
-	  RelIsoUCL1 = helper.pfIso(selectedMuons[0],0);
+    idL3 = selectedElectrons[1].pdgId();
+    mvaL3 = selectedElectrons[1].electronID(elecID);
+    EL3 = selectedElectrons[1].energy();
+    SipL3 = helper.getSIP3D(selectedElectrons[1]);
+    IPL3 = fabs(selectedElectrons[1].dB(pat::Electron::PV3D));
+    dIPL3 = selectedElectrons[1].edB(pat::Electron::PV3D);
+    pTL3 = selectedElectrons[1].pt();
+    pXL3 = selectedElectrons[1].px();
+    pYL3 = selectedElectrons[1].py();
+    pZL3 = selectedElectrons[1].pz();
+    chargeL3 = selectedElectrons[1].charge();
+    etaL3 = selectedElectrons[1].eta();
+    phiL3 = selectedElectrons[1].phi();
+    isoNHL3 = selectedElectrons[1].neutralHadronIso();
+    isoCHL3 = selectedElectrons[1].chargedHadronIso();
+    isoPhotL3 = selectedElectrons[1].photonIso();
+    isoTrackL3 = selectedElectrons[1].dr03TkSumPt();
+    isoEcalL3 = selectedElectrons[1].dr03EcalRecHitSumEt();
+    isoHcalL3 = selectedElectrons[1].dr03HcalTowerSumEt();
+    RelIsoL3 = helper.pfIso(selectedElectrons[1],elecRho);
+    RelIsoUCL3 = helper.pfIso(selectedElectrons[1],0);
 
-          idL2 = selectedElectrons[0].pdgId();
-	  mvaL2 = elecID=="noEID" ? -100 : selectedElectrons[0].electronID(elecID);
-	  EL2 = selectedElectrons[0].energy();
-          SipL2 = helper.getSIP3D(selectedElectrons[0]);
-	  IPL2 = fabs(selectedElectrons[0].dB(pat::Electron::PV3D));
-	  dIPL2 = selectedElectrons[0].edB(pat::Electron::PV3D);
-          pTL2 = selectedElectrons[0].pt();
-          pXL2 = selectedElectrons[0].px();
-          pYL2 = selectedElectrons[0].py();
-          pZL2 = selectedElectrons[0].pz();
-          chargeL2 = selectedElectrons[0].charge();
-          etaL2 = selectedElectrons[0].eta();
-          phiL2 = selectedElectrons[0].phi();
-          isoNHL2 = selectedElectrons[0].neutralHadronIso();
-	  isoCHL2 = selectedElectrons[0].chargedHadronIso();
-	  isoPhotL2 = selectedElectrons[0].photonIso();
-	  isoTrackL2 = selectedElectrons[0].dr03TkSumPt();
-          isoEcalL2 = selectedElectrons[0].dr03EcalRecHitSumEt();
-          isoHcalL2 = selectedElectrons[0].dr03HcalTowerSumEt();
-          RelIsoL2 = helper.pfIso(selectedElectrons[0],elecRho);
-	  RelIsoUCL2 = helper.pfIso(selectedElectrons[0],0);
+    idL4 = selectedElectrons[2].pdgId();
+    mvaL4 = elecID=="noEID" ? -100 : selectedElectrons[2].electronID(elecID);
+    EL4 = selectedElectrons[2].energy();
+    SipL4 = helper.getSIP3D(selectedElectrons[2]);
+    IPL4 = fabs(selectedElectrons[2].dB(pat::Electron::PV3D));
+    dIPL4 = selectedElectrons[2].edB(pat::Electron::PV3D);
+    pTL4 = selectedElectrons[2].pt();
+    pXL4 = selectedElectrons[2].px();
+    pYL4 = selectedElectrons[2].py();
+    pZL4 = selectedElectrons[2].pz();
+    chargeL4 = selectedElectrons[2].charge();
+    etaL4 = selectedElectrons[2].eta();
+    phiL4 = selectedElectrons[2].phi();
+    isoNHL4 = selectedElectrons[2].neutralHadronIso();
+    isoCHL4 = selectedElectrons[2].chargedHadronIso();
+    isoPhotL4 = selectedElectrons[2].photonIso();
+    isoTrackL4 = selectedElectrons[2].dr03TkSumPt();
+    isoEcalL4 = selectedElectrons[2].dr03EcalRecHitSumEt();
+    isoHcalL4 = selectedElectrons[2].dr03HcalTowerSumEt();
+    RelIsoL4 = helper.pfIso(selectedElectrons[2],elecRho);
+    RelIsoUCL4 = helper.pfIso(selectedElectrons[2],0); 
+  } 
+  else if (RecoFourMixEvent==4) // muemumu
+  {      
+    idL1 = selectedMuons[0].pdgId();
+    mvaL1 = selectedMuons[0].isPFMuon();
+    EL1 = selectedMuons[0].energy();
+    SipL1 = helper.getSIP3D(selectedMuons[0]);
+    IPL1 = fabs(selectedMuons[0].dB(pat::Muon::PV3D));
+    dIPL1 = selectedMuons[0].edB(pat::Muon::PV3D);
+    pTL1 = selectedMuons[0].pt();
+    pXL1 = selectedMuons[0].px();
+    pYL1 = selectedMuons[0].py();
+    pZL1 = selectedMuons[0].pz();
+    chargeL1 = selectedMuons[0].charge();
+    etaL1 = selectedMuons[0].eta();
+    phiL1 = selectedMuons[0].phi();
+    isoNHL1 = selectedMuons[0].neutralHadronIso();
+    isoCHL1 = selectedMuons[0].chargedHadronIso();
+    isoPhotL1 = selectedMuons[0].photonIso();
+    isoTrackL1 = selectedMuons[0].trackIso();
+    isoEcalL1 = selectedMuons[0].ecalIso();
+    isoHcalL1 = selectedMuons[0].hcalIso();
+    RelIsoL1 = helper.pfIso(selectedMuons[0],muonRho);
+    RelIsoUCL1 = helper.pfIso(selectedMuons[0],0);
 
-          idL3 = selectedElectrons[1].pdgId();
-	  mvaL3 = selectedElectrons[1].electronID(elecID);
-	  EL3 = selectedElectrons[1].energy();
-          SipL3 = helper.getSIP3D(selectedElectrons[1]);
-	  IPL3 = fabs(selectedElectrons[1].dB(pat::Electron::PV3D));
-	  dIPL3 = selectedElectrons[1].edB(pat::Electron::PV3D);
-          pTL3 = selectedElectrons[1].pt();
-          pXL3 = selectedElectrons[1].px();
-          pYL3 = selectedElectrons[1].py();
-          pZL3 = selectedElectrons[1].pz();
-          chargeL3 = selectedElectrons[1].charge();
-          etaL3 = selectedElectrons[1].eta();
-          phiL3 = selectedElectrons[1].phi();
-          isoNHL3 = selectedElectrons[1].neutralHadronIso();
-	  isoCHL3 = selectedElectrons[1].chargedHadronIso();
-	  isoPhotL3 = selectedElectrons[1].photonIso();
-	  isoTrackL3 = selectedElectrons[1].dr03TkSumPt();
-          isoEcalL3 = selectedElectrons[1].dr03EcalRecHitSumEt();
-          isoHcalL3 = selectedElectrons[1].dr03HcalTowerSumEt();
-          RelIsoL3 = helper.pfIso(selectedElectrons[1],elecRho);
-	  RelIsoUCL3 = helper.pfIso(selectedElectrons[1],0);
+    idL2 = selectedElectrons[0].pdgId();
+    mvaL2 = elecID=="noEID" ? -100 : selectedElectrons[0].electronID(elecID);
+    EL2 = selectedElectrons[0].energy();
+    SipL2 = helper.getSIP3D(selectedElectrons[0]);
+    IPL2 = fabs(selectedElectrons[0].dB(pat::Electron::PV3D));
+    dIPL2 = selectedElectrons[0].edB(pat::Electron::PV3D);
+    pTL2 = selectedElectrons[0].pt();
+    pXL2 = selectedElectrons[0].px();
+    pYL2 = selectedElectrons[0].py();
+    pZL2 = selectedElectrons[0].pz();
+    chargeL2 = selectedElectrons[0].charge();
+    etaL2 = selectedElectrons[0].eta();
+    phiL2 = selectedElectrons[0].phi();
+    isoNHL2 = selectedElectrons[0].neutralHadronIso();
+    isoCHL2 = selectedElectrons[0].chargedHadronIso();
+    isoPhotL2 = selectedElectrons[0].photonIso();
+    isoTrackL2 = selectedElectrons[0].dr03TkSumPt();
+    isoEcalL2 = selectedElectrons[0].dr03EcalRecHitSumEt();
+    isoHcalL2 = selectedElectrons[0].dr03HcalTowerSumEt();
+    RelIsoL2 = helper.pfIso(selectedElectrons[0],elecRho);
+    RelIsoUCL2 = helper.pfIso(selectedElectrons[0],0);
 
-          idL4 = selectedElectrons[2].pdgId();
-	  mvaL4 = elecID=="noEID" ? -100 : selectedElectrons[2].electronID(elecID);
-	  EL4 = selectedElectrons[2].energy();
-          SipL4 = helper.getSIP3D(selectedElectrons[2]);
-	  IPL4 = fabs(selectedElectrons[2].dB(pat::Electron::PV3D));
-	  dIPL4 = selectedElectrons[2].edB(pat::Electron::PV3D);
-          pTL4 = selectedElectrons[2].pt();
-          pXL4 = selectedElectrons[2].px();
-          pYL4 = selectedElectrons[2].py();
-          pZL4 = selectedElectrons[2].pz();
-          chargeL4 = selectedElectrons[2].charge();
-          etaL4 = selectedElectrons[2].eta();
-          phiL4 = selectedElectrons[2].phi();
-          isoNHL4 = selectedElectrons[2].neutralHadronIso();
-	  isoCHL4 = selectedElectrons[2].chargedHadronIso();
-	  isoPhotL4 = selectedElectrons[2].photonIso();
-	  isoTrackL4 = selectedElectrons[2].dr03TkSumPt();
-          isoEcalL4 = selectedElectrons[2].dr03EcalRecHitSumEt();
-          isoHcalL4 = selectedElectrons[2].dr03HcalTowerSumEt();
-          RelIsoL4 = helper.pfIso(selectedElectrons[2],elecRho);
-	  RelIsoUCL4 = helper.pfIso(selectedElectrons[2],0);
- 
-      } 
-      else if (RecoFourMixEvent==4)
-      {      
-          idL1 = selectedMuons[0].pdgId();
-	  mvaL1 = selectedMuons[0].isPFMuon();
-	  EL1 = selectedMuons[0].energy();
-          SipL1 = helper.getSIP3D(selectedMuons[0]);
-	  IPL1 = fabs(selectedMuons[0].dB(pat::Muon::PV3D));
-	  dIPL1 = selectedMuons[0].edB(pat::Muon::PV3D);
-          pTL1 = selectedMuons[0].pt();
-          pXL1 = selectedMuons[0].px();
-          pYL1 = selectedMuons[0].py();
-          pZL1 = selectedMuons[0].pz();
-          chargeL1 = selectedMuons[0].charge();
-          etaL1 = selectedMuons[0].eta();
-          phiL1 = selectedMuons[0].phi();
-          isoNHL1 = selectedMuons[0].neutralHadronIso();
-	  isoCHL1 = selectedMuons[0].chargedHadronIso();
-	  isoPhotL1 = selectedMuons[0].photonIso();
-	  isoTrackL1 = selectedMuons[0].trackIso();
-          isoEcalL1 = selectedMuons[0].ecalIso();
-          isoHcalL1 = selectedMuons[0].hcalIso();
-          RelIsoL1 = helper.pfIso(selectedMuons[0],muonRho);
-	  RelIsoUCL1 = helper.pfIso(selectedMuons[0],0);
+    idL3 = selectedMuons[1].pdgId();
+    mvaL3 = selectedMuons[1].isPFMuon();
+    EL3 = selectedMuons[1].energy();
+    SipL3 = helper.getSIP3D(selectedMuons[1]);
+    IPL3 = fabs(selectedMuons[1].dB(pat::Muon::PV3D));
+    dIPL3 = selectedMuons[1].edB(pat::Muon::PV3D);
+    pTL3 = selectedMuons[1].pt();
+    pXL3 = selectedMuons[1].px();
+    pYL3 = selectedMuons[1].py();
+    pZL3 = selectedMuons[1].pz();
+    chargeL3 = selectedMuons[1].charge();
+    etaL3 = selectedMuons[1].eta();
+    phiL3 = selectedMuons[1].phi();
+    isoNHL3 = selectedMuons[1].neutralHadronIso();
+    isoCHL3 = selectedMuons[1].chargedHadronIso();
+    isoPhotL3 = selectedMuons[1].photonIso();
+    isoTrackL3 = selectedMuons[1].trackIso();
+    isoEcalL3 = selectedMuons[1].ecalIso();
+    isoHcalL3 = selectedMuons[1].hcalIso();
+    RelIsoL3 = helper.pfIso(selectedMuons[1],muonRho);
+    RelIsoUCL3 = helper.pfIso(selectedMuons[1],0);
 
-          idL2 = selectedElectrons[0].pdgId();
-	  mvaL2 = elecID=="noEID" ? -100 : selectedElectrons[0].electronID(elecID);
-	  EL2 = selectedElectrons[0].energy();
-          SipL2 = helper.getSIP3D(selectedElectrons[0]);
-	  IPL2 = fabs(selectedElectrons[0].dB(pat::Electron::PV3D));
-	  dIPL2 = selectedElectrons[0].edB(pat::Electron::PV3D);
-          pTL2 = selectedElectrons[0].pt();
-          pXL2 = selectedElectrons[0].px();
-          pYL2 = selectedElectrons[0].py();
-          pZL2 = selectedElectrons[0].pz();
-          chargeL2 = selectedElectrons[0].charge();
-          etaL2 = selectedElectrons[0].eta();
-          phiL2 = selectedElectrons[0].phi();
-          isoNHL2 = selectedElectrons[0].neutralHadronIso();
-	  isoCHL2 = selectedElectrons[0].chargedHadronIso();
-	  isoPhotL2 = selectedElectrons[0].photonIso();
-	  isoTrackL2 = selectedElectrons[0].dr03TkSumPt();
-          isoEcalL2 = selectedElectrons[0].dr03EcalRecHitSumEt();
-          isoHcalL2 = selectedElectrons[0].dr03HcalTowerSumEt();
-          RelIsoL2 = helper.pfIso(selectedElectrons[0],elecRho);
-	  RelIsoUCL2 = helper.pfIso(selectedElectrons[0],0);
-
-	  idL3 = selectedMuons[1].pdgId();
-	  mvaL3 = selectedMuons[1].isPFMuon();
-	  EL3 = selectedMuons[1].energy();
-          SipL3 = helper.getSIP3D(selectedMuons[1]);
-	  IPL3 = fabs(selectedMuons[1].dB(pat::Muon::PV3D));
-	  dIPL3 = selectedMuons[1].edB(pat::Muon::PV3D);
-          pTL3 = selectedMuons[1].pt();
-          pXL3 = selectedMuons[1].px();
-          pYL3 = selectedMuons[1].py();
-          pZL3 = selectedMuons[1].pz();
-          chargeL3 = selectedMuons[1].charge();
-          etaL3 = selectedMuons[1].eta();
-          phiL3 = selectedMuons[1].phi();
-          isoNHL3 = selectedMuons[1].neutralHadronIso();
-	  isoCHL3 = selectedMuons[1].chargedHadronIso();
-	  isoPhotL3 = selectedMuons[1].photonIso();
-	  isoTrackL3 = selectedMuons[1].trackIso();
-          isoEcalL3 = selectedMuons[1].ecalIso();
-          isoHcalL3 = selectedMuons[1].hcalIso();
-          RelIsoL3 = helper.pfIso(selectedMuons[1],muonRho);
-	  RelIsoUCL3 = helper.pfIso(selectedMuons[1],0);
-
-          idL4 = selectedMuons[2].pdgId();
-	  mvaL4 = selectedMuons[2].isPFMuon();
-	  EL4 = selectedMuons[2].energy();
-          SipL4 = helper.getSIP3D(selectedMuons[2]);
-	  IPL4 = fabs(selectedMuons[2].dB(pat::Muon::PV3D));
-	  dIPL4 = selectedMuons[2].edB(pat::Muon::PV3D);
-          pTL4 = selectedMuons[2].pt();
-          pXL4 = selectedMuons[2].px();
-          pYL4 = selectedMuons[2].py();
-          pZL4 = selectedMuons[2].pz();
-          chargeL4 = selectedMuons[2].charge();
-          etaL4 = selectedMuons[2].eta();
-          phiL4 = selectedMuons[2].phi();
-          isoNHL4 = selectedMuons[2].neutralHadronIso();
-	  isoCHL4 = selectedMuons[2].chargedHadronIso();
-	  isoPhotL4 = selectedMuons[2].photonIso();
-	  isoTrackL4 = selectedMuons[2].trackIso();
-          isoEcalL4 = selectedMuons[2].ecalIso();
-          isoHcalL4 = selectedMuons[2].hcalIso();
-          RelIsoL4 = helper.pfIso(selectedMuons[2],muonRho);
-	  RelIsoUCL4 = helper.pfIso(selectedMuons[2],0);
- 
-      } 
-      else if (RecoFourMixEvent==5)
-      {      
+    idL4 = selectedMuons[2].pdgId();
+    mvaL4 = selectedMuons[2].isPFMuon();
+    EL4 = selectedMuons[2].energy();
+    SipL4 = helper.getSIP3D(selectedMuons[2]);
+    IPL4 = fabs(selectedMuons[2].dB(pat::Muon::PV3D));
+    dIPL4 = selectedMuons[2].edB(pat::Muon::PV3D);
+    pTL4 = selectedMuons[2].pt();
+    pXL4 = selectedMuons[2].px();
+    pYL4 = selectedMuons[2].py();
+    pZL4 = selectedMuons[2].pz();
+    chargeL4 = selectedMuons[2].charge();
+    etaL4 = selectedMuons[2].eta();
+    phiL4 = selectedMuons[2].phi();
+    isoNHL4 = selectedMuons[2].neutralHadronIso();
+    isoCHL4 = selectedMuons[2].chargedHadronIso();
+    isoPhotL4 = selectedMuons[2].photonIso();
+    isoTrackL4 = selectedMuons[2].trackIso();
+    isoEcalL4 = selectedMuons[2].ecalIso();
+    isoHcalL4 = selectedMuons[2].hcalIso();
+    RelIsoL4 = helper.pfIso(selectedMuons[2],muonRho);
+    RelIsoUCL4 = helper.pfIso(selectedMuons[2],0);
+  } 
+  else if (RecoFourMixEvent==5) // eeemu
+  {      
           idL1 = selectedElectrons[0].pdgId();
 	  mvaL1 = elecID=="noEID" ? -100 : selectedElectrons[0].electronID(elecID);
 	  EL1 = selectedElectrons[0].energy();
@@ -4948,7 +4889,7 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
 	  RelIsoUCL4 = helper.pfIso(selectedMuons[0],0);
  
       } 
-      else if (RecoFourMixEvent==6)
+      else if (RecoFourMixEvent==6) // eemue
       {      
           idL1 = selectedElectrons[0].pdgId();
 	  mvaL1 = elecID=="noEID" ? -100 : selectedElectrons[0].electronID(elecID);
@@ -5039,7 +4980,7 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
 	  RelIsoUCL4 = helper.pfIso(selectedElectrons[0],0);
  
       } 
-      else if (RecoFourMixEvent==7)
+      else if (RecoFourMixEvent==7) // mumuemu
       {      
           idL1 = selectedMuons[0].pdgId();
 	  mvaL1 = selectedMuons[0].isPFMuon();
@@ -5130,204 +5071,204 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
 	  RelIsoUCL4 = helper.pfIso(selectedMuons[2],0);
  
       } 
-      else if (RecoFourMixEvent==8)
-      {      
-          idL1 = selectedMuons[0].pdgId();
-	  mvaL1 = selectedMuons[0].isPFMuon();
-	  EL1 = selectedMuons[0].energy();
-          SipL1 = helper.getSIP3D(selectedMuons[0]);
-	  IPL1 = fabs(selectedMuons[0].dB(pat::Muon::PV3D));
-	  dIPL1 = selectedMuons[0].edB(pat::Muon::PV3D);
-          pTL1 = selectedMuons[0].pt();
-          pXL1 = selectedMuons[0].px();
-          pYL1 = selectedMuons[0].py();
-          pZL1 = selectedMuons[0].pz();
-          chargeL1 = selectedMuons[0].charge();
-          etaL1 = selectedMuons[0].eta();
-          phiL1 = selectedMuons[0].phi();
-          isoNHL1 = selectedMuons[0].neutralHadronIso();
-	  isoCHL1 = selectedMuons[0].chargedHadronIso();
-	  isoPhotL1 = selectedMuons[0].photonIso();
-	  isoTrackL1 = selectedMuons[0].trackIso();
-          isoEcalL1 = selectedMuons[0].ecalIso();
-          isoHcalL1 = selectedMuons[0].hcalIso();
-          RelIsoL1 = helper.pfIso(selectedMuons[0],muonRho);
-	  RelIsoUCL1 = helper.pfIso(selectedMuons[0],0);
+  else if (RecoFourMixEvent==8) // mumumue
+  {      
+    idL1 = selectedMuons[0].pdgId();
+    mvaL1 = selectedMuons[0].isPFMuon();
+    EL1 = selectedMuons[0].energy();
+    SipL1 = helper.getSIP3D(selectedMuons[0]);
+    IPL1 = fabs(selectedMuons[0].dB(pat::Muon::PV3D));
+    dIPL1 = selectedMuons[0].edB(pat::Muon::PV3D);
+    pTL1 = selectedMuons[0].pt();
+    pXL1 = selectedMuons[0].px();
+    pYL1 = selectedMuons[0].py();
+    pZL1 = selectedMuons[0].pz();
+    chargeL1 = selectedMuons[0].charge();
+    etaL1 = selectedMuons[0].eta();
+    phiL1 = selectedMuons[0].phi();
+    isoNHL1 = selectedMuons[0].neutralHadronIso();
+    isoCHL1 = selectedMuons[0].chargedHadronIso();
+    isoPhotL1 = selectedMuons[0].photonIso();
+    isoTrackL1 = selectedMuons[0].trackIso();
+    isoEcalL1 = selectedMuons[0].ecalIso();
+    isoHcalL1 = selectedMuons[0].hcalIso();
+    RelIsoL1 = helper.pfIso(selectedMuons[0],muonRho);
+    RelIsoUCL1 = helper.pfIso(selectedMuons[0],0);
 
-          idL2 = selectedMuons[1].pdgId();
-	  mvaL2 = selectedMuons[1].isPFMuon();
-	  EL2 = selectedMuons[1].energy();
-          SipL2 = helper.getSIP3D(selectedMuons[1]);
-	  IPL2 = fabs(selectedMuons[1].dB(pat::Muon::PV3D));
-	  dIPL2 = selectedMuons[1].edB(pat::Muon::PV3D);
-          pTL2 = selectedMuons[1].pt();
-          pXL2 = selectedMuons[1].px();
-          pYL2 = selectedMuons[1].py();
-          pZL2 = selectedMuons[1].pz();
-          chargeL2 = selectedMuons[1].charge();
-          etaL2 = selectedMuons[1].eta();
-          phiL2 = selectedMuons[1].phi();
-          isoNHL2 = selectedMuons[1].neutralHadronIso();
-	  isoCHL2 = selectedMuons[1].chargedHadronIso();
-	  isoPhotL2 = selectedMuons[1].photonIso();
-	  isoTrackL2 = selectedMuons[1].trackIso();
-          isoEcalL2 = selectedMuons[1].ecalIso();
-          isoHcalL2 = selectedMuons[1].hcalIso();
-          RelIsoL2 = helper.pfIso(selectedMuons[1],muonRho);
-	  RelIsoUCL2 = helper.pfIso(selectedMuons[1],0);
+    idL2 = selectedMuons[1].pdgId();
+    mvaL2 = selectedMuons[1].isPFMuon();
+    EL2 = selectedMuons[1].energy();
+    SipL2 = helper.getSIP3D(selectedMuons[1]);
+    IPL2 = fabs(selectedMuons[1].dB(pat::Muon::PV3D));
+    dIPL2 = selectedMuons[1].edB(pat::Muon::PV3D);
+    pTL2 = selectedMuons[1].pt();
+    pXL2 = selectedMuons[1].px();
+    pYL2 = selectedMuons[1].py();
+    pZL2 = selectedMuons[1].pz();
+    chargeL2 = selectedMuons[1].charge();
+    etaL2 = selectedMuons[1].eta();
+    phiL2 = selectedMuons[1].phi();
+    isoNHL2 = selectedMuons[1].neutralHadronIso();
+    isoCHL2 = selectedMuons[1].chargedHadronIso();
+    isoPhotL2 = selectedMuons[1].photonIso();
+    isoTrackL2 = selectedMuons[1].trackIso();
+    isoEcalL2 = selectedMuons[1].ecalIso();
+    isoHcalL2 = selectedMuons[1].hcalIso();
+    RelIsoL2 = helper.pfIso(selectedMuons[1],muonRho);
+    RelIsoUCL2 = helper.pfIso(selectedMuons[1],0);
 
-          idL3 = selectedMuons[2].pdgId();
-	  mvaL3 = selectedMuons[2].isPFMuon();
-	  EL3 = selectedMuons[2].energy();
-          SipL3 = helper.getSIP3D(selectedMuons[2]);
-	  IPL3 = fabs(selectedMuons[2].dB(pat::Muon::PV3D));
-	  dIPL3 = selectedMuons[2].edB(pat::Muon::PV3D);
-          pTL3 = selectedMuons[2].pt();
-          pXL3 = selectedMuons[2].px();
-          pYL3 = selectedMuons[2].py();
-          pZL3 = selectedMuons[2].pz();
-          chargeL3 = selectedMuons[2].charge();
-          etaL3 = selectedMuons[2].eta();
-          phiL3 = selectedMuons[2].phi();
-          isoNHL3 = selectedMuons[2].neutralHadronIso();
-	  isoCHL3 = selectedMuons[2].chargedHadronIso();
-	  isoPhotL3 = selectedMuons[2].photonIso();
-	  isoTrackL3 = selectedMuons[2].trackIso();
-          isoEcalL3 = selectedMuons[2].ecalIso();
-          isoHcalL3 = selectedMuons[2].hcalIso();
-          RelIsoL3 = helper.pfIso(selectedMuons[2],muonRho);
-	  RelIsoUCL3 = helper.pfIso(selectedMuons[2],0);
+    idL3 = selectedMuons[2].pdgId();
+    mvaL3 = selectedMuons[2].isPFMuon();
+    EL3 = selectedMuons[2].energy();
+    SipL3 = helper.getSIP3D(selectedMuons[2]);
+    IPL3 = fabs(selectedMuons[2].dB(pat::Muon::PV3D));
+    dIPL3 = selectedMuons[2].edB(pat::Muon::PV3D);
+    pTL3 = selectedMuons[2].pt();
+    pXL3 = selectedMuons[2].px();
+    pYL3 = selectedMuons[2].py();
+    pZL3 = selectedMuons[2].pz();
+    chargeL3 = selectedMuons[2].charge();
+    etaL3 = selectedMuons[2].eta();
+    phiL3 = selectedMuons[2].phi();
+    isoNHL3 = selectedMuons[2].neutralHadronIso();
+    isoCHL3 = selectedMuons[2].chargedHadronIso();
+    isoPhotL3 = selectedMuons[2].photonIso();
+    isoTrackL3 = selectedMuons[2].trackIso();
+    isoEcalL3 = selectedMuons[2].ecalIso();
+    isoHcalL3 = selectedMuons[2].hcalIso();
+    RelIsoL3 = helper.pfIso(selectedMuons[2],muonRho);
+    RelIsoUCL3 = helper.pfIso(selectedMuons[2],0);
 
-          idL4 = selectedElectrons[0].pdgId();
-	  mvaL4 = elecID=="noEID" ? -100 : selectedElectrons[0].electronID(elecID);
-	  EL4 = selectedElectrons[0].energy();
-          SipL4 = helper.getSIP3D(selectedElectrons[0]);
-	  IPL4 = fabs(selectedElectrons[0].dB(pat::Electron::PV3D));
-	  dIPL4 = selectedElectrons[0].edB(pat::Electron::PV3D);
-          pTL4 = selectedElectrons[0].pt();
-          pXL4 = selectedElectrons[0].px();
-          pYL4 = selectedElectrons[0].py();
-          pZL4 = selectedElectrons[0].pz();
-          chargeL4 = selectedElectrons[0].charge();
-          etaL4 = selectedElectrons[0].eta();
-          phiL4 = selectedElectrons[0].phi();
-          isoNHL4 = selectedElectrons[0].neutralHadronIso();
-	  isoCHL4 = selectedElectrons[0].chargedHadronIso();
-	  isoPhotL4 = selectedElectrons[0].photonIso();
-	  isoTrackL4 = selectedElectrons[0].dr03TkSumPt();
-          isoEcalL4 = selectedElectrons[0].dr03EcalRecHitSumEt();
-          isoHcalL4 = selectedElectrons[0].dr03HcalTowerSumEt();
-          RelIsoL4 = helper.pfIso(selectedElectrons[0],elecRho);
-	  RelIsoUCL4 = helper.pfIso(selectedElectrons[0],0);
+    idL4 = selectedElectrons[0].pdgId();
+    mvaL4 = elecID=="noEID" ? -100 : selectedElectrons[0].electronID(elecID);
+    EL4 = selectedElectrons[0].energy();
+    SipL4 = helper.getSIP3D(selectedElectrons[0]);
+    IPL4 = fabs(selectedElectrons[0].dB(pat::Electron::PV3D));
+    dIPL4 = selectedElectrons[0].edB(pat::Electron::PV3D);
+    pTL4 = selectedElectrons[0].pt();
+    pXL4 = selectedElectrons[0].px();
+    pYL4 = selectedElectrons[0].py();
+    pZL4 = selectedElectrons[0].pz();
+    chargeL4 = selectedElectrons[0].charge();
+    etaL4 = selectedElectrons[0].eta();
+    phiL4 = selectedElectrons[0].phi();
+    isoNHL4 = selectedElectrons[0].neutralHadronIso();
+    isoCHL4 = selectedElectrons[0].chargedHadronIso();
+    isoPhotL4 = selectedElectrons[0].photonIso();
+    isoTrackL4 = selectedElectrons[0].dr03TkSumPt();
+    isoEcalL4 = selectedElectrons[0].dr03EcalRecHitSumEt();
+    isoHcalL4 = selectedElectrons[0].dr03HcalTowerSumEt();
+    RelIsoL4 = helper.pfIso(selectedElectrons[0],elecRho);
+    RelIsoUCL4 = helper.pfIso(selectedElectrons[0],0);
  
-      } 
-      else
-      {      
-          idL1 = -999;
-          EL1 = -999.99;
-          SipL1 = -999.99;
-          pTL1 = -999.99;
-          pXL1 = -999.99;
-          pYL1 = -999.99;
-          pZL1 = -999.99;
-          chargeL1 = -999;
-          etaL1 = -999.99;
-          phiL1 = -999.99;
-          isoTrackL1 = -999.99;
-          isoEcalL1 = -999.99;
-          isoHcalL1 = -999.99;
-          RelIsoL1 = -999.99;
-	  RelIsoUCL1 = -999.99;
+  } 
+  else
+  {      
+    idL1 = -999;
+    EL1 = -999.99;
+    SipL1 = -999.99;
+    pTL1 = -999.99;
+    pXL1 = -999.99;
+    pYL1 = -999.99;
+    pZL1 = -999.99;
+    chargeL1 = -999;
+    etaL1 = -999.99;
+    phiL1 = -999.99;
+    isoTrackL1 = -999.99;
+    isoEcalL1 = -999.99;
+    isoHcalL1 = -999.99;
+    RelIsoL1 = -999.99;
+    RelIsoUCL1 = -999.99;
 
-          idL2 = -999;
-          EL2 = -999.99;
-          SipL2 = -999.99;
-          pTL2 = -999.99;
-          pXL2 = -999.99;
-          pYL2 = -999.99;
-          pZL2 = -999.99;
-          chargeL2 = -999;
-          etaL2 = -999.99;
-          phiL2 = -999.99;
-          isoTrackL2 = -999.99;
-          isoEcalL2 = -999.99;
-          isoHcalL2 = -999.99;
-          RelIsoL2 = -999.99;
-	  RelIsoUCL2 = -999.99;
+    idL2 = -999;
+    EL2 = -999.99;
+    SipL2 = -999.99;
+    pTL2 = -999.99;
+    pXL2 = -999.99;
+    pYL2 = -999.99;
+    pZL2 = -999.99;
+    chargeL2 = -999;
+    etaL2 = -999.99;
+    phiL2 = -999.99;
+    isoTrackL2 = -999.99;
+    isoEcalL2 = -999.99;
+    isoHcalL2 = -999.99;
+    RelIsoL2 = -999.99;
+    RelIsoUCL2 = -999.99;
 
-          idL3 = -999;
-          EL3 = -999.99;
-          SipL3 = -999.99;
-          pTL3 = -999.99;
-          pXL3 = -999.99;
-          pYL3 = -999.99;
-          pZL3 = -999.99;
-          chargeL3 = -999;
-          etaL3 = -999.99;
-          phiL3 = -999.99;
-          isoTrackL3 = -999.99;
-          isoEcalL3 = -999.99;
-          isoHcalL3 = -999.99;
-          RelIsoL3 = -999.99;
-	  RelIsoUCL3 = -999.99;
+    idL3 = -999;
+    EL3 = -999.99;
+    SipL3 = -999.99;
+    pTL3 = -999.99;
+    pXL3 = -999.99;
+    pYL3 = -999.99;
+    pZL3 = -999.99;
+    chargeL3 = -999;
+    etaL3 = -999.99;
+    phiL3 = -999.99;
+    isoTrackL3 = -999.99;
+    isoEcalL3 = -999.99;
+    isoHcalL3 = -999.99;
+    RelIsoL3 = -999.99;
+    RelIsoUCL3 = -999.99;
           
-          idL4 = -999;
-          EL4 = -999.99;
-          SipL4 = -999.99;
-          pTL4 = -999.99;
-          pXL4 = -999.99;
-          pYL4 = -999.99;
-          pZL4 = -999.99;
-          chargeL4 = -999;
-          etaL4 = -999.99;
-          phiL4 = -999.99;
-          isoTrackL4 = -999.99;
-          isoEcalL4 = -999.99;
-          isoHcalL4 = -999.99;
-          RelIsoL4 = -999.99;
-	  RelIsoUCL4 = -999.99;
+    idL4 = -999;
+    EL4 = -999.99;
+    SipL4 = -999.99;
+    pTL4 = -999.99;
+    pXL4 = -999.99;
+    pYL4 = -999.99;
+    pZL4 = -999.99;
+    chargeL4 = -999;
+    etaL4 = -999.99;
+    phiL4 = -999.99;
+    isoTrackL4 = -999.99;
+    isoEcalL4 = -999.99;
+    isoHcalL4 = -999.99;
+    RelIsoL4 = -999.99;
+    RelIsoUCL4 = -999.99;
  
-      } 
+  } 
 
 
   double tempDeltaR = 999;
   vector<pat::Jet> finalVBFJets;
   for( unsigned int k = 0; k < selectedVBFJets.size(); k++)
+  {
+    bool isDeltaR = true;
+    //check for overlap with leptons and gammas
+    tempDeltaR = deltaR(selectedVBFJets[k].eta(),selectedVBFJets[k].phi(),etaL1,phiL1);
+    if (tempDeltaR < 0.5) isDeltaR = false;
+    tempDeltaR = deltaR(selectedVBFJets[k].eta(),selectedVBFJets[k].phi(),etaL2,phiL2);
+    if (tempDeltaR < 0.5) isDeltaR = false;
+    tempDeltaR = deltaR(selectedVBFJets[k].eta(),selectedVBFJets[k].phi(),etaL3,phiL3);
+    if (tempDeltaR < 0.5) isDeltaR = false;
+    tempDeltaR = deltaR(selectedVBFJets[k].eta(),selectedVBFJets[k].phi(),etaL4,phiL4);
+    if (tempDeltaR < 0.5) isDeltaR = false;
+    
+    if (isDeltaR)
     {
-      bool isDeltaR = true;
-      //check for overlap with leptons and gammas
-      tempDeltaR = deltaR(selectedVBFJets[k].eta(),selectedVBFJets[k].phi(),etaL1,phiL1);
-      if (tempDeltaR < 0.5) isDeltaR = false;
-      tempDeltaR = deltaR(selectedVBFJets[k].eta(),selectedVBFJets[k].phi(),etaL2,phiL2);
-      if (tempDeltaR < 0.5) isDeltaR = false;
-      tempDeltaR = deltaR(selectedVBFJets[k].eta(),selectedVBFJets[k].phi(),etaL3,phiL3);
-      if (tempDeltaR < 0.5) isDeltaR = false;
-      tempDeltaR = deltaR(selectedVBFJets[k].eta(),selectedVBFJets[k].phi(),etaL4,phiL4);
-      if (tempDeltaR < 0.5) isDeltaR = false;
-      
-      if (isDeltaR)
-	{
-	  
-	  if (correctedVBFJets[k].pt() > 30 && fabs(selectedVBFJets[k].eta()) < 4.7)
-	    {
-	      finalVBFJets.push_back(correctedVBFJets[k]);
-	    }
-	  
-	}
+      if (correctedVBFJets[k].pt() > 30 && fabs(selectedVBFJets[k].eta()) < 4.7)
+      {
+        finalVBFJets.push_back(correctedVBFJets[k]);
+      }	  
     }
+  }
 
 
   //VBF                                                                                                                                            
   if(finalVBFJets.size() >= 1){VBFJet1 = true;}
   if(finalVBFJets.size() == 2){VBFJet2 = true;}
 
-  if(VBFJet1){
+  if(VBFJet1)
+  {
     etaVBFJet1 = finalVBFJets[0].eta();
     pTVBFJet1 = finalVBFJets[0].pt();
     phiVBFJet1 = finalVBFJets[0].phi();
     massVBFJet1 = finalVBFJets[0].mass();
   }
-  if(VBFJet2){
+  if(VBFJet2)
+  {
     etaVBFJet2 = finalVBFJets[1].eta();
     pTVBFJet2 = finalVBFJets[1].pt();
     phiVBFJet2 = finalVBFJets[1].phi();
@@ -5337,9 +5278,6 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
     // OLD MORIOND --- FisherDiscrim = 0.09407*fabs(VBFDeltaEta) + 4.1581e-4*VBFDiJetMass;
     FisherDiscrim = 0.18*fabs(VBFDeltaEta) + 1.92e-4*VBFDiJetMass;
   }
-
-
-
   
 }
 
@@ -5889,140 +5827,136 @@ bool UFHZZ4LAna::findZ(std::vector<pat::PackedCandidate> photons, std::vector<do
   if(electron2.superCluster()->eta() > 1.479) isoVetoE2 = isoVetoEE;
 
   if( !photons.empty() && photons.size() > 0 && doFsrRecovery)
+  {
+    for(unsigned int i = 0; i < photons.size(); i++)
     {
-      for(unsigned int i = 0; i < photons.size(); i++)
-	{
-          if( taken1 == (int)i ) continue;
-	  //pt, eta checks
-	  if( photons[i].pt() < 4 ) continue;
-	  if( photons[i].eta() > 2.4 ) continue;
-          /* removed for miniAOD , 3 lines below
-	  if( (photons[i].userFloat("fsrPhotonPFIsoChHad03pt02")+photons[i].userFloat("fsrPhotonPFIsoNHad03")
-	       +photons[i].userFloat("fsrPhotonPFIsoPhoton03")
-	       +photons[i].userFloat("fsrPhotonPFIsoChHadPU03pt02"))/photons[i].pt() > photIsoCut) continue;
-          */
-	  //calc both deltaRs
-	  deltaR1 = deltaR(electron1.eta(),electron1.phi(),photons[i].eta(),photons[i].phi());
-	  deltaR2 = deltaR(electron2.eta(),electron2.phi(),photons[i].eta(),photons[i].phi());
-	  //associate with closest lepton
-	  if( deltaR1 < deltaR2 ){ assocElecTmp = 1; smallestDeltaR = deltaR1;}
-	  else{ assocElecTmp = 2; smallestDeltaR = deltaR2;}
-	  if( smallestDeltaR > 0.5  || smallestDeltaR > deltaRVec[i]) continue;
-	  if( photons[i].pt() < photHighestPt ) continue;
-	  //calc P vectors
-	  mllgam = electron1.p4()+electron2.p4()+photons[i].p4();
-	  mll = electron1.p4()+electron2.p4();
-	  //check inv mass
-	  if( mllgam.M() < 4 || mllgam.M() > 100) continue;
-	  massDiffPhot = fabs(mllgam.M() - Zmass);
-	  massDiffNoPhot = fabs(mll.M() - Zmass);
+      if( taken1 == (int)i ) continue;
+      //pt, eta checks
+      if( photons[i].pt() < 4 ) continue;
+      if( photons[i].eta() > 2.4 ) continue;
+      /* removed for miniAOD , 3 lines below
+      if( (photons[i].userFloat("fsrPhotonPFIsoChHad03pt02")+photons[i].userFloat("fsrPhotonPFIsoNHad03")
+          +photons[i].userFloat("fsrPhotonPFIsoPhoton03")
+          +photons[i].userFloat("fsrPhotonPFIsoChHadPU03pt02"))/photons[i].pt() > photIsoCut) continue;
+      */
+      //calc both deltaRs
+      deltaR1 = deltaR(electron1.eta(),electron1.phi(),photons[i].eta(),photons[i].phi());
+      deltaR2 = deltaR(electron2.eta(),electron2.phi(),photons[i].eta(),photons[i].phi());
+      //associate with closest lepton
+      if( deltaR1 < deltaR2 ){ assocElecTmp = 1; smallestDeltaR = deltaR1;}
+      else{ assocElecTmp = 2; smallestDeltaR = deltaR2;}
+      if( smallestDeltaR > 0.5  || smallestDeltaR > deltaRVec[i]) continue;
+      if( photons[i].pt() < photHighestPt ) continue;
+      //calc P vectors
+      mllgam = electron1.p4()+electron2.p4()+photons[i].p4();
+      mll = electron1.p4()+electron2.p4();
+      //check inv mass
+      if( mllgam.M() < 4 || mllgam.M() > 100) continue;
+      massDiffPhot = fabs(mllgam.M() - Zmass);
+      massDiffNoPhot = fabs(mll.M() - Zmass);
 
-	  //if its smaller with phot, keep phot
-	  if( massDiffPhot < massDiffNoPhot )
-	    {
-	      //check  iso cone
-	      if( deltaR1 < coneSize && deltaR1 > isoVetoE1){elec1Iso = helper.pfIsoFSR(electron1,elecRho,photons[i].pt());}
-	      else{elec1Iso = helper.pfIso(electron1,elecRho);}
-	      //check electron2's iso cone
-	      if( deltaR2 < coneSize  && deltaR2 > isoVetoE2){elec2Iso = helper.pfIsoFSR(electron2,elecRho,photons[i].pt());}
-	      else{elec2Iso = helper.pfIso(electron2,elecRho);}
+      //if its smaller with phot, keep phot
+      if( massDiffPhot < massDiffNoPhot )
+      {
+        //check  iso cone
+        if( deltaR1 < coneSize && deltaR1 > isoVetoE1){elec1Iso = helper.pfIsoFSR(electron1,elecRho,photons[i].pt());}
+        else{elec1Iso = helper.pfIso(electron1,elecRho);}
+        //check electron2's iso cone
+        if( deltaR2 < coneSize  && deltaR2 > isoVetoE2){elec2Iso = helper.pfIsoFSR(electron2,elecRho,photons[i].pt());}
+        else{elec2Iso = helper.pfIso(electron2,elecRho);}
 	      
-	      if(elec1Iso < isoCut && elec2Iso < isoCut)
-		{
-		  foundPhot = true;
-		  photHighestPt = photons[i].pt();
-		  photVec = photons[i].p4();
-		  ZVec = mllgam;
-		  assocElec = assocElecTmp;
-		  taken2 = (int)i;
-		  foundZ = true;
-		}
-	    }
-	}
-      if(!foundPhot)
-	{
-	  bool useDR = false, usePT = false;
-	  for(unsigned int i = 0; i < photons.size(); i++)
-	    {
-	      if( taken1 == (int)i ) continue;
-	      //pt, eta checks
-	      if( photons[i].pt() < 2 ) continue;
-	      if( photons[i].eta() > 2.4 ) continue;
-	      if( photons[i].pt() < 4 ) useDR = true;
-	      if( photons[i].pt() > 4 ) usePT = true;
-	      if( usePT && photons[i].pt() < photHighestPt) continue;
-	      //calc both deltaRs
-	      deltaR1 = deltaR(electron1.eta(),electron1.phi(),photons[i].eta(),photons[i].phi());
-	      deltaR2 = deltaR(electron2.eta(),electron2.phi(),photons[i].eta(),photons[i].phi());
-	      //associate with closest lepton
-	      if( deltaR1 < deltaR2 ){ assocElecTmp = 1; smallestDeltaR = deltaR1;}
-	      else{ assocElecTmp = 2; smallestDeltaR = deltaR2;}
-	      if( smallestDeltaR > 0.07  || smallestDeltaR > deltaRVec[i]) continue;
-	      if( smallestDeltaR > totalSmallestDeltaR ) continue;
-	      //calc P vectors
-	      mllgam = electron1.p4()+electron2.p4()+photons[i].p4();
-	      mll = electron1.p4()+electron2.p4();
-	      //check inv mass
-	      if( mllgam.M() < 4 || mllgam.M() > 100) continue;
-	      massDiffPhot = fabs(mllgam.M() - Zmass);
-	      massDiffNoPhot = fabs(mll.M() - Zmass);
-	      //if its smaller with phot, keep phot
-	      if( massDiffPhot < massDiffNoPhot )
-		{
-		  //check electron1's iso cone
-		  if( deltaR1 < coneSize && deltaR1 > isoVetoE1 ){elec1Iso = helper.pfIsoFSR(electron1,elecRho,photons[i].pt());}
-		  else{elec1Iso = helper.pfIso(electron1,elecRho);}
-		  if( deltaR2 < coneSize && deltaR2 > isoVetoE2 ){elec2Iso = helper.pfIsoFSR(electron2,elecRho,photons[i].pt());}
-		  else{elec2Iso = helper.pfIso(electron2,elecRho);}
-
-		  if(elec1Iso < isoCut && elec2Iso < isoCut)
-		    {
-		      foundPhot = true;
-                      if(useDR) totalSmallestDeltaR = smallestDeltaR;
-                      if(usePT) photHighestPt = photons[i].pt();
-		      photHighestPt = photons[i].pt();
-		      photVec = photons[i].p4();
-		      ZVec = mllgam;
-		      assocElec = assocElecTmp;
-		      taken2 = (int)i;
-		      foundZ = true;
-		    }
-		  
-		}
-	      useDR = false;
-	      usePT = false;
-	    }
-	}
-      if(!foundPhot)
-	{
-	  elec1Iso = helper.pfIso(electron1,elecRho);
-          elec2Iso = helper.pfIso(electron2,elecRho);
-	  mll = electron1.p4()+electron2.p4();
-	  
-	  if( elec1Iso < isoCut && elec2Iso < isoCut )
-	    {
-	      ZVec = electron1.p4()+electron2.p4();
-	      taken2 = 999;
-	      assocElec = 999;
-	      foundPhot = false;
-	      foundZ = true;
-	    }
-	}
+        if(elec1Iso < isoCut && elec2Iso < isoCut)
+        {
+          foundPhot = true;
+          photHighestPt = photons[i].pt();
+          photVec = photons[i].p4();
+          ZVec = mllgam;
+          assocElec = assocElecTmp;
+          taken2 = (int)i;
+          foundZ = true;
+        }
+      }
     }
-  else{
-
+    if(!foundPhot)
+    {
+      bool useDR = false, usePT = false;
+      for(unsigned int i = 0; i < photons.size(); i++)
+      {
+        if( taken1 == (int)i ) continue;
+        //pt, eta checks
+        if( photons[i].pt() < 2 ) continue;
+        if( photons[i].eta() > 2.4 ) continue;
+        if( photons[i].pt() < 4 ) useDR = true;
+        if( photons[i].pt() > 4 ) usePT = true;
+        if( usePT && photons[i].pt() < photHighestPt) continue;
+        //calc both deltaRs
+        deltaR1 = deltaR(electron1.eta(),electron1.phi(),photons[i].eta(),photons[i].phi());
+        deltaR2 = deltaR(electron2.eta(),electron2.phi(),photons[i].eta(),photons[i].phi());
+        //associate with closest lepton
+        if( deltaR1 < deltaR2 ){ assocElecTmp = 1; smallestDeltaR = deltaR1;}
+        else{ assocElecTmp = 2; smallestDeltaR = deltaR2;}
+        if( smallestDeltaR > 0.07  || smallestDeltaR > deltaRVec[i]) continue;
+        if( smallestDeltaR > totalSmallestDeltaR ) continue;
+        //calc P vectors
+        mllgam = electron1.p4()+electron2.p4()+photons[i].p4();
+        mll = electron1.p4()+electron2.p4();
+        //check inv mass
+        if( mllgam.M() < 4 || mllgam.M() > 100) continue;
+        massDiffPhot = fabs(mllgam.M() - Zmass);
+        massDiffNoPhot = fabs(mll.M() - Zmass);
+        //if its smaller with phot, keep phot
+        if( massDiffPhot < massDiffNoPhot )
+        {
+          //check electron1's iso cone
+          if( deltaR1 < coneSize && deltaR1 > isoVetoE1 ){elec1Iso = helper.pfIsoFSR(electron1,elecRho,photons[i].pt());}
+          else{elec1Iso = helper.pfIso(electron1,elecRho);}
+          if( deltaR2 < coneSize && deltaR2 > isoVetoE2 ){elec2Iso = helper.pfIsoFSR(electron2,elecRho,photons[i].pt());}
+          else{elec2Iso = helper.pfIso(electron2,elecRho);}
+          if(elec1Iso < isoCut && elec2Iso < isoCut)
+          {
+            foundPhot = true;
+            if(useDR) totalSmallestDeltaR = smallestDeltaR;
+            if(usePT) photHighestPt = photons[i].pt();
+            photHighestPt = photons[i].pt();
+            photVec = photons[i].p4();
+            ZVec = mllgam;
+            assocElec = assocElecTmp;
+            taken2 = (int)i;
+            foundZ = true;
+          }
+        }
+        useDR = false;
+        usePT = false;
+      }
+    }
+    if(!foundPhot)
+    {
+      elec1Iso = helper.pfIso(electron1,elecRho);
+      elec2Iso = helper.pfIso(electron2,elecRho);
+      mll = electron1.p4()+electron2.p4();
+      if( elec1Iso < isoCut && elec2Iso < isoCut )
+      {
+        ZVec = electron1.p4()+electron2.p4();
+        taken2 = 999;
+        assocElec = 999;
+        foundPhot = false;
+        foundZ = true;
+      }
+    }
+  }
+  else
+  {
     elec1Iso = helper.pfIso(electron1,elecRho);
     elec2Iso = helper.pfIso(electron2,elecRho);
     mll = electron1.p4()+electron2.p4();
-    
     if( elec1Iso < isoCut && elec2Iso < isoCut )
-      {
-	ZVec = electron1.p4()+electron2.p4();
-	taken2 = 999;
-	assocElec = 999;
-	foundPhot = false;
-	foundZ = true;
-      }
+    {
+      ZVec = electron1.p4()+electron2.p4();
+      taken2 = 999;
+      assocElec = 999;
+      foundPhot = false;
+      foundZ = true;
+    }
   }	  
   
   foundPhoton = foundPhot;
@@ -6031,8 +5965,8 @@ bool UFHZZ4LAna::findZ(std::vector<pat::PackedCandidate> photons, std::vector<do
 
 
 // ------------ method fills 'descriptions' with the allowed parameters for the module  ------------
-void
-UFHZZ4LAna::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
+void UFHZZ4LAna::fillDescriptions(edm::ConfigurationDescriptions& descriptions) 
+{
   //The following says we do not know what parameters are allowed so do no validation
   // Please change this to state exactly what you do use, even if it is no parameters
   edm::ParameterSetDescription desc;
