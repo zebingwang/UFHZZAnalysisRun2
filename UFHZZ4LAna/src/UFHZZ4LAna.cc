@@ -171,10 +171,10 @@ private:
   virtual void beginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&);
   virtual void endLuminosityBlock(edm::LuminosityBlock const& lumiSeg,edm::EventSetup const& eSetup);
   
-  void findHiggsCandidate(std::vector<pat::Muon> &candMuons, std::vector<pat::Electron> &candElectrons, std::vector< pat::PackedCandidate > fsrPhotons,  // changed for miniAOD
-			  std::vector<double> deltaRVec,
-                          std::vector<pat::Muon> &selectedMuons, std::vector<pat::Electron> &selectedElectrons,
-                          std::vector<pat::PackedCandidate > &selectedFsrPhotons, const edm::Event& iEvent); // changed for miniAOD
+  void findHiggsCandidate(std::vector<pat::Muon> &candMuons, std::vector<pat::Electron> &candElectrons, std::vector< pat::PackedCandidate > fsrPhotons,
+                  std::vector<double> deltaRVec,
+                  std::vector<pat::Muon> &selectedMuons, std::vector<pat::Electron> &selectedElectrons,
+                  std::vector<pat::PackedCandidate > &selectedFsrPhotons, const edm::Event& iEvent);
 
   double getMinDeltaR(std::vector<pat::Muon> Muons, std::vector<pat::Electron> Electrons);
   void plotMinDeltaRemu(std::vector<pat::Muon> Muons, std::vector<pat::Electron> Electrons);
@@ -183,15 +183,18 @@ private:
   void fillStepPlots();
   void bookResolutionHistograms();
   void fillResolutionHistograms(edm::Handle<edm::View<pat::Muon> > muons);
-  bool findZ(std::vector<pat::PackedCandidate> photons, std::vector<double> deltaRVec, pat::Muon &muon1, pat::Muon &muon2,int taken1, int &taken2, // changed for miniAOD 
-	     int &assocMuon,math::XYZTLorentzVector &ZVec, math::XYZTLorentzVector &photVec, bool &foundPhoton);
+  bool findZ(std::vector<pat::PackedCandidate> photons, std::vector<double> deltaRVec, 
+             pat::Muon &muon1, pat::Muon &muon2,int taken1, int &taken2,
+             int &assocMuon,math::XYZTLorentzVector &ZVec, math::XYZTLorentzVector &photVec, bool &foundPhoton);
   
-  bool findZ(std::vector<pat::PackedCandidate> photons, std::vector<double> deltaRVec, pat::Electron &electron1, pat::Electron &electron2,int taken1,  // changed for miniAOD
-	     int &taken2, int &assocElec, math::XYZTLorentzVector &ZVec, math::XYZTLorentzVector &photVec, bool &foundPhoton);
+  bool findZ(std::vector<pat::PackedCandidate> photons, std::vector<double> deltaRVec, 
+             pat::Electron &electron1, pat::Electron &electron2,int taken1, int &taken2, 
+             int &assocElec, math::XYZTLorentzVector &ZVec, math::XYZTLorentzVector &photVec, bool &foundPhoton);
   
   //--------------------------------------------    
   void findHiggsCandidate_MixFlavour(std::vector<pat::Muon> &candMuons, std::vector<pat::Electron> &candElectrons,
-				     std::vector<pat::Muon> &selectedMuons, std::vector<pat::Electron> &selectedElectrons, bool noChargeReq = false);
+                             std::vector<pat::Muon> &selectedMuons, std::vector<pat::Electron> &selectedElectrons, 
+                             bool noChargeReq = false);
   int RecoFourMixEvent;
   bool mixedFlavorCharge;
   //--------------------------------------------
@@ -288,10 +291,7 @@ private:
   
   double MEKD_wPDF, MEKD_ME_H_wPDF, MEKD_ME_ZZ_wPDF;
   double MEKD_noPDF, MEKD_ME_H_noPDF, MEKD_ME_ZZ_noPDF;
-
   double MEKD_wPDF_noFSR, MEKD_ME_H_wPDF_noFSR, MEKD_ME_ZZ_wPDF_noFSR;
-
-  
  
   //Helper Class
   HZZ4LHelper helper;
@@ -541,8 +541,9 @@ private:
   double nEvWith1FSRZ, nEvWith1FSRZ_4e, nEvWith1FSRZ_4mu, nEvWith1FSRZ_2e2mu;
   double nEvWith2FSRZ, nEvWith2FSRZ_4e, nEvWith2FSRZ_4mu, nEvWith2FSRZ_2e2mu;
 
-  double nEvFSRPtLt4Zmm, nEvFSRPtGt4dR0p5MatchHadISOZmm, nEvFSRPtGt4dR0p07MatchZmm; 
-  double nEvFSRPtLt4Zee, nEvFSRPtGt4dR0p5MatchHadISOZee, nEvFSRPtGt4dR0p07MatchZee; 
+  double nEvFSRPtLt4, nEvFSRPtGt4dR0p5MatchFsrISO, nEvFSRPtGt4dR0p07Match; 
+  double nEvFSRPtLt4Zmm, nEvFSRPtGt4dR0p5MatchFsrISOZmm, nEvFSRPtGt4dR0p07MatchZmm; 
+  double nEvFSRPtLt4Zee, nEvFSRPtGt4dR0p5MatchFsrISOZee, nEvFSRPtGt4dR0p07MatchZee; 
 
   // register to the TFileService
   edm::Service<TFileService> fs;
@@ -587,9 +588,8 @@ private:
   int Z4lcounter_4mu, Z4lcounter_4e, Z4lcounter_2e2mu, Z4lcounter_2mu2e;
 
   double thetaZ2, etaZ2;
-
+ 
   bool doVarDump, doBlinding, doFsrRecovery;
-
 
 
   //Resolution
@@ -790,8 +790,9 @@ UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
   nEvWith1FSRZ = 0; nEvWith1FSRZ_4e = 0; nEvWith1FSRZ_4mu = 0; nEvWith1FSRZ_2e2mu = 0;
   nEvWith2FSRZ = 0; nEvWith2FSRZ_4e = 0; nEvWith2FSRZ_4mu = 0; nEvWith2FSRZ_2e2mu = 0;
 
-  nEvFSRPtLt4Zmm = 0; nEvFSRPtGt4dR0p5MatchHadISOZmm = 0; nEvFSRPtGt4dR0p07MatchZmm = 0;
-  nEvFSRPtLt4Zee = 0; nEvFSRPtGt4dR0p5MatchHadISOZee = 0; nEvFSRPtGt4dR0p07MatchZee = 0;
+  nEvFSRPtLt4 = 0; nEvFSRPtGt4dR0p5MatchFsrISO = 0; nEvFSRPtGt4dR0p07Match = 0;
+  nEvFSRPtLt4Zmm = 0; nEvFSRPtGt4dR0p5MatchFsrISOZmm = 0; nEvFSRPtGt4dR0p07MatchZmm = 0;
+  nEvFSRPtLt4Zee = 0; nEvFSRPtGt4dR0p5MatchFsrISOZee = 0; nEvFSRPtGt4dR0p07MatchZee = 0;
 
   nEvBeforeZCuts_4mu = 0;
   nEvAfterM4lCut_4mu = 0;
@@ -1208,6 +1209,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
   if(isMC && isSignal)
   {
+    nEventsTotal += eventWeight;
     sigEff_4->advanceSigDenCounters(genParticles,eventType,eventWeight);
     sigEff_6->advanceSigDenCounters(genParticles,eventType,eventWeight);
     sigEff_8->advanceSigDenCounters(genParticles,eventType,eventWeight);
@@ -1311,10 +1313,10 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
       }
 	
       nPhotons = 0;
-      vector<pat::PackedCandidate> fsrPhotons; vector<double> deltaRVec; //modified for miniAOD
+      vector<pat::PackedCandidate> fsrPhotons; vector<double> deltaRVec;
       if(doFsrRecovery)
       {
-        for(edm::View<pat::PackedCandidate>::const_iterator phot=pfCands->begin(); phot!=pfCands->end(); ++phot) // modified for miniAOD
+        for(edm::View<pat::PackedCandidate>::const_iterator phot=pfCands->begin(); phot!=pfCands->end(); ++phot) 
         {
           if (phot->pdgId()!=22 || phot->pt()<1.0) continue;
           bool matched = false; double chosenDeltaRPh = 999;
@@ -1456,7 +1458,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
       RecoFourMixEvent = 0;
       //if(mixedFlavorCharge){findHiggsCandidate_MixFlavour(recoMuons,recoElectrons,selectedMuons,selectedElectrons, true);}
-      vector< pat::PackedCandidate > selectedFsrPhotons; // modified for miniAOD
+      vector< pat::PackedCandidate > selectedFsrPhotons; 
       findHiggsCandidate(recoMuons,recoElectrons,fsrPhotons,deltaRVec,selectedMuons,selectedElectrons,selectedFsrPhotons,iEvent);
 	  
       if( foundHiggsCandidate )
@@ -2203,13 +2205,13 @@ void UFHZZ4LAna::endLuminosityBlock(edm::LuminosityBlock const& lumiSeg,edm::Eve
   // Keep track of all the events run over
   edm::Handle<edm::MergeableCounter> numEventsCounter;
   lumiSeg.getByLabel("nEventsTotal", numEventsCounter);
-  if( isMC )
-  {
-    if(numEventsCounter.isValid())
-    {
-      nEventsTotal += numEventsCounter->value;
-    }
-  }
+  //if( isMC )
+  //{
+  //  if(numEventsCounter.isValid())
+  //  {
+  //    nEventsTotal += numEventsCounter->value;
+  //  }
+  //}
 
   edm::Handle<edm::MergeableCounter> numEventsSkimmedCounter;
   lumiSeg.getByLabel("nEvents2LSkim", numEventsSkimmedCounter);
@@ -2284,7 +2286,8 @@ void UFHZZ4LAna::findHiggsCandidate(std::vector< pat::Muon > &candMuons, std::ve
     {
       if( candMuons[i].charge() * candMuons[j].charge() == -1 )
       {
-        bool foundZ1 = findZ(fsrPhotons, deltaRVec, candMuons[i], candMuons[j],999, takenPhotMu1, tmpAssociatedPh, tmpZVec, tmpPhotVec, foundPhot);
+        bool foundZ1 = findZ(fsrPhotons, deltaRVec, candMuons[i], candMuons[j],999, 
+                       takenPhotMu1, tmpAssociatedPh, tmpZVec, tmpPhotVec, foundPhot);
         dm = abs(Zmass-tmpZVec.M());
         if(dm < ZmassDiff && foundZ1)
         {
