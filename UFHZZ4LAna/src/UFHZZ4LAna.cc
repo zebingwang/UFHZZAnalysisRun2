@@ -673,10 +673,10 @@ UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
   histContainer_["extraParticles"]=fs->make<TH1F>("extraParticles", "Extra Leptons after Iso; N Leptons; N Events", 15, 0, 15);
 
   histContainer_["NEVENTS"]=fs->make<TH1F>("nEvents","nEvents in Sample",2,0,2);
-  histContainer_["NVTX"]=fs->make<TH1F>("nVtx","Number of Vertices",36,-0.5,35.5);
-  histContainer_["NVTX_RW"]=fs->make<TH1F>("nVtx_ReWeighted","Number of Vertices",36,-0.5,35.5);
-  histContainer_["NINTERACT"]=fs->make<TH1F>("nInteractions","Number of True Interactions",36,-0.5,35.5);
-  histContainer_["NINTERACT_RW"]=fs->make<TH1F>("nInteraction_ReWeighted","Number of True Interactions",36,-0.5,35.5);
+  histContainer_["NVTX"]=fs->make<TH1F>("nVtx","Number of Vertices",61,-0.5,60.5);
+  histContainer_["NVTX_RW"]=fs->make<TH1F>("nVtx_ReWeighted","Number of Vertices",61,-0.5,60.5);
+  histContainer_["NINTERACT"]=fs->make<TH1F>("nInteractions","Number of True Interactions",61,-0.5,60.5);
+  histContainer_["NINTERACT_RW"]=fs->make<TH1F>("nInteraction_ReWeighted","Number of True Interactions",61,-0.5,60.5);
   histContainer_["PUweights"]=fs->make<TH1F>("PUweights","PUweights",240,0,80);
 
   histContainer_["minMass2l"]=fs->make<TH1F>("minMass2l","Minimum Mass of 2 Leptons",1000,0,100);
@@ -2318,7 +2318,8 @@ void UFHZZ4LAna::findHiggsCandidate(std::vector< pat::Muon > &candMuons, std::ve
     {
       if( candElectrons[i].charge() * candElectrons[j].charge() == -1 )
       {
-        bool foundZ1 = findZ(fsrPhotons, deltaRVec, candElectrons[i], candElectrons[j],999, takenPhotEl1,tmpAssociatedPh, tmpZVec, tmpPhotVec,foundPhot);
+        bool foundZ1 = findZ(fsrPhotons, deltaRVec, candElectrons[i], candElectrons[j],999, 
+                             takenPhotEl1,tmpAssociatedPh, tmpZVec, tmpPhotVec,foundPhot);
         dm = abs(Zmass-tmpZVec.M());
         if(dm < ZmassDiff && foundZ1)
         {
@@ -2444,8 +2445,8 @@ void UFHZZ4LAna::findHiggsCandidate(std::vector< pat::Muon > &candMuons, std::ve
           if(tmpDeltaR3 < 0.02) continue;
           if(tmpDeltaR4 < 0.02) continue;
 
-          bool foundZ2 = findZ(fsrPhotons, deltaRVec, candMuons[i], candMuons[j],takenPhotonZ1, takenPhotMu2, tmpAssociatedPh, tmpZVec, 
-                               tmpPhotVec, foundPhot);
+          bool foundZ2 = findZ(fsrPhotons, deltaRVec, candMuons[i], candMuons[j],takenPhotonZ1, 
+                               takenPhotMu2, tmpAssociatedPh, tmpZVec, tmpPhotVec, foundPhot);
           sumPtZ2_tmp = candMuons[i].pt() + candMuons[j].pt();
 		   
           if(sumPtZ2_tmp > sumPtZ2 && foundZ2)
@@ -3134,7 +3135,7 @@ void UFHZZ4LAna::findHiggsCandidate_MixFlavour(std::vector<pat::Muon> &candMuons
       if( Z1isEMu && Z2isElectrons )
       {
         selectedMuons.push_back(candMuons[takenZ1_1]);
-        electedElectrons.push_back(candElectrons[takenZ1_2]);
+        selectedElectrons.push_back(candElectrons[takenZ1_2]);
         selectedElectrons.push_back(candElectrons[takenZ2_1]);
         selectedElectrons.push_back(candElectrons[takenZ2_2]);
         RecoFourMixEvent = 3;
@@ -5560,7 +5561,7 @@ void UFHZZ4LAna::fillResolutionHistograms(edm::Handle<edm::View<pat::Muon> > muo
 ////////////Muons/////////////////
 bool UFHZZ4LAna::findZ(std::vector<pat::PackedCandidate> photons, std::vector<double> deltaRVec, 
                        pat::Muon &muon1, pat::Muon &muon2,int taken1, int &taken2, int &assocMuon, 
-                       math::XYZTLorentzVector &ZVec, math::XYZTLorentzVector &photVec, bool &foundPhoton) // for miniAOD
+                       math::XYZTLorentzVector &ZVec, math::XYZTLorentzVector &photVec, bool &foundPhoton)
 {
 
   using namespace std;
@@ -5718,7 +5719,9 @@ bool UFHZZ4LAna::findZ(std::vector<pat::PackedCandidate> photons, std::vector<do
 
 
 ////////////Electrons/////////////////
-bool UFHZZ4LAna::findZ(std::vector<pat::PackedCandidate> photons, std::vector<double> deltaRVec, pat::Electron &electron1, pat::Electron &electron2,int taken1, int &taken2, int &assocElec, math::XYZTLorentzVector &ZVec, math::XYZTLorentzVector &photVec, bool &foundPhoton) // for miniAOD
+bool UFHZZ4LAna::findZ(std::vector<pat::PackedCandidate> photons, std::vector<double> deltaRVec, 
+                       pat::Electron &electron1, pat::Electron &electron2,int taken1, int &taken2, int &assocElec, 
+                       math::XYZTLorentzVector &ZVec, math::XYZTLorentzVector &photVec, bool &foundPhoton) 
 {
 
   using namespace std;
