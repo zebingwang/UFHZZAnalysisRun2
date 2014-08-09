@@ -857,8 +857,9 @@ UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
   //if(interactiveRun)
   //{ lumiWeight = new edm::LumiReWeighting( "hists/mcFlat10_Fall11.root", "hists/Data_PU_Fall11.root", "pileup_mc", "pileup" );}
   //else
-  //{ lumiWeight = new edm::LumiReWeighting( "UFHZZAnalysis8TeV/UFHZZ4LAna/hists/mcFlat10_Fall11.root", "UFHZZAnalysis8TeV/UFHZZ4LAna/hists/Data_PU_Fall11.root",
-  //					       "pileup_mc", "pileup" ); } 
+  //{ lumiWeight = new edm::LumiReWeighting( "UFHZZAnalysis8TeV/UFHZZ4LAna/hists/mcFlat10_Fall11.root", 
+  //                                         "UFHZZAnalysis8TeV/UFHZZ4LAna/hists/Data_PU_Fall11.root",
+  //					     "pileup_mc", "pileup" ); } 
 
   npv = -1;
   BX = 0;
