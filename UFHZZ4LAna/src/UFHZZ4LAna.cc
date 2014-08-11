@@ -84,7 +84,7 @@
 #include "DataFormats/ParticleFlowCandidate/interface/PFCandidateFwd.h"
 #include "DataFormats/ParticleFlowCandidate/interface/PFCandidate.h"
 #include "PhysicsTools/SelectorUtils/interface/JetIDSelectionFunctor.h"
-#include "DataFormats/PatCandidates/interface/PackedCandidate.h"  // added for miniAOD
+#include "DataFormats/PatCandidates/interface/PackedCandidate.h"  
 //#include "CMGTools/External/interface/PileupJetIdAlgo.h"  // removed for miniAOD
 //#include "CMGTools/External/interface/PileupJetIdentifier.h"  // removed for miniAOD
 // Reco
@@ -171,10 +171,11 @@ private:
   virtual void beginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&);
   virtual void endLuminosityBlock(edm::LuminosityBlock const& lumiSeg,edm::EventSetup const& eSetup);
   
-  void findHiggsCandidate(std::vector<pat::Muon> &candMuons, std::vector<pat::Electron> &candElectrons, std::vector< pat::PackedCandidate > fsrPhotons,
+  void findHiggsCandidate(std::vector<pat::Muon> &candMuons, std::vector<pat::Electron> &candElectrons, 
+                  std::vector<pat::PFParticle> fsrPhotons,
                   std::vector<double> deltaRVec,
                   std::vector<pat::Muon> &selectedMuons, std::vector<pat::Electron> &selectedElectrons,
-                  std::vector<pat::PackedCandidate > &selectedFsrPhotons, const edm::Event& iEvent);
+                  std::vector<pat::PFParticle > &selectedFsrPhotons, const edm::Event& iEvent);
 
   double getMinDeltaR(std::vector<pat::Muon> Muons, std::vector<pat::Electron> Electrons);
   void plotMinDeltaRemu(std::vector<pat::Muon> Muons, std::vector<pat::Electron> Electrons);
@@ -183,11 +184,11 @@ private:
   void fillStepPlots();
   void bookResolutionHistograms();
   void fillResolutionHistograms(edm::Handle<edm::View<pat::Muon> > muons);
-  bool findZ(std::vector<pat::PackedCandidate> photons, std::vector<double> deltaRVec, 
+  bool findZ(std::vector<pat::PFParticle> photons, std::vector<double> deltaRVec, 
              pat::Muon &muon1, pat::Muon &muon2,int taken1, int &taken2,
              int &assocMuon,math::XYZTLorentzVector &ZVec, math::XYZTLorentzVector &photVec, bool &foundPhoton);
   
-  bool findZ(std::vector<pat::PackedCandidate> photons, std::vector<double> deltaRVec, 
+  bool findZ(std::vector<pat::PFParticle> photons, std::vector<double> deltaRVec, 
              pat::Electron &electron1, pat::Electron &electron2,int taken1, int &taken2, 
              int &assocElec, math::XYZTLorentzVector &ZVec, math::XYZTLorentzVector &photVec, bool &foundPhoton);
   
@@ -987,8 +988,8 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   edm::Handle<edm::View<pat::PackedCandidate> > pfCands; // modified for miniAOD
   iEvent.getByLabel("packedPFCandidates",pfCands); // modified for miniAOD
 
-  //edm::Handle<edm::View<pat::PackedCandidate> > photonsForFsr;  //remove for miniAOD
-  //iEvent.getByLabel("boostedFsrPhotons",photonsForFsr); //remove for miniAOD
+  edm::Handle<edm::View<pat::PFParticle> > photonsForFsr;  //remove for miniAOD
+  iEvent.getByLabel("boostedFsrPhotons",photonsForFsr); //remove for miniAOD
   
   // GEN collection
   edm::Handle<reco::GenParticleCollection> genParticles;
@@ -1314,14 +1315,13 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
       }
 	
       nPhotons = 0;
-      vector<pat::PackedCandidate> fsrPhotons; vector<double> deltaRVec;
+      std::vector<pat::PFParticle> fsrPhotons; std::vector<double> deltaRVec;
       if(doFsrRecovery)
       {
-        for(edm::View<pat::PackedCandidate>::const_iterator phot=pfCands->begin(); phot!=pfCands->end(); ++phot) 
+        for(edm::View<pat::PFParticle>::const_iterator phot=photonsForFsr->begin(); phot!=photonsForFsr->end(); ++phot)
         {
-          if (phot->pdgId()!=22 || phot->pt()<1.0) continue;
           bool matched = false; double chosenDeltaRPh = 999;
-          for(unsigned int i = 0; i < recoElectrons.size(); i++)
+          for(int i=0; i<(int)recoElectrons.size(); i++)
           {
             double tmpDeltaREPh = deltaR(recoElectrons[i].eta(), recoElectrons[i].phi(), phot->eta(),phot->phi());
             double fsrDeltaPhi = fabs(deltaPhi(phot->phi(),recoElectrons[i].phi()));
@@ -1330,7 +1330,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
             if( fsrDeltaPhi < 2 && fsrDeltaEta < 0.05 ){matched = true;}
             if( tmpDeltaREPh < chosenDeltaRPh ){chosenDeltaRPh = tmpDeltaREPh;}
           }
-          for(unsigned int i = 0; i < recoMuons.size(); i++)
+          for(int i=0; i<(int)recoMuons.size(); i++)
           {
             double tmpDeltaRMPh = deltaR(recoMuons[i].eta(), recoMuons[i].phi(), phot->eta(),phot->phi());
             if( tmpDeltaRMPh < chosenDeltaRPh ){chosenDeltaRPh = tmpDeltaRMPh;}
@@ -1459,7 +1459,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
       RecoFourMixEvent = 0;
       //if(mixedFlavorCharge){findHiggsCandidate_MixFlavour(recoMuons,recoElectrons,selectedMuons,selectedElectrons, true);}
-      vector< pat::PackedCandidate > selectedFsrPhotons; 
+      std::vector<pat::PFParticle> selectedFsrPhotons; 
       findHiggsCandidate(recoMuons,recoElectrons,fsrPhotons,deltaRVec,selectedMuons,selectedElectrons,selectedFsrPhotons,iEvent);
 	  
       if( foundHiggsCandidate )
@@ -2241,10 +2241,10 @@ void UFHZZ4LAna::endLuminosityBlock(edm::LuminosityBlock const& lumiSeg,edm::Eve
 //Pass good leptons for analysis as candMuons and candElectrons
 //Pass empty vectors of pat leptons as selectedMuons and selectedElectrons
 // these will be filled in the function and then useable for more analysis.
-void UFHZZ4LAna::findHiggsCandidate(std::vector< pat::Muon > &candMuons, std::vector< pat::Electron > &candElectrons,
-                           std::vector< pat::PackedCandidate > fsrPhotons, std::vector<double> deltaRVec,  // for miniAOD
-                           std::vector< pat::Muon > &selectedMuons, std::vector< pat::Electron > &selectedElectrons, 
-                           std::vector< pat::PackedCandidate > &selectedFsrPhotons,const edm::Event& iEvent )  // for miniAOD
+void UFHZZ4LAna::findHiggsCandidate(std::vector<pat::Muon> &candMuons, std::vector<pat::Electron> &candElectrons,
+                           std::vector<pat::PFParticle> fsrPhotons, std::vector<double> deltaRVec,  // for miniAOD
+                           std::vector<pat::Muon> &selectedMuons, std::vector<pat::Electron> &selectedElectrons, 
+                           std::vector<pat::PFParticle> &selectedFsrPhotons,const edm::Event& iEvent )  // for miniAOD
 {
   using namespace pat;
   using namespace std;
@@ -5560,7 +5560,7 @@ void UFHZZ4LAna::fillResolutionHistograms(edm::Handle<edm::View<pat::Muon> > muo
 
 
 ////////////Muons/////////////////
-bool UFHZZ4LAna::findZ(std::vector<pat::PackedCandidate> photons, std::vector<double> deltaRVec, 
+bool UFHZZ4LAna::findZ(std::vector<pat::PFParticle> photons, std::vector<double> deltaRVec, 
                        pat::Muon &muon1, pat::Muon &muon2,int taken1, int &taken2, int &assocMuon, 
                        math::XYZTLorentzVector &ZVec, math::XYZTLorentzVector &photVec, bool &foundPhoton)
 {
@@ -5577,7 +5577,7 @@ bool UFHZZ4LAna::findZ(std::vector<pat::PackedCandidate> photons, std::vector<do
   double coneSize = 0.4;
   double muon1Iso = 999, muon2Iso = 999;
   double assocMuonTmp = 999;
-  //double photIsoCut = 1.0; // for miniAOD
+  double photIsoCut = 1.0;
   bool foundZ = false;
   double isoVetoMuons = 0.00;
 
@@ -5589,11 +5589,9 @@ bool UFHZZ4LAna::findZ(std::vector<pat::PackedCandidate> photons, std::vector<do
       //pt, eta checks
       if( photons[i].pt() < 4 ) continue;
       if( photons[i].eta() > 2.4 ) continue;
-      /* removed for miniAOD 3 lines below
       if( (photons[i].userFloat("fsrPhotonPFIsoChHad03pt02")+photons[i].userFloat("fsrPhotonPFIsoNHad03")
           +photons[i].userFloat("fsrPhotonPFIsoPhoton03")
           +photons[i].userFloat("fsrPhotonPFIsoChHadPU03pt02"))/photons[i].pt() > photIsoCut) continue;
-      */
       //calc both deltaRs
       deltaR1 = deltaR(muon1.eta(),muon1.phi(),photons[i].eta(),photons[i].phi());
       deltaR2 = deltaR(muon2.eta(),muon2.phi(),photons[i].eta(),photons[i].phi());
@@ -5720,7 +5718,7 @@ bool UFHZZ4LAna::findZ(std::vector<pat::PackedCandidate> photons, std::vector<do
 
 
 ////////////Electrons/////////////////
-bool UFHZZ4LAna::findZ(std::vector<pat::PackedCandidate> photons, std::vector<double> deltaRVec, 
+bool UFHZZ4LAna::findZ(std::vector<pat::PFParticle> photons, std::vector<double> deltaRVec, 
                        pat::Electron &electron1, pat::Electron &electron2,int taken1, int &taken2, int &assocElec, 
                        math::XYZTLorentzVector &ZVec, math::XYZTLorentzVector &photVec, bool &foundPhoton) 
 {
@@ -5737,7 +5735,7 @@ bool UFHZZ4LAna::findZ(std::vector<pat::PackedCandidate> photons, std::vector<do
   double coneSize = 0.4;
   double elec1Iso = 999, elec2Iso = 999;
   double assocElecTmp = 999;
-  //double photIsoCut = 1.0; //for miniAOD
+  double photIsoCut = 1.0; 
   bool foundZ = false;
   foundPhoton = false;
   double isoVetoEE = 0.08;
@@ -5747,17 +5745,15 @@ bool UFHZZ4LAna::findZ(std::vector<pat::PackedCandidate> photons, std::vector<do
 
   if( !photons.empty() && photons.size() > 0 && doFsrRecovery)
   {
-    for(unsigned int i = 0; i < photons.size(); i++)
+    for(int i=0; i<(int)photons.size(); i++)
     {
-      if( taken1 == (int)i ) continue;
+      if( taken1==i ) continue;
       //pt, eta checks
       if( photons[i].pt() < 4 ) continue;
       if( photons[i].eta() > 2.4 ) continue;
-      /* removed for miniAOD , 3 lines below
       if( (photons[i].userFloat("fsrPhotonPFIsoChHad03pt02")+photons[i].userFloat("fsrPhotonPFIsoNHad03")
           +photons[i].userFloat("fsrPhotonPFIsoPhoton03")
           +photons[i].userFloat("fsrPhotonPFIsoChHadPU03pt02"))/photons[i].pt() > photIsoCut) continue;
-      */
       //calc both deltaRs
       deltaR1 = deltaR(electron1.eta(),electron1.phi(),photons[i].eta(),photons[i].phi());
       deltaR2 = deltaR(electron2.eta(),electron2.phi(),photons[i].eta(),photons[i].phi());
@@ -5799,9 +5795,9 @@ bool UFHZZ4LAna::findZ(std::vector<pat::PackedCandidate> photons, std::vector<do
     if(!foundPhot)
     {
       bool useDR = false, usePT = false;
-      for(unsigned int i = 0; i < photons.size(); i++)
+      for(int i=0; i<(int)photons.size(); i++)
       {
-        if( taken1 == (int)i ) continue;
+        if( taken1==i ) continue;
         //pt, eta checks
         if( photons[i].pt() < 2 ) continue;
         if( photons[i].eta() > 2.4 ) continue;

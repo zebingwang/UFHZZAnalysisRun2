@@ -65,7 +65,7 @@
 #include "DataFormats/Provenance/interface/Timestamp.h"
 #include "DataFormats/Candidate/interface/Candidate.h"
 #include "DataFormats/PatCandidates/interface/CompositeCandidate.h"
-#include "DataFormats/PatCandidates/interface/PackedCandidate.h"
+
 using namespace std;
 
 class HZZ4LResolution
@@ -78,7 +78,7 @@ class HZZ4LResolution
 	~HZZ4LResolution();
 
 	void bookHistograms(edm::Service<TFileService> fs, std::map<TString,TH1F*> &histContainer_, std::map<TString, TH2F*> &hist2DContainer_);
-	void fillHistograms(std::map<TString,TH1F*> &histContainer_, std::map<TString, TH2F*> &hist2DContainer_, std::vector< pat::Electron> & electrons, std::vector< pat::Muon>& muons, vector< pat::PackedCandidate>& fsrPhotons, double evtWeight, bool isData);	
+	void fillHistograms(std::map<TString,TH1F*> &histContainer_, std::map<TString, TH2F*> &hist2DContainer_, std::vector< pat::Electron> & electrons, std::vector< pat::Muon>& muons, vector< pat::PFParticle>& fsrPhotons, double evtWeight, bool isData);	
         void plotHistograms(std::map<TString,TH1F*> &histContainer_, bool weightEvents, double scaleWeight);
 	double genHiggsMass(const pat::Electron*elec);
 	double genHiggsMass(const pat::Muon*elec);
@@ -252,7 +252,7 @@ void HZZ4LResolution::bookHistograms(edm::Service<TFileService> fs, std::map<TSt
         histContainer_["hmass_pulls_4egen3_good_adcorr"]=fs->make<TH1F>("hmass_pulls_4egen3_good_adcorr","new four lepton mass pulls (w.r.t 4 gen3 e), good; (m_{4e}^{RECO} - m_{4e}^{GEN3})/new #sigma_{m_{4e}}^{RECO}; N Events", 1000, -10, 10);
 
 }
-void HZZ4LResolution::fillHistograms(std::map<TString,TH1F*> &histContainer_, std::map<TString, TH2F*> &hist2DContainer_, std::vector< pat::Electron>& isolatedRecElectrons, std::vector< pat::Muon >& isolatedRecMuons, vector< pat::PackedCandidate>& fsrPhotons, double evtWeight, bool isData)
+void HZZ4LResolution::fillHistograms(std::map<TString,TH1F*> &histContainer_, std::map<TString, TH2F*> &hist2DContainer_, std::vector< pat::Electron>& isolatedRecElectrons, std::vector< pat::Muon >& isolatedRecMuons, vector< pat::PFParticle>& fsrPhotons, double evtWeight, bool isData)
 {
 
 	// for 4e mass resolution 

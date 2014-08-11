@@ -2,7 +2,7 @@ import FWCore.ParameterSet.Config as cms
 
 ## PF Photons
 fsrPhotons = cms.EDProducer("FSRPhotonProducer",
-    srcCands = cms.InputTag("particleFlow"),
+    srcCands = cms.InputTag("packedPFCandidates"),
     ptThresh = cms.double(1.0), ## will tighten to 2 at analysis level
     extractMuonFSR = cms.bool(True),
 )
