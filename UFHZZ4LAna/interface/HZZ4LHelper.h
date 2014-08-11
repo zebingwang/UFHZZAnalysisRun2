@@ -86,11 +86,15 @@ class HZZ4LHelper
   HZZ4LHelper();
   ~HZZ4LHelper();
   
-  std::vector< pat::Muon > goodMuons2012_Iso(edm::Handle<edm::View<pat::Muon> > Muons, double muPtCut, double rho, double isocut, const reco::Vertex *&vertex);
-  std::vector< pat::Electron > goodElectrons2012_Iso(edm::Handle<edm::View<pat::Electron> > Electrons, double elecPtCut, double rho, double isocut, std::string elecID, const reco::Vertex *&vertex);
+  std::vector<pat::Muon> goodMuons2012_Iso(edm::Handle<edm::View<pat::Muon> > Muons, double muPtCut,
+                                              double rho, double isocut, const reco::Vertex *&vertex);
+  std::vector<pat::Electron> goodElectrons2012_Iso(edm::Handle<edm::View<pat::Electron> > Electrons, double elecPtCut, 
+                                                   double rho, double isocut, std::string elecID, const reco::Vertex *&vertex);
   
-  std::vector< pat::Muon > goodMuons2012_Iso(std::vector< pat::Muon > Muons, double muPtCut, double rho, double isocut, const reco::Vertex *&vertex);
-  std::vector< pat::Electron > goodElectrons2012_Iso(std::vector< pat::Electron > Electrons, double elecPtCut, double rho, double isocut, std::string elecID, const reco::Vertex *&vertex);
+  std::vector<pat::Muon> goodMuons2012_Iso(std::vector<pat::Muon> Muons, double muPtCut, 
+                                           double rho, double isocut, const reco::Vertex *&vertex);
+  std::vector<pat::Electron> goodElectrons2012_Iso(std::vector<pat::Electron> Electrons, double elecPtCut,
+                                   double rho, double isocut, std::string elecID, const reco::Vertex *&vertex);
 
   std::vector<pat::Muon> allMuons(edm::Handle<edm::View<pat::Muon> > Muons);
   std::vector<pat::Electron> allElectrons(edm::Handle<edm::View<pat::Electron> > Electrons);
@@ -127,7 +131,8 @@ class HZZ4LHelper
 
   void cleanOverlappingLeptons(std::vector<pat::Muon> &Muons, std::vector<pat::Electron> &Electrons,const reco::Vertex *&vertex);
   void m2lCutAt4GeV(std::vector<pat::Muon> &Muons, std::vector<pat::Electron> &Electrons);
-  void m2lCutAt4GeV(std::vector<pat::Muon> inputMuons, std::vector<pat::Electron> inputElectrons, std::vector<pat::Muon> &outputMuons, std::vector<pat::Electron> &outputElectrons);
+  void m2lCutAt4GeV(std::vector<pat::Muon> inputMuons, std::vector<pat::Electron> inputElectrons, std::vector<pat::Muon> &outputMuons, 
+                    std::vector<pat::Electron> &outputElectrons);
   bool passedM2lCut(std::vector<pat::Muon> Muons, std::vector<pat::Electron> Electrons, double lowM2lCut, double highM2lCut);
   bool passedM2lCut_OS(std::vector<pat::Muon> Muons, std::vector<pat::Electron> Electrons, double lowM2lCut, double highM2lCut);
   bool passedM2lAndPtCut(std::vector<pat::Muon> Muons, std::vector<pat::Electron> Electrons, double lowM2lCut, double highM2lCut);
@@ -144,9 +149,12 @@ class HZZ4LHelper
   double getLeastIso1(std::vector<pat::Muon> Muons, std::vector<pat::Electron> Electrons, double muonRhoCorr, double elecRhoCorr, double &pt);
   double getLeastIso2(std::vector<pat::Muon> Muons, std::vector<pat::Electron> Electrons, double muonRhoCorr, double elecRhoCorr);
 
-  int passedIsolation(std::vector<pat::Muon> Muons, std::vector<pat::Electron> Electrons, double chosenIsoCut, double muonRhoCorr, double elecRhoCorr);
-  int passedIsolation(std::vector<pat::Muon> Muons, std::vector<pat::Electron> Electrons, double chosenIsoCut, TString isoType, TString muPUCorr, TString elPUCorr, double Rho);
-  int passedIsolation(std::vector<pat::Muon> Muons, std::vector<pat::Electron> Electrons, double chosenIsoCut, TString isoType, TString muPUCorr, TString elPUCorr, double muonRho, double elecRho, double &leastIso1, double &leastIso2 );
+  int passedIsolation(std::vector<pat::Muon> Muons, std::vector<pat::Electron> Electrons, double chosenIsoCut, 
+                      double muonRhoCorr, double elecRhoCorr);
+  int passedIsolation(std::vector<pat::Muon> Muons, std::vector<pat::Electron> Electrons, double chosenIsoCut, 
+                      TString isoType, TString muPUCorr, TString elPUCorr, double Rho);
+  int passedIsolation(std::vector<pat::Muon> Muons, std::vector<pat::Electron> Electrons, double chosenIsoCut, 
+                      TString isoType, TString muPUCorr, TString elPUCorr, double muonRho, double elecRho, double &leastIso1, double &leastIso2 );
   
     
   int passedEarlyIsolation(std::vector<pat::Muon> Muons, std::vector<pat::Electron> Electrons, double muonRhoCorr, double elecRhoCorr, double earlyIsoCut);
