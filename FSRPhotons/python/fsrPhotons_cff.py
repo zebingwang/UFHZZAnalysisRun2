@@ -8,9 +8,9 @@ fsrPhotons = cms.EDProducer("FSRPhotonProducer",
 )
 
 ## vetos as per muons 
-fsrPhotonPFIsoChHad04 = cms.EDProducer("LeptonPFIsoFromStep1",
+fsrPhotonPFIsoChHad04 = cms.EDProducer("PhotonPFIsoCalculator",
     leptonLabel = cms.InputTag("fsrPhotons"),
-    pfLabel     = cms.InputTag("pfNoPileUp"), 
+    pfLabel     = cms.InputTag("packedPFCandidates"), 
     pfSelection = cms.string("charge != 0 && abs(pdgId) == 211"), # neutral hadrons
     deltaR     = cms.double(0.4), # radius
     deltaRself = cms.double(0.0001), # self-veto 0.0001
@@ -30,8 +30,10 @@ fsrPhotonPFIsoPhoton04 = fsrPhotonPFIsoChHad04.clone(
     deltaRself  = 0.01, # larger veto cone for neutrals
 )
 # for deltaBeta corrections
-fsrPhotonPFIsoChHadPU04 = fsrPhotonPFIsoChHad04.clone(pfLabel = 'pfPileUp')
-fsrPhotonPFIsoChHadPU04pt02 = fsrPhotonPFIsoChHad04pt02.clone(pfLabel = 'pfPileUp')
+#fsrPhotonPFIsoChHadPU04 = fsrPhotonPFIsoChHad04.clone(pfLabel = 'pfPileUp')
+#fsrPhotonPFIsoChHadPU04pt02 = fsrPhotonPFIsoChHad04pt02.clone(pfLabel = 'pfPileUp')
+fsrPhotonPFIsoChHadPU04 = fsrPhotonPFIsoChHad04.clone(pfLabel = 'packedPFCandidates')
+fsrPhotonPFIsoChHadPU04pt02 = fsrPhotonPFIsoChHad04pt02.clone(pfLabel = 'packedPFCandidates')
 
 ## deltaR = 0.3 copy
 fsrPhotonPFIsoChHad03       = fsrPhotonPFIsoChHad04.clone(deltaR = 0.3)
