@@ -6,11 +6,11 @@
 /*
   class UFHZZ4LAna UFHZZ4LAna.cc UFHZZAnalysis8TeV/UFHZZ4LAna/src/UFHZZ4LAna.cc
   
-  Description: UF HZZ4L Analysis Analyzer. Works in CMSSW 53X
+  Description: UF HZZ4L Analysis Analyzer. Works in CMSSW 7xx
   
-  Implementation: Full analysis step for HZZ4L in 2012.
+  Implementation: Full analysis step for HZZ4L for CMS Run2
   
-  Last updated: 05.06.2013 --- Matt Snowball
+  Last updated: 12. Aug. 2014 by Hengne.Li@cern.ch 
   
 */
 //
@@ -591,6 +591,7 @@ private:
   double thetaZ2, etaZ2;
  
   bool doVarDump, doBlinding, doFsrRecovery;
+  bool fsrIsoCalculateUseHelper; // temp switch to calculate fsrISO using Helper function
 
 
   //Resolution
@@ -661,6 +662,7 @@ UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
   doVarDump(iConfig.getUntrackedParameter<bool>("doVarDump",false)),
   doBlinding(iConfig.getUntrackedParameter<bool>("doBlinding",false)),
   doFsrRecovery(iConfig.getUntrackedParameter<bool>("doFsrRecovery",false)),
+  fsrIsoCalculateUseHelper(iConfig.getUntrackedParameter<bool>("fsrIsoCalculateUseHelper",false)),
   bStudyResolution(iConfig.getUntrackedParameter<bool>("bStudyResolution",false)),
   bStudyDiLeptonResolution(iConfig.getUntrackedParameter<bool>("bStudyDiLeptonResolution",false)),
   bStudyFourLeptonResolution(iConfig.getUntrackedParameter<bool>("bStudyFourLeptonResolution",false))
@@ -984,15 +986,15 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   elecRho = *eventRhoE;
 
   // Particle Flow Cands
-  edm::Handle<edm::View<pat::PackedCandidate> > pfCands; // modified for miniAOD
-  iEvent.getByLabel("packedPFCandidates",pfCands); // modified for miniAOD
+  edm::Handle<edm::View<pat::PackedCandidate> > pfCands; 
+  iEvent.getByLabel("packedPFCandidates",pfCands);
 
   edm::Handle<edm::View<pat::PFParticle> > photonsForFsr;  
   if (doFsrRecovery) iEvent.getByLabel("boostedFsrPhotons",photonsForFsr); 
   
   // GEN collection
   edm::Handle<reco::GenParticleCollection> genParticles;
-  iEvent.getByLabel("prunedGenParticles", genParticles); // modified for miniAOD
+  iEvent.getByLabel("prunedGenParticles", genParticles); 
 
   //VBF 
   //edm::Handle<edm::View<pat::Jet> > correctedJets; //removed for miniAOD
@@ -1314,10 +1316,10 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
       }
 	
       nPhotons = 0;
-      std::vector<pat::PFParticle> fsrPhotons; std::vector<double> deltaRVec;
+      pat::PFParticleCollection fsrPhotons; std::vector<double> deltaRVec;
       if(doFsrRecovery)
       {
-        for(edm::View<pat::PFParticle>::const_iterator phot=photonsForFsr->begin(); phot!=photonsForFsr->end(); ++phot)
+        for(edm::View<pat::PFParticle>::const_iterator phot=photonsForFsr->begin(); phot!=photonsForFsr->end(); phot++)
         {
           bool matched = false; double chosenDeltaRPh = 999;
           for(int i=0; i<(int)recoElectrons.size(); i++)
@@ -1337,7 +1339,15 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
           if( (phot->pt() > 2 && chosenDeltaRPh < 0.07) || (phot->pt() > 4 && chosenDeltaRPh < 0.5) )
           {
-            if(!matched && fabs(phot->eta()) < 2.4){ fsrPhotons.push_back(*phot); deltaRVec.push_back(chosenDeltaRPh); nPhotons++;}
+            if(!matched && fabs(phot->eta()) < 2.4)
+            { 
+              if (fsrIsoCalculateUseHelper)
+              {
+                float fsrIso = (float)helper.fsrIso(*phot, pfCands); 
+                const_cast<pat::PFParticle&>(*phot).addUserFloat("fsrIso", fsrIso);
+              }
+              fsrPhotons.push_back(*phot); deltaRVec.push_back(chosenDeltaRPh); nPhotons++;
+            }
           }
         }
       }	   
@@ -5576,9 +5586,20 @@ bool UFHZZ4LAna::findZ(std::vector<pat::PFParticle> photons, std::vector<double>
       //pt, eta checks
       if( photons[i].pt() < 4 ) continue;
       if( photons[i].eta() > 2.4 ) continue;
-      if( (photons[i].userFloat("fsrPhotonPFIsoChHad03pt02")+photons[i].userFloat("fsrPhotonPFIsoNHad03")
-          +photons[i].userFloat("fsrPhotonPFIsoPhoton03")
-          +photons[i].userFloat("fsrPhotonPFIsoChHadPU03pt02"))/photons[i].pt() > photIsoCut) continue;
+
+      float fsrIso = 1.1;
+      if (fsrIsoCalculateUseHelper)
+      {
+        fsrIso = photons[i].userFloat("fsrIso");
+      }
+      else
+      {
+        fsrIso = (photons[i].userFloat("fsrPhotonPFIsoChHad03pt02")+photons[i].userFloat("fsrPhotonPFIsoNHad03")
+                 +photons[i].userFloat("fsrPhotonPFIsoPhoton03")
+                 +photons[i].userFloat("fsrPhotonPFIsoChHadPU03pt02"))/photons[i].pt();
+      }
+      if (fsrIso>photIsoCut) continue;
+
       //calc both deltaRs
       deltaR1 = deltaR(muon1.eta(),muon1.phi(),photons[i].eta(),photons[i].phi());
       deltaR2 = deltaR(muon2.eta(),muon2.phi(),photons[i].eta(),photons[i].phi());
@@ -5737,9 +5758,20 @@ bool UFHZZ4LAna::findZ(std::vector<pat::PFParticle> photons, std::vector<double>
       //pt, eta checks
       if( photons[i].pt() < 4 ) continue;
       if( photons[i].eta() > 2.4 ) continue;
-      if( (photons[i].userFloat("fsrPhotonPFIsoChHad03pt02")+photons[i].userFloat("fsrPhotonPFIsoNHad03")
-          +photons[i].userFloat("fsrPhotonPFIsoPhoton03")
-          +photons[i].userFloat("fsrPhotonPFIsoChHadPU03pt02"))/photons[i].pt() > photIsoCut) continue;
+
+      float fsrIso = 1.1;
+      if (fsrIsoCalculateUseHelper)
+      {
+        fsrIso = photons[i].userFloat("fsrIso");
+      }
+      else
+      {
+        fsrIso = (photons[i].userFloat("fsrPhotonPFIsoChHad03pt02")+photons[i].userFloat("fsrPhotonPFIsoNHad03")
+                 +photons[i].userFloat("fsrPhotonPFIsoPhoton03")
+                 +photons[i].userFloat("fsrPhotonPFIsoChHadPU03pt02"))/photons[i].pt();
+      }
+      if (fsrIso>photIsoCut) continue;
+
       //calc both deltaRs
       deltaR1 = deltaR(electron1.eta(),electron1.phi(),photons[i].eta(),photons[i].phi());
       deltaR2 = deltaR(electron2.eta(),electron2.phi(),photons[i].eta(),photons[i].phi());

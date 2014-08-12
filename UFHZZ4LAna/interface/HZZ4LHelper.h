@@ -181,6 +181,7 @@ class HZZ4LHelper
   double pfIso(pat::Electron elec, double Rho);
   double pfIsoFSR(pat::Muon muon, double Rho, double photPt);
   double pfIsoFSR(pat::Electron elec, double Rho, double photPt);
+  double fsrIso(pat::PFParticle photon, edm::Handle<edm::View<pat::PackedCandidate> > pfcands); 
 
 
   enum MuonEffectiveAreaType {
@@ -3490,55 +3491,71 @@ bool HZZ4LHelper::isPFMuon(pat::Muon muon,edm::Handle<edm::View<reco::PFCandidat
 
 double HZZ4LHelper::pfIso(pat::Muon muon, double Rho)
 {
-  //using namespace edm;
-  using namespace pat;
-  using namespace std;
-
   //double PUCorr = Rho*MuonEffArea(muEAtype,muon.eta(),muEAtarget);
   double PUCorr = 0.5*muon.userIsolation("PfPUChargedHadronIso");
-  double iso = (muon.chargedHadronIso()+max(muon.photonIso()+muon.neutralHadronIso()-PUCorr,0.0))/muon.pt();
-
-  
+  double iso = (muon.chargedHadronIso()+std::max(muon.photonIso()+muon.neutralHadronIso()-PUCorr,0.0))/muon.pt();
   return iso;
 }
 
 
 double HZZ4LHelper::pfIso(pat::Electron elec, double Rho)
 {
-  //using namespace edm;
-  using namespace pat;
-  using namespace std;
-
   double PUCorr = Rho*ElecEffArea(elEAtype,elec.superCluster()->eta(),elEAtarget);
-  double iso = (elec.chargedHadronIso()+max(elec.photonIso()+elec.neutralHadronIso()-PUCorr,0.0))/elec.pt();
-  
+  double iso = (elec.chargedHadronIso()+std::max(elec.photonIso()+elec.neutralHadronIso()-PUCorr,0.0))/elec.pt();
   return iso;
 }
 
 double HZZ4LHelper::pfIsoFSR(pat::Muon muon, double Rho, double photPt)
 {
-  //using namespace edm;
-  using namespace pat;
-  using namespace std;
-
   //double PUCorr = Rho*MuonEffArea(muEAtype,muon.eta(),muEAtarget);
   double PUCorr= 0.5*muon.userIsolation("PfPUChargedHadronIso");
-  double iso = (muon.chargedHadronIso()+max(muon.photonIso()-photPt+muon.neutralHadronIso()-PUCorr,0.0))/muon.pt();
-  
+  double iso = (muon.chargedHadronIso()+std::max(muon.photonIso()-photPt+muon.neutralHadronIso()-PUCorr,0.0))/muon.pt();
   return iso;
 }
 
 
 double HZZ4LHelper::pfIsoFSR(pat::Electron elec, double Rho, double photPt)
 {
-  //using namespace edm;
-  using namespace pat;
-  using namespace std;
-
   double PUCorr = Rho*ElecEffArea(elEAtype,elec.superCluster()->eta(),elEAtarget);
-  double iso = (elec.chargedHadronIso()+max(elec.photonIso()-photPt+elec.neutralHadronIso()-PUCorr,0.0))/elec.pt();
-  
+  double iso = (elec.chargedHadronIso()+std::max(elec.photonIso()-photPt+elec.neutralHadronIso()-PUCorr,0.0))/elec.pt();
   return iso;
+}
+
+double HZZ4LHelper::fsrIso(pat::PFParticle photon, edm::Handle<edm::View<pat::PackedCandidate> > pfcands)
+{
+  // hardcoded cut values
+  const double cut_deltaR = 0.3; 
+  const double cut_deltaRself_ch = 0.0001;
+  const double cut_deltaRself_ne = 0.01;
+
+  double ptSum(0.0);
+  for( edm::View<pat::PackedCandidate>::const_iterator pf = pfcands->begin(); pf!=pfcands->end(); ++pf )
+  {
+    double dr = deltaR(photon.p4(), pf->p4()) ;
+    if (dr>=cut_deltaR) continue;
+
+    //neutral hadrons + photons !fromPV
+    if (pf->charge()==0) 
+    {
+      if (dr<cut_deltaRself_ne) continue; 
+      if (pf->fromPV()) continue;
+      if (pf->pt()<=0.5) continue;
+      if (abs(pf->pdgId())!=22) continue;
+      if (abs(pf->pdgId())!=130) continue;
+    }
+    // charged hadrons 
+    else
+    {
+      if (dr<cut_deltaRself_ch) continue; 
+      if (pf->pt()<=0.2) continue;
+      if (abs(pf->pdgId())!=211) continue;
+    }
+    // if not skip in above steps, sum its pt
+    ptSum += pf->pt();
+  }
+
+  return ptSum/photon.pt();
+
 }
 
 
