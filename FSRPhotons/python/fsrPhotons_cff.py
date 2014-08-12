@@ -76,7 +76,7 @@ import PhysicsTools.PatAlgos.producersLayer1.pfParticleProducer_cfi
 boostedFsrPhotons = PhysicsTools.PatAlgos.producersLayer1.pfParticleProducer_cfi.patPFParticles.clone(
     pfCandidateSource = 'fsrPhotons',
 )
-#boostedFsrPhotons.userData.userFloats.src = cms.VInputTag(
+boostedFsrPhotons.userData.userFloats.src = cms.VInputTag(
     #cms.InputTag("fsrPhotonPFIsoChHad04"),
     #cms.InputTag("fsrPhotonPFIsoChHad04pt02"),
     #cms.InputTag("fsrPhotonPFIsoNHad04"),
@@ -89,9 +89,9 @@ boostedFsrPhotons = PhysicsTools.PatAlgos.producersLayer1.pfParticleProducer_cfi
     ##cms.InputTag("fsrPhotonPFIsoPhoton03"),
     #cms.InputTag("fsrPhotonPFIsoChHadPU03"),
     ##cms.InputTag("fsrPhotonPFIsoChHadPU03pt02"),
-    ###cms.InputTag("fsrPhotonPFIsoChHadPUNoPU03pt02"),
-    ###cms.InputTag("fsrPhotonPFIsoNHadPhoton03")
-#)
+    cms.InputTag("fsrPhotonPFIsoChHadPUNoPU03pt02"),
+    cms.InputTag("fsrPhotonPFIsoNHadPhoton03")
+)
 
 fsrPhotonSequence = cms.Sequence(
     fsrPhotons 
@@ -108,7 +108,7 @@ fsrPhotonSequence = cms.Sequence(
     ##fsrPhotonPFIsoPhoton03 + 
     #fsrPhotonPFIsoChHadPU03 + 
     ##fsrPhotonPFIsoChHadPU03pt02 + 
-    #fsrPhotonPFIsoChHadPUNoPU03pt02 +
-    #fsrPhotonPFIsoNHadPhoton03 +
+    fsrPhotonPFIsoChHadPUNoPU03pt02 +
+    fsrPhotonPFIsoNHadPhoton03 +
     boostedFsrPhotons
 )
