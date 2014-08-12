@@ -78,32 +78,34 @@ void PhotonPFIsoCalculator::produce(edm::Event& iEvent, const edm::EventSetup& i
     std::vector<math::XYZVector> coneParticles;
     for( pat::PackedCandidateCollection::const_iterator pf = pfcands->begin(); pf!=pfcands->end(); ++pf )
     {   
-      double dr = deltaR(pf->p4(), pf->p4()) ;
-      if (dr >= deltaR_) continue;
+      double dr = deltaR(ph->p4(), pf->p4()) ;
+      if (dr>=deltaR_ || dr<deltaRself_ ) continue;
+      if (deltaZ_>0 && fabs(pf->vz() - ph->vz()) > deltaZ_) continue;
+      // dR Veto for Gamma: no-one in EB, dR > 0.08 in EE
+      if (vetoConeEndcaps_ > 0 && endcapDefinition_(*ph) && dr < vetoConeEndcaps_) continue;
+
       if (!pfSelection_(*pf)) continue; 
       if (debug_) std::cout << "   pfCandidate of pdgId " << pf->pdgId() 
           << ", pt = " << pf->pt() << ", dr = " << dr << ", dz = " << (pf->vz()-ph->vz()) 
           << " is in cone... " << " from PV? " << pf->fromPV() << std::endl;
-
-      if (deltaZ_ > 0 && fabs(pf->vz() - ph->vz()) > deltaZ_) continue;
-      if (deltaR(pf->p4(), ph->p4()) < deltaRself_) continue;
-
-      // dR Veto for Gamma: no-one in EB, dR > 0.08 in EE
-      if (vetoConeEndcaps_ > 0 && endcapDefinition_(*ph) && dr < vetoConeEndcaps_) continue;
       if (debug_) std::cout << "          ...and passes all vetos, so it's added to the sum." << std::endl;
 
       // scalar sum
       ptSum += pf->pt();
 
-      // directional sum
-      math::XYZVector transverse(pf->eta()-ph->eta(), reco::deltaPhi(pf->phi(),ph->phi()), 0);
-      transverse *= pf->pt() / transverse.rho();
-      if (transverse.rho() > 0) 
+      if (directional_)
       {
-        isoAngleSum += transverse;
-        coneParticles.push_back(transverse);
+        // directional sum
+        math::XYZVector transverse(pf->eta()-ph->eta(), reco::deltaPhi(pf->phi(),ph->phi()), 0);
+        transverse *= pf->pt() / transverse.rho();
+        if (transverse.rho() > 0) 
+        {
+          isoAngleSum += transverse;
+          coneParticles.push_back(transverse);
+        }
       }
     }
+
     if (directional_) 
     {
       double directionalPT = 0;
@@ -113,8 +115,12 @@ void PhotonPFIsoCalculator::produce(edm::Event& iEvent, const edm::EventSetup& i
       }
       isoV.push_back(directionalPT);
     } 
-    else isoV.push_back(ptSum);
+    else 
+    {
+      isoV.push_back(ptSum);
+    }
   }
+
   isoF.insert(photons,isoV.begin(),isoV.end());
   isoF.fill();
   iEvent.put(isoM);
