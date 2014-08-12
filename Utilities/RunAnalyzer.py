@@ -6,7 +6,7 @@ import FWCore.ParameterSet.VarParsing as VarParsing
 #inputFile = 'root://cms-xrd-global.cern.ch//store/mc/Spring14miniaod//GluGluToHToZZTo4L_M-125_13TeV-powheg-pythia6/MINIAODSIM/PU20bx25_POSTLS170_V5-v1/00000/0881ABEB-2709-E411-9E42-00145EDD7581.root'
 #outputFile = cms.string("GluGluToHToZZTo4L_M-125_13TeV-powheg-pythia6_PU20bx25_PAT_testAna.root")
 inputFile = 'root://cms-xrd-global.cern.ch//store/cmst3/user/gpetrucc/miniAOD/v1/GluGluToHToZZTo4L_M-125_13TeV-powheg-pythia6_PU_S14_PAT_big.root'
-outputFile = cms.string("GluGluToHToZZTo4L_M-125_13TeV-powheg-pythia6_PU_S14_PAT_big_testAna_FSRV2.root");
+outputFile = cms.string("GluGluToHToZZTo4L_M-125_13TeV-powheg-pythia6_PU_S14_PAT_big_testAna_FSRV3_preCalc.root");
 
 #inputFile='https://cms-service-dqm.web.cern.ch//eos/cms/store/cmst3/user/gpetrucc/miniAOD/v1/VBF_HToZZTo4L_M-125_13TeV-powheg-pythia6_PU20bx25_PAT.root'
 #outputFile = cms.string("VBF_HToZZTo4L_M-125_13TeV-powheg-pythia6_PU20bx25_PAT_testAna.root")
@@ -16,7 +16,7 @@ outputFile = cms.string("GluGluToHToZZTo4L_M-125_13TeV-powheg-pythia6_PU_S14_PAT
 
 ### SETUP OPTIONS
 options = VarParsing.VarParsing('standard')
-options.register('doFsrRecovery', False, 
+options.register('doFsrRecovery', True, 
                  VarParsing.VarParsing.multiplicity.singleton,
                  VarParsing.VarParsing.varType.bool, 
                  "doFsrRecovery or not")
@@ -24,7 +24,10 @@ options.register('elecID', "eidTight",
                  VarParsing.VarParsing.multiplicity.singleton,
                  VarParsing.VarParsing.varType.string,
                  "electron ID, noEID, eidLoose, eidTight, etc..")
-
+ptions.register('fsrIsoCalculateUseHelper', True,
+                 VarParsing.VarParsing.multiplicity.singleton,
+                 VarParsing.VarParsing.varType.bool,
+                 "use helper to calculate fsrIso or not")
 
 process = cms.Process("UFHZZ4LAnalysis")
 
@@ -95,6 +98,7 @@ process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
                               reweightForPU = cms.untracked.bool(False),       
                               doVarDump    = cms.untracked.bool(True),
                               doFsrRecovery = cms.untracked.bool(options.doFsrRecovery),
+                              fsrIsoCalculateUseHelper = cms.untracked.bool(options.fsrIsoCalculateUseHelper),
                               elecID       = cms.untracked.string(options.elecID)
                              )
 
@@ -117,7 +121,10 @@ process.hltHighLevel = cms.EDFilter("HLTHighLevel",
                      throw = cms.bool(False)    # throw exception on unknown path names 
                      )
 
-
+if (options.fsrIsoCalculateUseHelper):
+   boostedFsrPhotons.userData.userFloats.src = cms.VInputTag()
+   fsrPhotonSequence = cms.Sequence(fsrPhotons+ boostedFsrPhotons)
+   
 
 process.p = cms.Path(#process.reCorrectedPatJets*
                      process.fsrPhotonSequence*
