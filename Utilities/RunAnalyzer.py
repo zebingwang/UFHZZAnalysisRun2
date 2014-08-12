@@ -1,11 +1,25 @@
 import FWCore.ParameterSet.Config as cms
+#import FWCore.ParameterSet.VarParsing as VarParsing
 
-elecId = cms.untracked.string("noEID")
+
+### SETUP OPTIONS
+#options = VarParsing.VarParsing('standard')
+#options.register('doFsrRecovery',
+#                 1, # default Value = true
+#                 VarParsing.VarParsing.multiplicity.singleton, # singleton or list
+#                 VarParsing.VarParsing.varType.int,          # string, int, or float
+#                 "change files path in case of local test: isCrab=0 if you are running it locally with cmsRun")
+
+
+FsrRecovery = cms.untracked.bool(True)
+#elecId = cms.untracked.string("noEID")
 #elecId = cms.untracked.string("eidLoose")
-#elecId = cms.untracked.string("eidTight")
+elecId = cms.untracked.string("eidTight")
 #inputFile = 'file:GluGluToHToZZTo4L_M-125_13TeV-powheg-pythia6_PU20bx25_PAT.root'
-inputFile = 'root://cms-xrd-global.cern.ch//store/mc/Spring14miniaod//GluGluToHToZZTo4L_M-125_13TeV-powheg-pythia6/MINIAODSIM/PU20bx25_POSTLS170_V5-v1/00000/0881ABEB-2709-E411-9E42-00145EDD7581.root'
-outputFile = cms.string("GluGluToHToZZTo4L_M-125_13TeV-powheg-pythia6_PU20bx25_PAT_testAna.root")
+#inputFile = 'root://cms-xrd-global.cern.ch//store/mc/Spring14miniaod//GluGluToHToZZTo4L_M-125_13TeV-powheg-pythia6/MINIAODSIM/PU20bx25_POSTLS170_V5-v1/00000/0881ABEB-2709-E411-9E42-00145EDD7581.root'
+#outputFile = cms.string("GluGluToHToZZTo4L_M-125_13TeV-powheg-pythia6_PU20bx25_PAT_testAna.root")
+inputFile = 'root://cms-xrd-global.cern.ch//store/cmst3/user/gpetrucc/miniAOD/v1/GluGluToHToZZTo4L_M-125_13TeV-powheg-pythia6_PU_S14_PAT_big.root'
+outputFile = cms.string("GluGluToHToZZTo4L_M-125_13TeV-powheg-pythia6_PU_S14_PAT_big_testAna_FSR.root");
 
 #inputFile='https://cms-service-dqm.web.cern.ch//eos/cms/store/cmst3/user/gpetrucc/miniAOD/v1/VBF_HToZZTo4L_M-125_13TeV-powheg-pythia6_PU20bx25_PAT.root'
 #outputFile = cms.string("VBF_HToZZTo4L_M-125_13TeV-powheg-pythia6_PU20bx25_PAT_testAna.root")
@@ -55,6 +69,12 @@ process.reCorrectedPatJets = cms.EDProducer("PatJetReCorrector",
                                             )
 '''
 
+process.load('UFHZZAnalysisRun2.FSRPhotons.fsrPhotons_cff')
+
+# 
+from CommonTools.ParticleFlow.pfPileUp_cfi  import *
+from CommonTools.ParticleFlow.TopProjectors.pfNoPileUp_cfi import *
+
 process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
                               photonSrc    = cms.untracked.InputTag("slimmedPhotons"),
                               electronSrc  = cms.untracked.InputTag("slimmedElectrons"),
@@ -62,6 +82,8 @@ process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
                               #correctedJetSrc = cms.untracked.InputTag("reCorrectedPatJets"),
                               jetSrc       = cms.untracked.InputTag("slimmedJets"),
                               metSrc       = cms.untracked.InputTag("slimmedMETs"),
+                              pfCands      = cms.untracked.InputTag("packedPFCandidates"),
+                              photonsForFsr = cms.untracked.InputTag("boostedFsrPhotons"),
                               vertexSrc    = cms.untracked.InputTag("offlineSlimmedPrimaryVertices"), #or selectedVertices 
                               isMC         = cms.untracked.bool(True),
                               isSignal     = cms.untracked.bool(True),
@@ -71,57 +93,36 @@ process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
                               weightEvents = cms.untracked.bool(True),
                               elRhoSrc     = cms.untracked.InputTag("fixedGridRhoFastjetAll"),
                               muRhoSrc     = cms.untracked.InputTag("fixedGridRhoFastjetCentralNeutral"),
-                              reweightForPU = cms.untracked.bool(True),       
+                              reweightForPU = cms.untracked.bool(False),       
                               doVarDump    = cms.untracked.bool(True),
-                              doFsrRecovery = cms.untracked.bool(True),
+                              doFsrRecovery = FsrRecovery,
                               elecID       = elecId
                              )
 
-process.AnaAfterHlt = cms.EDAnalyzer('UFHZZ4LAna',
-                              photonSrc    = cms.untracked.InputTag("slimmedPhotons"),
-                              electronSrc  = cms.untracked.InputTag("slimmedElectrons"),
-                              muonSrc      = cms.untracked.InputTag("slimmedMuons"),
-                              #correctedJetSrc = cms.untracked.InputTag("reCorrectedPatJets"),
-                              jetSrc       = cms.untracked.InputTag("slimmedJets"),
-                              metSrc       = cms.untracked.InputTag("slimmedMETs"),
-                              vertexSrc    = cms.untracked.InputTag("offlineSlimmedPrimaryVertices"), #or selectedVertices 
-                              isMC         = cms.untracked.bool(True),
-                              isSignal     = cms.untracked.bool(True),
-                              mH           = cms.untracked.uint32(125),
-                              CrossSection = cms.untracked.double(0.00544046 ),
-                              FilterEff    = cms.untracked.double(1),
-                              weightEvents = cms.untracked.bool(True),
-                              elRhoSrc     = cms.untracked.InputTag("fixedGridRhoFastjetAll"),
-                              muRhoSrc     = cms.untracked.InputTag("fixedGridRhoFastjetCentralNeutral"),
-                              reweightForPU = cms.untracked.bool(True),            
-                              doVarDump    = cms.untracked.bool(True),
-                              doFsrRecovery = cms.untracked.bool(True),
-                              elecID       = elecId
-                             )
-
-
+process.AnaAfterHlt = process.Ana.clone();
 
 
 # Trigger
 process.hltHighLevel = cms.EDFilter("HLTHighLevel",
-                                    TriggerResultsTag = cms.InputTag("TriggerResults","","HLT"),
-                                    HLTPaths = cms.vstring('HLT_Mu17_TkMu8*',
-                                                            'HLT_Mu17_Mu8*',
-                                                            'HLT_Ele17_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL_Ele8_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL*',
-                                                            'HLT_Mu8_Ele17_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL*',
-                                                            'HLT_Mu17_Ele8_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL*',
-                                                            'HLT_Ele15_Ele8_Ele5_CaloIdL_TrkIdVL*'
-                                                             ),
-                                    # provide list of HLT paths (or patterns) you want
-                                    eventSetupPathsKey = cms.string(''), # not empty => use read paths from AlCaRecoTriggerBitsRcd via this key
-                                    andOr = cms.bool(True),             # how to deal with multiple triggers: True (OR) accept if ANY is true, False (AND) accept if ALL are true  
-                                    throw = cms.bool(False)    # throw exception on unknown path names 
-                                    )
+                     TriggerResultsTag = cms.InputTag("TriggerResults","","HLT"),
+                     HLTPaths = cms.vstring('HLT_Mu17_TkMu8*',
+                               'HLT_Mu17_Mu8*',
+                               'HLT_Ele17_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL_Ele8_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL*',
+                               'HLT_Mu8_Ele17_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL*',
+                               'HLT_Mu17_Ele8_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL*',
+                               'HLT_Ele15_Ele8_Ele5_CaloIdL_TrkIdVL*'
+                              ),
+                     # provide list of HLT paths (or patterns) you want
+                     eventSetupPathsKey = cms.string(''), # not empty => use read paths from AlCaRecoTriggerBitsRcd via this key
+                     andOr = cms.bool(True),             # how to deal with multiple triggers: True (OR) accept if ANY is true, False (AND) accept if ALL are true  
+                     throw = cms.bool(False)    # throw exception on unknown path names 
+                     )
 
 
 
 process.p = cms.Path(#process.reCorrectedPatJets
-                     process.Ana
+                     process.fsrPhotonSequence
+                     *process.Ana
                      *process.hltHighLevel
                      *process.AnaAfterHlt
                      )

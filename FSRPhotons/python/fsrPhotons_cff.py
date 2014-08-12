@@ -9,31 +9,34 @@ fsrPhotons = cms.EDProducer("FSRPhotonProducer",
 
 ## vetos as per muons 
 fsrPhotonPFIsoChHad04 = cms.EDProducer("PhotonPFIsoCalculator",
-    leptonLabel = cms.InputTag("fsrPhotons"),
+    photonLabel = cms.InputTag("fsrPhotons"),
     pfLabel     = cms.InputTag("packedPFCandidates"), 
-    pfSelection = cms.string("charge != 0 && abs(pdgId) == 211"), # neutral hadrons
+    pfSelection = cms.string("charge != 0 && abs(pdgId) == 211 && (!fromPV) "), # charged hadrons
     deltaR     = cms.double(0.4), # radius
     deltaRself = cms.double(0.0001), # self-veto 0.0001
     vetoConeEndcaps = cms.double(0.0), # no special veto in the endcaps
     directional = cms.bool(False),
+    debug       = cms.untracked.bool(False)
 )
 # Separate version with Patrick's threshold
 fsrPhotonPFIsoChHad04pt02 = fsrPhotonPFIsoChHad04.clone(
     pfSelection = fsrPhotonPFIsoChHad04.pfSelection.value() + " && pt > 0.2"
 )
 fsrPhotonPFIsoNHad04 = fsrPhotonPFIsoChHad04.clone(
-    pfSelection = "charge == 0 && abs(pdgId) == 130 && pt > 0.5", # neutral hadrons
+    pfSelection = "charge == 0 && abs(pdgId) == 130 && (!fromPV) && pt > 0.5", # neutral hadrons
     deltaRself  = 0.01, # larger veto cone for neutrals
 )
 fsrPhotonPFIsoPhoton04 = fsrPhotonPFIsoChHad04.clone(
-    pfSelection = "charge == 0 && abs(pdgId) == 22 && pt > 0.5", # photons
+    pfSelection = "charge == 0 && abs(pdgId) == 22 && (!fromPV) && pt > 0.5", # photons
     deltaRself  = 0.01, # larger veto cone for neutrals
 )
 # for deltaBeta corrections
-#fsrPhotonPFIsoChHadPU04 = fsrPhotonPFIsoChHad04.clone(pfLabel = 'pfPileUp')
-#fsrPhotonPFIsoChHadPU04pt02 = fsrPhotonPFIsoChHad04pt02.clone(pfLabel = 'pfPileUp')
-fsrPhotonPFIsoChHadPU04 = fsrPhotonPFIsoChHad04.clone(pfLabel = 'packedPFCandidates')
-fsrPhotonPFIsoChHadPU04pt02 = fsrPhotonPFIsoChHad04pt02.clone(pfLabel = 'packedPFCandidates')
+fsrPhotonPFIsoChHadPU04 = fsrPhotonPFIsoChHad04.clone(
+    pfSelection = cms.string("charge != 0 && abs(pdgId) == 211 && (fromPV) "), # charged hadrons 
+)
+fsrPhotonPFIsoChHadPU04pt02 = fsrPhotonPFIsoChHad04pt02.clone(
+     pfSelection = fsrPhotonPFIsoChHadPU04.pfSelection.value() + " && pt > 0.2"
+)
 
 ## deltaR = 0.3 copy
 fsrPhotonPFIsoChHad03       = fsrPhotonPFIsoChHad04.clone(deltaR = 0.3)
