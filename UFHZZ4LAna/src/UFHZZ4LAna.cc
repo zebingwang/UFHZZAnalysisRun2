@@ -914,7 +914,6 @@ UFHZZ4LAna::~UFHZZ4LAna()
 void
 UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
-  using namespace std;
   using namespace pat;
   //using namespace MEMNames; // removed for miniAOD
 
@@ -952,7 +951,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   {PU_weight = pileUp.getPUWeight(npv,PUVersion);}
   else
   { PU_weight = 1.0;}
-  //cout << "PU WEIGHT: " <<  PU_weight << endl;
+  //std::cout << "PU WEIGHT: " <<  PU_weight << std::endl;
   histContainer_["NINTERACT_RW"]->Fill(npv,PU_weight);
 
   // photon collection 
@@ -988,8 +987,8 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   edm::Handle<edm::View<pat::PackedCandidate> > pfCands; // modified for miniAOD
   iEvent.getByLabel("packedPFCandidates",pfCands); // modified for miniAOD
 
-  edm::Handle<edm::View<pat::PFParticle> > photonsForFsr;  //remove for miniAOD
-  iEvent.getByLabel("boostedFsrPhotons",photonsForFsr); //remove for miniAOD
+  edm::Handle<edm::View<pat::PFParticle> > photonsForFsr;  
+  if (doFsrRecovery) iEvent.getByLabel("boostedFsrPhotons",photonsForFsr); 
   
   // GEN collection
   edm::Handle<reco::GenParticleCollection> genParticles;
@@ -1253,8 +1252,8 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     histContainer_["NVTX"]->Fill(nVtx);
     histContainer_["NVTX_RW"]->Fill(nVtx,PU_weight);
     
-    vector<pat::Muon> AllMuons;
-    vector<pat::Electron> AllElectrons;
+    std::vector<pat::Muon> AllMuons;
+    std::vector<pat::Electron> AllElectrons;
   
     AllMuons = helper.goodLooseMuons2012(muons,_muPtCut);
     AllElectrons = helper.goodLooseElectrons2012(electrons,_elecPtCut);
@@ -1265,8 +1264,8 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     // no more skim
     //    if(skimStep1 && skimStep2)
       
-    vector<pat::Muon> recoMuons;
-    vector<pat::Electron> recoElectrons;
+    std::vector<pat::Muon> recoMuons;
+    std::vector<pat::Electron> recoElectrons;
     helper.cleanOverlappingLeptons(AllMuons,AllElectrons,PV);
 
     recoMuons = helper.goodMuons2012_noIso(AllMuons,_muPtCut,PV);
@@ -1285,8 +1284,8 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
       // Mass Resolution Study
       if(bStudyResolution)
       {
-        vector< pat::Muon > recoIsoMuons;
-        vector< pat::Electron > recoIsoElectrons;
+        std::vector< pat::Muon > recoIsoMuons;
+        std::vector< pat::Electron > recoIsoElectrons;
 	    
         recoIsoMuons = helper.goodMuons2012_Iso(AllMuons,_muPtCut, muonRho, isoCut, PV);
         recoIsoElectrons = helper.goodElectrons2012_Iso(AllElectrons,_elecPtCut, elecRho, isoCut, elecID,PV);
@@ -1454,8 +1453,8 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 	            
       // =========== END Extra Event Info  =========== //                  
 
-      vector<pat::Muon> selectedMuons;
-      vector<pat::Electron> selectedElectrons;
+      std::vector<pat::Muon> selectedMuons;
+      std::vector<pat::Electron> selectedElectrons;
 
       RecoFourMixEvent = 0;
       //if(mixedFlavorCharge){findHiggsCandidate_MixFlavour(recoMuons,recoElectrons,selectedMuons,selectedElectrons, true);}
@@ -1465,7 +1464,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
       if( foundHiggsCandidate )
       {	    
         //VBF Jets
-        vector<pat::Jet> selectedVBFJets, correctedVBFJets;
+        std::vector<pat::Jet> selectedVBFJets, correctedVBFJets;
         double tempDeltaR = -999;
         //if(doVarDump) jetDump->fillJetDumpTree(jets,correctedJets,iEvent); // for miniAOD
         if(doVarDump) jetDump->fillJetDumpTree(jets,jets,iEvent); // for miniAOD
@@ -1477,7 +1476,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
           const pat::Jet & correctedJet = jets->at(i); // for miniAOD
           //float mva   = (*puJetIdMva)[jets->refAt(i)];
           //int  idflag = (*puJetIdFlag)[jets->refAt(i)]; // for miniAOD
-          //cout << "jet " << i << " pt " << patjet.pt() << " eta " << patjet.eta() << " PU JetID MVA " << mva << endl; 
+          //std::cout << "jet " << i << " pt " << patjet.pt() << " eta " << patjet.eta() << " PU JetID MVA " << mva << std::endl; 
           //if( PileupJetIdentifier::passJetId( idflag, PileupJetIdentifier::kLoose ) )  // for miniAOD
           if (patjet.userFloat("pileupJetId:fullDiscriminant")) // for miniAOD
           {
@@ -1702,8 +1701,8 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
             //MEKDnoPDFs_noFSR->computeKD( (string)"Higgs0M", (string)"ZZ", MEKD_PSZZ_noPDF_noFSR, MEKD_PSZZ_ME_PS_noPDF_noFSR, MEKD_PSZZ_ME_ZZ_noPDF_noFSR);
             //MEKDnoPDFs_noFSR->computeKD( (string)"Graviton2PM", (string)"ZZ", MEKD_S2ZZ_noPDF_noFSR, MEKD_S2ZZ_ME_S2_noPDF_noFSR, MEKD_S2ZZ_ME_ZZ_noPDF_noFSR);
   
-            vector<TLorentzVector> P4s_noFSR, P4s;
-            vector<int> tmpIDs;
+            std::vector<TLorentzVector> P4s_noFSR, P4s;
+            std::vector<int> tmpIDs;
             P4s.push_back(L11P4); P4s_noFSR.push_back(L11P4_noFSR);
             P4s.push_back(L12P4); P4s_noFSR.push_back(L12P4_noFSR);
             P4s.push_back(L21P4); P4s_noFSR.push_back(L21P4_noFSR);
@@ -1770,7 +1769,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
             MEMsnoPDFs_noFSR->computeKD(k1minus_prodIndep, kMEKD, kqqZZ, kMEKD, &MEMs::probRatio, MEKD_h1M_ZZ_prodInd_noPDF_noFSR,
                                         MEKD_ME_h1M_prodInd_noPDF_noFSR, MEKD_ME_ZZ_noPDF_noFSR);
 
-            //cout << "               " << MEMsnoPDFs_noFSR->computeME(k2mplus_prodIndep, kMEKD, P4s_noFSR,tmpIDs, MEKD_ME_h2P_prodInd_noPDF_noFSR) << endl;
+            //std::cout << "               " << MEMsnoPDFs_noFSR->computeME(k2mplus_prodIndep, kMEKD, P4s_noFSR,tmpIDs, MEKD_ME_h2P_prodInd_noPDF_noFSR) << std::endl;
 
 
             // JHUGen/MCMF cross-check
@@ -1784,7 +1783,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
             */   
 
             Z4lmaxP = helper.largestLepMomentum(L11P4,L12P4,L21P4,L22P4);
-            vector<double> thetas = angles.angleBetweenLep(L11P4,L12P4,L21P4,L22P4);
+            std::vector<double> thetas = angles.angleBetweenLep(L11P4,L12P4,L21P4,L22P4);
             theta12 = thetas[0]; theta13 = thetas[1]; theta14 = thetas[2];
             theta12_deg = acos(theta12)*180/PI; theta13_deg = acos(theta13)*180/PI;
             theta14_deg = acos(theta14)*180/PI;
@@ -1925,7 +1924,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                       if( RecoFourEEvent  ){nEvAfterVBFJet2_4e += eventWeight; }
                       if( RecoTwoETwoMuEvent || RecoTwoMuTwoEEvent ){nEvAfterVBFJet2_2e2mu += eventWeight; }
 	  			
-                      //cout << "VBF: " << VBFDiJetMass << "   " << VBFDeltaEta << endl;
+                      //std::cout << "VBF: " << VBFDiJetMass << "   " << VBFDeltaEta << std::endl;
   
                       if(FisherDiscrim > 0.4)
                       {      
@@ -2048,8 +2047,6 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 // ------------ method called once each job just before starting event loop  ------------
 void UFHZZ4LAna::beginJob()
 {
-  //using namespace edm;
-  using namespace std;
   using namespace pat;
 
   bookStepPlots();
@@ -2084,8 +2081,6 @@ void UFHZZ4LAna::beginJob()
 // ------------ method called once each job just after ending the event loop  ------------
 void  UFHZZ4LAna::endJob() 
 {
-  //using namespace edm;
-  using namespace std;
   using namespace pat;
 
   gen4mu = sigEff_4->getNGen4mu();
@@ -2097,60 +2092,60 @@ void  UFHZZ4LAna::endJob()
   gen2e2muPseudo = sigEff_4->getNGen2e2muPseudo();
 
 
-  cout << "XS:               " << CrossSection << endl
-       << "Filter:           " << FilterEff << endl
-       << "nEventsAfterSkim: " << nEvAfterSkim << endl
-       << "nEvPassedHLT:     " << nEvPassedHlt << endl
-       << "Weight:           " << scaleWeight << endl;
+  std::cout << "XS:               " << CrossSection << std::endl
+       << "Filter:           " << FilterEff << std::endl
+       << "nEventsAfterSkim: " << nEvAfterSkim << std::endl
+       << "nEvPassedHLT:     " << nEvPassedHlt << std::endl
+       << "Weight:           " << scaleWeight << std::endl;
 
-  cout << endl << endl;
-  cout << "  4L/ 4e/ 4mu/ 2e2mu  " << endl;
-  cout << "nEvTotalReco          " << endl
-       << nEventsTotal << endl 
-       << "nEvTotalGen           " << endl
-       << gen4mu+gen4e+gen2e2mu << "/ " << gen4e << "/ " << gen4mu << "/ " << gen2e2mu << endl
-       << "nEvAccepted:          " << endl
-       << gen4muPseudo+gen4ePseudo+gen2e2muPseudo << "/ " << gen4ePseudo << "/ " << gen4muPseudo << "/ " << gen2e2muPseudo << endl
-       << "nEvAfterId:           " << endl
-       << nEvAfterId << endl
-       << "nEvAfterZ1Formed:     " << endl 
-       << nEvAfterZ1Formed << "/ " << nEvAfterZ1Formed_2e << "/ " << nEvAfterZ1Formed_2mu << endl
-       << "nEvAfterZ1Cut:        " << endl
-       << nEvAfterZ1Cut << "/ " << nEvAfterZ1Cut_2e << "/ " << nEvAfterZ1Cut_2mu << endl
-       << counterElZ1ph << "/ " << counterMuZ1ph << endl
-       << "nEv4GoodLep:          " << endl 
-       << nEv4GoodLep << "/ " << nEv4GoodLep_4e << "/ " << nEv4GoodLep_4mu << "/ " << nEv4GoodLep_2e2mu << endl
-       << "nEvAfterZ2Formed:     " << endl
-       << nEvAfterZ2Formed << "/ " << nEvAfterZ2Formed_4e << "/ " << nEvAfterZ2Formed_4mu << "/ " << nEvAfterZ2Formed_2e2mu << endl
-       << "nEvAfterZ2:           " << endl
-       << nEvAfterZ2Cut << "/ " << nEvAfterZ2Cut_4e << "/ " << nEvAfterZ2Cut_4mu << "/ " << nEvAfterZ2Cut_2e2mu << endl
-       << counterElZ2ph << "/ " << counterMuZ2ph << endl
-       << "nEvPassedPtCut:       " << endl
-       << nEvPassedPtCut2 << "/ " << nEvPassedPtCut2_4e << "/ " << nEvPassedPtCut2_4mu << "/ " << nEvPassedPtCut2_2e2mu << endl
-       << "nEvAfter4GeV:         " << endl
-       << nEvAfterCleaning << "/ " << nEvAfterCleaning_4e << "/ " << nEvAfterCleaning_4mu << "/ " << nEvAfterCleaning_2e2mu << endl
-       << "nEvAfterZ4lCut:       " << endl
-       << nEvAfterZ4lCut << "/ " << nEvAfterZ4lCut_4e << "/ " << nEvAfterZ4lCut_4mu << "/ " << nEvAfterZ4lCut_2e2mu << endl
-       << "nEvAfterM4lCut:       " << endl
-       << nEvAfterM4lCut << "/ " << nEvAfterM4lCut_4e << "/ " << nEvAfterM4lCut_4mu << "/ " << nEvAfterM4lCut_2e2mu << endl
-       << "nEvAfterVBFJet1:       " << endl
-       << nEvAfterVBFJet1 << "/ " << nEvAfterVBFJet1_4e << "/ " << nEvAfterVBFJet1_4mu << "/ " << nEvAfterVBFJet1_2e2mu << endl
-       << "nEvAfterVBFJet2:       " << endl
-       << nEvAfterVBFJet2 << "/ " << nEvAfterVBFJet2_4e << "/ " << nEvAfterVBFJet2_4mu << "/ " << nEvAfterVBFJet2_2e2mu << endl
-       << "nEvAfterVBFJetCuts:       " << endl
-       << nEvAfterVBFJetCuts << "/ " << nEvAfterVBFJetCuts_4e << "/ " << nEvAfterVBFJetCuts_4mu << "/ " << nEvAfterVBFJetCuts_2e2mu << endl
-       << "nEvAfterZZCut:       " << endl
-       << nEvAfterZZCut << "/ " << nEvAfterZZCut_4e << "/ " << nEvAfterZZCut_4mu << "/ " << nEvAfterZZCut_2e2mu << endl
-       << "nEvAfterMelaCut:       " << endl
-       << nEvAfterMelaCut << "/ " << nEvAfterMelaCut_4e << "/ " << nEvAfterMelaCut_4mu << "/ " << nEvAfterMelaCut_2e2mu << endl
-       << "nEvAfterPseudoMelaCut:       " << endl
-       << nEvAfterPsMelaCut << "/ " << nEvAfterPsMelaCut_4e << "/ " << nEvAfterPsMelaCut_4mu << "/ " << nEvAfterPsMelaCut_2e2mu << endl
-       << "nEvAfterGraviMelaCut:       " << endl
-       << nEvAfterGrMelaCut << "/ " << nEvAfterGrMelaCut_4e << "/ " << nEvAfterGrMelaCut_4mu << "/ " << nEvAfterGrMelaCut_2e2mu << endl
-       << "nEvWith1FSR: " << endl
-       << nEvWith1FSRZ << "/ " << nEvWith1FSRZ_4e << "/ " << nEvWith1FSRZ_4mu << "/ " << nEvWith1FSRZ_2e2mu << endl
-       << "nEvWith2FSR: " << endl
-       << nEvWith2FSRZ<< "/ " << nEvWith2FSRZ_4e << "/ " << nEvWith2FSRZ_4mu << "/ " << nEvWith2FSRZ_2e2mu <<endl;
+  std::cout << std::endl << std::endl;
+  std::cout << "  4L/ 4e/ 4mu/ 2e2mu  " << std::endl;
+  std::cout << "nEvTotalReco          " << std::endl
+       << nEventsTotal << std::endl 
+       << "nEvTotalGen           " << std::endl
+       << gen4mu+gen4e+gen2e2mu << "/ " << gen4e << "/ " << gen4mu << "/ " << gen2e2mu << std::endl
+       << "nEvAccepted:          " << std::endl
+       << gen4muPseudo+gen4ePseudo+gen2e2muPseudo << "/ " << gen4ePseudo << "/ " << gen4muPseudo << "/ " << gen2e2muPseudo << std::endl
+       << "nEvAfterId:           " << std::endl
+       << nEvAfterId << std::endl
+       << "nEvAfterZ1Formed:     " << std::endl 
+       << nEvAfterZ1Formed << "/ " << nEvAfterZ1Formed_2e << "/ " << nEvAfterZ1Formed_2mu << std::endl
+       << "nEvAfterZ1Cut:        " << std::endl
+       << nEvAfterZ1Cut << "/ " << nEvAfterZ1Cut_2e << "/ " << nEvAfterZ1Cut_2mu << std::endl
+       << counterElZ1ph << "/ " << counterMuZ1ph << std::endl
+       << "nEv4GoodLep:          " << std::endl 
+       << nEv4GoodLep << "/ " << nEv4GoodLep_4e << "/ " << nEv4GoodLep_4mu << "/ " << nEv4GoodLep_2e2mu << std::endl
+       << "nEvAfterZ2Formed:     " << std::endl
+       << nEvAfterZ2Formed << "/ " << nEvAfterZ2Formed_4e << "/ " << nEvAfterZ2Formed_4mu << "/ " << nEvAfterZ2Formed_2e2mu << std::endl
+       << "nEvAfterZ2:           " << std::endl
+       << nEvAfterZ2Cut << "/ " << nEvAfterZ2Cut_4e << "/ " << nEvAfterZ2Cut_4mu << "/ " << nEvAfterZ2Cut_2e2mu << std::endl
+       << counterElZ2ph << "/ " << counterMuZ2ph << std::endl
+       << "nEvPassedPtCut:       " << std::endl
+       << nEvPassedPtCut2 << "/ " << nEvPassedPtCut2_4e << "/ " << nEvPassedPtCut2_4mu << "/ " << nEvPassedPtCut2_2e2mu << std::endl
+       << "nEvAfter4GeV:         " << std::endl
+       << nEvAfterCleaning << "/ " << nEvAfterCleaning_4e << "/ " << nEvAfterCleaning_4mu << "/ " << nEvAfterCleaning_2e2mu << std::endl
+       << "nEvAfterZ4lCut:       " << std::endl
+       << nEvAfterZ4lCut << "/ " << nEvAfterZ4lCut_4e << "/ " << nEvAfterZ4lCut_4mu << "/ " << nEvAfterZ4lCut_2e2mu << std::endl
+       << "nEvAfterM4lCut:       " << std::endl
+       << nEvAfterM4lCut << "/ " << nEvAfterM4lCut_4e << "/ " << nEvAfterM4lCut_4mu << "/ " << nEvAfterM4lCut_2e2mu << std::endl
+       << "nEvAfterVBFJet1:       " << std::endl
+       << nEvAfterVBFJet1 << "/ " << nEvAfterVBFJet1_4e << "/ " << nEvAfterVBFJet1_4mu << "/ " << nEvAfterVBFJet1_2e2mu << std::endl
+       << "nEvAfterVBFJet2:       " << std::endl
+       << nEvAfterVBFJet2 << "/ " << nEvAfterVBFJet2_4e << "/ " << nEvAfterVBFJet2_4mu << "/ " << nEvAfterVBFJet2_2e2mu << std::endl
+       << "nEvAfterVBFJetCuts:       " << std::endl
+       << nEvAfterVBFJetCuts << "/ " << nEvAfterVBFJetCuts_4e << "/ " << nEvAfterVBFJetCuts_4mu << "/ " << nEvAfterVBFJetCuts_2e2mu << std::endl
+       << "nEvAfterZZCut:       " << std::endl
+       << nEvAfterZZCut << "/ " << nEvAfterZZCut_4e << "/ " << nEvAfterZZCut_4mu << "/ " << nEvAfterZZCut_2e2mu << std::endl
+       << "nEvAfterMelaCut:       " << std::endl
+       << nEvAfterMelaCut << "/ " << nEvAfterMelaCut_4e << "/ " << nEvAfterMelaCut_4mu << "/ " << nEvAfterMelaCut_2e2mu << std::endl
+       << "nEvAfterPseudoMelaCut:       " << std::endl
+       << nEvAfterPsMelaCut << "/ " << nEvAfterPsMelaCut_4e << "/ " << nEvAfterPsMelaCut_4mu << "/ " << nEvAfterPsMelaCut_2e2mu << std::endl
+       << "nEvAfterGraviMelaCut:       " << std::endl
+       << nEvAfterGrMelaCut << "/ " << nEvAfterGrMelaCut_4e << "/ " << nEvAfterGrMelaCut_4mu << "/ " << nEvAfterGrMelaCut_2e2mu << std::endl
+       << "nEvWith1FSR: " << std::endl
+       << nEvWith1FSRZ << "/ " << nEvWith1FSRZ_4e << "/ " << nEvWith1FSRZ_4mu << "/ " << nEvWith1FSRZ_2e2mu << std::endl
+       << "nEvWith2FSR: " << std::endl
+       << nEvWith2FSRZ<< "/ " << nEvWith2FSRZ_4e << "/ " << nEvWith2FSRZ_4mu << "/ " << nEvWith2FSRZ_2e2mu <<std::endl;
 
 
 
@@ -2178,7 +2173,7 @@ void  UFHZZ4LAna::endJob()
   //Zto4LAna.plotZto4LHistograms(histContainer_ , weightEvents,scaleWeight);
   //Zto4LAnaOP->plotZto4LHistograms(histContainer_ , weightEvents,scaleWeight);
 
-  cout << "@@@@@@@@@@@@@@@@@@@@@@@@@@ END @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@" << endl;
+  std::cout << "@@@@@@@@@@@@@@@@@@@@@@@@@@ END @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@" << std::endl;
 
 }
 
@@ -2201,8 +2196,6 @@ void UFHZZ4LAna::beginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSet
 // ------------ method called when ending the processing of a luminosity block  ------------
 void UFHZZ4LAna::endLuminosityBlock(edm::LuminosityBlock const& lumiSeg,edm::EventSetup const& eSetup)
 {
-  using namespace std;
-
   // Keep track of all the events run over
   edm::Handle<edm::MergeableCounter> numEventsCounter;
   lumiSeg.getByLabel("nEventsTotal", numEventsCounter);
@@ -2247,7 +2240,6 @@ void UFHZZ4LAna::findHiggsCandidate(std::vector<pat::Muon> &candMuons, std::vect
                            std::vector<pat::PFParticle> &selectedFsrPhotons,const edm::Event& iEvent )  // for miniAOD
 {
   using namespace pat;
-  using namespace std;
 
   bool Z1isMuons = false;
   bool Z1isElectrons = false;
@@ -2678,18 +2670,18 @@ void UFHZZ4LAna::findHiggsCandidate(std::vector<pat::Muon> &candMuons, std::vect
     {
       if( mZ1 > (Zmass+20) || mZ1 < (Zmass-20) )
       {
-        vector<pat::Muon> muonsZ1;
+        std::vector<pat::Muon> muonsZ1;
         muonsZ1.push_back(selectedMuons[0]);
         muonsZ1.push_back(selectedMuons[1]);
-        vector<pat::Muon> passedMuonsZ1 = helper.goodTightMuons(muonsZ1,_muPtCut);
+        std::vector<pat::Muon> passedMuonsZ1 = helper.goodTightMuons(muonsZ1,_muPtCut);
         if( passedMuonsZ1.size() != muonsZ1.size() ){ foundHiggsCandidate = false; }
       }
       if( mZ2 > (Zmass+20) || mZ2 < (Zmass-20) )
       {
-        vector<pat::Muon> muonsZ2;
+        std::vector<pat::Muon> muonsZ2;
         muonsZ2.push_back(selectedMuons[2]);
         muonsZ2.push_back(selectedMuons[3]);
-        vector<pat::Muon> passedMuonsZ2 = helper.goodTightMuons(muonsZ2,_muPtCut);
+        std::vector<pat::Muon> passedMuonsZ2 = helper.goodTightMuons(muonsZ2,_muPtCut);
         if( passedMuonsZ2.size() != muonsZ2.size() ){ foundHiggsCandidate = false; }
       }
     }
@@ -2697,18 +2689,18 @@ void UFHZZ4LAna::findHiggsCandidate(std::vector<pat::Muon> &candMuons, std::vect
     {
       if( mZ1 > (Zmass+20) || mZ1 < (Zmass-20) )
       {
-        vector<pat::Electron> elecsZ1;
+        std::vector<pat::Electron> elecsZ1;
         elecsZ1.push_back(selectedElectrons[0]);
         elecsZ1.push_back(selectedElectrons[1]);
-        vector<pat::Electron> passedElecsZ1 = helper.goodTightElectrons(elecsZ1,_elecPtCut,elecID);
+        std::vector<pat::Electron> passedElecsZ1 = helper.goodTightElectrons(elecsZ1,_elecPtCut,elecID);
         if( passedElecsZ1.size() != elecsZ1.size() ){ foundHiggsCandidate = false; }
       }
       if( mZ2 > (Zmass+20) || mZ2 < (Zmass-20) )
       {
-        vector<pat::Electron> elecsZ2;
+        std::vector<pat::Electron> elecsZ2;
         elecsZ2.push_back(selectedElectrons[2]);
         elecsZ2.push_back(selectedElectrons[3]);
-        vector<pat::Electron> passedElecsZ2 = helper.goodTightElectrons(elecsZ2,_elecPtCut,elecID);
+        std::vector<pat::Electron> passedElecsZ2 = helper.goodTightElectrons(elecsZ2,_elecPtCut,elecID);
         if( passedElecsZ2.size() != elecsZ2.size() ){ foundHiggsCandidate = false; }
       }
     }
@@ -2716,18 +2708,18 @@ void UFHZZ4LAna::findHiggsCandidate(std::vector<pat::Muon> &candMuons, std::vect
     {
       if( mZ1 > (Zmass+20) || mZ1 < (Zmass-20) )
       {
-        vector<pat::Electron> elecsZ1;
+        std::vector<pat::Electron> elecsZ1;
         elecsZ1.push_back(selectedElectrons[0]);
         elecsZ1.push_back(selectedElectrons[1]);
-        vector<pat::Electron> passedElecsZ1 = helper.goodTightElectrons(elecsZ1,_elecPtCut,elecID);
+        std::vector<pat::Electron> passedElecsZ1 = helper.goodTightElectrons(elecsZ1,_elecPtCut,elecID);
         if( passedElecsZ1.size() != elecsZ1.size() ){ foundHiggsCandidate = false; }
       }
       if( mZ2 > (Zmass+20) || mZ2 < (Zmass-20) )
       {
-        vector<pat::Muon> muonsZ2;
+        std::vector<pat::Muon> muonsZ2;
         muonsZ2.push_back(selectedMuons[0]);
         muonsZ2.push_back(selectedMuons[1]);
-        vector<pat::Muon> passedMuonsZ2 = helper.goodTightMuons(muonsZ2,_muPtCut);
+        std::vector<pat::Muon> passedMuonsZ2 = helper.goodTightMuons(muonsZ2,_muPtCut);
         if( passedMuonsZ2.size() != muonsZ2.size() ){ foundHiggsCandidate = false; }
       }
     }
@@ -2735,18 +2727,18 @@ void UFHZZ4LAna::findHiggsCandidate(std::vector<pat::Muon> &candMuons, std::vect
     {
       if( mZ1 > (Zmass+20) || mZ1 < (Zmass-20) )
       {
-        vector<pat::Muon> muonsZ1;
+        std::vector<pat::Muon> muonsZ1;
         muonsZ1.push_back(selectedMuons[0]);
         muonsZ1.push_back(selectedMuons[1]);
-        vector<pat::Muon> passedMuonsZ1 = helper.goodTightMuons(muonsZ1,_muPtCut);
+        std::vector<pat::Muon> passedMuonsZ1 = helper.goodTightMuons(muonsZ1,_muPtCut);
         if( passedMuonsZ1.size() != muonsZ1.size() ){ foundHiggsCandidate = false; }
       }
       if( mZ2 > (Zmass+20) || mZ2 < (Zmass-20) )
       {
-        vector<pat::Electron> elecsZ2;
+        std::vector<pat::Electron> elecsZ2;
         elecsZ2.push_back(selectedElectrons[0]);
         elecsZ2.push_back(selectedElectrons[1]);
-        vector<pat::Electron> passedElecsZ2 = helper.goodTightElectrons(elecsZ2,_elecPtCut,elecID);
+        std::vector<pat::Electron> passedElecsZ2 = helper.goodTightElectrons(elecsZ2,_elecPtCut,elecID);
         if( passedElecsZ2.size() != elecsZ2.size() ){ foundHiggsCandidate = false; }
       }
     }
@@ -2767,7 +2759,6 @@ void UFHZZ4LAna::findHiggsCandidate_MixFlavour(std::vector<pat::Muon> &candMuons
                                           std::vector<pat::Muon> &selectedMuons, std::vector<pat::Electron> &selectedElectrons, bool noChargeReq)
 {
   using namespace pat;
-  using namespace std;
     
   bool Z1isMuons = false;
   bool Z1isElectrons = false;
@@ -3196,10 +3187,9 @@ double UFHZZ4LAna::getMinDeltaR(std::vector<pat::Muon> Muons, std::vector<pat::E
 {
 
   using namespace pat;
-  using namespace std;
 
   double minDeltaR = 1000;
-  vector<double> deltaR_, deltR_emu;
+  std::vector<double> deltaR_, deltR_emu;
   double tmpDeltaR = 1000;
   
   for( unsigned int i = 0; i < Muons.size(); i++ )
@@ -3247,10 +3237,9 @@ double UFHZZ4LAna::getMinDeltaR(std::vector<pat::Muon> Muons, std::vector<pat::E
 void UFHZZ4LAna::plotMinDeltaRemu(std::vector<pat::Muon> Muons, std::vector<pat::Electron> Electrons)
 {
   using namespace pat;
-  using namespace std;
 
   double minDeltaR = 1000;
-  vector<double> deltaR_emu;
+  std::vector<double> deltaR_emu;
   double tmpDeltaR = 1000;
 
   for( unsigned int i = 0; i < Electrons.size(); i++ )
@@ -3951,7 +3940,6 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
                                    std::vector<pat::Jet> selectedVBFJets, std::vector<pat::Jet> correctedVBFJets)
 {
   using namespace pat;
-  using namespace std;
 
   //Tree Variable
   if( RecoFourMuEvent ){ finalState = 1;}
@@ -5198,7 +5186,7 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
 
 
   double tempDeltaR = 999;
-  vector<pat::Jet> finalVBFJets;
+  std::vector<pat::Jet> finalVBFJets;
   for( unsigned int k = 0; k < selectedVBFJets.size(); k++)
   {
     bool isDeltaR = true;
@@ -5565,7 +5553,6 @@ bool UFHZZ4LAna::findZ(std::vector<pat::PFParticle> photons, std::vector<double>
                        math::XYZTLorentzVector &ZVec, math::XYZTLorentzVector &photVec, bool &foundPhoton)
 {
 
-  using namespace std;
   using namespace pat;
   using namespace reco;
 
@@ -5723,7 +5710,6 @@ bool UFHZZ4LAna::findZ(std::vector<pat::PFParticle> photons, std::vector<double>
                        math::XYZTLorentzVector &ZVec, math::XYZTLorentzVector &photVec, bool &foundPhoton) 
 {
 
-  using namespace std;
   using namespace pat;
   using namespace reco;
 

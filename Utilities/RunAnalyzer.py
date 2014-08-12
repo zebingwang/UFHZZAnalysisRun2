@@ -1,31 +1,30 @@
 import FWCore.ParameterSet.Config as cms
-#import FWCore.ParameterSet.VarParsing as VarParsing
+import FWCore.ParameterSet.VarParsing as VarParsing
 
 
-### SETUP OPTIONS
-#options = VarParsing.VarParsing('standard')
-#options.register('doFsrRecovery',
-#                 1, # default Value = true
-#                 VarParsing.VarParsing.multiplicity.singleton, # singleton or list
-#                 VarParsing.VarParsing.varType.int,          # string, int, or float
-#                 "change files path in case of local test: isCrab=0 if you are running it locally with cmsRun")
-
-
-FsrRecovery = cms.untracked.bool(True)
-#elecId = cms.untracked.string("noEID")
-#elecId = cms.untracked.string("eidLoose")
-elecId = cms.untracked.string("eidTight")
 #inputFile = 'file:GluGluToHToZZTo4L_M-125_13TeV-powheg-pythia6_PU20bx25_PAT.root'
 #inputFile = 'root://cms-xrd-global.cern.ch//store/mc/Spring14miniaod//GluGluToHToZZTo4L_M-125_13TeV-powheg-pythia6/MINIAODSIM/PU20bx25_POSTLS170_V5-v1/00000/0881ABEB-2709-E411-9E42-00145EDD7581.root'
 #outputFile = cms.string("GluGluToHToZZTo4L_M-125_13TeV-powheg-pythia6_PU20bx25_PAT_testAna.root")
 inputFile = 'root://cms-xrd-global.cern.ch//store/cmst3/user/gpetrucc/miniAOD/v1/GluGluToHToZZTo4L_M-125_13TeV-powheg-pythia6_PU_S14_PAT_big.root'
-outputFile = cms.string("GluGluToHToZZTo4L_M-125_13TeV-powheg-pythia6_PU_S14_PAT_big_testAna_FSR.root");
+outputFile = cms.string("GluGluToHToZZTo4L_M-125_13TeV-powheg-pythia6_PU_S14_PAT_big_testAna_FSRV2.root");
 
 #inputFile='https://cms-service-dqm.web.cern.ch//eos/cms/store/cmst3/user/gpetrucc/miniAOD/v1/VBF_HToZZTo4L_M-125_13TeV-powheg-pythia6_PU20bx25_PAT.root'
 #outputFile = cms.string("VBF_HToZZTo4L_M-125_13TeV-powheg-pythia6_PU20bx25_PAT_testAna.root")
 
 #inputFile='root://cms-xrd-global.cern.ch//store/mc/Spring14miniaod/WH_ZH_HToZZ_4LFilter_M-125_13TeV_pythia6/MINIAODSIM/PU20bx25_POSTLS170_V5-v1/00000//0ABFFCEF-AA09-E411-8022-001E673970FD.root'
 #outputFile=cms.string("WH_ZH_HToZZ_4LFilter_M-125_13TeV_pythia6_testAna.root");
+
+### SETUP OPTIONS
+options = VarParsing.VarParsing('standard')
+options.register('doFsrRecovery', False, 
+                 VarParsing.VarParsing.multiplicity.singleton,
+                 VarParsing.VarParsing.varType.bool, 
+                 "doFsrRecovery or not")
+options.register('elecID', "eidTight",
+                 VarParsing.VarParsing.multiplicity.singleton,
+                 VarParsing.VarParsing.varType.string,
+                 "electron ID, noEID, eidLoose, eidTight, etc..")
+
 
 process = cms.Process("UFHZZ4LAnalysis")
 
@@ -95,8 +94,8 @@ process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
                               muRhoSrc     = cms.untracked.InputTag("fixedGridRhoFastjetCentralNeutral"),
                               reweightForPU = cms.untracked.bool(False),       
                               doVarDump    = cms.untracked.bool(True),
-                              doFsrRecovery = FsrRecovery,
-                              elecID       = elecId
+                              doFsrRecovery = cms.untracked.bool(options.doFsrRecovery),
+                              elecID       = cms.untracked.string(options.elecID)
                              )
 
 process.AnaAfterHlt = process.Ana.clone();
@@ -120,11 +119,11 @@ process.hltHighLevel = cms.EDFilter("HLTHighLevel",
 
 
 
-process.p = cms.Path(#process.reCorrectedPatJets
-                     process.fsrPhotonSequence
-                     *process.Ana
-                     *process.hltHighLevel
-                     *process.AnaAfterHlt
+process.p = cms.Path(#process.reCorrectedPatJets*
+                     process.fsrPhotonSequence*
+                     process.Ana*
+                     process.hltHighLevel*
+                     process.AnaAfterHlt
                      )
 
 

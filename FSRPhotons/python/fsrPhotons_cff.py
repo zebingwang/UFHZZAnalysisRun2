@@ -52,33 +52,34 @@ boostedFsrPhotons = PhysicsTools.PatAlgos.producersLayer1.pfParticleProducer_cfi
     pfCandidateSource = 'fsrPhotons',
 )
 boostedFsrPhotons.userData.userFloats.src = cms.VInputTag(
-    cms.InputTag("fsrPhotonPFIsoChHad04"),
-    cms.InputTag("fsrPhotonPFIsoChHad04pt02"),
-    cms.InputTag("fsrPhotonPFIsoNHad04"),
-    cms.InputTag("fsrPhotonPFIsoPhoton04"),
-    cms.InputTag("fsrPhotonPFIsoChHadPU04"),
-    cms.InputTag("fsrPhotonPFIsoChHadPU04pt02"),
-    cms.InputTag("fsrPhotonPFIsoChHad03"),
+    #cms.InputTag("fsrPhotonPFIsoChHad04"),
+    #cms.InputTag("fsrPhotonPFIsoChHad04pt02"),
+    #cms.InputTag("fsrPhotonPFIsoNHad04"),
+    #cms.InputTag("fsrPhotonPFIsoPhoton04"),
+    #cms.InputTag("fsrPhotonPFIsoChHadPU04"),
+    #cms.InputTag("fsrPhotonPFIsoChHadPU04pt02"),
+    #cms.InputTag("fsrPhotonPFIsoChHad03"),
     cms.InputTag("fsrPhotonPFIsoChHad03pt02"),
     cms.InputTag("fsrPhotonPFIsoNHad03"),
     cms.InputTag("fsrPhotonPFIsoPhoton03"),
-    cms.InputTag("fsrPhotonPFIsoChHadPU03"),
+    #cms.InputTag("fsrPhotonPFIsoChHadPU03"),
     cms.InputTag("fsrPhotonPFIsoChHadPU03pt02"),
 )
 
 fsrPhotonSequence = cms.Sequence(
-    fsrPhotons +
-    fsrPhotonPFIsoChHad04 + 
-    fsrPhotonPFIsoChHad04pt02 + 
-    fsrPhotonPFIsoNHad04 + 
-    fsrPhotonPFIsoPhoton04 + 
-    fsrPhotonPFIsoChHadPU04 + 
-    fsrPhotonPFIsoChHadPU04pt02 + 
-    fsrPhotonPFIsoChHad03 + 
-    fsrPhotonPFIsoChHad03pt02 + 
-    fsrPhotonPFIsoNHad03 + 
-    fsrPhotonPFIsoPhoton03 + 
-    fsrPhotonPFIsoChHadPU03 + 
-    fsrPhotonPFIsoChHadPU03pt02 + 
-    boostedFsrPhotons
+    fsrPhotons 
+    #+
+    #fsrPhotonPFIsoChHad04 + 
+    #fsrPhotonPFIsoChHad04pt02 + 
+    #fsrPhotonPFIsoNHad04 + 
+    #fsrPhotonPFIsoPhoton04 + 
+    #fsrPhotonPFIsoChHadPU04 + 
+    #fsrPhotonPFIsoChHadPU04pt02 + 
+    #fsrPhotonPFIsoChHad03 + 
+    ##fsrPhotonPFIsoChHad03pt02 + 
+    ##fsrPhotonPFIsoNHad03 + 
+    ##fsrPhotonPFIsoPhoton03 + 
+    #fsrPhotonPFIsoChHadPU03 + 
+    ##fsrPhotonPFIsoChHadPU03pt02 + 
+    #boostedFsrPhotons
 )
