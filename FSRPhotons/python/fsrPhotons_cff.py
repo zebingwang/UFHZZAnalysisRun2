@@ -74,7 +74,7 @@ fsrPhotonPFIsoNHadPhoton03 = cms.EDProducer("PhotonPFIsoCalculator",
 
 import PhysicsTools.PatAlgos.producersLayer1.pfParticleProducer_cfi 
 boostedFsrPhotons = PhysicsTools.PatAlgos.producersLayer1.pfParticleProducer_cfi.patPFParticles.clone(
-    pfCandidateSource = 'fsrPhotons',
+    pfCandidateSource = 'fsrPhotons'
 )
 boostedFsrPhotons.userData.userFloats.src = cms.VInputTag(
     #cms.InputTag("fsrPhotonPFIsoChHad04"),

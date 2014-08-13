@@ -5594,9 +5594,12 @@ bool UFHZZ4LAna::findZ(std::vector<pat::PFParticle> photons, std::vector<double>
       }
       else
       {
-        fsrIso = (photons[i].userFloat("fsrPhotonPFIsoChHad03pt02")+photons[i].userFloat("fsrPhotonPFIsoNHad03")
-                 +photons[i].userFloat("fsrPhotonPFIsoPhoton03")
-                 +photons[i].userFloat("fsrPhotonPFIsoChHadPU03pt02"))/photons[i].pt();
+        //fsrIso = (photons[i].userFloat("fsrPhotonPFIsoChHad03pt02")+photons[i].userFloat("fsrPhotonPFIsoNHad03")
+        //         +photons[i].userFloat("fsrPhotonPFIsoPhoton03")
+        //         +photons[i].userFloat("fsrPhotonPFIsoChHadPU03pt02"))/photons[i].pt()i;
+        // below is the same as above just with the merged variables for reducing computing time.
+        fsrIso = (photons[i].userFloat("fsrPhotonPFIsoChHadPUNoPU03pt02")+
+                  photons[i].userFloat("fsrPhotonPFIsoNHadPhoton03")) / photons[i].pt();
       }
       if (fsrIso>photIsoCut) continue;
 
@@ -5766,9 +5769,12 @@ bool UFHZZ4LAna::findZ(std::vector<pat::PFParticle> photons, std::vector<double>
       }
       else
       {
-        fsrIso = (photons[i].userFloat("fsrPhotonPFIsoChHad03pt02")+photons[i].userFloat("fsrPhotonPFIsoNHad03")
-                 +photons[i].userFloat("fsrPhotonPFIsoPhoton03")
-                 +photons[i].userFloat("fsrPhotonPFIsoChHadPU03pt02"))/photons[i].pt();
+        //fsrIso = (photons[i].userFloat("fsrPhotonPFIsoChHad03pt02")+photons[i].userFloat("fsrPhotonPFIsoNHad03")
+        //         +photons[i].userFloat("fsrPhotonPFIsoPhoton03")
+        //         +photons[i].userFloat("fsrPhotonPFIsoChHadPU03pt02"))/photons[i].pt();
+        // below is the same as above just with the merged variables for reducing computing time.
+        fsrIso = (photons[i].userFloat("fsrPhotonPFIsoChHadPUNoPU03pt02")+
+                  photons[i].userFloat("fsrPhotonPFIsoNHadPhoton03")) / photons[i].pt();
       }
       if (fsrIso>photIsoCut) continue;
 
