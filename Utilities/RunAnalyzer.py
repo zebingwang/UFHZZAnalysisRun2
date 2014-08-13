@@ -6,7 +6,7 @@ import FWCore.ParameterSet.VarParsing as VarParsing
 #inputFile = 'root://cms-xrd-global.cern.ch//store/mc/Spring14miniaod//GluGluToHToZZTo4L_M-125_13TeV-powheg-pythia6/MINIAODSIM/PU20bx25_POSTLS170_V5-v1/00000/0881ABEB-2709-E411-9E42-00145EDD7581.root'
 #outputFile = cms.string("GluGluToHToZZTo4L_M-125_13TeV-powheg-pythia6_PU20bx25_PAT_testAna.root")
 inputFile = 'root://cms-xrd-global.cern.ch//store/cmst3/user/gpetrucc/miniAOD/v1/GluGluToHToZZTo4L_M-125_13TeV-powheg-pythia6_PU_S14_PAT_big.root'
-outputFile = cms.string("GluGluToHToZZTo4L_M-125_13TeV-powheg-pythia6_PU_S14_PAT_big_testAna_FSRV3_preCalc.root");
+outputFile = cms.string("GluGluToHToZZTo4L_M-125_13TeV-powheg-pythia6_PU_S14_PAT_big_testAna_FSRV3_preCalcV2.root");
 
 #inputFile='https://cms-service-dqm.web.cern.ch//eos/cms/store/cmst3/user/gpetrucc/miniAOD/v1/VBF_HToZZTo4L_M-125_13TeV-powheg-pythia6_PU20bx25_PAT.root'
 #outputFile = cms.string("VBF_HToZZTo4L_M-125_13TeV-powheg-pythia6_PU20bx25_PAT_testAna.root")
@@ -24,7 +24,7 @@ options.register('elecID', "eidTight",
                  VarParsing.VarParsing.multiplicity.singleton,
                  VarParsing.VarParsing.varType.string,
                  "electron ID, noEID, eidLoose, eidTight, etc..")
-ptions.register('fsrIsoCalculateUseHelper', True,
+options.register('fsrIsoCalculateUseHelper', False,
                  VarParsing.VarParsing.multiplicity.singleton,
                  VarParsing.VarParsing.varType.bool,
                  "use helper to calculate fsrIso or not")
@@ -122,9 +122,10 @@ process.hltHighLevel = cms.EDFilter("HLTHighLevel",
                      )
 
 if (options.fsrIsoCalculateUseHelper):
-   boostedFsrPhotons.userData.userFloats.src = cms.VInputTag()
-   fsrPhotonSequence = cms.Sequence(fsrPhotons+ boostedFsrPhotons)
-   
+   process.boostedFsrPhotons.userData.userFloats.src = cms.VInputTag()
+   process.fsrPhotonSequence = cms.Sequence(fsrPhotons+ boostedFsrPhotons)
+
+print options   
 
 process.p = cms.Path(#process.reCorrectedPatJets*
                      process.fsrPhotonSequence*
@@ -135,6 +136,11 @@ process.p = cms.Path(#process.reCorrectedPatJets*
 
 
 
+############################
+## Dump the output Python ##
+############################
+processDumpFile = open('processDump.py', 'w')
+print >> processDumpFile, process.dumpPython()
 
 
 
