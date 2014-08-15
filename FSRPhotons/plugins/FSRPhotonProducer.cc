@@ -17,7 +17,7 @@
 
 #include "DataFormats/VertexReco/interface/Vertex.h"
 #include "DataFormats/VertexReco/interface/VertexFwd.h"
-//#include <DataFormats/MuonReco/interface/Muon.h>
+#include <DataFormats/MuonReco/interface/Muon.h>
 #include "DataFormats/PatCandidates/interface/Muon.h"
 #include <DataFormats/GsfTrackReco/interface/GsfTrack.h>
 
@@ -70,13 +70,15 @@ void FSRPhotonProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetu
     }
   }
 
+  // experimental version below, need to be verified.
   if (extractMuonFSR_) 
   {
     for( edm::View<pat::Muon>::const_iterator mu=muons->begin(); mu!=muons->end(); ++mu )
     {
-      if (abs(mu->pdgId())==13 && mu->calEnergy()>0.0) 
+      double mu_energy = mu->calEnergy().emS25;
+      if (abs(mu->pdgId())==13 && mu_energy>0.0) 
       { 
-        reco::Particle::PolarLorentzVector p4( (mu->calEnergy())*(mu->pt()/mu->p()), mu->eta(), mu->phi(), 0.);
+        reco::Particle::PolarLorentzVector p4( mu_energy*mu->pt()/mu->p(), mu->eta(), mu->phi(), 0.);
         if (p4.pt() > ptThresh_) 
         {
            comp->push_back( reco::PFCandidate(0, reco::Particle::LorentzVector(p4), reco::PFCandidate::gamma) );
