@@ -3538,7 +3538,6 @@ double HZZ4LHelper::fsrIso(pat::PFParticle photon, edm::Handle<edm::View<pat::Pa
     if (pf->charge()==0) 
     {
       if (dr<cut_deltaRself_ne) continue; 
-      if (pf->fromPV()) continue;
       if (pf->pt()<=0.5) continue;
       if (abs(pf->pdgId())!=22) continue;
       if (abs(pf->pdgId())!=130) continue;
