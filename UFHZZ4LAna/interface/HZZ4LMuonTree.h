@@ -21,51 +21,51 @@
 #include "TString.h"
 #include "TLorentzVector.h"
 
- // user include files 
- #include "FWCore/Framework/interface/Frameworkfwd.h"
- #include "FWCore/Framework/interface/EDAnalyzer.h"
- #include "FWCore/Framework/interface/Event.h"
- #include "FWCore/Framework/interface/MakerMacros.h"
+// user include files 
+#include "FWCore/Framework/interface/Frameworkfwd.h"
+#include "FWCore/Framework/interface/EDAnalyzer.h"
+#include "FWCore/Framework/interface/Event.h"
+#include "FWCore/Framework/interface/MakerMacros.h"
 
- #include "DataFormats/HepMCCandidate/interface/GenParticle.h"
+#include "DataFormats/HepMCCandidate/interface/GenParticle.h"
 
- #include "FWCore/ParameterSet/interface/ParameterSet.h"
- #include "FWCore/ServiceRegistry/interface/Service.h"
- #include "CommonTools/UtilAlgos/interface/TFileService.h"
- #include "TROOT.h"
- #include "TH1.h"
- #include "TH2.h"
- #include "TTree.h"
- #include "TMath.h"
- #include "TString.h"
- #include "TLorentzVector.h"
- #include "FWCore/Framework/interface/LuminosityBlock.h"
- #include "FWCore/Framework/interface/Frameworkfwd.h"
- #include "FWCore/Framework/interface/EDAnalyzer.h"
- #include "FWCore/Framework/interface/Event.h"
- #include "FWCore/Framework/interface/MakerMacros.h"
- #include "FWCore/ParameterSet/interface/ParameterSet.h"
- #include "FWCore/ServiceRegistry/interface/Service.h"
- #include "FWCore/Utilities/interface/InputTag.h"
- #include "Math/VectorUtil.h"
- #include "DataFormats/Common/interface/MergeableCounter.h"
- #include "DataFormats/Math/interface/Point3D.h"
- #include "DataFormats/Common/interface/RefToBase.h"
- #include "DataFormats/Math/interface/deltaR.h"
- #include "DataFormats/Math/interface/deltaPhi.h"
+#include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/ServiceRegistry/interface/Service.h"
+#include "CommonTools/UtilAlgos/interface/TFileService.h"
+#include "TROOT.h"
+#include "TH1.h"
+#include "TH2.h"
+#include "TTree.h"
+#include "TMath.h"
+#include "TString.h"
+#include "TLorentzVector.h"
+#include "FWCore/Framework/interface/LuminosityBlock.h"
+#include "FWCore/Framework/interface/Frameworkfwd.h"
+#include "FWCore/Framework/interface/EDAnalyzer.h"
+#include "FWCore/Framework/interface/Event.h"
+#include "FWCore/Framework/interface/MakerMacros.h"
+#include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/ServiceRegistry/interface/Service.h"
+#include "FWCore/Utilities/interface/InputTag.h"
+#include "Math/VectorUtil.h"
+#include "DataFormats/Common/interface/MergeableCounter.h"
+#include "DataFormats/Math/interface/Point3D.h"
+#include "DataFormats/Common/interface/RefToBase.h"
+#include "DataFormats/Math/interface/deltaR.h"
+#include "DataFormats/Math/interface/deltaPhi.h"
 
- // PAT
- #include "DataFormats/PatCandidates/interface/Electron.h"
- #include "DataFormats/PatCandidates/interface/Photon.h"
- #include "DataFormats/PatCandidates/interface/Muon.h"
- #include "DataFormats/PatCandidates/interface/Tau.h"
- #include "DataFormats/PatCandidates/interface/Jet.h"
- #include "DataFormats/PatCandidates/interface/MET.h"
- #include "DataFormats/PatCandidates/interface/TriggerEvent.h"
- #include "DataFormats/Provenance/interface/Timestamp.h"
- #include "DataFormats/Candidate/interface/Candidate.h"
- #include "DataFormats/PatCandidates/interface/CompositeCandidate.h"
- #include "UFHZZAnalysisRun2/UFHZZ4LAna/interface/HZZ4LHelper.h"
+// PAT
+#include "DataFormats/PatCandidates/interface/Electron.h"
+#include "DataFormats/PatCandidates/interface/Photon.h"
+#include "DataFormats/PatCandidates/interface/Muon.h"
+#include "DataFormats/PatCandidates/interface/Tau.h"
+#include "DataFormats/PatCandidates/interface/Jet.h"
+#include "DataFormats/PatCandidates/interface/MET.h"
+#include "DataFormats/PatCandidates/interface/TriggerEvent.h"
+#include "DataFormats/Provenance/interface/Timestamp.h"
+#include "DataFormats/Candidate/interface/Candidate.h"
+#include "DataFormats/PatCandidates/interface/CompositeCandidate.h"
+#include "UFHZZAnalysisRun2/UFHZZ4LAna/interface/HZZ4LHelper.h"
 
 class HZZ4LMuonTree
 {
@@ -76,20 +76,19 @@ class HZZ4LMuonTree
   ~HZZ4LMuonTree();
 
 
-  void fillMuonDumpTree(std::vector<pat::Muon> muons, const edm::Event& iEvent, double muonRho, const reco::Vertex *&vertex);
+  void fillMuonDumpTree(std::vector<pat::Muon> muons, const edm::Event& iEvent, double muonRho, const reco::Vertex *&vertex, const int nvtx);
 
  private:
   
   double Event, Run, LumiSect;
+  int nVtx;
   double pT, eta, phi, rho, SIP, pX, pY, pZ;
   int id, pfmuon;
   double relIso, relIsoUncorr, isoNH, isoCH, isoPhot;
   double dxy, dz, energy, dB;
 
   HZZ4LHelper myHelper;
-  
   TTree *muonTree;
-    
 
 };
 
@@ -106,6 +105,7 @@ HZZ4LMuonTree::HZZ4LMuonTree(TString treeName,edm::Service<TFileService> fs)
   muonTree->Branch("Event",&Event,"Event/D");
   muonTree->Branch("Run",&Run,"Run/D");
   muonTree->Branch("Lumi",&LumiSect,"Lumi/D");
+  muonTree->Branch("nVtx",&nVtx,"nVtx/I");
   muonTree->Branch("pT",&pT,"pT/D");
   muonTree->Branch("pdgid",&id,"pdgid/I");
   muonTree->Branch("eta",&eta,"eta/D");
@@ -135,41 +135,36 @@ HZZ4LMuonTree::~HZZ4LMuonTree()
 }
 
 
-void HZZ4LMuonTree::fillMuonDumpTree(std::vector<pat::Muon> muons, const edm::Event& iEvent, double muonRho, const reco::Vertex *&vertex)
+void HZZ4LMuonTree::fillMuonDumpTree(std::vector<pat::Muon> muons, const edm::Event& iEvent, double muonRho, const reco::Vertex *&vertex, const int nvtx)
 {
-
-  using namespace std;
-
-  
   Run = iEvent.id().run();
   Event = iEvent.id().event();
   LumiSect = iEvent.id().luminosityBlock();
   rho = muonRho;
+  nVtx = nvtx;
 
-  for(unsigned int i = 0; i < muons.size(); i++)
-    {
-      pT = muons[i].pt();
-      eta = muons[i].eta();
-      phi = muons[i].phi();
-      SIP = myHelper.getSIP3D(muons[i]);
-      pX = muons[i].px();
-      pY = muons[i].py();
-      pZ = muons[i].pz();
-      id = muons[i].pdgId();
-      pfmuon = muons[i].isPFMuon();
-      energy = muons[i].energy();
-      isoNH = muons[i].neutralHadronIso();
-      isoCH = muons[i].chargedHadronIso();
-      isoPhot = muons[i].photonIso();
-      relIso = myHelper.pfIso(muons[i],muonRho);
-      relIsoUncorr = myHelper.pfIso(muons[i],0);
-      dz = muons[i].muonBestTrack()->dz(vertex->position()); // minAOD 
-      dxy = muons[i].muonBestTrack()->dxy(vertex->position()); // miniAOD
-      dB = muons[i].userIsolation("PfPUChargedHadronIso");
-      
-      muonTree->Fill();
-
-    }
+  for(int i=0; i < (int)muons.size(); i++)
+  {
+    pT = muons[i].pt();
+    eta = muons[i].eta();
+    phi = muons[i].phi();
+    SIP = myHelper.getSIP3D(muons[i]);
+    pX = muons[i].px();
+    pY = muons[i].py();
+    pZ = muons[i].pz();
+    id = muons[i].pdgId();
+    pfmuon = muons[i].isPFMuon();
+    energy = muons[i].energy();
+    isoNH = muons[i].neutralHadronIso();
+    isoCH = muons[i].chargedHadronIso();
+    isoPhot = muons[i].photonIso();
+    relIso = myHelper.pfIso(muons[i],muonRho);
+    relIsoUncorr = myHelper.pfIso(muons[i],-1);
+    dz = muons[i].muonBestTrack()->dz(vertex->position()); 
+    dxy = muons[i].muonBestTrack()->dxy(vertex->position()); 
+    dB = muons[i].userIsolation("PfPUChargedHadronIso");
+    muonTree->Fill();
+  }
       
 }
 

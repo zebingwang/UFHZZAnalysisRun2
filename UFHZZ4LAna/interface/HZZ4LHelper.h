@@ -3493,6 +3493,7 @@ double HZZ4LHelper::pfIso(pat::Muon muon, double Rho)
 {
   //double PUCorr = Rho*MuonEffArea(muEAtype,muon.eta(),muEAtarget);
   double PUCorr = 0.5*muon.userIsolation("PfPUChargedHadronIso");
+  if (Rho<0.0) PUCorr = 0.;
   double iso = (muon.chargedHadronIso()+std::max(muon.photonIso()+muon.neutralHadronIso()-PUCorr,0.0))/muon.pt();
   return iso;
 }

@@ -75,13 +75,14 @@ class HZZ4LElectronTree
   HZZ4LElectronTree(TString treeName,edm::Service<TFileService> fs);
   ~HZZ4LElectronTree();
 
-  void fillElectronDumpTree(std::vector<pat::Electron> electrons, const edm::Event& iEvent, double electronRho, const reco::Vertex *&vertex, std::string elecID);
-  void fillElectronDumpTree(std::vector<pat::Electron> electrons, const edm::Event& iEvent, double electronRho, const reco::Vertex *&vertex);
+  void fillElectronDumpTree(std::vector<pat::Electron> electrons, const edm::Event& iEvent, double electronRho, const reco::Vertex *&vertex, std::string elecID, const int nvtx);
+  void fillElectronDumpTree(std::vector<pat::Electron> electrons, const edm::Event& iEvent, double electronRho, const reco::Vertex *&vertex, const int nvtx);
 
 
  private:
   
   double Event, Run, LumiSect;
+  int nVtx;
   double pT, eta, phi, rho, SIP, pX, pY, pZ;
   int id;
   double relIso, relIsoUncorr, isoNH, isoCH, isoPhot;
@@ -108,6 +109,7 @@ HZZ4LElectronTree::HZZ4LElectronTree(TString treeName,edm::Service<TFileService>
   electronTree->Branch("Event",&Event,"Event/D");
   electronTree->Branch("Run",&Run,"Run/D");
   electronTree->Branch("Lumi",&LumiSect,"Lumi/D");
+  electronTree->Branch("nVtx",&nVtx,"nVtx/I");
   electronTree->Branch("pdgid",&id,"pdgid/I");
   electronTree->Branch("pT",&pT,"pT/D");
   electronTree->Branch("eta",&eta,"eta/D");
@@ -137,43 +139,42 @@ HZZ4LElectronTree::~HZZ4LElectronTree()
 }
 
 
-void HZZ4LElectronTree::fillElectronDumpTree(std::vector<pat::Electron> electrons, const edm::Event& iEvent, double electronRho, const reco::Vertex *&vertex)
+void HZZ4LElectronTree::fillElectronDumpTree(std::vector<pat::Electron> electrons, const edm::Event& iEvent, double electronRho, const reco::Vertex *&vertex, const int nvtx)
 {
-  this->fillElectronDumpTree(electrons, iEvent, electronRho, vertex, std::string("mvaNonTrigV0")); 
+  this->fillElectronDumpTree(electrons, iEvent, electronRho, vertex, std::string("mvaNonTrigV0"), nvtx); 
 }
 
 void HZZ4LElectronTree::fillElectronDumpTree(std::vector<pat::Electron> electrons, const edm::Event& iEvent, 
-           double electronRho, const reco::Vertex *&vertex, std::string elecID)
+           double electronRho, const reco::Vertex *&vertex, std::string elecID, const int nvtx)
 {
 
   Run = iEvent.id().run();
   Event = iEvent.id().event();
   LumiSect = iEvent.id().luminosityBlock();
   rho = electronRho;
+  nVtx = nvtx;
 
-  for(unsigned int i = 0; i < electrons.size(); i++)
-    {
-      pT = electrons[i].pt();
-      eta = electrons[i].eta();
-      phi = electrons[i].phi();
-      SIP = myHelper.getSIP3D(electrons[i]);
-      pX = electrons[i].px();
-      pY = electrons[i].py();
-      pZ = electrons[i].pz();
-      id = electrons[i].pdgId();
-      mva = elecID=="noEID" ? -100 :electrons[i].electronID(elecID);
-      energy = electrons[i].energy();
-      isoNH = electrons[i].neutralHadronIso();
-      isoCH = electrons[i].chargedHadronIso();
-      isoPhot = electrons[i].photonIso();
-      relIso = myHelper.pfIso(electrons[i],electronRho);
-      relIsoUncorr = myHelper.pfIso(electrons[i],0);
-      //dz = electrons[i].gsfTrack()->dz(vertex->position());  // for miniAOD
-      //dxy = electrons[i].gsfTrack()->dxy(vertex->position()); // for miniAOD
-
-      electronTree->Fill();
-
-    }
+  for(int i=0; i<(int)electrons.size(); i++)
+  {
+    pT = electrons[i].pt();
+    eta = electrons[i].eta();
+    phi = electrons[i].phi();
+    SIP = myHelper.getSIP3D(electrons[i]);
+    pX = electrons[i].px();
+    pY = electrons[i].py();
+    pZ = electrons[i].pz();
+    id = electrons[i].pdgId();
+    mva = elecID=="noEID" ? -100 :electrons[i].electronID(elecID);
+    energy = electrons[i].energy();
+    isoNH = electrons[i].neutralHadronIso();
+    isoCH = electrons[i].chargedHadronIso();
+    isoPhot = electrons[i].photonIso();
+    relIso = myHelper.pfIso(electrons[i],electronRho);
+    relIsoUncorr = myHelper.pfIso(electrons[i],0);
+    dz = electrons[i].gsfTrack()->dz(vertex->position());  
+    dxy = electrons[i].gsfTrack()->dxy(vertex->position()); 
+    electronTree->Fill();
+  }
       
 }
 
