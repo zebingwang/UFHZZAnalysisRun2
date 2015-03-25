@@ -179,6 +179,8 @@ class HZZ4LHelper
   bool isPFMuon(pat::Muon muon,edm::Handle<edm::View<reco::PFCandidate> > pf);
   double pfIso(pat::Muon muon, double Rho);
   double pfIso(pat::Electron elec, double Rho);
+  double getPUIso(pat::Muon muon, double Rho);
+  double getPUIso(pat::Electron elec, double Rho);
   double pfIsoFSR(pat::Muon muon, double Rho, double photPt);
   double pfIsoFSR(pat::Electron elec, double Rho, double photPt);
   double fsrIso(pat::PFParticle photon, edm::Handle<edm::View<pat::PackedCandidate> > pfcands); 
@@ -3505,6 +3507,21 @@ double HZZ4LHelper::pfIso(pat::Electron elec, double Rho)
   double iso = (elec.chargedHadronIso()+std::max(elec.photonIso()+elec.neutralHadronIso()-PUCorr,0.0))/elec.pt();
   return iso;
 }
+
+double HZZ4LHelper::getPUIso(pat::Muon muon, double Rho)
+{
+  double puiso = 0.5*muon.userIsolation("PfPUChargedHadronIso");
+  if (Rho<0.0) puiso = 0.;
+  return puiso;
+}
+
+
+double HZZ4LHelper::getPUIso(pat::Electron elec, double Rho)
+{
+  double puiso = Rho*ElecEffArea(elEAtype,elec.superCluster()->eta(),elEAtarget);
+  return puiso;
+}
+
 
 double HZZ4LHelper::pfIsoFSR(pat::Muon muon, double Rho, double photPt)
 {
