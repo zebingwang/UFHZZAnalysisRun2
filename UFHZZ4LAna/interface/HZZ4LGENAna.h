@@ -81,7 +81,7 @@ class HZZ4LGENAna
 
   void fillGenEvent(edm::Handle<reco::GenParticleCollection> genParticles,std::vector<reco::GenParticle> &Higgs, 
 		    std::vector<reco::GenParticle> &Zs, 
-		    std::vector<reco::GenParticle> &leptonsS1, std::vector<reco::GenParticle> &leptonsS3);
+		    std::vector<reco::GenParticle> &leptonsS1, std::vector<reco::GenParticle> &leptonsS3, std::vector<bool> &isFromHiggs, std::vector<bool> &isFromW);
   void fillGenTree(edm::Handle<reco::GenParticleCollection> genParticles);
   void fillTreeVariables(std::vector<reco::GenParticle> Higgs, 
 			 std::vector<reco::GenParticle> Zs, 
@@ -90,9 +90,18 @@ class HZZ4LGENAna
   
   void printDecayList(edm::Handle<reco::GenParticleCollection> genParticles);
   bool IsMotherZ(const reco::GenParticle* p);
+  bool IsMotherW(const reco::GenParticle* p);
+  bool IsMotherT(const reco::GenParticle* p);
+  bool IsMotherH(const reco::GenParticle* p);
+  bool IsFSR(const reco::GenParticle* p, int id);
+  bool IsMotherStatus3EorMu(const reco::GenParticle* p);
   void getMotherZ(const reco::GenParticle* p, double &px, double &py, double &pz, double &E);
-  void getStatusThree(const reco::GenParticle* p, TLorentzVector &pv, int pdgid, int &id);
+  bool getMotherH(const reco::GenParticle* p);
 
+  int MotherID(const reco::GenParticle* p);
+  int MotherMotherID(const reco::GenParticle* p);
+
+  void getStatusThree(const reco::GenParticle* p, TLorentzVector &pv, int pdgid, int &id);
 
   int idL1_S1, idL2_S1, idL3_S1, idL4_S1;
   double pTL1_S1, pTL2_S1, pTL3_S1, pTL4_S1;
@@ -118,6 +127,8 @@ class HZZ4LGENAna
   int chargeL1_S3, chargeL2_S3, chargeL3_S3, chargeL4_S3;
   double etaL1_S3, etaL2_S3, etaL3_S3, etaL4_S3;
   double phiL1_S3, phiL2_S3, phiL3_S3, phiL4_S3;
+
+  double isoL1_S3, isoL2_S3, isoL3_S3, isoL4_S3;
 
   double MH, MZ1, MZ2;
 
@@ -205,6 +216,11 @@ HZZ4LGENAna::HZZ4LGENAna(TString Treename)
   GenEventsTree->Branch("pZL3_S3",&pZL3_S3,"pZL3_S3/D");
   GenEventsTree->Branch("pZL4_S3",&pZL4_S3,"pZL4_S3/D");
 
+  GenEventsTree->Branch("isoL1_S3",&isoL1_S3,"isoL1_S3/D");
+  GenEventsTree->Branch("isoL2_S3",&isoL2_S3,"isoL2_S3/D");
+  GenEventsTree->Branch("isoL3_S3",&isoL3_S3,"isoL3_S3/D");
+  GenEventsTree->Branch("isoL4_S3",&isoL4_S3,"isoL4_S3/D");
+
   GenEventsTree->Branch("pTZ1",&pTZ1,"pTZ1/D");
   GenEventsTree->Branch("pTZ2",&pTZ2,"pTZ2/D");
   GenEventsTree->Branch("pXZ1",&pXZ1,"pXZ1/D");
@@ -242,9 +258,6 @@ HZZ4LGENAna::HZZ4LGENAna(TString Treename)
 
   GenEventsTree->Branch("MH",&MH,"MH/D");
 
-
-
-  
 }
 
 HZZ4LGENAna::~HZZ4LGENAna()
@@ -252,6 +265,36 @@ HZZ4LGENAna::~HZZ4LGENAna()
 
 }
 
+int HZZ4LGENAna::MotherID(const reco::GenParticle* p){
+    int ID = 0;
+    int nMo = p->numberOfMothers();
+    const reco::Candidate* g= (const reco::Candidate*)p;
+    while (nMo>0) {
+        //cout<<"id: "<<g->pdgId()<<" pt: "<<g->pt()<<" eta: "<<g->eta()<<" status: "<<g->status()<<" motherId: "<<g->mother()->pdgId()<<endl;
+        if(g->mother()->status() == 3) { ID = g->mother()->pdgId(); return ID;  } // from Z W+ W-
+        else {
+            g = (g->mother());
+            nMo = g->numberOfMothers();
+        }
+    }    
+    return ID;
+}
+
+int HZZ4LGENAna::MotherMotherID(const reco::GenParticle* p){
+    int ID = 0;
+    int nMo = p->numberOfMothers();
+    const reco::Candidate* g= (const reco::Candidate*)p;
+    while (nMo>0) {
+        int nMoMo = g->mother()->numberOfMothers();
+        if (nMoMo==0) return 0;
+        if(g->mother()->status() == 3 && g->mother()->mother()->status()==3 && g->pdgId()!=g->mother()->pdgId() && g->pdgId()!=g->mother()->mother()->pdgId() && g->mother()->pdgId()!=g->mother()->mother()->pdgId()) { ID = g->mother()->mother()->pdgId(); return ID; } // from Z W+ W-
+        else {
+            g = (g->mother());
+            nMo = g->numberOfMothers();
+        }
+    }
+    return ID;
+} 
 
 
 bool HZZ4LGENAna::IsMotherZ(const reco::GenParticle* p){
@@ -267,6 +310,86 @@ bool HZZ4LGENAna::IsMotherZ(const reco::GenParticle* p){
 	}
 	return yes;
 }
+
+bool HZZ4LGENAna::IsMotherW(const reco::GenParticle* p){
+        bool yes = false;
+        int nMo = p->numberOfMothers();
+        const reco::Candidate* g= (const reco::Candidate*)p;
+        while (nMo>0) {
+                if(abs(g->mother()->pdgId()) == 24) return true; // from Z W+ W-
+                else {
+                        g = (g->mother());
+                        nMo = g->numberOfMothers();
+                }
+        }
+        return yes;
+}
+
+bool HZZ4LGENAna::IsMotherT(const reco::GenParticle* p){
+        bool yes = false;
+        int nMo = p->numberOfMothers();
+        const reco::Candidate* g= (const reco::Candidate*)p;
+        while (nMo>0) {
+                if(abs(g->mother()->pdgId()) == 15) return true; // from Z W+ W-
+                else {
+                        g = (g->mother());
+                        nMo = g->numberOfMothers();
+                }
+        }
+        return yes;
+}
+
+bool HZZ4LGENAna::IsMotherH(const reco::GenParticle* p){
+    bool yes = false;
+    int nMo = p->numberOfMothers();
+    const reco::Candidate* g= (const reco::Candidate*)p;
+    while (nMo>0) {
+        
+        if (g->mother()->mother()->pdgId()==2212) return false;
+        
+        if(g->mother()->pdgId() == 23 && (g->mother()->mother()->pdgId() == 25 || g->mother()->mother()->pdgId()==32 || g->mother()->mother()->pdgId()==39)) return true; // from Z W+ W-
+        else {
+            g = (g->mother());
+            nMo = g->numberOfMothers();
+        }
+    }
+    return yes;
+}
+
+bool HZZ4LGENAna::IsFSR(const reco::GenParticle* p, int id){
+    bool yes = false;
+    int nMo = p->numberOfMothers();
+    const reco::Candidate* g= (const reco::Candidate*)p;
+
+    if (g->pdgId()!=22) return false;
+
+    while (nMo>0) {
+        if(g->mother()->pdgId() == id and g->mother()->status()==3) return true;
+        else {
+            g = (g->mother());
+            nMo = g->numberOfMothers();
+        }
+    }
+    return yes;
+}
+
+bool HZZ4LGENAna::IsMotherStatus3EorMu(const reco::GenParticle* p){
+    bool yes = false;
+    int nMo = p->numberOfMothers();
+    const reco::Candidate* g= (const reco::Candidate*)p;
+
+    if (!(abs(g->pdgId())==11 || abs(g->pdgId())==13)) return false;
+
+    while (nMo>0) {
+        if( (abs(g->mother()->pdgId()) == 11 || abs(g->mother()->pdgId())== 13) && g->mother()->status()==3) return true;
+        else {
+            g = (g->mother());
+            nMo = g->numberOfMothers();
+        }
+    }
+    return yes;
+}
+
 
 void HZZ4LGENAna::getMotherZ(const reco::GenParticle* p, double &px, double &py, double &pz, double &E)
 {
@@ -290,9 +413,29 @@ void HZZ4LGENAna::getMotherZ(const reco::GenParticle* p, double &px, double &py,
 
 }
 
+bool HZZ4LGENAna::getMotherH(const reco::GenParticle* p) // only lepton from Higgs
+{
+  bool done = false;
+  int nMo = p->numberOfMothers();
+  const reco::Candidate* g= (const reco::Candidate*)p;
+  while (nMo>0 && !done) {
+    if(g->mother()->pdgId()){
+      //cout << g->mother()->px() << nMo << endl;
+      done = true;
+    }
+    else {
+      g = (g->mother());
+      nMo = g->numberOfMothers();
+    }
+  }
+
+ return done; 
+
+}
+
 void HZZ4LGENAna::getStatusThree(const reco::GenParticle* p, TLorentzVector &pv, int pdgid, int &id)
 {
-  bool done = false;;
+  bool done = false;
   int nMo = p->numberOfMothers();
   const reco::Candidate* g= (const reco::Candidate*)p;
   while (nMo>0 && !done) {
@@ -314,34 +457,66 @@ void HZZ4LGENAna::getStatusThree(const reco::GenParticle* p, TLorentzVector &pv,
 
 void HZZ4LGENAna::fillGenEvent(edm::Handle<reco::GenParticleCollection> genParticles,std::vector<reco::GenParticle> &Higgs, 
 		  std::vector<reco::GenParticle> &Zs, 
-		  std::vector<reco::GenParticle> &leptonsS1, std::vector<reco::GenParticle> &leptonsS3)
+		  std::vector<reco::GenParticle> &leptonsS1, std::vector<reco::GenParticle> &leptonsS3, std::vector<bool> &isFromHiggs, std::vector<bool> &isFromW)
 {
 
   using namespace std;
   using namespace pat;
-  //using namespace edm;
+  using namespace edm;
 
   reco::GenParticleCollection::const_iterator  genPart;
   
+  //cout<<"FillGenEvent!"<<endl;
   for(genPart = genParticles->begin(); genPart != genParticles->end(); genPart++)
     {
       if( abs(genPart->pdgId()) == 25 && genPart->status() == 3 ) Higgs.push_back(*genPart);
       if( abs(genPart->pdgId()) == 23 && genPart->status() == 3 ) Zs.push_back(*genPart);
-      
+  
+      /*
+      if (genPart->status()==3) { 
+          cout<<"gen part id: "<<genPart->pdgId()<<" status: "<<genPart->status()<<" pt: "<<genPart->pt()<<" eta: "<<genPart->eta();
+          if (genPart->numberOfMothers()>0) cout<<" motherid: "<<genPart->mother()->pdgId()<<endl;
+          else cout<<endl;
+      }
+      */
+
+      bool fromHiggs = false; bool fromW = false;
+    
       if( abs(genPart->pdgId()) == 13 || abs(genPart->pdgId()) == 11 )
 	{
 	  if( genPart->status() == 1 )
 	    {
-	      if(IsMotherZ(&*genPart)) leptonsS1.push_back(*genPart);
+            //cout<<"genPart id: "<<genPart->pdgId()<<" status: "<<genPart->status()<<" pt: "<<genPart->pt()<<" eta: "<<genPart->eta()<<endl;
+            //if(IsMotherZ(&*genPart)) 
+            leptonsS1.push_back(*genPart);
+
+            
+            //if(IsMotherH(&*genPart)) fromHiggs = true;
+            //if(IsMotherW(&*genPart)) fromW = true;
+            //if(IsMotherZ(&*genPart) || IsMotherW(&*genPart)) {
+            //    leptonsS3.push_back(*genPart);
+            //    isFromHiggs.push_back(fromHiggs); isFromW.push_back(fromW);
+            //}
+
 	    }
 	  if( genPart->status() == 3 )
 	    {
-	      if(IsMotherZ(&*genPart)) leptonsS3.push_back(*genPart);
+            //cout<<"genPart id: "<<genPart->pdgId()<<" status: "<<genPart->status()<<" pt: "<<genPart->pt()<<" eta: "<<genPart->eta()<<endl;
+            //if(IsMotherZ(&*genPart)) leptonsS3.push_back(*genPart);
+
+            if(genPart->mother()->mother()->pdgId()==25) fromHiggs = true;
+            if(abs(genPart->mother()->pdgId()==24)) fromW = true;
+            if(IsMotherZ(&*genPart) || IsMotherW(&*genPart)) { 
+                leptonsS3.push_back(*genPart); 
+                isFromHiggs.push_back(fromHiggs); isFromW.push_back(fromW);
+            }
+            
+
+            //if(genPart->mother()->mother()->pdgId()==25){ leptonsS3.push_back(*genPart); isFromHiggs.push_back(fromHiggs);  }  // only keep leptons from Higgs decay
 	    }
 	}
       
     }
-  
 
 }
 
@@ -350,7 +525,7 @@ void HZZ4LGENAna::fillGenTree(edm::Handle<reco::GenParticleCollection> genPartic
 
   using namespace std;
   using namespace pat;
-  //using namespace edm;
+  using namespace edm;
 
   reco::GenParticleCollection::const_iterator  genPart;
 
@@ -362,7 +537,7 @@ void HZZ4LGENAna::fillGenTree(edm::Handle<reco::GenParticleCollection> genPartic
       if( abs(genPart->pdgId()) == 25 && genPart->status() == 3 ) Higgs.push_back(*genPart);
       if( abs(genPart->pdgId()) == 23 && genPart->status() == 3 ) Zs.push_back(*genPart);
       
-      if( abs(genPart->pdgId()) == 13 || abs(genPart->pdgId()) == 11 )
+      if( abs(genPart->pdgId()) == 13 || abs(genPart->pdgId()) == 11 || abs(genPart->pdgId()) == 15 )
 	{
 	  if( genPart->status() == 1 )
 	    {
@@ -459,6 +634,8 @@ void HZZ4LGENAna::fillTreeVariables(std::vector<reco::GenParticle> Higgs,
     
     }
 
+  isoL1_S3 = 0.0; isoL2_S3 = 0.0; isoL3_S3 = 0.0; isoL4_S3 = 0.0;
+
   if( leptonsS3.size() == 4)
     {
       idL1_S3 = leptonsS3[0].pdgId(); idL2_S3 = leptonsS3[1].pdgId(); 
@@ -503,7 +680,7 @@ void HZZ4LGENAna::fillTreeVariables(std::vector<reco::GenParticle> Higgs,
 
 void HZZ4LGENAna::printDecayList(edm::Handle<reco::GenParticleCollection> particles){
 	//Handle<reco::CandidateView> particles;
-	bool printOnlyHardInteraction_ = false;
+	bool printOnlyHardInteraction_ = true;
 	bool printVertex_ = false;
 	//bool useMessageLogger_=false;
 
