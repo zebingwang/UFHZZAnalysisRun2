@@ -20,13 +20,16 @@ process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
 
 myfilelist = cms.untracked.vstring()
 myfilelist.extend( [
-       '/store/mc/Phys14DR/GluGluToHToZZTo4L_M-125_13TeV-powheg-pythia6/MINIAODSIM/PU20bx25_tsg_PHYS14_25_V1-v1/00000/148E558C-946F-E411-AFA7-7845C4FC3A52.root',
-       '/store/mc/Phys14DR/GluGluToHToZZTo4L_M-125_13TeV-powheg-pythia6/MINIAODSIM/PU20bx25_tsg_PHYS14_25_V1-v1/00000/3295EF7C-2070-E411-89C4-7845C4FC35DB.root',
-       '/store/mc/Phys14DR/GluGluToHToZZTo4L_M-125_13TeV-powheg-pythia6/MINIAODSIM/PU20bx25_tsg_PHYS14_25_V1-v1/00000/40729A64-946F-E411-B6CE-7845C4FC3A52.root',
-       '/store/mc/Phys14DR/GluGluToHToZZTo4L_M-125_13TeV-powheg-pythia6/MINIAODSIM/PU20bx25_tsg_PHYS14_25_V1-v1/00000/60908275-2070-E411-94E2-7845C4FC3A58.root',
-       '/store/mc/Phys14DR/GluGluToHToZZTo4L_M-125_13TeV-powheg-pythia6/MINIAODSIM/PU20bx25_tsg_PHYS14_25_V1-v1/00000/84965C0D-946F-E411-99FA-848F69FD2955.root',
-       '/store/mc/Phys14DR/GluGluToHToZZTo4L_M-125_13TeV-powheg-pythia6/MINIAODSIM/PU20bx25_tsg_PHYS14_25_V1-v1/10000/A2ABB939-3670-E411-BCA8-848F69FD4553.root',
-       '/store/mc/Phys14DR/GluGluToHToZZTo4L_M-125_13TeV-powheg-pythia6/MINIAODSIM/PU20bx25_tsg_PHYS14_25_V1-v1/10000/C0E81726-3670-E411-BE66-008CFA007CE0.root'
+        '/store/mc/Phys14DR/GluGluToHToZZTo4L_M-125_13TeV-powheg-pythia6/MINIAODSIM/PU20bx25_tsg_PHYS14_25_V1-v1/00000/3295EF7C-2070-E411-89C4-7845C4FC35DB.root' # the sync file
+
+       # all files
+       #'/store/mc/Phys14DR/GluGluToHToZZTo4L_M-125_13TeV-powheg-pythia6/MINIAODSIM/PU20bx25_tsg_PHYS14_25_V1-v1/00000/148E558C-946F-E411-AFA7-7845C4FC3A52.root',
+       #'/store/mc/Phys14DR/GluGluToHToZZTo4L_M-125_13TeV-powheg-pythia6/MINIAODSIM/PU20bx25_tsg_PHYS14_25_V1-v1/00000/3295EF7C-2070-E411-89C4-7845C4FC35DB.root',
+       #'/store/mc/Phys14DR/GluGluToHToZZTo4L_M-125_13TeV-powheg-pythia6/MINIAODSIM/PU20bx25_tsg_PHYS14_25_V1-v1/00000/40729A64-946F-E411-B6CE-7845C4FC3A52.root',
+       #'/store/mc/Phys14DR/GluGluToHToZZTo4L_M-125_13TeV-powheg-pythia6/MINIAODSIM/PU20bx25_tsg_PHYS14_25_V1-v1/00000/60908275-2070-E411-94E2-7845C4FC3A58.root',
+       #'/store/mc/Phys14DR/GluGluToHToZZTo4L_M-125_13TeV-powheg-pythia6/MINIAODSIM/PU20bx25_tsg_PHYS14_25_V1-v1/00000/84965C0D-946F-E411-99FA-848F69FD2955.root',
+       #'/store/mc/Phys14DR/GluGluToHToZZTo4L_M-125_13TeV-powheg-pythia6/MINIAODSIM/PU20bx25_tsg_PHYS14_25_V1-v1/10000/A2ABB939-3670-E411-BCA8-848F69FD4553.root',
+       #'/store/mc/Phys14DR/GluGluToHToZZTo4L_M-125_13TeV-powheg-pythia6/MINIAODSIM/PU20bx25_tsg_PHYS14_25_V1-v1/10000/C0E81726-3670-E411-BE66-008CFA007CE0.root'
 
 ]
 )
@@ -51,38 +54,42 @@ process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
                               photonSrc    = cms.untracked.InputTag("slimmedPhotons"),
                               electronSrc  = cms.untracked.InputTag("slimmedElectrons"),
                               muonSrc      = cms.untracked.InputTag("slimmedMuons"),
-                              #correctedJetSrc = cms.untracked.InputTag("reCorrectedPatJets"),
+                              correctedJetSrc = cms.untracked.InputTag("slimmedJets"),
                               jetSrc       = cms.untracked.InputTag("slimmedJets"),
                               metSrc       = cms.untracked.InputTag("slimmedMETs"),
                               vertexSrc    = cms.untracked.InputTag("offlineSlimmedPrimaryVertices"), #or selectedVertices 
                               isMC         = cms.untracked.bool(True),
                               isSignal     = cms.untracked.bool(True),
-                              mH           = cms.untracked.uint32(125),
+                              mH           = cms.untracked.double(125.0),
                               CrossSection = cms.untracked.double(0.00544046 ),
                               FilterEff    = cms.untracked.double(1),
                               weightEvents = cms.untracked.bool(True),
                               elRhoSrc     = cms.untracked.InputTag("fixedGridRhoFastjetAll"),
                               muRhoSrc     = cms.untracked.InputTag("fixedGridRhoFastjetCentralNeutral"),
-                              reweightForPU = cms.untracked.bool(True)               
+                              reweightForPU = cms.untracked.bool(True),
+                              #verbose = cms.untracked.bool(False)              
+                              verbose = cms.untracked.bool(True)              
                              )
 
 process.AnaAfterHlt = cms.EDAnalyzer('UFHZZ4LAna',
                               photonSrc    = cms.untracked.InputTag("slimmedPhotons"),
                               electronSrc  = cms.untracked.InputTag("slimmedElectrons"),
                               muonSrc      = cms.untracked.InputTag("slimmedMuons"),
-                              #correctedJetSrc = cms.untracked.InputTag("reCorrectedPatJets"),
+                              correctedJetSrc = cms.untracked.InputTag("slimmedJets"),
                               jetSrc       = cms.untracked.InputTag("slimmedJets"),
                               metSrc       = cms.untracked.InputTag("slimmedMETs"),
                               vertexSrc    = cms.untracked.InputTag("offlineSlimmedPrimaryVertices"), #or selectedVertices 
                               isMC         = cms.untracked.bool(True),
                               isSignal     = cms.untracked.bool(True),
-                              mH           = cms.untracked.uint32(125),
+                              mH           = cms.untracked.double(125.0),
                               CrossSection = cms.untracked.double(0.00544046 ),
                               FilterEff    = cms.untracked.double(1),
                               weightEvents = cms.untracked.bool(True),
                               elRhoSrc     = cms.untracked.InputTag("fixedGridRhoFastjetAll"),
                               muRhoSrc     = cms.untracked.InputTag("fixedGridRhoFastjetCentralNeutral"),
-                             reweightForPU = cms.untracked.bool(True)            
+                              reweightForPU = cms.untracked.bool(True),
+                              verbose = cms.untracked.bool(False)                          
+                              #verbose = cms.untracked.bool(True)                          
                              )
 
 
@@ -91,12 +98,13 @@ process.AnaAfterHlt = cms.EDAnalyzer('UFHZZ4LAna',
 # Trigger
 process.hltHighLevel = cms.EDFilter("HLTHighLevel",
                                     TriggerResultsTag = cms.InputTag("TriggerResults","","HLT"),
-                                    HLTPaths = cms.vstring('HLT_Mu17_TkMu8*',
-                                                            'HLT_Mu17_Mu8*',
-                                                            'HLT_Ele17_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL_Ele8_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL*',
-                                                            'HLT_Mu8_Ele17_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL*',
-                                                            'HLT_Mu17_Ele8_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL*',
-                                                            'HLT_Ele15_Ele8_Ele5_CaloIdL_TrkIdVL*'
+                                    HLTPaths = cms.vstring(
+                                           'HLT_Ele17_Ele12_Ele10_CaloId_TrackId_v1',
+                                           'HLT_Ele23_Ele12_CaloId_TrackId_Iso_v1',
+                                           'HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_v1',
+                                           'HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL_v1',
+                                           'HLT_Mu23_TrkIsoVVL_Ele12_Gsf_CaloId_TrackId_Iso_MediumWP_v1',
+                                           'HLT_Mu8_TrkIsoVVL_Ele23_Gsf_CaloId_TrackId_Iso_MediumWP_v1'
                                                              ),
                                     # provide list of HLT paths (or patterns) you want
                                     eventSetupPathsKey = cms.string(''), # not empty => use read paths from AlCaRecoTriggerBitsRcd via this key
@@ -105,11 +113,13 @@ process.hltHighLevel = cms.EDFilter("HLTHighLevel",
                                     )
 
 
+process.load('UFHZZAnalysisRun2.FSRPhotons.fsrPhotons_cff')
 
 process.p = cms.Path(#process.reCorrectedPatJets
-                     process.Ana
-                     *process.hltHighLevel
-                     *process.AnaAfterHlt
+                     process.fsrPhotonSequence*
+                     process.Ana*
+                     process.hltHighLevel*
+                     process.AnaAfterHlt
                      )
 
 
