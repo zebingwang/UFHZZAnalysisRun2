@@ -503,7 +503,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     using namespace pat;
     //using namespace MEMNames;
 
-    if (verbose) cout<<"starting to analyze"<<endl;
+    nEventsTotal += 1.0;
 
     Run = iEvent.id().run();
     Event = iEvent.id().event();
@@ -511,91 +511,78 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     if (verbose) cout<<Run<<":"<<Event<<":"<<LumiSect<<endl;
 
     // ======= Get Collections ======= //
+    if (verbose) cout<<"getting collections"<<endl;
 
     // vertex collection
     edm::Handle<reco::VertexCollection> vertex;
     iEvent.getByLabel(vertexSrc_,vertex);
     const reco::Vertex *PV = 0;
     if(!vertex->empty() && vertex->size() > 0) PV = &(vertex->at(0));
-    if (verbose) cout<<"got vertex collection"<<endl;
 
     // photon collection 
     edm::Handle<edm::View<pat::Photon> > photons;
     iEvent.getByLabel(photonSrc_,photons);
-    if (verbose) cout<<"got photon collection"<<endl;
   
     // electron collection
     edm::Handle<edm::View<pat::Electron> > electrons;
     iEvent.getByLabel(elecSrc_,electrons);
-    if (verbose) cout<<"got electron collection"<<endl;
+    if (verbose) cout<<electrons->size()<<" total electrons in the collection"<<endl;
 
     // muon collection
     edm::Handle<edm::View<pat::Muon> > muons;
     iEvent.getByLabel(muonSrc_,muons);
-    if (verbose) cout<<"got muon collection"<<endl;
+    if (verbose) cout<<muons->size()<<" total muons in the collection"<<endl;
 
     // met collection 
     edm::Handle<edm::View<pat::MET> > mets;
     iEvent.getByLabel(metSrc_,mets);
-    if (verbose) cout<<"got met collection"<<endl;
     
     // beamspot collection
     edm::Handle<reco::BeamSpot> beamspot;
     iEvent.getByLabel("offlineBeamSpot",beamspot);
-    if (verbose) cout<<"got beamspot collection"<<endl;
   
     // Rho Correction
     edm::Handle<double> eventRhoMu;
     iEvent.getByLabel(muRhoSrc_,eventRhoMu);
     muRho = *eventRhoMu;
-    if (verbose) cout<<"got muon rho"<<endl;
 
     edm::Handle<double> eventRhoE;
     iEvent.getByLabel(elRhoSrc_,eventRhoE);
     elRho = *eventRhoE;
-    if (verbose) cout<<"got electron rho"<<endl;
 
     // Particle Flow Cands
     edm::Handle<reco::PFCandidateCollection> pfCands;
     iEvent.getByLabel("packedPFCandidates",pfCands);
-    if (verbose) cout<<"got pfcand collection"<<endl;
 
     edm::Handle<edm::View<pat::PFParticle> > photonsForFsr;
     iEvent.getByLabel("boostedFsrPhotons",photonsForFsr);
-    if (verbose) cout<<"got photons for fsr collection"<<endl;
   
     // GEN collection
     edm::Handle<reco::GenParticleCollection> genParticles;
     iEvent.getByLabel("prunedGenParticles", genParticles);
-    if (verbose) cout<<"got genParticles collection"<<endl;
 
     //VBF 
     edm::Handle<edm::View<pat::Jet> > correctedJets;
     iEvent.getByLabel(correctedJetSrc_,correctedJets);
-    if (verbose) cout<<"got corrected jet collection"<<endl;
 
     edm::Handle<edm::View<pat::Jet> > jets;
     iEvent.getByLabel(jetSrc_,jets);
-    if (verbose) cout<<"got jet collection"<<endl;
   
     edm::Handle<edm::ValueMap<float> > puJetIdMva;
     iEvent.getByLabel("puJetMva","full53xDiscriminant",puJetIdMva);
     //iEvent.getByLabel("puJetMva","fullDiscriminant",puJetIdMva);
-    if (verbose) cout<<"got pileupjet mva"<<endl;
 
     edm::Handle<edm::ValueMap<int> > puJetIdFlag;
     iEvent.getByLabel("puJetMva","full53xId",puJetIdFlag);  
     //iEvent.getByLabel("puJetMva","fullId",puJetIdFlag);  
-    if (verbose) cout<<"got pileupjet id flags"<<endl;
   
     edm::Handle<edm::View<reco::GenJet> > genJets;
     iEvent.getByLabel("slimmedGenJets", genJets);
-    if (verbose) cout<<"got gen jet collection"<<endl;
 
     // ============ Initialize Variables ============= //
 
     // Event Variables
-    if (verbose) cout<<"clear event variables"<<endl;
+    if (verbose) cout<<"clear variables"<<endl;
     nVtx = -1.0;
     finalState = -1;
     passedFullSelection=false; passedZ4lSelection=false; passedQCDcut=false;
@@ -604,33 +591,20 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     pileupWeight=0.0; dataMCWeight=0.0; eventWeight=0.0;
 
     //lepton variables
-    if (verbose) cout<<"clear lepton variables"<<endl;
     if (lep_p4->GetLast()!=-1) lep_p4->Clear(); 
-    cout<<"test1"<<endl;
     if (lep_p4_FSR->GetLast()!=-1) lep_p4_FSR->Clear();
-    cout<<"test2"<<endl;
     for (int i=0; i<4; ++i) {lep_Hindex[i]=-1;}
-    cout<<"test3"<<endl;
     pTL1=-1.0; pTL2=-1.0; pTL3=-1.0; pTL4=-1.0;
-    cout<<"test4"<<endl;
     etaL1=9999.0; etaL2=9999.0; etaL3=9999.0; etaL4=9999.0;
-    cout<<"test5"<<endl;
     idL1=9999; idL2=9999; idL3=9999; idL4=9999;
-    cout<<"test6"<<endl;
     pTL1FSR=-1.0; pTL2FSR=-1.0; pTL3FSR=-1.0; pTL4FSR=-1.0;
-    cout<<"test7"<<endl;
     lep_genindex.clear(); lep_id.clear(); 
-    cout<<"test8"<<endl;
     lep_mva.clear();
-    cout<<"test9"<<endl;
     lep_Sip.clear(); lep_IP.clear(); lep_dIP.clear();
-    cout<<"test10"<<endl;
     lep_isoNH.clear(); lep_isoCH.clear(); lep_isoPhot.clear(); lep_isoPU.clear(); lep_RelIso.clear();
-    cout<<"test11"<<endl;
     lep_missingHits.clear();
  
     // Higgs candidate variables
-    if (verbose) cout<<"clear higgs/Z variables"<<endl;
     if (H_p4->GetLast()!=-1) H_p4->Clear();
     if (H_p4_noFSR->GetLast()!=-1) H_p4_noFSR->Clear();
     mass4l=-1.0; mass4l_noFSR=-1.0; mass4e=-1.0; mass4mu=-1.0; mass2e2mu=-1.0; pT4l=-1.0; eta4l=9999.0; phi4l=9999.0; rapidity4l=9999.0;
@@ -641,7 +615,6 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     massZ1=-1.0; massZ2=-1.0; pTZ1=-1.0; pTZ2=-1.0;
 
     // MET
-    if (verbose) cout<<"clear jet/met variables"<<endl;
     if (met_p4->GetLast()!=-1) met_p4->Clear();
     met=-1.0;
 
@@ -680,7 +653,6 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     DijetFisherDiscrim=9999.0;
 
     // FSR Photons
-    if (verbose) cout<<"clear other reco variables"<<endl;
     if (phofsr_p4->GetLast()!=-1) phofsr_p4->Clear();
     nFSRPhotons=0;
     FSR_Z1=false; FSR_Z2=false;
@@ -697,12 +669,10 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     // ------------------------- 
 
     //Event variables
-    if (verbose) cout<<"clear gen event variables"<<endl;
     GENfinalState=-1;
     passedFiducialSelection=false;
 
     // lepton variables
-    if (verbose) cout<<"clear gen lepton variables"<<endl;
     if (GENlep_p4->GetLast()!=-1) GENlep_p4->Clear();
     GENlep_id.clear();
     GENlep_status.clear();
@@ -715,7 +685,6 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     GENlep_RelIso.clear();
 
     // Higgs candidate variables (calculated using selected gen leptons)
-    if (verbose) cout<<"clear gen higgs/Z variables"<<endl;
     if (GENH_p4->GetLast()!=-1) GENH_p4->Clear();
     GENmass4l=-1.0; GENmassZ1=-1.0; GENmassZ2=-1.0; GENpT4l=-1.0; GENeta4l=9999.0; GENrapidity4l=9999.0; GENMH=-1.0;
     GENcosTheta1=9999.0; GENcosTheta2=9999.0; GENcosThetaStar=9999.0; GENPhi=9999.0; GENPhi1=9999.0;
@@ -729,7 +698,6 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     GENHmass=-1.0;
 
     // Jets
-    if (verbose) cout<<"clear gen jet variables"<<endl;
     if (GENjet_p4->GetLast()!=-1) GENjet_p4->Clear();
     GENnjets_pt30_eta4p7=-1;
     GENpt_leadingjet_pt30_eta4p7=-1.0;
@@ -752,9 +720,6 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     isIsolated = false;
     passedSIP3D = false;
     passedPtCuts = false;
-    passedFullSelection = false;
-    passedZ4lSelection = false;
-    passedQCDcut = false;
     isRecord = false; 
 
     // ====================== Do Analysis ======================== //
@@ -780,7 +745,6 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     eventWeight = pileupWeight;
     if (verbose) cout<<"finished pileup reweighting"<<endl;
     
-    nEventsTotal += eventWeight;
 
     if(isMC) {
         if (verbose) cout<<"setting gen variables"<<endl;       
@@ -805,7 +769,6 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     if (verbose) cout<<"finished checking duplicates"<<endl;       
 
     if( notDuplicateEvent && !vertex->empty()) {
-
     
         //N Vertex 
         if (verbose) cout<<"fill nvtx histogram"<<endl;       
@@ -822,12 +785,14 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         vector<pat::Electron> AllElectrons;  
         AllMuons = helper.goodLooseMuons2012(muons,_muPtCut);
         AllElectrons = helper.goodLooseElectrons2012(electrons,_elecPtCut);
-
+        if (verbose) cout<<AllMuons.size()<<" loose muons "<<AllElectrons.size()<<" loose elctrons "<<endl;
         helper.cleanOverlappingLeptons(AllMuons,AllElectrons,PV);
-        recoMuons = helper.goodMuons2012_noIso(AllMuons,_muPtCut,PV);
-        recoElectrons = helper.goodElectrons2012_noIso(AllElectrons,_elecPtCut,elecID,PV,iEvent);
+        if (verbose) cout<<AllMuons.size()<<" loose muons "<<AllElectrons.size()<<" loose elctrons after overlap cleaning"<<endl;
+        recoMuons = helper.goodMuons2015_noIso(AllMuons,_muPtCut,PV);
+        recoElectrons = helper.goodElectrons2015_noIso(AllElectrons,_elecPtCut,elecID,PV,iEvent);
 
         //sort electrons and muons by pt
+        if (verbose) cout<<recoMuons.size()<<" muons and "<<recoElectrons.size()<<" electrons to be sorted"<<endl;
         if (verbose) cout<<"start pt-sorting leptons"<<endl;
         if (verbose) cout<<"adding muons to sorted list"<<endl;           
         for(unsigned int i = 0; i < recoMuons.size(); i++) {
@@ -892,7 +857,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 lep_Sip.push_back(helper.getSIP3D(recoMuons[lep_ptindex[i]]));            
                 lep_genindex.push_back(-1.0);
             }
-            if (verbose) cout<<"( RelIso: "<<lep_RelIso[i]<<" isoCH: "<<lep_isoCH[i]<<" isoNH: "<<lep_isoNH[i]
+            if (verbose) cout<<" RelIso: "<<lep_RelIso[i]<<" isoCH: "<<lep_isoCH[i]<<" isoNH: "<<lep_isoNH[i]
                              <<" isoPhot: "<<lep_isoPhot[i]<<" isoPU: "<<lep_isoPU[i]<<" Sip: "<<lep_Sip[i]<<endl;
         }
 
@@ -906,7 +871,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
                 for (unsigned int j = 0; j < GENlep_id.size(); j++) {
 
-                    if (GENlep_status[j]!=1) continue;
+                    //if (GENlep_status[j]!=1) continue;
                     if (GENlep_id[j]!=lep_id[i]) continue;
 
                     TLorentzVector *reco, *gen;
@@ -924,10 +889,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
             if (verbose) cout<<"finished gen matching"<<endl;
         } //isMC
 
-        bool twoLep_ID = false;
-        if( (recoMuons.size() + recoElectrons.size()) >= 2 ){twoLep_ID = true;}
-
-        if(twoLep_ID) {
+        if( (recoMuons.size() + recoElectrons.size()) >= 2 ){
             if (verbose) cout<<"found two leptons"<<endl;
             // Mass Resolution Study
             if(bStudyResolution) {
@@ -941,10 +903,8 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 if (verbose) cout<<"finished 2lep mass resolution study"<<endl;
             }
 
-            bool fourLep_ID = false;
-            if((recoMuons.size() + recoElectrons.size()) >= 4 ) {fourLep_ID = true;}  
+            if((recoMuons.size() + recoElectrons.size()) >= 4 ) {
 
-            if(fourLep_ID){
                 if (verbose) cout<<"found four leptons"<<endl;     
                 bool properLep_ID = false; int Nmm = 0; int Nmp = 0; int Nem = 0; int Nep = 0;
                 for(unsigned int i =0; i<recoMuons.size(); i++) {
@@ -1000,7 +960,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                     vector<pat::Electron> selectedElectrons;
                     vector<pat::PFParticle> selectedFsrPhotons;
                     
-                    if (verbose) cout<<"begins looking for higgs candidate"<<endl;                    
+                    if (verbose) cout<<"begin looking for higgs candidate"<<endl;                    
                     findHiggsCandidate(lep_p4,fsrPhotons,deltaRVec,lep_Hindex,selectedMuons,selectedElectrons,selectedFsrPhotons,iEvent);
                     if (verbose) cout<<"found higgs candidate? "<<foundHiggsCandidate<<endl;                    
                         
@@ -1141,7 +1101,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 //else {std::cout<<Run<<":"<<LumiSect<<":"<<Event<<" failed 4 properID"<<std::endl;}
             }//if 4lepID
             //else {std::cout<<Run<<":"<<LumiSect<<":"<<Event<<" failed 4ID"<<std::endl;}
-        if (!isMC) passedEventsTree_All->Fill();		  
+            if (!isMC) passedEventsTree_All->Fill();		  
         }//if 2lepID
         //else {std::cout<<Run<<":"<<LumiSect<<":"<<Event<<" failed ID"<<std::endl;}     
     }//notDuplicate
@@ -1938,6 +1898,7 @@ void UFHZZ4LAna::setGENVariables(edm::Handle<reco::GenParticleCollection> genPar
         if (abs(genPart->pdgId())==11  || abs(genPart->pdgId())==13 || abs(genPart->pdgId())==15) {
             if (genPart->pt()<3.0) continue;
             if (abs(genPart->eta())>2.7) continue;
+            if (!genAna.IsMotherW(&genParticles->at(j)) || genAna.IsMotherZ(&genParticles->at(j))) continue;
             nGENLeptons++;
             new ( (*GENlep_p4)[nGENLeptons] ) TLorentzVector(genPart->px(),genPart->py(),genPart->pz(),genPart->energy());
             GENlep_id.push_back( genPart->pdgId() );
@@ -2105,7 +2066,7 @@ void UFHZZ4LAna::setGENVariables(edm::Handle<reco::GenParticleCollection> genPar
                 bool inDR_pt30_eta4p7 = false;
                 unsigned int N=(u_int)GENlep_p4->GetLast()+1;
                 for(unsigned int i = 0; i<N; i++) {
-                    if (GENlep_status[i]!=1) continue;
+                    //if (GENlep_status[i]!=1) continue;
                     if (!(abs(GENlep_id[i])==11 || abs(GENlep_id[i])==13)) continue;
                     TLorentzVector *genlep;
                     genlep = (TLorentzVector*) GENlep_p4->At(i);
@@ -2147,11 +2108,11 @@ bool UFHZZ4LAna::mZ1_mZ2(unsigned int& L1, unsigned int& L2, unsigned int& L3, u
     unsigned int N = GENlep_p4->GetLast()+1;
 
     for(unsigned int i=0; i<N; i++){
-        if(GENlep_status[i]!=1) continue;
+        //if(GENlep_status[i]!=1) continue;
         for(unsigned int j=i+1; j<N; j++){
 
             if((GENlep_id[i]+GENlep_id[j])!=0) continue;
-            if(GENlep_status[j]!=1) continue;
+            //if(GENlep_status[j]!=1) continue;
 
             TLorentzVector *li, *lj;
             li = (TLorentzVector*) GENlep_p4->At(i);
@@ -2184,11 +2145,11 @@ bool UFHZZ4LAna::mZ1_mZ2(unsigned int& L1, unsigned int& L2, unsigned int& L3, u
 
     for(unsigned int i=0; i<N; i++){
         if(i==L1 || i==L2) continue; // can not be the lep from Z1
-        if(GENlep_status[i]!=1) continue;
+        //if(GENlep_status[i]!=1) continue;
         for(unsigned int j=i+1; j<N; j++){
             if(j==L1 || j==L2) continue; // can not be the lep from Z1
             if((GENlep_id[i]+GENlep_id[j])!=0) continue;            
-            if(GENlep_status[j]!=1) continue;
+            //if(GENlep_status[j]!=1) continue;
 
             TLorentzVector *li, *lj;
             li = (TLorentzVector*) GENlep_p4->At(i);
