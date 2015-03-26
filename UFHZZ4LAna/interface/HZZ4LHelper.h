@@ -118,12 +118,15 @@ class HZZ4LHelper
   std::vector<pat::Muon> goodMuons2012_noIso(std::vector<pat::Muon> Muons, double muPtCut, const reco::Vertex *&vertex);
   std::vector<pat::Electron> goodElectrons2012_noIso(std::vector<pat::Electron> Electrons, double elecPtCut, std::string elecID, const reco::Vertex *&vertex,const edm::Event& iEvent);
 
+  std::vector<pat::Muon> goodMuons2015_noIso(std::vector<pat::Muon> Muons, double muPtCut, const reco::Vertex *&vertex);
+  std::vector<pat::Electron> goodElectrons2015_noIso(std::vector<pat::Electron> Electrons, double elecPtCut, std::string elecID, const reco::Vertex *&vertex,const edm::Event& iEvent);
+
   std::vector<pat::Muon> goodLooseMuons2012(edm::Handle<edm::View<pat::Muon> > Muons, double muPtCut);
   std::vector<pat::Electron> goodLooseElectrons2012(edm::Handle<edm::View<pat::Electron> > Electrons, double elPtCut);
-  
 
   std::vector<pat::Muon> goodLooseMuons(std::vector<pat::Muon> Muons, double muPtCut);
   std::vector<pat::Electron> goodLooseElectrons(std::vector<pat::Electron> Electrons, double elecPtCut, std::string elecID);
+
   std::vector<pat::Muon> goodTightMuons(std::vector<pat::Muon>  Muons, double muPtCut);
   std::vector<pat::Electron> goodTightElectrons(std::vector<pat::Electron> Electrons, double elecPtCut, std::string elecID);
 
@@ -911,24 +914,19 @@ std::vector<pat::Muon> HZZ4LHelper::goodMuons2012_noIso(edm::Handle<edm::View<pa
   double dzCut = 1;
   /**************************************/
 
-
-  for(edm::View<pat::Muon>::const_iterator mu=Muons->begin(); mu != Muons->end(); ++mu)
-    {
-      if( mu->pt() > muPtCut && abs(mu->eta()) < muEtaCut && mu->isPFMuon() == 1 && (mu->isGlobalMuon() || mu->isTrackerMuon() ) )
-	{
-	  if( abs(getSIP3D(*mu)) < sipCut )
-	    {
-	      if( fabs(mu->muonBestTrack()->dxy(vertex->position())) < dxyCut ) // miniAOD
-		{ 
-		  if( fabs(mu->muonBestTrack()->dz(vertex->position())) < dzCut ) // miniAOD
-		    {
-		      bestMuons.push_back(*mu);
-		    }
-		}
-	    }
-	}
-    }
-
+  int i=-1;
+  for(edm::View<pat::Muon>::const_iterator mu=Muons->begin(); mu != Muons->end(); ++mu) {
+      i++;
+      if( mu->pt() > muPtCut && abs(mu->eta()) < muEtaCut && mu->isPFMuon() == 1 && (mu->isGlobalMuon() || mu->isTrackerMuon() ) ) {
+          if( abs(getSIP3D(*mu)) < sipCut ) {
+              if( fabs(mu->muonBestTrack()->dxy(vertex->position())) < dxyCut ) { //miniAOD 
+                  if( fabs(mu->muonBestTrack()->dz(vertex->position())) < dzCut ) {// miniAOD
+                      bestMuons.push_back(*mu);
+                  } else {cout<<"muon "<<i<<" failed dz cut, |dz|="<<fabs(mu->muonBestTrack()->dxy(vertex->position()))<<endl;}
+              } else {cout<<"muon "<<i<<" failed dxy cut, |dxz|="<<fabs(mu->muonBestTrack()->dz(vertex->position()))<<endl;}
+          } else {cout<<"muon "<<i<<" failed sip cut, |sip|="<<abs(getSIP3D(*mu))<<endl;}
+      } else {cout<<"muon "<<i<<" failed pt, eta, or (isGlobal || isTracker)"<<endl;}
+  }
 
   return bestMuons;
   
@@ -1050,32 +1048,49 @@ std::vector<pat::Muon> HZZ4LHelper::goodMuons2012_noIso(std::vector<pat::Muon> M
   double dzCut = 1;
   /**************************************/
 
-
   for(unsigned int i = 0; i < Muons.size(); i++)
-    {
-
-      //cout << Muons[i].pt() << "  " << Muons[i].eta() << "  " << Muons[i].isPFMuon() << endl;
-
-      if( Muons[i].pt() > muPtCut && abs(Muons[i].eta()) < muEtaCut && Muons[i].isPFMuon() == 1 && (Muons[i].isGlobalMuon() || Muons[i].isTrackerMuon() ) )
-	{
-	  if( abs(getSIP3D(Muons[i])) < sipCut )
-	    {
-	      if( fabs(Muons[i].muonBestTrack()->dxy(vertex->position())) < dxyCut ) // miniAOD
-		{ 
-		  if( fabs(Muons[i].muonBestTrack()->dz(vertex->position())) < dzCut ) // miniAOD
-		    {
-		      bestMuons.push_back(Muons[i]);
-		    }
-		}
-	    }
-	}
-    }
-
+      if( Muons[i].pt() > muPtCut && abs(Muons[i].eta()) < muEtaCut && Muons[i].isPFMuon() == 1 && (Muons[i].isGlobalMuon() || Muons[i].isTrackerMuon() ) ) {
+          if( abs(getSIP3D(Muons[i])) < sipCut ) {
+              if( fabs(Muons[i].muonBestTrack()->dxy(vertex->position())) < dxyCut ) { //miniAOD 
+                  if( fabs(Muons[i].muonBestTrack()->dz(vertex->position())) < dzCut ) {// miniAOD       
+                      bestMuons.push_back(Muons[i]);
+                  } else {cout<<"muon "<<i<<" failed dz cut, |dz|="<<fabs(Muons[i].muonBestTrack()->dxy(vertex->position()))<<endl;}
+              } else {cout<<"muon "<<i<<" failed dxy cut, |dxz|="<<fabs(Muons[i].muonBestTrack()->dz(vertex->position()))<<endl;}
+          } else {cout<<"muon "<<i<<" failed sip cut, |sip|="<<abs(getSIP3D(Muons[i]))<<endl;}
+      } else {cout<<"muon "<<i<<" failed pt, eta, or (isGlobal || isTracker)"<<endl;}
 
   return bestMuons;
   
 }
 
+std::vector<pat::Muon> HZZ4LHelper::goodMuons2015_noIso(std::vector<pat::Muon> Muons, double muPtCut, const reco::Vertex *&vertex)
+{
+  //using namespace edm;
+  using namespace pat;
+  using namespace std;
+  
+  vector<pat::Muon> bestMuons;
+  /********** M U O N  C U T S **********/
+  double muEtaCut = 2.4;
+  double sipCut = 99999999.0;
+  double dxyCut = 0.5;
+  double dzCut = 1;
+  /**************************************/
+
+  for(unsigned int i = 0; i < Muons.size(); i++)
+      if( Muons[i].pt() > muPtCut && abs(Muons[i].eta()) < muEtaCut && Muons[i].isPFMuon() == 1 && (Muons[i].isGlobalMuon() || Muons[i].isTrackerMuon() ) ) {
+          if( abs(getSIP3D(Muons[i])) < sipCut ) {
+              if( fabs(Muons[i].muonBestTrack()->dxy(vertex->position())) < dxyCut ) { //miniAOD 
+                  if( fabs(Muons[i].muonBestTrack()->dz(vertex->position())) < dzCut ) {// miniAOD       
+                      bestMuons.push_back(Muons[i]);
+                  } else {cout<<"muon "<<i<<" failed dz cut, |dz|="<<fabs(Muons[i].muonBestTrack()->dxy(vertex->position()))<<endl;}
+              } else {cout<<"muon "<<i<<" failed dxy cut, |dxz|="<<fabs(Muons[i].muonBestTrack()->dz(vertex->position()))<<endl;}
+          } else {cout<<"muon "<<i<<" failed sip cut, |sip|="<<abs(getSIP3D(Muons[i]))<<endl;}
+      } else {cout<<"muon "<<i<<" failed pt, eta, or (isGlobal || isTracker)"<<endl;}
+
+  return bestMuons;
+  
+}
 
 std::vector<pat::Electron> HZZ4LHelper::goodElectrons2012_noIso(std::vector<pat::Electron> Electrons, double elecPtCut, std::string elecID, const reco::Vertex *&vertex,const edm::Event& iEvent)
 {
@@ -1133,55 +1148,95 @@ std::vector<pat::Electron> HZZ4LHelper::goodElectrons2012_noIso(std::vector<pat:
   
   ///MVA ID = mvaNonTrigV0
   
-  for(unsigned int i = 0; i < Electrons.size(); i++)
-    {
-      if( abs(getSIP3D(Electrons[i])) < sipCut && fabs(Electrons[i].gsfTrack()->dxy(vertex->position())) < dxyCut && fabs(Electrons[i].gsfTrack()->dz(vertex->position())) < dzCut )
-	{
-	  if( Electrons[i].pt() > elecPtCut && abs(Electrons[i].eta()) < elecEtaCut)
-	    { 
-              //cout << "mva: " << Electrons[i].electronID(elecID) << endl;
+  for(unsigned int i = 0; i < Electrons.size(); i++) {
 
-	      double cutVal = 1000;
-	      if( Electrons[i].pt() > 0 && Electrons[i].pt() < 10.0 )
-		{
-		  if(fabs(Electrons[i].superCluster()->eta()) > 0 && fabs(Electrons[i].superCluster()->eta()) < 0.8 ){ cutVal = bdtCutLoPt_0_08;}
-		  if(fabs(Electrons[i].superCluster()->eta()) >= 0.8 && fabs(Electrons[i].superCluster()->eta()) < 1.479 ){ cutVal = bdtCutLoPt_08_14;}
-		  if(fabs(Electrons[i].superCluster()->eta()) >= 1.479){ cutVal = bdtCutLoPt_14_25;}
-		}
-	      if( Electrons[i].pt() >= 10.0 )
-		{
-		  if(fabs(Electrons[i].superCluster()->eta()) > 0 && fabs(Electrons[i].superCluster()->eta()) < 0.8 ){ cutVal = bdtCutHiPt_0_08;}
-		  if(fabs(Electrons[i].superCluster()->eta()) >= 0.8 && fabs(Electrons[i].superCluster()->eta()) < 1.479 ){ cutVal = bdtCutHiPt_08_14;}
-		  if(fabs(Electrons[i].superCluster()->eta()) >= 1.479){ cutVal = bdtCutHiPt_14_25;}
-		}
-	      //if(cutVal == 1000){ cout << "Electrons[i].superCluster()->eta() > 2.5, event " << iEvent.id().event() 
-	      //<< "pt " << Electrons[i].pt() << " eta " << Electrons[i].eta() << " scEta " << Electrons[i].superCluster()->eta() << endl; continue;}
-	      //int misHits = Electrons[i].gsfTrack()->trackerExpectedHitsInner().numberOfLostHits(); // for miniADO
+      if( abs(getSIP3D(Electrons[i])) < sipCut) { 
+      if (fabs(Electrons[i].gsfTrack()->dxy(vertex->position())) < dxyCut) {
+      if (fabs(Electrons[i].gsfTrack()->dz(vertex->position())) < dzCut ) {
+
+          if( Electrons[i].pt() > elecPtCut && abs(Electrons[i].eta()) < elecEtaCut) { 
+              double cutVal = 1000;
+              if( Electrons[i].pt() > 0 && Electrons[i].pt() < 10.0 ) {
+                  if(fabs(Electrons[i].superCluster()->eta()) > 0 && fabs(Electrons[i].superCluster()->eta()) < 0.8 ){ cutVal = bdtCutLoPt_0_08;}
+                  if(fabs(Electrons[i].superCluster()->eta()) >= 0.8 && fabs(Electrons[i].superCluster()->eta()) < 1.479 ){ cutVal = bdtCutLoPt_08_14;}
+                  if(fabs(Electrons[i].superCluster()->eta()) >= 1.479){ cutVal = bdtCutLoPt_14_25;}
+              }
+              if( Electrons[i].pt() >= 10.0 ) {
+                  if(fabs(Electrons[i].superCluster()->eta()) > 0 && fabs(Electrons[i].superCluster()->eta()) < 0.8 ){ cutVal = bdtCutHiPt_0_08;}
+                  if(fabs(Electrons[i].superCluster()->eta()) >= 0.8 && fabs(Electrons[i].superCluster()->eta()) < 1.479 ){ cutVal = bdtCutHiPt_08_14;}
+                  if(fabs(Electrons[i].superCluster()->eta()) >= 1.479){ cutVal = bdtCutHiPt_14_25;}
+              }
+              //int misHits = Electrons[i].gsfTrack()->trackerExpectedHitsInner().numberOfLostHits(); // for miniADO
               int misHits = 0; // for miniAOD
-              if (elecID=="noEID" && misHits < missingHitsCuts )
-              {
-                bestElectrons.push_back(Electrons[i]);
-              }
-              else
-              if(Electrons[i].electronID(elecID) > cutVal && misHits < missingHitsCuts)
-              {
-                bestElectrons.push_back(Electrons[i]);
-              }
-            }
-	}
-    }
-
+              if (elecID=="noEID" && misHits < missingHitsCuts ) { bestElectrons.push_back(Electrons[i]); } 
+              else if (Electrons[i].electronID(elecID) > cutVal && misHits < missingHitsCuts) { bestElectrons.push_back(Electrons[i]);}
+          }
+      } else {cout<<"electron "<<i<<" failed dz, |dz|="<<fabs(Electrons[i].gsfTrack()->dz(vertex->position()))<<endl;}
+      } else {cout<<"electron "<<i<<" failed dxy, |dxy|="<<fabs(Electrons[i].gsfTrack()->dxy(vertex->position()))<<endl;}
+      } else {cout<<"electron "<<i<<" failed sip, |sip|="<<abs(getSIP3D(Electrons[i]))<<endl;}
+  }
   
   return bestElectrons;
   
-  
 }
 
+std::vector<pat::Electron> HZZ4LHelper::goodElectrons2015_noIso(std::vector<pat::Electron> Electrons, double elecPtCut, std::string elecID, const reco::Vertex *&vertex,const edm::Event& iEvent)
+{
+  //using namespace edm;
+  using namespace pat;
+  using namespace std;
+  
+  vector<pat::Electron> bestElectrons;
+  
+  /****** E L E C T R O N  C U T S ******/
+  double elecEtaCut = 2.5;
+  int missingHitsCuts = 2;
+  double sipCut = 9999999999.0;
+  double dxyCut = 0.5;
+  double dzCut = 1;
+  /**************************************/
 
+  //Legacy
+  double bdtCutLoPt_0_08 = 0.47;
+  double bdtCutLoPt_08_14 = 0.004;
+  double bdtCutLoPt_14_25 = 0.295;
+  double bdtCutHiPt_0_08 = -0.34;
+  double bdtCutHiPt_08_14 = -0.65;
+  double bdtCutHiPt_14_25 = 0.6;
+  
+  ///MVA ID = mvaNonTrigV0
+  
+  for(unsigned int i = 0; i < Electrons.size(); i++) {
 
+      if( abs(getSIP3D(Electrons[i])) < sipCut) { 
+      if (fabs(Electrons[i].gsfTrack()->dxy(vertex->position())) < dxyCut) {
+      if (fabs(Electrons[i].gsfTrack()->dz(vertex->position())) < dzCut ) {
 
-
-
+          if( Electrons[i].pt() > elecPtCut && abs(Electrons[i].eta()) < elecEtaCut) { 
+              double cutVal = 1000;
+              if( Electrons[i].pt() > 0 && Electrons[i].pt() < 10.0 ) {
+                  if(fabs(Electrons[i].superCluster()->eta()) > 0 && fabs(Electrons[i].superCluster()->eta()) < 0.8 ){ cutVal = bdtCutLoPt_0_08;}
+                  if(fabs(Electrons[i].superCluster()->eta()) >= 0.8 && fabs(Electrons[i].superCluster()->eta()) < 1.479 ){ cutVal = bdtCutLoPt_08_14;}
+                  if(fabs(Electrons[i].superCluster()->eta()) >= 1.479){ cutVal = bdtCutLoPt_14_25;}
+              }
+              if( Electrons[i].pt() >= 10.0 ) {
+                  if(fabs(Electrons[i].superCluster()->eta()) > 0 && fabs(Electrons[i].superCluster()->eta()) < 0.8 ){ cutVal = bdtCutHiPt_0_08;}
+                  if(fabs(Electrons[i].superCluster()->eta()) >= 0.8 && fabs(Electrons[i].superCluster()->eta()) < 1.479 ){ cutVal = bdtCutHiPt_08_14;}
+                  if(fabs(Electrons[i].superCluster()->eta()) >= 1.479){ cutVal = bdtCutHiPt_14_25;}
+              }
+              //int misHits = Electrons[i].gsfTrack()->trackerExpectedHitsInner().numberOfLostHits(); // for miniADO
+              int misHits = 0; // for miniAOD
+              if (elecID=="noEID" && misHits < missingHitsCuts ) { bestElectrons.push_back(Electrons[i]); } 
+              else if (Electrons[i].electronID(elecID) > cutVal && misHits < missingHitsCuts) { bestElectrons.push_back(Electrons[i]);}
+          }
+      } else {cout<<"electron "<<i<<" failed dz, |dz|="<<fabs(Electrons[i].gsfTrack()->dz(vertex->position()))<<endl;}
+      } else {cout<<"electron "<<i<<" failed dxy, |dxy|="<<fabs(Electrons[i].gsfTrack()->dxy(vertex->position()))<<endl;}
+      } else {cout<<"electron "<<i<<" failed sip, |sip|="<<abs(getSIP3D(Electrons[i]))<<endl;}
+  }
+  
+  return bestElectrons;
+  
+}
 
 
 //Returns vector of good muons for analysis
