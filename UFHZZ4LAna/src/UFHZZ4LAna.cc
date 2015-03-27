@@ -873,7 +873,6 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
                     //if (GENlep_status[j]!=1) continue;
                     if (GENlep_id[j]!=lep_id[i]) continue;
-
                     TLorentzVector *reco, *gen;
                     reco = (TLorentzVector*) lep_p4->At(i);
                     gen = (TLorentzVector*) GENlep_p4->At(j);
@@ -1215,13 +1214,14 @@ UFHZZ4LAna::findHiggsCandidate(TClonesArray *lep_p4,
             // same flavor opposite charge
             if((lep_id[i]+lep_id[j])!=0) continue;
 
-            if (verbose) cout<<"OSSF pair: id1="<<lep_id[i]<<" id2="<<lep_id[j]<<endl;    
             TLorentzVector *li, *lj;
             li = (TLorentzVector*) lep_p4->At(i);
             lj = (TLorentzVector*) lep_p4->At(j);
 
+            if (verbose) cout<<"OSSF pair: i="<<i<<" id1="<<lep_id[i]<<" j="<<j<<" id2="<<lep_id[j]<<" pt1: "<<li->Pt()<<" pt2: "<<lj->Pt()<<endl;    
+
             if (verbose) cout<<"begin Z1 candidate formation"<<endl;
-            foundZ1 = findZ(fsrPhotons, deltaRVec, *lj, i, *lj, j, 999, tmpTakenPhotonZ1, tmpAssociatedPh, tmpZVec, tmpPhotVec, foundPhot);
+            foundZ1 = findZ(fsrPhotons, deltaRVec, *li, i, *lj, j, 999, tmpTakenPhotonZ1, tmpAssociatedPh, tmpZVec, tmpPhotVec, foundPhot);
             if (verbose) cout<<"found Z1 candidate?"<<foundZ1<<endl;
             if (!foundZ1) continue;
             
@@ -1403,6 +1403,19 @@ void UFHZZ4LAna::bookPassedEventTree(TString treeName, TTree *tree)
     lep_p4_FSR = new TClonesArray("TLorentzVector", 10);
     tree->Branch("lep_p4_FSR","TClonesArray", &lep_p4_FSR, 128000, 0);
     tree->Branch("lep_Hindex",&lep_Hindex,"lep_Hindex[4]/I");
+    tree->Branch("lep_genindex",&lep_genindex);
+    tree->Branch("lep_id",&lep_id);
+    tree->Branch("lep_missingHits",&lep_missingHits);
+    tree->Branch("lep_mva",&lep_mva);
+    tree->Branch("lep_Sip",&lep_Sip);
+    tree->Branch("lep_IP",&lep_IP);
+    tree->Branch("lep_dIPL1",&lep_dIP);
+    tree->Branch("lep_isoNH",&lep_isoNH);
+    tree->Branch("lep_isoCH",&lep_isoCH);
+    tree->Branch("lep_isoPhot",&lep_isoPhot);
+    tree->Branch("lep_RelIso",&lep_RelIso);
+    tree->Branch("muRho",&muRho,"muRho/D");
+    tree->Branch("elRho",&elRho,"elRho/D");
     tree->Branch("pTL1",&pTL1,"pTL1/D");
     tree->Branch("pTL2",&pTL2,"pTL2/D");
     tree->Branch("pTL3",&pTL3,"pTL3/D");
@@ -1419,18 +1432,6 @@ void UFHZZ4LAna::bookPassedEventTree(TString treeName, TTree *tree)
     tree->Branch("pTL2FSR",&pTL2FSR,"pTL2FSR/D");
     tree->Branch("pTL3FSR",&pTL3FSR,"pTL3FSR/D");
     tree->Branch("pTL4FSR",&pTL4FSR,"pTL4FSR/D");
-    tree->Branch("lep_genindex",&lep_genindex);
-    tree->Branch("lep_missingHits",&lep_missingHits);
-    tree->Branch("lep_mva",&lep_mva);
-    tree->Branch("lep_Sip",&lep_Sip);
-    tree->Branch("lep_IP",&lep_IP);
-    tree->Branch("lep_dIPL1",&lep_dIP);
-    tree->Branch("lep_isoNH",&lep_isoNH);
-    tree->Branch("lep_isoCH",&lep_isoCH);
-    tree->Branch("lep_isoPhot",&lep_isoPhot);
-    tree->Branch("lep_RelIso",&lep_RelIso);
-    tree->Branch("muRho",&muRho,"muRho/D");
-    tree->Branch("elRho",&elRho,"elRho/D");
 
     //Higgs Candidate Variables
     H_p4 = new TClonesArray("TLorentzVector", 10);
@@ -1610,8 +1611,12 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
     if( RecoTwoETwoMuEvent ){ finalState = 3;}
     if( RecoTwoMuTwoEEvent ){ finalState = 4;}
 
+    new ( (*H_p4)[0] ) TLorentzVector(HVec.Px(),HVec.Py(),HVec.Pz(),HVec.Energy());
+    new ( (*H_p4_noFSR)[0] ) TLorentzVector(HVecNoFSR.Px(),HVecNoFSR.Py(),HVecNoFSR.Pz(),HVecNoFSR.Energy());
+
     mass4l = HVec.M();
     mass4l_noFSR = HVecNoFSR.M();
+
     if(RecoFourMuEvent){mass4mu = HVec.M();}
     else{mass4mu = -1;}
     if(RecoFourEEvent){ mass4e = HVec.M();}
@@ -1629,40 +1634,43 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
     massZ1 = Z1Vec.M();
     massZ2 = Z2Vec.M();
 
-    TLorentzVector *Lep1FSR, *Lep2FSR, *Lep3FSR, *Lep4FSR;
-    Lep1FSR = (TLorentzVector*) lep_p4_FSR->At(lep_Hindex[0]);
-    Lep2FSR = (TLorentzVector*) lep_p4_FSR->At(lep_Hindex[1]);
-    Lep3FSR = (TLorentzVector*) lep_p4_FSR->At(lep_Hindex[2]);
-    Lep4FSR = (TLorentzVector*) lep_p4_FSR->At(lep_Hindex[3]);
-    pTL1FSR = Lep1FSR->Pt();
-    pTL2FSR = Lep2FSR->Pt();
-    pTL3FSR = Lep3FSR->Pt();
-    pTL4FSR = Lep4FSR->Pt();
+    if (foundHiggsCandidate) {
 
-    //FIXME put some protections on number of leptons
-    TLorentzVector *Lep1;
-    Lep1 = (TLorentzVector*) lep_p4->At(lep_Hindex[0]);
-    idL1 = lep_id[lep_Hindex[0]];
-    pTL1 = Lep1->Pt();
-    etaL1 = Lep1->Eta();
+        TLorentzVector *Lep1FSR, *Lep2FSR, *Lep3FSR, *Lep4FSR;
+        Lep1FSR = (TLorentzVector*) lep_p4_FSR->At(lep_Hindex[0]);
+        Lep2FSR = (TLorentzVector*) lep_p4_FSR->At(lep_Hindex[1]);
+        Lep3FSR = (TLorentzVector*) lep_p4_FSR->At(lep_Hindex[2]);
+        Lep4FSR = (TLorentzVector*) lep_p4_FSR->At(lep_Hindex[3]);
+        pTL1FSR = Lep1FSR->Pt();
+        pTL2FSR = Lep2FSR->Pt();
+        pTL3FSR = Lep3FSR->Pt();
+        pTL4FSR = Lep4FSR->Pt();
 
-    TLorentzVector *Lep2;
-    Lep2 = (TLorentzVector*) lep_p4->At(lep_Hindex[1]);
-    idL2 = lep_id[lep_Hindex[1]];
-    pTL2 = Lep2->Pt();
-    etaL2 = Lep2->Eta();
+        //FIXME put some protections on number of leptons
+        TLorentzVector *Lep1;
+        Lep1 = (TLorentzVector*) lep_p4->At(lep_Hindex[0]);
+        idL1 = lep_id[lep_Hindex[0]];
+        pTL1 = Lep1->Pt();
+        etaL1 = Lep1->Eta();
 
-    TLorentzVector *Lep3;
-    Lep3 = (TLorentzVector*) lep_p4->At(lep_Hindex[2]);
-    idL3 = lep_id[lep_Hindex[2]];
-    pTL3 = Lep3->Pt();
-    etaL3 = Lep3->Eta();
+        TLorentzVector *Lep2;
+        Lep2 = (TLorentzVector*) lep_p4->At(lep_Hindex[1]);
+        idL2 = lep_id[lep_Hindex[1]];
+        pTL2 = Lep2->Pt();
+        etaL2 = Lep2->Eta();
 
-    TLorentzVector *Lep4;
-    Lep4 = (TLorentzVector*) lep_p4->At(lep_Hindex[3]);
-    idL4 = lep_id[lep_Hindex[3]];
-    pTL4 = Lep4->Pt();
-    etaL4 = Lep4->Eta();
+        TLorentzVector *Lep3;
+        Lep3 = (TLorentzVector*) lep_p4->At(lep_Hindex[2]);
+        idL3 = lep_id[lep_Hindex[2]];
+        pTL3 = Lep3->Pt();
+        etaL3 = Lep3->Eta();
+        
+        TLorentzVector *Lep4;
+        Lep4 = (TLorentzVector*) lep_p4->At(lep_Hindex[3]);
+        idL4 = lep_id[lep_Hindex[3]];
+        pTL4 = Lep4->Pt();
+        etaL4 = Lep4->Eta();
+    }
 
     double tempDeltaR = 999.0;
     vector<pat::Jet> finalVBFJets;
@@ -1688,6 +1696,7 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
                 isDeltaR_eta4p7 = false;
             }
         }
+
         // check overlap with fsr photons
         unsigned int N = phofsr_p4->GetLast()+1;
         for(unsigned int i=0; i<N; i++) {
@@ -1699,7 +1708,6 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
                 isDeltaR_eta4p7 = false;
             }
         }
-
 
         double factor = 1.0;
         double factorup = 1.0;
@@ -1791,7 +1799,7 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
                     absrapidity_leadingjet_pt30_eta4p7 = jet_jer->Rapidity(); //take abs later
                 }
                 finalVBFJets.push_back(goodJets[k]);
-                new ( (*jet_p4)[njets_pt30_eta4p7-1] ) TLorentzVector(jet_jer->Px(), jet_jer->Py(), jet_jer->Pz(), jet_jer->Energy());
+                new ( (*jet_p4)[njets_pt30_eta4p7] ) TLorentzVector(jet_jer->Px(), jet_jer->Py(), jet_jer->Pz(), jet_jer->Energy());
             }
         }
         
@@ -1803,7 +1811,7 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
                     pt_leadingjet_pt30_eta4p7_jerup = jet_jerup->Pt();
                     absrapidity_leadingjet_pt30_eta4p7_jerup = jet_jerup->Rapidity(); //take abs later
                 }
-                new ( (*jet_p4_jerup)[njets_pt30_eta4p7_jerup-1] ) TLorentzVector(jetPx_jerup,jetPy_jerup,jetPz_jerup,jetE_jerup);
+                new ( (*jet_p4_jerup)[njets_pt30_eta4p7_jerup] ) TLorentzVector(jetPx_jerup,jetPy_jerup,jetPz_jerup,jetE_jerup);
             }
         }
 
@@ -1815,7 +1823,7 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
                     pt_leadingjet_pt30_eta4p7_jerdn = jet_jerdn->Pt();
                     absrapidity_leadingjet_pt30_eta4p7_jerdn = jet_jerdn->Rapidity(); //take abs later
                 }
-                new ( (*jet_p4_jerdn)[njets_pt30_eta4p7_jerdn-1] ) TLorentzVector(jetPx_jerdn,jetPy_jerdn,jetPz_jerdn,jetE_jerdn);
+                new ( (*jet_p4_jerdn)[njets_pt30_eta4p7_jerdn] ) TLorentzVector(jetPx_jerdn,jetPy_jerdn,jetPz_jerdn,jetE_jerdn);
             }
         }
 
@@ -1832,7 +1840,7 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
                     pt_leadingjet_pt30_eta4p7_jesup = jet_jesup->Pt();
                     absrapidity_leadingjet_pt30_eta4p7_jesup = jet_jesup->Rapidity(); //take abs later
                 }                             
-                new ( (*jet_p4_jesup)[njets_pt30_eta4p7_jesup-1] ) TLorentzVector(jetPx_jesup,jetPy_jesup,jetPz_jesup,jetE_jesup);
+                new ( (*jet_p4_jesup)[njets_pt30_eta4p7_jesup] ) TLorentzVector(jetPx_jesup,jetPy_jesup,jetPz_jesup,jetE_jesup);
             }
         }
 
@@ -1849,7 +1857,7 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
                     pt_leadingjet_pt30_eta4p7_jesdn = jet_jesdn->Pt();
                     absrapidity_leadingjet_pt30_eta4p7_jesdn = jet_jesdn->Rapidity(); //take abs later
                 }                
-                new ( (*jet_p4_jesdn)[njets_pt30_eta4p7_jesdn-1] ) TLorentzVector(jetPx_jesdn,jetPy_jesdn,jetPz_jesdn,jetE_jesdn);
+                new ( (*jet_p4_jesdn)[njets_pt30_eta4p7_jesdn] ) TLorentzVector(jetPx_jesdn,jetPy_jesdn,jetPz_jesdn,jetE_jesdn);
             }
         }
         
@@ -1896,15 +1904,17 @@ void UFHZZ4LAna::setGENVariables(edm::Handle<reco::GenParticleCollection> genPar
     for(genPart = genParticles->begin(); genPart != genParticles->end(); genPart++) {
         j++;
         if (abs(genPart->pdgId())==11  || abs(genPart->pdgId())==13 || abs(genPart->pdgId())==15) {
-            if (genPart->pt()<3.0) continue;
-            if (abs(genPart->eta())>2.7) continue;
-            if (!genAna.IsMotherW(&genParticles->at(j)) || genAna.IsMotherZ(&genParticles->at(j))) continue;
+
+            if (!(genAna.IsMotherW(&genParticles->at(j)) || genAna.IsMotherZ(&genParticles->at(j)))) continue;
+
             nGENLeptons++;
+
             new ( (*GENlep_p4)[nGENLeptons] ) TLorentzVector(genPart->px(),genPart->py(),genPart->pz(),genPart->energy());
             GENlep_id.push_back( genPart->pdgId() );
             GENlep_status.push_back(genPart->status());
             GENlep_MomId.push_back(genAna.MotherID(&genParticles->at(j)));
             GENlep_MomMomId.push_back(genAna.MotherMotherID(&genParticles->at(j)));
+
             TLorentzVector *thisLep;
             thisLep = (TLorentzVector*) GENlep_p4->At(nGENLeptons);
             // GEN iso calculation
@@ -2254,7 +2264,7 @@ void UFHZZ4LAna::fillResolutionHistograms(edm::Handle<edm::View<pat::Muon> > muo
 
 
 ////////// Find Z ////////////
-bool UFHZZ4LAna::findZ(std::vector<pat::PFParticle> photons, std::vector<double> &deltaRVec, TLorentzVector &l1, unsigned int &index1, TLorentzVector &l2, unsigned int &index2, int takenZ1, int taken, int assocLep, TLorentzVector &ZVec, TLorentzVector &photVec, bool &foundPhoton)
+bool UFHZZ4LAna::findZ(std::vector<pat::PFParticle> photons, std::vector<double> &deltaRVec, TLorentzVector &li, unsigned int &index1, TLorentzVector &lj, unsigned int &index2, int takenZ1, int taken, int assocLep, TLorentzVector &ZVec, TLorentzVector &photVec, bool &foundPhoton)
 {
 
     using namespace std;
@@ -2272,6 +2282,9 @@ bool UFHZZ4LAna::findZ(std::vector<pat::PFParticle> photons, std::vector<double>
     double photIsoCut = 1.0;
     bool foundZ = false;
 
+    if (verbose) cout<<"i="<<index1<<" id: "<<lep_id[index1]<<"pt: "<<li.Pt()<<endl;
+    if (verbose) cout<<"j="<<index2<<" id: "<<lep_id[index2]<<"pt: "<<lj.Pt()<<endl;
+
     if( !photons.empty() && photons.size() > 0 && doFsrRecovery) {
 
         for(unsigned int i = 0; i < photons.size(); i++) {
@@ -2286,8 +2299,8 @@ bool UFHZZ4LAna::findZ(std::vector<pat::PFParticle> photons, std::vector<double>
                  +photons[i].userFloat("fsrPhotonPFIsoChHadPU03pt02"))/photons[i].pt() > photIsoCut) continue;
 
             //calc both deltaRs
-            deltaR1 = deltaR(l1.Eta(),l1.Phi(),photons[i].eta(),photons[i].phi());
-            deltaR2 = deltaR(l2.Eta(),l2.Phi(),photons[i].eta(),photons[i].phi());
+            deltaR1 = deltaR(li.Eta(),li.Phi(),photons[i].eta(),photons[i].phi());
+            deltaR2 = deltaR(lj.Eta(),lj.Phi(),photons[i].eta(),photons[i].phi());
 
             //associate with closest lepton
             if( deltaR1 < deltaR2 ){ assocLepTmp = 1; smallestDeltaR = deltaR1;}
@@ -2298,33 +2311,34 @@ bool UFHZZ4LAna::findZ(std::vector<pat::PFParticle> photons, std::vector<double>
             //calc P vectors
             TLorentzVector phoi;
             phoi.SetPtEtaPhiE(photons[i].pt(),photons[i].eta(),photons[i].phi(),photons[i].energy());
-            mllgam = l1+l2+phoi;
-            mll = l1+l2;
+            mllgam = li+lj+phoi;
+            mll = li+lj;
 
+            if (verbose) cout<<"m(llgamma): "<<mllgam.M()<<" m(ll): "<<mll.M()<<endl;
             //check inv mass
             if( mllgam.M() < 4 || mllgam.M() > 100) continue;
             massDiffPhot = fabs(mllgam.M() - Zmass);
             massDiffNoPhot = fabs(mll.M() - Zmass);
 
             //if its smaller with phot, keep phot
-            if( massDiffPhot < massDiffNoPhot )
-            {
+            if( massDiffPhot < massDiffNoPhot ) {
                 //check iso cone
                 if( deltaR1 < coneSize && deltaR1 > 1e-06){
-                    lep1Iso = (lep_isoCH[index1]+std::max(lep_isoNH[index1]+lep_isoPhot[index1]-lep_isoPU[index1]-photons[i].pt(),0.0))/l1.Pt();
+                    lep1Iso = (lep_isoCH[index1]+std::max(lep_isoNH[index1]+lep_isoPhot[index1]-lep_isoPU[index1]-photons[i].pt(),0.0))/li.Pt();
                 }
                 else {
-                    lep1Iso = (lep_isoCH[index1]+std::max(lep_isoNH[index1]+lep_isoPhot[index1]-lep_isoPU[index1],0.0))/l1.Pt();
+                    lep1Iso = (lep_isoCH[index1]+std::max(lep_isoNH[index1]+lep_isoPhot[index1]-lep_isoPU[index1],0.0))/li.Pt();
                 }
 
                 if( deltaR2 < coneSize && deltaR2 > 1e-06){
-                    lep2Iso = (lep_isoCH[index1]+std::max(lep_isoNH[index2]+lep_isoPhot[index2]-lep_isoPU[index2]-photons[i].pt(),0.0))/l2.Pt();
+                    lep2Iso = (lep_isoCH[index2]+std::max(lep_isoNH[index2]+lep_isoPhot[index2]-lep_isoPU[index2]-photons[i].pt(),0.0))/lj.Pt();
                 }
                 else {
-                    lep2Iso = (lep_isoCH[index1]+std::max(lep_isoNH[index2]+lep_isoPhot[index2]-lep_isoPU[index2]-photons[i].pt(),0.0))/l2.Pt();
+                    lep2Iso = (lep_isoCH[index2]+std::max(lep_isoNH[index2]+lep_isoPhot[index2]-lep_isoPU[index2],0.0))/lj.Pt();
                 }
-
+                if (verbose) cout<<"new lep1iso: "<<lep1Iso<<" lep2iso: "<<lep2Iso<<" isoCut: "<<isoCut<<endl;
                 if (lep1Iso < isoCut && lep2Iso < isoCut) {
+                    if (verbose) cout<<"taking photon "<<i<<" m(llgam)="<<mllgam.M()<<endl;
                     foundPhot = true;
                     taken = (int)i;
                     photHighestPt = photons[i].pt();                    
@@ -2335,9 +2349,11 @@ bool UFHZZ4LAna::findZ(std::vector<pat::PFParticle> photons, std::vector<double>
                 }
             }
         }
-
+        
         if(!foundPhot) {
-
+            
+            if (verbose) cout<<"did not find fsr photon, try method 2"<<endl;
+            
             for(unsigned int i = 0; i < photons.size(); i++) {
                 //FIXME not sure about the useDR and usePT
                 bool useDR = false, usePT = false;
@@ -2349,8 +2365,8 @@ bool UFHZZ4LAna::findZ(std::vector<pat::PFParticle> photons, std::vector<double>
                 if( photons[i].pt() > 4 ) usePT = true;
                 if( usePT && photons[i].pt() < photHighestPt) continue;
                 //calc both deltaRs
-                deltaR1 = deltaR(l1.Eta(),l1.Phi(),photons[i].eta(),photons[i].phi());
-                deltaR2 = deltaR(l2.Eta(),l2.Phi(),photons[i].eta(),photons[i].phi());
+                deltaR1 = deltaR(li.Eta(),li.Phi(),photons[i].eta(),photons[i].phi());
+                deltaR2 = deltaR(lj.Eta(),lj.Phi(),photons[i].eta(),photons[i].phi());
                 //associate with closest lepton
                 if( deltaR1 < deltaR2 ){ assocLepTmp = 1; smallestDeltaR = deltaR1;}
                 else{ assocLepTmp = 2; smallestDeltaR = deltaR2;}
@@ -2359,9 +2375,10 @@ bool UFHZZ4LAna::findZ(std::vector<pat::PFParticle> photons, std::vector<double>
                 //calc P vectors
                 TLorentzVector phoi;
                 phoi.SetPtEtaPhiE(photons[i].pt(),photons[i].eta(),photons[i].phi(),photons[i].energy());
-                mllgam = l1+l2+phoi;
-                mll = l1+l2;
+                mllgam = li+lj+phoi;
+                mll = li+lj;
 
+                if (verbose) cout<<"m(llgamma): "<<mllgam.M()<<" m(ll): "<<mll.M()<<endl;
                 //check inv mass
                 if( mllgam.M() < 4 || mllgam.M() > 100) continue;
                 massDiffPhot = fabs(mllgam.M() - Zmass);
@@ -2370,18 +2387,20 @@ bool UFHZZ4LAna::findZ(std::vector<pat::PFParticle> photons, std::vector<double>
                 //if its smaller with phot, keep phot
                 if( massDiffPhot < massDiffNoPhot ) {
                     if( deltaR1 < coneSize && deltaR1 > 1e-06){
-                        lep1Iso = (lep_isoCH[index1]+std::max(lep_isoNH[index1]+lep_isoPhot[index1]-lep_isoPU[index1]-photons[i].pt(),0.0))/l1.Pt();
+                        lep1Iso = (lep_isoCH[index1]+std::max(lep_isoNH[index1]+lep_isoPhot[index1]-lep_isoPU[index1]-photons[i].pt(),0.0))/li.Pt();
                     }
                     else {
-                        lep1Iso = (lep_isoCH[index1]+std::max(lep_isoNH[index1]+lep_isoPhot[index1]-lep_isoPU[index1],0.0))/l1.Pt();
+                        lep1Iso = (lep_isoCH[index1]+std::max(lep_isoNH[index1]+lep_isoPhot[index1]-lep_isoPU[index1],0.0))/li.Pt();
                     }
                     if( deltaR2 < coneSize && deltaR2 > 1e-06){
-                        lep2Iso = (lep_isoCH[index1]+std::max(lep_isoNH[index2]+lep_isoPhot[index2]-lep_isoPU[index2]-photons[i].pt(),0.0))/l2.Pt();
+                        lep2Iso = (lep_isoCH[index2]+std::max(lep_isoNH[index2]+lep_isoPhot[index2]-lep_isoPU[index2]-photons[i].pt(),0.0))/lj.Pt();
                     }
                     else {
-                        lep2Iso = (lep_isoCH[index1]+std::max(lep_isoNH[index2]+lep_isoPhot[index2]-lep_isoPU[index2]-photons[i].pt(),0.0))/l2.Pt();
+                        lep2Iso = (lep_isoCH[index2]+std::max(lep_isoNH[index2]+lep_isoPhot[index2]-lep_isoPU[index2],0.0))/lj.Pt();
                     }
+                    if (verbose) cout<<"new lep1iso: "<<lep1Iso<<" lep2iso: "<<lep2Iso<<" isoCut: "<<isoCut<<endl;
                     if(lep1Iso < isoCut && lep2Iso < isoCut) {
+                        if (verbose) cout<<"taking photon "<<i<<" m(llgam)="<<mllgam.M()<<endl;                   
                         foundPhot = true;
                         taken = (int)i;
                         if(useDR) totalSmallestDeltaR = smallestDeltaR;
@@ -2397,34 +2416,36 @@ bool UFHZZ4LAna::findZ(std::vector<pat::PFParticle> photons, std::vector<double>
 
         if(!foundPhot) {
 
-            lep1Iso = (lep_isoCH[index1]+std::max(lep_isoNH[index1]+lep_isoPhot[index1]-lep_isoPU[index1],0.0))/l1.Pt();
-            lep1Iso = (lep_isoCH[index2]+std::max(lep_isoNH[index2]+lep_isoPhot[index2]-lep_isoPU[index2],0.0))/l2.Pt();
+            if (verbose) cout<<"did not find any fsr photons"<<endl;
 
-            mll = l1+l2;
+            lep1Iso = (lep_isoCH[index1]+std::max(lep_isoNH[index1]+lep_isoPhot[index1]-lep_isoPU[index1],0.0))/li.Pt();
+            lep2Iso = (lep_isoCH[index2]+std::max(lep_isoNH[index2]+lep_isoPhot[index2]-lep_isoPU[index2],0.0))/lj.Pt();
 
+            mll = li+lj;
+            if (verbose) cout<<"m(ll): "<<mll.M()<<endl;
+            if (verbose) cout<<"lep1iso: "<<lep1Iso<<" lep2iso: "<<lep2Iso<<" isoCut: "<<isoCut<<endl;
             if( lep1Iso < isoCut && lep2Iso < isoCut ) {
-                ZVec = l1+l2;
+                ZVec = li+lj;
                 assocLep = 999;
                 foundPhot = false;
                 foundZ = true;
             }
-
         }
     }
     else {
 
-        lep1Iso = (lep_isoCH[index1]+std::max(lep_isoNH[index1]+lep_isoPhot[index1]-lep_isoPU[index1],0.0))/l1.Pt();
-        lep1Iso = (lep_isoCH[index2]+std::max(lep_isoNH[index2]+lep_isoPhot[index2]-lep_isoPU[index2],0.0))/l2.Pt();
+        lep1Iso = (lep_isoCH[index1]+std::max(lep_isoNH[index1]+lep_isoPhot[index1]-lep_isoPU[index1],0.0))/li.Pt();
+        lep2Iso = (lep_isoCH[index2]+std::max(lep_isoNH[index2]+lep_isoPhot[index2]-lep_isoPU[index2],0.0))/lj.Pt();
 
-        mll = l1+l2;
-
+        mll = li+lj;
+        if (verbose) cout<<"m(ll): "<<mll.M()<<endl;
+        if (verbose) cout<<"lep1iso: "<<lep1Iso<<" lep2iso: "<<lep2Iso<<" isoCut: "<<isoCut<<endl;
         if( lep1Iso < isoCut && lep2Iso < isoCut ) {
-            ZVec = l1+l2;
+            ZVec = li+lj;
             assocLep = 999;
             foundPhot = false;
             foundZ = true;
         }
-
     } 
   
     foundPhoton = foundPhot;
