@@ -20,7 +20,9 @@ process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
 
 myfilelist = cms.untracked.vstring()
 myfilelist.extend( [
-        '/store/mc/Phys14DR/GluGluToHToZZTo4L_M-125_13TeV-powheg-pythia6/MINIAODSIM/PU20bx25_tsg_PHYS14_25_V1-v1/00000/3295EF7C-2070-E411-89C4-7845C4FC35DB.root' # the sync file
+
+       # the sync file
+       '/store/mc/Phys14DR/GluGluToHToZZTo4L_M-125_13TeV-powheg-pythia6/MINIAODSIM/PU20bx25_tsg_PHYS14_25_V1-v1/00000/3295EF7C-2070-E411-89C4-7845C4FC35DB.root'
 
        # all files
        #'/store/mc/Phys14DR/GluGluToHToZZTo4L_M-125_13TeV-powheg-pythia6/MINIAODSIM/PU20bx25_tsg_PHYS14_25_V1-v1/00000/148E558C-946F-E411-AFA7-7845C4FC3A52.root',
@@ -67,8 +69,8 @@ process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
                               elRhoSrc     = cms.untracked.InputTag("fixedGridRhoFastjetAll"),
                               muRhoSrc     = cms.untracked.InputTag("fixedGridRhoFastjetCentralNeutral"),
                               reweightForPU = cms.untracked.bool(True),
-                              #verbose = cms.untracked.bool(False)              
-                              verbose = cms.untracked.bool(True)              
+                              verbose = cms.untracked.bool(False)              
+                              #verbose = cms.untracked.bool(True)              
                              )
 
 process.AnaAfterHlt = cms.EDAnalyzer('UFHZZ4LAna',
