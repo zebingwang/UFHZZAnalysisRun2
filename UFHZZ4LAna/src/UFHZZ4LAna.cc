@@ -231,6 +231,7 @@ private:
     vector<double> lep_isoCH;
     vector<double> lep_isoPhot;
     vector<double> lep_isoPU;
+    vector<double> lep_isoPUcorr;
     vector<double> lep_RelIso;
     vector<int> lep_missingHits;
     double muRho, elRho;
@@ -251,6 +252,7 @@ private:
 
     // Jets
     TClonesArray *jet_p4;
+    vector<double> jet_pumva;
     TClonesArray *jet_p4_jesup;
     TClonesArray *jet_p4_jesdn;
     TClonesArray *jet_p4_jerup;
@@ -601,7 +603,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     lep_genindex.clear(); lep_id.clear(); 
     lep_mva.clear();
     lep_Sip.clear(); lep_IP.clear(); lep_dIP.clear();
-    lep_isoNH.clear(); lep_isoCH.clear(); lep_isoPhot.clear(); lep_isoPU.clear(); lep_RelIso.clear();
+    lep_isoNH.clear(); lep_isoCH.clear(); lep_isoPhot.clear(); lep_isoPU.clear(); lep_isoPUcorr.clear(); lep_RelIso.clear();
     lep_missingHits.clear();
  
     // Higgs candidate variables
@@ -624,6 +626,8 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     if (jet_p4_jesdn->GetLast()!=-1) jet_p4_jesdn->Clear();
     if (jet_p4_jerup->GetLast()!=-1) jet_p4_jerup->Clear();
     if (jet_p4_jerdn->GetLast()!=-1) jet_p4_jerdn->Clear();
+    
+    jet_pumva.clear();
 
     njets_pt30_eta4p7=-1;
     njets_pt30_eta4p7_jesup=-1;
@@ -785,14 +789,13 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         vector<pat::Electron> AllElectrons;  
         AllMuons = helper.goodLooseMuons2012(muons,_muPtCut);
         AllElectrons = helper.goodLooseElectrons2012(electrons,_elecPtCut);
-        if (verbose) cout<<AllMuons.size()<<" loose muons "<<AllElectrons.size()<<" loose elctrons "<<endl;
         helper.cleanOverlappingLeptons(AllMuons,AllElectrons,PV);
-        if (verbose) cout<<AllMuons.size()<<" loose muons "<<AllElectrons.size()<<" loose elctrons after overlap cleaning"<<endl;
-        recoMuons = helper.goodMuons2015_noIso(AllMuons,_muPtCut,PV);
-        recoElectrons = helper.goodElectrons2015_noIso(AllElectrons,_elecPtCut,elecID,PV,iEvent);
+        if (verbose) cout<<AllMuons.size()<<" loose muons "<<AllElectrons.size()<<" loose elctrons"<<endl;
+        recoMuons = helper.goodMuons2015_noIso(AllMuons,_muPtCut,PV,sip3dCut);
+        recoElectrons = helper.goodElectrons2015_noIso(AllElectrons,_elecPtCut,elecID,PV,iEvent,sip3dCut);
 
         //sort electrons and muons by pt
-        if (verbose) cout<<recoMuons.size()<<" muons and "<<recoElectrons.size()<<" electrons to be sorted"<<endl;
+        if (verbose) cout<<recoMuons.size()<<" good muons and "<<recoElectrons.size()<<" good electrons to be sorted"<<endl;
         if (verbose) cout<<"start pt-sorting leptons"<<endl;
         if (verbose) cout<<"adding muons to sorted list"<<endl;           
         for(unsigned int i = 0; i < recoMuons.size(); i++) {
@@ -841,7 +844,8 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 lep_isoCH.push_back(recoElectrons[lep_ptindex[i]].chargedHadronIso());
                 lep_isoNH.push_back(recoElectrons[lep_ptindex[i]].neutralHadronIso());
                 lep_isoPhot.push_back(recoElectrons[lep_ptindex[i]].photonIso());
-                lep_isoPU.push_back(helper.getPUIso(recoElectrons[lep_ptindex[i]],elRho));
+                lep_isoPU.push_back(recoElectrons[lep_ptindex[i]].puChargedHadronIso());
+                lep_isoPUcorr.push_back(helper.getPUIso(recoElectrons[lep_ptindex[i]],elRho));
                 lep_Sip.push_back(helper.getSIP3D(recoElectrons[lep_ptindex[i]]));           
                 lep_genindex.push_back(-1.0);
             }
@@ -853,12 +857,13 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 lep_isoCH.push_back(recoMuons[lep_ptindex[i]].chargedHadronIso());
                 lep_isoNH.push_back(recoMuons[lep_ptindex[i]].neutralHadronIso());
                 lep_isoPhot.push_back(recoMuons[lep_ptindex[i]].photonIso());
-                lep_isoPU.push_back(helper.getPUIso(recoMuons[lep_ptindex[i]],muRho));
+                lep_isoPU.push_back(recoMuons[lep_ptindex[i]].puChargedHadronIso());
+                lep_isoPUcorr.push_back(helper.getPUIso(recoMuons[lep_ptindex[i]],muRho));
                 lep_Sip.push_back(helper.getSIP3D(recoMuons[lep_ptindex[i]]));            
                 lep_genindex.push_back(-1.0);
             }
             if (verbose) cout<<" RelIso: "<<lep_RelIso[i]<<" isoCH: "<<lep_isoCH[i]<<" isoNH: "<<lep_isoNH[i]
-                             <<" isoPhot: "<<lep_isoPhot[i]<<" isoPU: "<<lep_isoPU[i]<<" Sip: "<<lep_Sip[i]<<endl;
+                             <<" isoPhot: "<<lep_isoPhot[i]<<" isoPUcorr: "<<lep_isoPUcorr[i]<<" Sip: "<<lep_Sip[i]<<endl;
         }
 
         // GEN matching
@@ -927,7 +932,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                     vector<pat::PFParticle> fsrPhotons; 
                     vector<double> deltaRVec;
                     if(doFsrRecovery) {
-                        if (verbose) cout<<"filling fsr photon candidates"<<endl;                                    
+                        if (verbose) cout<<"checking "<<photonsForFsr->size()<<" fsr photon candidates"<<endl;                                    
                         for(edm::View<pat::PFParticle>::const_iterator phot=photonsForFsr->begin(); phot!=photonsForFsr->end(); ++phot) {
 
                             bool matched = false; double chosenDeltaRPh = 999;
@@ -973,44 +978,62 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                         const pat::Jet & patjet = jets->at(i);
                         const pat::Jet & correctedJet = correctedJets->at(i);
 
-                        //int  idflag = (*puJetIdFlag)[jets->refAt(i)];
-                        //if( PileupJetIdentifier::passJetId(idflag, PileupJetIdentifier::kLoose) ) {
-                        if (1==1) { //FIXME
-  
-                            //PF ID
-                            if (verbose) cout<<"checking jetid..."<<endl;                                        
-                            if(jetHelper.patjetID(correctedJet) == 1) {
+                        //JetID ID
+                        if (verbose) cout<<"checking jetid..."<<endl;
+                        float jpumva=0.;
+                        bool passPU=true;
+                        jpumva=correctedJet.userFloat("pileupJetId:fullDiscriminant");
+                        if (verbose) cout<< " jet pu mva  "<<jpumva <<endl;
+                        if(correctedJet.pt()>20){
+                            if(abs(correctedJet.eta())>3.){
+                                if(jpumva<=-0.45)passPU=false;
+                            }else if(abs(correctedJet.eta())>2.75){
+                                if(jpumva<=-0.55)passPU=false;
+                            }else if(abs(correctedJet.eta())>2.5){
+                                if(jpumva<=-0.6)passPU=false;
+                            }else if(jpumva<=-0.63)passPU=false;
+                        }else{
+                            if(abs(correctedJet.eta())>3.){
+                                if(jpumva<=-0.95)passPU=false;
+                            }else if(abs(correctedJet.eta())>2.75){
+                                if(jpumva<=-0.94)passPU=false;
+                            }else if(abs(correctedJet.eta())>2.5){
+                                if(jpumva<=-0.96)passPU=false;
+                            }else if(jpumva<=-0.95)passPU=false;
+                        }
 
-                                if (verbose) cout<<"checking overlap with fsr photons..."<<endl;                                        
-                                bool isDeltaR = true;
-                                for(unsigned int phIndex = 0; phIndex < selectedFsrPhotons.size(); phIndex++) {
-                                    tempDeltaR = deltaR(patjet.eta(),patjet.phi(),selectedFsrPhotons[phIndex].eta(),selectedFsrPhotons[phIndex].phi());
-                                    if (tempDeltaR < 0.5) isDeltaR = false;
-                                }
+                        if(jetHelper.patjetID(correctedJet)==1 && passPU) {
 
-                                if(correctedJet.pt() > pt_cut && fabs(patjet.eta()) < eta_cut && isDeltaR) {
+                            if (verbose) cout<<"passed pf jet id and pu jet id"<<endl;
+                            if (verbose) cout<<"checking overlap with fsr photons..."<<endl;                                        
+                            bool isDeltaR = true;
+                            for(unsigned int phIndex = 0; phIndex < selectedFsrPhotons.size(); phIndex++) {
+                                tempDeltaR = deltaR(patjet.eta(),patjet.phi(),selectedFsrPhotons[phIndex].eta(),selectedFsrPhotons[phIndex].phi());
+                                if (tempDeltaR < 0.5) isDeltaR = false;
+                            }
+
+                            if(correctedJet.pt() > pt_cut && fabs(patjet.eta()) < eta_cut && isDeltaR) {
                                     
-                                    // apply scale factor for PU Jets by demoting 1-data/MC % of jets jets in certain pt/eta range 
-                                    // Configured now that SF is 1.0
-                                    if (verbose) cout<<"adding pu jet scale factors..."<<endl;       
-                                    bool dropit=false;
-                                    if (abs(patjet.eta())>3.0) {
-                                        TRandom3 rand;
-                                        rand.SetSeed(abs(static_cast<int>(sin(patjet.phi())*100000)));
-                                        float coin = rand.Uniform(1.); 
-                                        if (correctedJet.pt()>=20.0 && correctedJet.pt()<36.0 && coin>1.0) dropit=true;
-                                        if (correctedJet.pt()>=36.0 && correctedJet.pt()<50.0 && coin>1.0) dropit=true;
-                                        if (correctedJet.pt()>=50.0 && coin>1.0) dropit=true;
-                                    }                                        
+                                // apply scale factor for PU Jets by demoting 1-data/MC % of jets jets in certain pt/eta range 
+                                // Configured now that SF is 1.0
+                                if (verbose) cout<<"adding pu jet scale factors..."<<endl;       
+                                bool dropit=false;
+                                if (abs(patjet.eta())>3.0) {
+                                    TRandom3 rand;
+                                    rand.SetSeed(abs(static_cast<int>(sin(patjet.phi())*100000)));
+                                    float coin = rand.Uniform(1.); 
+                                    if (correctedJet.pt()>=20.0 && correctedJet.pt()<36.0 && coin>1.0) dropit=true;
+                                    if (correctedJet.pt()>=36.0 && correctedJet.pt()<50.0 && coin>1.0) dropit=true;
+                                    if (correctedJet.pt()>=50.0 && coin>1.0) dropit=true;
+                                }                                        
                                     
-                                    if (!dropit) {
-                                        if (verbose) cout<<"adding jet candidate, pt: "<<correctedJet.pt()<<" eta: "<<correctedJet.eta()<<endl;
-                                        goodJets.push_back(correctedJet);
-                                    } // pu jet scale factor
-
-                                } // pass deltaR jet/fsr photons		    
-                            } // pass loose pf jet id
-                        } // pass pu jet id
+                                if (!dropit) {
+                                    if (verbose) cout<<"adding jet candidate, pt: "<<correctedJet.pt()<<" eta: "<<correctedJet.eta()<<endl;
+                                    goodJets.push_back(correctedJet);
+                                } // pu jet scale factor
+                                
+                            } // pass deltaR jet/fsr photons		    
+                        } // pass loose pf jet id and pu jet id
                     } // all jets
       
                     if( foundHiggsCandidate ){
@@ -1413,6 +1436,8 @@ void UFHZZ4LAna::bookPassedEventTree(TString treeName, TTree *tree)
     tree->Branch("lep_isoNH",&lep_isoNH);
     tree->Branch("lep_isoCH",&lep_isoCH);
     tree->Branch("lep_isoPhot",&lep_isoPhot);
+    tree->Branch("lep_isoPU",&lep_isoPU);
+    tree->Branch("lep_isoPUcorr",&lep_isoPUcorr);
     tree->Branch("lep_RelIso",&lep_RelIso);
     tree->Branch("muRho",&muRho,"muRho/D");
     tree->Branch("elRho",&elRho,"elRho/D");
@@ -1479,6 +1504,7 @@ void UFHZZ4LAna::bookPassedEventTree(TString treeName, TTree *tree)
     jet_p4_jerdn = new TClonesArray("TLorentzVector", 20);
     tree->Branch("jet_p4_jerdn","TClonesArray", &jet_p4_jesdn, 128000, 0);
 
+    tree->Branch("jet_pumva",&jet_pumva);
     tree->Branch("njets_pt30_eta4p7",&njets_pt30_eta4p7,"njets_pt30_eta4p7/I");
     tree->Branch("njets_pt30_eta4p7_jesup",&njets_pt30_eta4p7_jesup,"njets_pt30_eta4p7_jesup/I");
     tree->Branch("njets_pt30_eta4p7_jesdn",&njets_pt30_eta4p7_jesdn,"njets_pt30_eta4p7_jesdn/I");
@@ -1790,7 +1816,7 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
         jecunc->setJetPt(jet_jer->Pt());
         jecunc->setJetEta(goodJets[k].eta());
         double jecunc_dn = 1.0-jecunc->getUncertainty(false);
-      
+
         if (jet_jer->Pt() > 30.0 && fabs(goodJets[k].eta())<4.7) {
             if (isDeltaR_eta4p7) { 
                 njets_pt30_eta4p7++;
@@ -1800,6 +1826,7 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
                 }
                 finalVBFJets.push_back(goodJets[k]);
                 new ( (*jet_p4)[njets_pt30_eta4p7] ) TLorentzVector(jet_jer->Px(), jet_jer->Py(), jet_jer->Pz(), jet_jer->Energy());
+                jet_pumva.push_back(goodJets[k].userFloat("pileupJetId:fullDiscriminant"));
             }
         }
         
@@ -2284,27 +2311,36 @@ bool UFHZZ4LAna::findZ(std::vector<pat::PFParticle> photons, std::vector<double>
 
     if (verbose) cout<<"i="<<index1<<" id: "<<lep_id[index1]<<"pt: "<<li.Pt()<<endl;
     if (verbose) cout<<"j="<<index2<<" id: "<<lep_id[index2]<<"pt: "<<lj.Pt()<<endl;
-
+    if (verbose) cout<<" considering "<<photons.size()<<" fsr photons"<<endl;
+    
     if( !photons.empty() && photons.size() > 0 && doFsrRecovery) {
 
         for(unsigned int i = 0; i < photons.size(); i++) {
 
+
             if( takenZ1 == (int)i ) continue;
+
+            double photoniso = photons[i].userFloat("fsrPhotonPFIsoChHad03pt02")+photons[i].userFloat("fsrPhotonPFIsoNHad03")
+                +photons[i].userFloat("fsrPhotonPFIsoPhoton03")
+                +photons[i].userFloat("fsrPhotonPFIsoChHadPU03pt02");
+
+            if (verbose) cout<<i<<" pt: "<<photons[i].pt()<<" iso: "<<photoniso<<endl;
 
             //pt, eta checks
             if( photons[i].pt() < 4 ) continue;
             if( photons[i].eta() > 2.4 ) continue;
-            if( (photons[i].userFloat("fsrPhotonPFIsoChHad03pt02")+photons[i].userFloat("fsrPhotonPFIsoNHad03")
-                 +photons[i].userFloat("fsrPhotonPFIsoPhoton03")
-                 +photons[i].userFloat("fsrPhotonPFIsoChHadPU03pt02"))/photons[i].pt() > photIsoCut) continue;
-
+            if( photoniso/photons[i].pt() > photIsoCut) { 
+                if (verbose) cout<<"fsr photon "<<i<<" failed isolation cuts"<<endl;
+                continue;
+            }
             //calc both deltaRs
             deltaR1 = deltaR(li.Eta(),li.Phi(),photons[i].eta(),photons[i].phi());
             deltaR2 = deltaR(lj.Eta(),lj.Phi(),photons[i].eta(),photons[i].phi());
 
             //associate with closest lepton
-            if( deltaR1 < deltaR2 ){ assocLepTmp = 1; smallestDeltaR = deltaR1;}
-            else{ assocLepTmp = 2; smallestDeltaR = deltaR2;}
+            if( deltaR1 < deltaR2 ){ assocLepTmp = index1; smallestDeltaR = deltaR1;}
+            else{ assocLepTmp = index2; smallestDeltaR = deltaR2;}
+            if (verbose) cout<<"smallestDeltaR: "<<smallestDeltaR<<" deltaRVec[i]: "<<deltaRVec[i]<<endl;
             if( smallestDeltaR > 0.5 || smallestDeltaR > deltaRVec[i] ) continue;
             if( photons[i].pt() < photHighestPt ) continue;
 
@@ -2324,17 +2360,17 @@ bool UFHZZ4LAna::findZ(std::vector<pat::PFParticle> photons, std::vector<double>
             if( massDiffPhot < massDiffNoPhot ) {
                 //check iso cone
                 if( deltaR1 < coneSize && deltaR1 > 1e-06){
-                    lep1Iso = (lep_isoCH[index1]+std::max(lep_isoNH[index1]+lep_isoPhot[index1]-lep_isoPU[index1]-photons[i].pt(),0.0))/li.Pt();
+                    lep1Iso = (lep_isoCH[index1]+std::max(lep_isoNH[index1]+lep_isoPhot[index1]-lep_isoPUcorr[index1]-photons[i].pt(),0.0))/li.Pt();
                 }
                 else {
-                    lep1Iso = (lep_isoCH[index1]+std::max(lep_isoNH[index1]+lep_isoPhot[index1]-lep_isoPU[index1],0.0))/li.Pt();
+                    lep1Iso = (lep_isoCH[index1]+std::max(lep_isoNH[index1]+lep_isoPhot[index1]-lep_isoPUcorr[index1],0.0))/li.Pt();
                 }
 
                 if( deltaR2 < coneSize && deltaR2 > 1e-06){
-                    lep2Iso = (lep_isoCH[index2]+std::max(lep_isoNH[index2]+lep_isoPhot[index2]-lep_isoPU[index2]-photons[i].pt(),0.0))/lj.Pt();
+                    lep2Iso = (lep_isoCH[index2]+std::max(lep_isoNH[index2]+lep_isoPhot[index2]-lep_isoPUcorr[index2]-photons[i].pt(),0.0))/lj.Pt();
                 }
                 else {
-                    lep2Iso = (lep_isoCH[index2]+std::max(lep_isoNH[index2]+lep_isoPhot[index2]-lep_isoPU[index2],0.0))/lj.Pt();
+                    lep2Iso = (lep_isoCH[index2]+std::max(lep_isoNH[index2]+lep_isoPhot[index2]-lep_isoPUcorr[index2],0.0))/lj.Pt();
                 }
                 if (verbose) cout<<"new lep1iso: "<<lep1Iso<<" lep2iso: "<<lep2Iso<<" isoCut: "<<isoCut<<endl;
                 if (lep1Iso < isoCut && lep2Iso < isoCut) {
@@ -2353,11 +2389,11 @@ bool UFHZZ4LAna::findZ(std::vector<pat::PFParticle> photons, std::vector<double>
         if(!foundPhot) {
             
             if (verbose) cout<<"did not find fsr photon, try method 2"<<endl;
-            
+            bool useDR = false, usePT = false;            
             for(unsigned int i = 0; i < photons.size(); i++) {
                 //FIXME not sure about the useDR and usePT
-                bool useDR = false, usePT = false;
                 if( takenZ1 == (int)i ) continue;
+                if (verbose) cout<<i<<" pt: "<<photons[i].pt()<<endl;
                 //pt, eta checks
                 if( photons[i].pt() < 2 ) continue;
                 if( photons[i].eta() > 2.4 ) continue;
@@ -2368,9 +2404,11 @@ bool UFHZZ4LAna::findZ(std::vector<pat::PFParticle> photons, std::vector<double>
                 deltaR1 = deltaR(li.Eta(),li.Phi(),photons[i].eta(),photons[i].phi());
                 deltaR2 = deltaR(lj.Eta(),lj.Phi(),photons[i].eta(),photons[i].phi());
                 //associate with closest lepton
-                if( deltaR1 < deltaR2 ){ assocLepTmp = 1; smallestDeltaR = deltaR1;}
-                else{ assocLepTmp = 2; smallestDeltaR = deltaR2;}
-                if( smallestDeltaR > 0.07  || smallestDeltaR > deltaRVec[i] ) continue;
+                if( deltaR1 < deltaR2 ){ assocLepTmp = index1; smallestDeltaR = deltaR1;}
+                else{ assocLepTmp = index2; smallestDeltaR = deltaR2;}
+                if (verbose) cout<<"smallestDeltaR: "<<smallestDeltaR<<" deltaRVec[i] "<<deltaRVec[i]<<" totalSmallestDeltaR: "
+                                 <<totalSmallestDeltaR<<" useDR? "<<useDR<<endl;
+                if( smallestDeltaR > 0.07  || ( abs(smallestDeltaR - deltaRVec[i]) > 1e-4 ) ) continue;
                 if( smallestDeltaR > totalSmallestDeltaR && useDR ) continue;
                 //calc P vectors
                 TLorentzVector phoi;
@@ -2387,16 +2425,16 @@ bool UFHZZ4LAna::findZ(std::vector<pat::PFParticle> photons, std::vector<double>
                 //if its smaller with phot, keep phot
                 if( massDiffPhot < massDiffNoPhot ) {
                     if( deltaR1 < coneSize && deltaR1 > 1e-06){
-                        lep1Iso = (lep_isoCH[index1]+std::max(lep_isoNH[index1]+lep_isoPhot[index1]-lep_isoPU[index1]-photons[i].pt(),0.0))/li.Pt();
+                        lep1Iso = (lep_isoCH[index1]+std::max(lep_isoNH[index1]+lep_isoPhot[index1]-lep_isoPUcorr[index1]-photons[i].pt(),0.0))/li.Pt();
                     }
                     else {
-                        lep1Iso = (lep_isoCH[index1]+std::max(lep_isoNH[index1]+lep_isoPhot[index1]-lep_isoPU[index1],0.0))/li.Pt();
+                        lep1Iso = (lep_isoCH[index1]+std::max(lep_isoNH[index1]+lep_isoPhot[index1]-lep_isoPUcorr[index1],0.0))/li.Pt();
                     }
                     if( deltaR2 < coneSize && deltaR2 > 1e-06){
-                        lep2Iso = (lep_isoCH[index2]+std::max(lep_isoNH[index2]+lep_isoPhot[index2]-lep_isoPU[index2]-photons[i].pt(),0.0))/lj.Pt();
+                        lep2Iso = (lep_isoCH[index2]+std::max(lep_isoNH[index2]+lep_isoPhot[index2]-lep_isoPUcorr[index2]-photons[i].pt(),0.0))/lj.Pt();
                     }
                     else {
-                        lep2Iso = (lep_isoCH[index2]+std::max(lep_isoNH[index2]+lep_isoPhot[index2]-lep_isoPU[index2],0.0))/lj.Pt();
+                        lep2Iso = (lep_isoCH[index2]+std::max(lep_isoNH[index2]+lep_isoPhot[index2]-lep_isoPUcorr[index2],0.0))/lj.Pt();
                     }
                     if (verbose) cout<<"new lep1iso: "<<lep1Iso<<" lep2iso: "<<lep2Iso<<" isoCut: "<<isoCut<<endl;
                     if(lep1Iso < isoCut && lep2Iso < isoCut) {
@@ -2418,8 +2456,8 @@ bool UFHZZ4LAna::findZ(std::vector<pat::PFParticle> photons, std::vector<double>
 
             if (verbose) cout<<"did not find any fsr photons"<<endl;
 
-            lep1Iso = (lep_isoCH[index1]+std::max(lep_isoNH[index1]+lep_isoPhot[index1]-lep_isoPU[index1],0.0))/li.Pt();
-            lep2Iso = (lep_isoCH[index2]+std::max(lep_isoNH[index2]+lep_isoPhot[index2]-lep_isoPU[index2],0.0))/lj.Pt();
+            lep1Iso = (lep_isoCH[index1]+std::max(lep_isoNH[index1]+lep_isoPhot[index1]-lep_isoPUcorr[index1],0.0))/li.Pt();
+            lep2Iso = (lep_isoCH[index2]+std::max(lep_isoNH[index2]+lep_isoPhot[index2]-lep_isoPUcorr[index2],0.0))/lj.Pt();
 
             mll = li+lj;
             if (verbose) cout<<"m(ll): "<<mll.M()<<endl;
@@ -2434,8 +2472,8 @@ bool UFHZZ4LAna::findZ(std::vector<pat::PFParticle> photons, std::vector<double>
     }
     else {
 
-        lep1Iso = (lep_isoCH[index1]+std::max(lep_isoNH[index1]+lep_isoPhot[index1]-lep_isoPU[index1],0.0))/li.Pt();
-        lep2Iso = (lep_isoCH[index2]+std::max(lep_isoNH[index2]+lep_isoPhot[index2]-lep_isoPU[index2],0.0))/lj.Pt();
+        lep1Iso = (lep_isoCH[index1]+std::max(lep_isoNH[index1]+lep_isoPhot[index1]-lep_isoPUcorr[index1],0.0))/li.Pt();
+        lep2Iso = (lep_isoCH[index2]+std::max(lep_isoNH[index2]+lep_isoPhot[index2]-lep_isoPUcorr[index2],0.0))/lj.Pt();
 
         mll = li+lj;
         if (verbose) cout<<"m(ll): "<<mll.M()<<endl;
