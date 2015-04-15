@@ -38,10 +38,12 @@ myfilelist.extend( [
 
 process.source = cms.Source("PoolSource",fileNames = myfilelist,
                              duplicateCheckMode = cms.untracked.string('noDuplicateCheck'),
+                             eventsToProcess = cms.untracked.VEventRange('1:1-1:1000')
+                             #eventsToProcess = cms.untracked.VEventRange('1:506-1:506')
                             )
 
 process.TFileService = cms.Service("TFileService",
-                                   fileName = cms.string("GluGluToHToZZTo4L_M-125_13TeV-powheg-pythia6_PU20bx25_PAT_testAna.root")
+                                   fileName = cms.string("GluGluToHToZZTo4L_M-125_13TeV-powheg-pythia6_PU20bx25_PAT_testAna.root")                              
                                    )
 '''
 process.reCorrectedPatJets = cms.EDProducer("PatJetReCorrector",
@@ -90,8 +92,8 @@ process.AnaAfterHlt = cms.EDAnalyzer('UFHZZ4LAna',
                               elRhoSrc     = cms.untracked.InputTag("fixedGridRhoFastjetAll"),
                               muRhoSrc     = cms.untracked.InputTag("fixedGridRhoFastjetCentralNeutral"),
                               reweightForPU = cms.untracked.bool(True),
-                              verbose = cms.untracked.bool(False)                          
-                              #verbose = cms.untracked.bool(True)                          
+                              #verbose = cms.untracked.bool(False)                          
+                              verbose = cms.untracked.bool(True)                          
                              )
 
 
