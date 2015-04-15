@@ -160,15 +160,11 @@ private:
     virtual void beginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&);
     virtual void endLuminosityBlock(edm::LuminosityBlock const& lumiSeg,edm::EventSetup const& eSetup);
   
-    void findHiggsCandidate(TClonesArray *lep_p4,
-                            std::vector< pat::PFParticle > fsrPhotons, std::vector<double> deltaRVec,
-                            int lep_Hindex[],
-                            std::vector< pat::Muon > &selectedMuons, std::vector< pat::Electron > &selectedElectrons,
+    void findHiggsCandidate(std::vector< pat::Muon > &selectedMuons, std::vector< pat::Electron > &selectedElectrons,
                             std::vector< pat::PFParticle > &selectedFsrPhotons,const edm::Event& iEvent);
 
     void bookResolutionHistograms();
     void fillResolutionHistograms(edm::Handle<edm::View<pat::Muon> > muons);
-    bool findZ(std::vector<pat::PFParticle> photons, std::vector<double> &deltaRVec, TLorentzVector &li, unsigned int &index1, TLorentzVector &lj, unsigned int &index2, int takenZ1, int taken, int assocMuon, TLorentzVector &ZVec, TLorentzVector &photVec, bool &foundPhoton);
   
     //MELA
     HZZ4LAngles angles;
@@ -244,6 +240,7 @@ private:
 
     // Z candidate variables
     TClonesArray *Z_p4;
+    int Z_Hindex[2]; // position of Z1 and Z2 in Z_p4
     double massZ1, massZ2, pTZ1, pTZ2;
 
     // MET
@@ -360,13 +357,12 @@ private:
     vector<int> lep_ptindex;
     vector<pat::Muon> recoMuons;
     vector<pat::Electron> recoElectrons;
+    vector<pat::PFParticle> fsrPhotons; 
+    vector<int> fsrPhotons_lepindex; 
+    vector<double> fsrPhotons_deltaR;
     TLorentzVector HVec, HVecNoFSR, Z1Vec, Z2Vec;
     bool RecoFourMuEvent, RecoFourEEvent, RecoTwoETwoMuEvent, RecoTwoMuTwoEEvent;
-    bool eventPassedPtAndIsoCuts, foundHiggsCandidate, twoLooseIsoLeptons;
-    bool isIsolated, passedSIP3D, passedPtCuts;
-    bool fourLep_Cleaned;
-    bool isRecord; 
-    bool foundZ1;
+    bool foundHiggsCandidate;
 
     // hist container
     std::map<std::string,TH1F*> histContainer_;
@@ -394,7 +390,7 @@ private:
     double mH;
     double crossSection, filterEff, Lumi;
     bool weightEvents;
-    double isoCut, earlyIsoCut, sip3dCut;
+    double isoCutEl, isoCutMu, earlyIsoCut, sip3dCut;
     double leadingPtCut, subleadingPtCut;
     double genIsoCut;
     double _elecPtCut, _muPtCut;
@@ -428,11 +424,11 @@ UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
     muRhoSrc_(iConfig.getUntrackedParameter<edm::InputTag>("muRhoSrc")),
     elRhoSrc_(iConfig.getUntrackedParameter<edm::InputTag>("elRhoSrc")),
     Zmass(91.1876),
-    mZ1Low(iConfig.getUntrackedParameter<double>("mZ1Low",40)),
-    mZ2Low(iConfig.getUntrackedParameter<double>("mZ2Low",12)), // was 12
-    mZ1High(iConfig.getUntrackedParameter<double>("mZ1High",120)),
-    mZ2High(iConfig.getUntrackedParameter<double>("mZ2High",120)),
-    m4lLowCut(iConfig.getUntrackedParameter<double>("m4lLowCut",100)),
+    mZ1Low(iConfig.getUntrackedParameter<double>("mZ1Low",40.0)),
+    mZ2Low(iConfig.getUntrackedParameter<double>("mZ2Low",12.0)), // was 12
+    mZ1High(iConfig.getUntrackedParameter<double>("mZ1High",120.0)),
+    mZ2High(iConfig.getUntrackedParameter<double>("mZ2High",120.0)),
+    m4lLowCut(iConfig.getUntrackedParameter<double>("m4lLowCut",70.0)),
     pt_cut(iConfig.getUntrackedParameter<double>("pt_cut",10.0)),
     eta_cut(iConfig.getUntrackedParameter<double>("eta_cut",4.7)),
     //elecID(iConfig.getUntrackedParameter<std::string>("elecID","mvaNonTrigV0")),
@@ -444,7 +440,8 @@ UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
     filterEff(iConfig.getUntrackedParameter<double>("FilterEff",1.0)),
     Lumi(iConfig.getUntrackedParameter<double>("Lumi",1.0)),
     weightEvents(iConfig.getUntrackedParameter<bool>("weightEvents",false)),
-    isoCut(iConfig.getUntrackedParameter<double>("isoCut",0.4)),
+    isoCutEl(iConfig.getUntrackedParameter<double>("isoCutEl",0.4)),
+    isoCutMu(iConfig.getUntrackedParameter<double>("isoCutMu",0.4)),
     earlyIsoCut(iConfig.getUntrackedParameter<double>("earlyIsoCut",0.4)),
     sip3dCut(iConfig.getUntrackedParameter<double>("sip3dCut",4)),
     leadingPtCut(iConfig.getUntrackedParameter<double>("leadingPtCut",20.0)),
@@ -614,6 +611,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
     // Z candidate variables
     if (Z_p4->GetLast()!=-1) Z_p4->Clear();
+    for (int i=0; i<2; ++i) {Z_Hindex[i]=-1;}
     massZ1=-1.0; massZ2=-1.0; pTZ1=-1.0; pTZ2=-1.0;
 
     // MET
@@ -714,17 +712,15 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
     // Global variables not stored in tree
     lep_pt.clear(); lep_ptid.clear(); lep_ptindex.clear();
-    recoMuons.clear(); recoElectrons.clear();
+    recoMuons.clear(); recoElectrons.clear(); fsrPhotons.clear();
+    fsrPhotons_lepindex.clear(); fsrPhotons_deltaR.clear();
+    HVec.SetPtEtaPhiM(0.0,0.0,0.0,0.0);
+    HVecNoFSR.SetPtEtaPhiM(0.0,0.0,0.0,0.0);
+    Z1Vec.SetPtEtaPhiM(0.0,0.0,0.0,0.0);
+    Z2Vec.SetPtEtaPhiM(0.0,0.0,0.0,0.0);
     RecoFourMuEvent = false; RecoFourEEvent = false;
     RecoTwoETwoMuEvent = false; RecoTwoMuTwoEEvent = false;
-    eventPassedPtAndIsoCuts = false;
     foundHiggsCandidate = false;
-    foundZ1 = false;
-    twoLooseIsoLeptons = false;
-    isIsolated = false;
-    passedSIP3D = false;
-    passedPtCuts = false;
-    isRecord = false; 
 
     // ====================== Do Analysis ======================== //
 
@@ -900,8 +896,8 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 if (verbose) cout<<"begin 2lep mass resolution study"<<endl;
                 vector<pat::Muon> recoIsoMuons;
                 vector<pat::Electron> recoIsoElectrons;	    
-                recoIsoMuons = helper.goodMuons2012_Iso(AllMuons,_muPtCut, muRho, isoCut, PV);
-                recoIsoElectrons = helper.goodElectrons2012_Iso(AllElectrons,_elecPtCut, elRho, isoCut, elecID,PV);	   
+                recoIsoMuons = helper.goodMuons2012_Iso(AllMuons,_muPtCut, muRho, isoCutMu, PV);
+                recoIsoElectrons = helper.goodElectrons2012_Iso(AllElectrons,_elecPtCut, elRho, isoCutEl, elecID,PV);	   
                 PerLepReso->fillHistograms(hContainer_, hContainer2D_, hContainer3D_, recoIsoElectrons, recoIsoMuons, eventWeight, !isMC);
                 if(bStudyDiLeptonResolution) { DiLepReso->fillHistograms(hContainer_, hContainer2D_, recoIsoElectrons, recoIsoMuons, eventWeight, !isMC); }
                 if (verbose) cout<<"finished 2lep mass resolution study"<<endl;
@@ -926,46 +922,81 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
                 // four proper charge flavor combination
                 if(properLep_ID){     
+
                     if (verbose) cout<<"found 2 OSSF lepton pairs"<<endl;
 
                     // FSR Photons
-                    vector<pat::PFParticle> fsrPhotons; 
-                    vector<double> deltaRVec;
                     if(doFsrRecovery) {
-                        if (verbose) cout<<"checking "<<photonsForFsr->size()<<" fsr photon candidates"<<endl;                                    
+
+                        if (verbose) cout<<"checking "<<photonsForFsr->size()<<" fsr photon candidates"<<endl;
+
                         for(edm::View<pat::PFParticle>::const_iterator phot=photonsForFsr->begin(); phot!=photonsForFsr->end(); ++phot) {
 
-                            bool matched = false; double chosenDeltaRPh = 999;
+                            bool matched = false; double minDeltaRFSR = 999.0; int lepindex=-1;
 
-                            for(unsigned int i = 0; i < recoElectrons.size(); i++) {
-                                double tmpDeltaREPh = deltaR(recoElectrons[i].eta(), recoElectrons[i].phi(), phot->eta(), phot->phi());
-                                double fsrDeltaPhi = fabs(deltaPhi(phot->phi(),recoElectrons[i].phi()));
-                                double fsrDeltaEta = fabs(phot->eta()-recoElectrons[i].eta());
+                            if (fabs(phot->eta()) > 2.4) continue;
+                            if (phot->pt()<2.0) continue;
 
-                                if( tmpDeltaREPh < 0.15){matched = true;}	
-                                if( fsrDeltaPhi < 2 && fsrDeltaEta < 0.05 ){matched = true;}
-                                if( tmpDeltaREPh < chosenDeltaRPh ){chosenDeltaRPh = tmpDeltaREPh;}
+                            unsigned int Nleptons = lep_p4->GetLast()+1;
+                            for (unsigned int i=0; i<Nleptons; i++) {
+                                
+                                if (matched) continue;
+                                
+                                TLorentzVector *thisLep;
+                                thisLep = (TLorentzVector*) lep_p4->At(i);
+                                
+                                double fsrDr = deltaR(thisLep->Eta(), thisLep->Phi(), phot->eta(), phot->phi());
+                                double fsrDeltaPhi = fabs(deltaPhi(phot->phi(),thisLep->Phi()));
+                                double fsrDeltaEta = fabs(phot->eta()-thisLep->Eta());
+
+                                if ( abs(lep_id[(int)i])==11) {
+                                    
+                                    fsrDr = deltaR(recoElectrons[lep_ptindex[i]].superCluster()->eta(), recoElectrons[lep_ptindex[i]].superCluster()->phi(), phot->eta(), phot->phi());
+                                    fsrDeltaPhi = fabs(deltaPhi(phot->phi(),recoElectrons[lep_ptindex[i]].superCluster()->phi()));
+                                    fsrDeltaEta = fabs(phot->eta()-recoElectrons[lep_ptindex[i]].superCluster()->eta());
+
+                                    if ( fsrDr<0.15 || (fsrDeltaPhi<2.0 && fsrDeltaEta<0.05) ) { 
+                                        matched=true;
+                                        continue;
+                                    }
+
+                                }
+
+                                if( fsrDr < minDeltaRFSR ) {
+                                    minDeltaRFSR = fsrDr;
+                                    lepindex = (int)i;
+                                }
+
                             }
 
-                            for(unsigned int i = 0; i < recoMuons.size(); i++) {
-                                double tmpDeltaRMPh = deltaR(recoMuons[i].eta(), recoMuons[i].phi(), phot->eta(),phot->phi());
-                                if( tmpDeltaRMPh < chosenDeltaRPh ){chosenDeltaRPh = tmpDeltaRMPh;}
+                            if (matched) continue;
+                            
+                            double photoniso = (phot->userFloat("fsrPhotonPFIsoChHad03pt02")+phot->userFloat("fsrPhotonPFIsoNHad03")
+                                                +phot->userFloat("fsrPhotonPFIsoPhoton03")+phot->userFloat("fsrPhotonPFIsoChHadPU03pt02"))/phot->pt();
+
+                            if (verbose) cout<<"fsr photon cand, pt: "<<phot->pt()<<" eta: "<<phot->eta()<<" phi: "<<phot->phi()
+                                             <<" isoCH: "<<phot->userFloat("fsrPhotonPFIsoChHad03pt02")<<" isoNH: "<<phot->userFloat("fsrPhotonPFIsoNHad03")
+                                             <<" isoPhot: "<<phot->userFloat("fsrPhotonPFIsoPhoton03")<<" isoPU: "<<phot->userFloat("fsrPhotonPFIsoChHadPU03pt02")
+                                             <<" photoniso: "<<photoniso<<" mindDeltaRFSR: "<<minDeltaRFSR<<endl;
+                            
+                            if ( minDeltaRFSR < 0.07 || (phot->pt() > 4.0 && minDeltaRFSR < 0.5 && photoniso<1.0) ) {
+                                if (verbose) cout<<" keeping this photon "<<endl;
+                                fsrPhotons.push_back(*phot); 
+                                fsrPhotons_lepindex.push_back(lepindex);
+                                fsrPhotons_deltaR.push_back(minDeltaRFSR);
                             }
                             
-                            if( (phot->pt() > 2 && chosenDeltaRPh < 0.07) || (phot->pt() > 4 && chosenDeltaRPh < 0.5) ) {
-                                if(!matched && fabs(phot->eta()) < 2.4){ fsrPhotons.push_back(*phot); deltaRVec.push_back(chosenDeltaRPh);}
-                            }
-
                         } // loop over fsr photon candidates
                         if (verbose) cout<<"finished filling fsr photon candidates"<<endl;            
                     } // doFsrRecovery
                     	           
+                    // creat vectors for selected objects
                     vector<pat::Muon> selectedMuons;
                     vector<pat::Electron> selectedElectrons;
                     vector<pat::PFParticle> selectedFsrPhotons;
                     
                     if (verbose) cout<<"begin looking for higgs candidate"<<endl;                    
-                    findHiggsCandidate(lep_p4,fsrPhotons,deltaRVec,lep_Hindex,selectedMuons,selectedElectrons,selectedFsrPhotons,iEvent);
+                    findHiggsCandidate(selectedMuons,selectedElectrons,selectedFsrPhotons,iEvent);
                     if (verbose) cout<<"found higgs candidate? "<<foundHiggsCandidate<<endl;                    
                         
                     //VBF Jets
@@ -1037,97 +1068,80 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                     } // all jets
       
                     if( foundHiggsCandidate ){
+
+                        //M4L Error
+                        if (verbose) cout<<"getting mass errors"<<endl;  
+                        massErrorUCSD = massErr.getMassResolution(selectedElectrons, selectedMuons, selectedFsrPhotons);
+                        massErrorUCSDCorr = massErr.getMassResolutionCorr(selectedElectrons, selectedMuons, selectedFsrPhotons, true, !isMC);
+                        if(RecoFourMuEvent) {
+                            massErrorUF = massErr.calc4muErr(selectedMuons,selectedFsrPhotons,false,!isMC);
+                            massErrorUFCorr = massErr.calc4muErr(selectedMuons,selectedFsrPhotons,true,!isMC);
+                        }
+                        else if (RecoFourEEvent) {
+                            massErrorUF = massErr.calc4eErr(selectedElectrons,selectedFsrPhotons,false,!isMC);
+                            massErrorUFCorr = massErr.calc4eErr(selectedElectrons,selectedFsrPhotons,true,!isMC);                      
+                        }
+                        else if(RecoTwoETwoMuEvent || RecoTwoMuTwoEEvent) { 
+                            massErrorUF = massErr.calc2e2muErr(selectedElectrons,selectedMuons,selectedFsrPhotons,false,!isMC);
+                            massErrorUFCorr = massErr.calc2e2muErr(selectedElectrons,selectedMuons,selectedFsrPhotons,true,!isMC);               
+                        }
                         
-                        if (verbose) cout<<"checking lepton pt cuts"<<endl;  
-                        passedPtCuts = helper.passedPtandEarlyIso(selectedMuons, selectedElectrons, leadingPtCut, subleadingPtCut, 1000, "PF", "dB","PFEffAreaRho", muRho);
+                        if (verbose) cout<<"storing H_p4_noFSR"<<endl; 
+                        if(RecoFourMuEvent) {
+                            math::XYZTLorentzVector tmpHVec;
+                            tmpHVec = selectedMuons[0].p4() + selectedMuons[1].p4() + selectedMuons[2].p4() + selectedMuons[3].p4();
+                            HVecNoFSR.SetPtEtaPhiM(tmpHVec.Pt(),tmpHVec.Eta(),tmpHVec.Phi(),tmpHVec.M());
+                            new ( (*H_p4_noFSR)[0] ) TLorentzVector(HVecNoFSR.Px(),HVecNoFSR.Py(),HVecNoFSR.Pz(),HVecNoFSR.E());
+                        }
+                        else if(RecoFourEEvent) {
+                            math::XYZTLorentzVector tmpHVec;
+                            tmpHVec = selectedElectrons[0].p4() + selectedElectrons[1].p4() + selectedElectrons[2].p4() + selectedElectrons[3].p4();
+                            HVecNoFSR.SetPtEtaPhiM(tmpHVec.Pt(),tmpHVec.Eta(),tmpHVec.Phi(),tmpHVec.M());
+                            new ( (*H_p4_noFSR)[0] ) TLorentzVector(HVecNoFSR.Px(),HVecNoFSR.Py(),HVecNoFSR.Pz(),HVecNoFSR.E());
+                        }
+                        else if(RecoTwoETwoMuEvent || RecoTwoMuTwoEEvent){
+                            math::XYZTLorentzVector tmpHVec;
+                            tmpHVec = selectedMuons[0].p4() + selectedMuons[1].p4() + selectedElectrons[0].p4() + selectedElectrons[1].p4();
+                            HVecNoFSR.SetPtEtaPhiM(tmpHVec.Pt(),tmpHVec.Eta(),tmpHVec.Phi(),tmpHVec.M());
+                            new ( (*H_p4_noFSR)[0] ) TLorentzVector(HVecNoFSR.Px(),HVecNoFSR.Py(),HVecNoFSR.Pz(),HVecNoFSR.E());
+                        }
+                        
+                        //Set All the Variables for Saved Trees --- must be done after variables are available
+                        if (verbose) cout<<"begin setting tree variables"<<endl; 
+                        setTreeVariables(iEvent, iSetup, selectedMuons, selectedElectrons, recoMuons, recoElectrons, goodJets);
+                        if (verbose) cout<<"finshed setting tree variables"<<endl; 
+                        
+                        //mela::computeAngles(P4s[0], tmpIDs[0], P4s[1], tmpIDs[1], P4s[2], tmpIDs[2], P4s[3], tmpIDs[3], cosThetaStar,cosTheta1,cosTheta2,Phi,Phi1);
 
-                        if( passedPtCuts ){
-		  
+                        //Z4lmaxP = helper.largestLepMomentum(L11P4,L12P4,L21P4,L22P4);
+                        //vector<double> thetas = angles.angleBetweenLep(L11P4,L12P4,L21P4,L22P4);
+                        //theta12 = thetas[0]; theta13 = thetas[1]; theta14 = thetas[2];
+                        //thetaPhoton = angles.minAngleOfPhoton(L11P4,L12P4,L21P4,L22P4);
+                        //thetaPhotonZ = angles.angleOfPhotonZframe(L11P4,L12P4,L21P4,L22P4,chargeL3);
+                        //maxMass2Lep = helper.maxMass2l(recoMuons,recoElectrons); 
 
-                            // ========= m2l > 4 cut ========= //
-                            if (verbose) cout<<"checking m2l cuts"<<endl;  
-                            bool fourLep_Cleaned = helper.passedM2lCut_OS(selectedMuons,selectedElectrons,4,10000);
-                            passedQCDcut = helper.passedM2lCut_OS(selectedMuons,selectedElectrons,4,10000);
+                        if(Z2Vec.M() > 0) {
+                            passedZ4lSelection = true;
+                            if(Z2Vec.M() > mZ2Low) passedFullSelection = true;
+                        }
+                        
+                        if(bStudyResolution && bStudyFourLeptonResolution){
+                            if (passedFullSelection) {
+                                FourLepReso->fillHistograms(hContainer_, hContainer2D_, selectedElectrons, selectedMuons, selectedFsrPhotons, eventWeight,!isMC);
+                            }
+                        } // bStudyFourLepResolution
 
-                            if(fourLep_Cleaned){
-
-                                //M4L Error
-                                if (verbose) cout<<"getting mass errors"<<endl;  
-                                massErrorUCSD = massErr.getMassResolution(selectedElectrons, selectedMuons, selectedFsrPhotons);
-                                massErrorUCSDCorr = massErr.getMassResolutionCorr(selectedElectrons, selectedMuons, selectedFsrPhotons, true, !isMC);
-                                if(RecoFourMuEvent) {
-                                    massErrorUF = massErr.calc4muErr(selectedMuons,selectedFsrPhotons,false,!isMC);
-                                    massErrorUFCorr = massErr.calc4muErr(selectedMuons,selectedFsrPhotons,true,!isMC);
-                                }
-                                else if (RecoFourEEvent) {
-                                    massErrorUF = massErr.calc4eErr(selectedElectrons,selectedFsrPhotons,false,!isMC);
-                                    massErrorUFCorr = massErr.calc4eErr(selectedElectrons,selectedFsrPhotons,true,!isMC);                      
-                                }
-                                else if(RecoTwoETwoMuEvent || RecoTwoMuTwoEEvent) { 
-                                    massErrorUF = massErr.calc2e2muErr(selectedElectrons,selectedMuons,selectedFsrPhotons,false,!isMC);
-                                    massErrorUFCorr = massErr.calc2e2muErr(selectedElectrons,selectedMuons,selectedFsrPhotons,true,!isMC);               
-                                }
-
-                                if (verbose) cout<<"storing H_p4_noFSR"<<endl; 
-                                if(RecoFourMuEvent) {
-                                    math::XYZTLorentzVector tmpHVec;
-                                    tmpHVec = selectedMuons[0].p4() + selectedMuons[1].p4() + selectedMuons[2].p4() + selectedMuons[3].p4();
-                                    HVecNoFSR.SetPtEtaPhiM(tmpHVec.Pt(),tmpHVec.Eta(),tmpHVec.Phi(),tmpHVec.M());
-                                    new ( (*H_p4_noFSR)[0] ) TLorentzVector(HVecNoFSR.Px(),HVecNoFSR.Py(),HVecNoFSR.Pz(),HVecNoFSR.E());
-                                }
-                                else if(RecoFourEEvent) {
-                                    math::XYZTLorentzVector tmpHVec;
-                                    tmpHVec = selectedElectrons[0].p4() + selectedElectrons[1].p4() + selectedElectrons[2].p4() + selectedElectrons[3].p4();
-                                    HVecNoFSR.SetPtEtaPhiM(tmpHVec.Pt(),tmpHVec.Eta(),tmpHVec.Phi(),tmpHVec.M());
-                                    new ( (*H_p4_noFSR)[0] ) TLorentzVector(HVecNoFSR.Px(),HVecNoFSR.Py(),HVecNoFSR.Pz(),HVecNoFSR.E());
-                                }
-                                else if(RecoTwoETwoMuEvent || RecoTwoMuTwoEEvent){
-                                    math::XYZTLorentzVector tmpHVec;
-                                    tmpHVec = selectedMuons[0].p4() + selectedMuons[1].p4() + selectedElectrons[0].p4() + selectedElectrons[1].p4();
-                                    HVecNoFSR.SetPtEtaPhiM(tmpHVec.Pt(),tmpHVec.Eta(),tmpHVec.Phi(),tmpHVec.M());
-                                    new ( (*H_p4_noFSR)[0] ) TLorentzVector(HVecNoFSR.Px(),HVecNoFSR.Py(),HVecNoFSR.Pz(),HVecNoFSR.E());
-                                }
-	      
-                                //Set All the Variables for Saved Trees --- must be done after variables are available
-                                if (verbose) cout<<"begin setting tree variables"<<endl; 
-                                setTreeVariables(iEvent, iSetup, selectedMuons, selectedElectrons, recoMuons, recoElectrons, goodJets);
-                                if (verbose) cout<<"finshed setting tree variables"<<endl; 
-
-                                //mela::computeAngles(P4s[0], tmpIDs[0], P4s[1], tmpIDs[1], P4s[2], tmpIDs[2], P4s[3], tmpIDs[3], cosThetaStar,cosTheta1,cosTheta2,Phi,Phi1);
-
-                                //Z4lmaxP = helper.largestLepMomentum(L11P4,L12P4,L21P4,L22P4);
-                                //vector<double> thetas = angles.angleBetweenLep(L11P4,L12P4,L21P4,L22P4);
-                                //theta12 = thetas[0]; theta13 = thetas[1]; theta14 = thetas[2];
-                                //thetaPhoton = angles.minAngleOfPhoton(L11P4,L12P4,L21P4,L22P4);
-                                //thetaPhotonZ = angles.angleOfPhotonZframe(L11P4,L12P4,L21P4,L22P4,chargeL3);
-                                //maxMass2Lep = helper.maxMass2l(recoMuons,recoElectrons); 
-
-                                if(Z2Vec.M() > 0) {
-                                    passedZ4lSelection = true;
-                                    if(Z2Vec.M() > mZ2Low) passedFullSelection = true;
-                                }
-
-                                if(bStudyResolution && bStudyFourLeptonResolution){
-                                    if (passedFullSelection) {
-                                        FourLepReso->fillHistograms(hContainer_, hContainer2D_, selectedElectrons, selectedMuons, selectedFsrPhotons, eventWeight,!isMC);
-                                    }
-                                } // bStudyFourLepResolution
-
-                            }//fourLep_Cleaned
-                            //else {std::cout<<Run<<":"<<LumiSect<<":"<<Event<<" failed fourLep_Cleaned"<<std::endl;}
-                        }//passedPtCuts
-                        //else {std::cout<<Run<<":"<<LumiSect<<":"<<Event<<" failed PtCuts"<<std::endl;}
-                    }//if HC
-                    //else {std::cout<<Run<<":"<<LumiSect<<":"<<Event<<" failed HC"<<std::endl;}
-                }// if 4 properID
-                //else {std::cout<<Run<<":"<<LumiSect<<":"<<Event<<" failed 4 properID"<<std::endl;}
-            }//if 4lepID
-            //else {std::cout<<Run<<":"<<LumiSect<<":"<<Event<<" failed 4ID"<<std::endl;}
+                    } // found higgs candidate 
+                    else { if (verbose) cout<<Run<<":"<<LumiSect<<":"<<Event<<" failed higgs candidate"<<endl;}
+                } // if 4 properID
+                else { if (verbose) cout<<Run<<":"<<LumiSect<<":"<<Event<<" failed 4 properID"<<endl;}
+            } //if 4lepID
+            else { if (verbose) cout<<Run<<":"<<LumiSect<<":"<<Event<<" failed 4ID"<<endl;}
             if (!isMC) passedEventsTree_All->Fill();		  
-        }//if 2lepID
-        //else {std::cout<<Run<<":"<<LumiSect<<":"<<Event<<" failed ID"<<std::endl;}     
-    }//notDuplicate
-    //else {std::cout<<Run<<":"<<LumiSect<<":"<<Event<<" failed notDuplicate"<<std::endl;}
+        } //if 2lepID
+        else { if (verbose) cout<<Run<<":"<<LumiSect<<":"<<Event<<" failed 2ID"<<endl;}
+    } //notDuplicate
+    else { if (verbose) cout<<Run<<":"<<LumiSect<<":"<<Event<<" failed notDuplicate"<<endl;}
     if (isMC) passedEventsTree_All->Fill();
 }
 
@@ -1202,10 +1216,7 @@ UFHZZ4LAna::endLuminosityBlock(edm::LuminosityBlock const& lumiSeg,edm::EventSet
 //Pass empty vectors of pat leptons as selectedMuons and selectedElectrons
 // these will be filled in the function and then useable for more analysis.
 void
-UFHZZ4LAna::findHiggsCandidate(TClonesArray *lep_p4,
-                               std::vector< pat::PFParticle > fsrPhotons, std::vector<double> deltaRVec,
-                               int lep_Hindex[],
-                               std::vector< pat::Muon > &selectedMuons, std::vector< pat::Electron > &selectedElectrons,
+UFHZZ4LAna::findHiggsCandidate(std::vector< pat::Muon > &selectedMuons, std::vector< pat::Electron > &selectedElectrons,
                                std::vector< pat::PFParticle > &selectedFsrPhotons,const edm::Event& iEvent )
 {
 
@@ -1213,153 +1224,351 @@ UFHZZ4LAna::findHiggsCandidate(TClonesArray *lep_p4,
     using namespace pat;
     using namespace std;
 
-    double ZmassDiff = 1000.0;
     const double Zmass = 91.1876;
-    bool foundZ1=false, foundZ2=false;
 
-    int tmpTakenPhotonZ1 = 999;
-    int takenPhotonZ1 = 999;
-    int associatedPh1 = 999, associatedPh2 = 999;
-    int tmpAssociatedPh = 999;
-    TLorentzVector photVecZ1, photVecZ2, tmpPhotVec, tmpZVec;
-    bool foundPhotZ1 = false, foundPhotZ2 = false;
-    bool foundPhot = false;
+    unsigned int Nlep = lep_p4->GetLast()+1;
+    if (verbose) cout<<Nlep<<" leptons in total"<<endl;
 
-
-    unsigned int N = lep_p4->GetLast()+1;
-    if (verbose) cout<<N<<" leptons in total"<<endl;
-
-    // Select Z1 by 2 leptons with same flavor opposite charge
-    // with m(2l) closest to mZ
-    for(unsigned int i=0; i<N; i++){
-        for(unsigned int j=i+1; j<N; j++){
+    // First, make all Z candidates including any FSR photons
+    int n_Zs=0;
+    vector<int> Z_lepindex1;
+    vector<int> Z_lepindex2;
+    vector<int> Z_fsrindex;
+    for(unsigned int i=0; i<Nlep; i++){
+        for(unsigned int j=i+1; j<Nlep; j++){
 
             // same flavor opposite charge
             if((lep_id[i]+lep_id[j])!=0) continue;
 
             TLorentzVector *li, *lj;
             li = (TLorentzVector*) lep_p4->At(i);
-            lj = (TLorentzVector*) lep_p4->At(j);
-
-            if (verbose) cout<<"OSSF pair: i="<<i<<" id1="<<lep_id[i]<<" j="<<j<<" id2="<<lep_id[j]<<" pt1: "<<li->Pt()<<" pt2: "<<lj->Pt()<<endl;    
-
-            if (verbose) cout<<"begin Z1 candidate formation"<<endl;
-            foundZ1 = findZ(fsrPhotons, deltaRVec, *li, i, *lj, j, 999, tmpTakenPhotonZ1, tmpAssociatedPh, tmpZVec, tmpPhotVec, foundPhot);
-            if (verbose) cout<<"found Z1 candidate?"<<foundZ1<<endl;
-            if (!foundZ1) continue;
+            lj = (TLorentzVector*) lep_p4->At(j);            
             
-            if (verbose) cout<<"this m(Z1): "<<tmpZVec.M()<<" best m(Z1): "<<Z1Vec.M()<<endl;
-            double dm = abs(Zmass-tmpZVec.M());
-            if(dm < ZmassDiff ) {
-                ZmassDiff = dm;
-                Z1Vec = tmpZVec;
-                if (li->Pt()>lj->Pt()) {lep_Hindex[0] = i; lep_Hindex[1] = j;}
-                else {lep_Hindex[0] = j; lep_Hindex[1] = i;}                
-                if (verbose) cout<<"fsr? "<<foundPhotZ1<<" new lep_Hindex[0]="<<lep_Hindex[0]<<" lepHindex[1]="<<lep_Hindex[1]<<endl;
-                foundPhotZ1 = foundPhot;
-                if (foundPhotZ1) {
-                    photVecZ1 = tmpPhotVec;                
-                    if(tmpAssociatedPh == 1) associatedPh1 = i;
-                    if(tmpAssociatedPh == 2) associatedPh1 = j;
-                    takenPhotonZ1=tmpTakenPhotonZ1;
-                } // better Z1 candidate has FSR photon
-            } // better Z1 candidate
-        } // lepton i
-    } // lepton j
 
-    if (!foundZ1) return;
+            TLorentzVector lilj = (*li)+(*lj);
 
-    if (verbose) cout<<"best Z1: lep_Hindex[0]="<<lep_Hindex[0]<<" lep_Hindex[1]="<<lep_Hindex[1]<<endl;
-    TLorentzVector *lep_1, *lep_2;
-    lep_1 = (TLorentzVector*) lep_p4->At(lep_Hindex[0]);
-    lep_2 = (TLorentzVector*) lep_p4->At(lep_Hindex[1]);
+            if (verbose) cout<<"OSSF pair: i="<<i<<" id1="<<lep_id[i]<<" j="<<j<<" id2="<<lep_id[j]<<" pt1: "<<li->Pt()<<" pt2: "<<lj->Pt()<<" M: "<<lilj.M()<<endl;    
 
-    if( foundPhotZ1 ) {
-        FSR_Z1 = true; 
-        nFSRPhotons++;
-        new ( (*phofsr_p4)[nFSRPhotons-1] ) TLorentzVector(photVecZ1.Px(),photVecZ1.Py(), photVecZ1.Pz(), photVecZ1.E());
-        phofsr_lepindex.push_back(associatedPh1);
-        TLorentzVector *pho;
-        pho = (TLorentzVector*) phofsr_p4->At(nFSRPhotons-1);
-        TLorentzVector lepfsr;
-        if (associatedPh1==lep_Hindex[0]) lepfsr = (*lep_1)+(*pho);
-        else if (associatedPh1==lep_Hindex[1]) lepfsr = (*lep_2)+(*pho);
-        new ( (*lep_p4_FSR)[associatedPh1] ) TLorentzVector(lepfsr.Px(),lepfsr.Py(),lepfsr.Pz(),lepfsr.E());
 
-    }
+            int phoindex=-1;
+            int goodfsr_Npt4=0;
+            double goodfsr_maxpt=0.0;
+            double goodfsr_mindr=9999.9;
 
-    // Z2 selection
-    double sumPtZ2 = 0, sumPtZ2_tmp = 0;
-    tmpAssociatedPh = 999;
-    for(unsigned int i=0; i<N; i++){
-        for(unsigned int j=i+1; j<N; j++){
+            for (unsigned int p=0; p<fsrPhotons.size(); p++) {
 
-            // same flavor opposite charge
-            if((lep_id[i]+lep_id[j])!=0) continue;
-            // not Z1 leptons
-            if( (int)i == lep_Hindex[0] || (int)i == lep_Hindex[1] || (int)j == lep_Hindex[0] || (int)j == lep_Hindex[1] ) continue;
+                if (!(fsrPhotons_lepindex[(int)p]==(int)i) || (fsrPhotons_lepindex[(int)p]==(int)j)) continue; 
+                
+                TLorentzVector pho;
+                pho.SetPtEtaPhiE(fsrPhotons[p].pt(),fsrPhotons[p].eta(),fsrPhotons[p].phi(),fsrPhotons[p].energy());
 
-            TLorentzVector *li, *lj;
-            li = (TLorentzVector*) lep_p4->At(i);
-            lj = (TLorentzVector*) lep_p4->At(j);
+                TLorentzVector liljpho;
+                liljpho = (*li)+(*lj)+pho;
+                
+                if (verbose) cout<<" fsr photon "<<p<<" mllgam "<<liljpho.M()<<" abs(mllgam-mz)-abs(mll-ms): "<<abs(liljpho.M()-Zmass) - abs(lilj.M()-Zmass)<<endl;
+                if ( liljpho.M()<4.0 || liljpho.M()>100.0 ) continue;
+                if ( abs(liljpho.M()-Zmass) > abs(lilj.M()-Zmass) ) continue;
 
-            double tmpDeltaR=999.0;
-            tmpDeltaR = deltaR(li->Eta(),li->Phi(),lep_1->Eta(),lep_1->Phi());
-            if(tmpDeltaR < 0.02) continue;
-            tmpDeltaR = deltaR(li->Eta(),li->Phi(),lep_2->Eta(),lep_2->Phi());
-            if(tmpDeltaR < 0.02) continue;
-            tmpDeltaR = deltaR(lj->Eta(),lj->Phi(),lep_1->Eta(),lep_1->Phi());
-            if(tmpDeltaR < 0.02) continue;
-            tmpDeltaR = deltaR(lj->Eta(),lj->Phi(),lep_2->Eta(),lep_2->Phi());
-            if(tmpDeltaR < 0.02) continue;
-                    
-            // tmpTakenPhotonZ1 now is just a dummy, needed so we can use the same function findZ() for both Z1 and Z2
-            foundZ2 = findZ(fsrPhotons, deltaRVec, *li, i, *lj, j, takenPhotonZ1, tmpTakenPhotonZ1, tmpAssociatedPh, tmpZVec, tmpPhotVec, foundPhot);
-            sumPtZ2_tmp = li->Pt() + lj->Pt();
+                if (pho.Pt()>4.0) goodfsr_Npt4++;
+
+                // if there's at least one photon with pT > 4 GeV, pick the one with highest pT 
+                if (goodfsr_Npt4>0) {
+                    if (pho.Pt()>goodfsr_maxpt) {
+                        goodfsr_maxpt = pho.Pt();
+                        phoindex=p;
+                    }
+                }
+                // if all photons have pT < 4 GeV, pick the one that has the else  smallestR to its closest lepton
+                if (goodfsr_Npt4==0) {
+                    if (fsrPhotons_deltaR[p]<goodfsr_mindr) {
+                        goodfsr_mindr=fsrPhotons_deltaR[p];
+                        phoindex=p;
+                    }
+                }
+                if (verbose) cout<<"phoindex is: "<<phoindex<<endl;
+            }
             
-            if(sumPtZ2_tmp > sumPtZ2 && foundZ2) {
-                sumPtZ2 = sumPtZ2_tmp;
-                Z2Vec = tmpZVec;
-                if (li->Pt() > lj->Pt()){lep_Hindex[2] = (int)i; lep_Hindex[3] = (int)j;}
-                else {lep_Hindex[2] = (int)j; lep_Hindex[3] = (int)i;}
-                foundPhotZ2 = foundPhot;
-                if (foundPhotZ2) {
-                    photVecZ2 = tmpPhotVec;
-                    if(tmpAssociatedPh == 1) associatedPh2 = i;
-                    if(tmpAssociatedPh == 2) associatedPh2 = j;
-                } // better Z2 has fsr photon
-            } // better Z2
-        } // lepton j
-    } // lepton i
+            TLorentzVector Z;
+            if (phoindex>0) {
+                TLorentzVector pho;
+                pho.SetPtEtaPhiE(fsrPhotons[phoindex].pt(),fsrPhotons[phoindex].eta(),fsrPhotons[phoindex].phi(),fsrPhotons[phoindex].energy());
+                Z = (*li)+(*lj)+pho;
+            } else {
+                Z = (*li)+(*lj);
+            }
+
+            if (verbose) cout<<"this Z mass: "<<Z.M()<<" mZ2Low: "<<mZ2Low<<endl;
+
+            if (Z.M()>mZ2Low) {
+                n_Zs++;
+                new ( (*Z_p4)[n_Zs-1] ) TLorentzVector(Z.Px(),Z.Py(),Z.Pz(),Z.E());
+                Z_fsrindex.push_back(phoindex);
+                Z_lepindex1.push_back(i);
+                Z_lepindex2.push_back(j);
+                if (verbose) cout<<" add Z_fsrindex: "<<phoindex<<" Z_lepindex1: "<<i<<" Z_lepindex2: "<<j<<endl;
+            }
+
+        } // lep i
+    } // lep j
+
+
+    // Consider all ZZ candidates
+    double minZ1DeltaM=9999.9;
+    double maxZ2SumPt=0.0;
+    for (int i=0; i<n_Zs; i++) {
+        for (int j=i+1; j<n_Zs; j++) {
+ 
+            int i1 = Z_lepindex1[i]; int i2 = Z_lepindex2[i];                            
+            int j1 = Z_lepindex1[j]; int j2 = Z_lepindex2[j];                            
+
+            TLorentzVector *lep_i1, *lep_i2, *lep_j1, *lep_j2;
+            lep_i1 = (TLorentzVector*) lep_p4->At(i1);
+            lep_i2 = (TLorentzVector*) lep_p4->At(i2);
+            lep_j1 = (TLorentzVector*) lep_p4->At(j1);
+            lep_j2 = (TLorentzVector*) lep_p4->At(j2);
+
+            TLorentzVector *Zi, *Zj;
+            Zi = (TLorentzVector*) Z_p4->At(i);
+            Zj = (TLorentzVector*) Z_p4->At(j);
+
+            if (verbose) cout<<"ZZ candiate Zi->M() "<<Zi->M()<<" Zj->M() "<<Zj->M()<<endl;
+
+            TLorentzVector Z1, Z2;
+            int Z1index, Z2index;
+            int Z1_lepindex[2] = {0,0};
+            int Z2_lepindex[2] = {0,0};
+            double Z1DeltaM, Z2SumPt;
+
+            if (abs(Zi->M()-Zmass)<abs(Zj->M()-Zmass)) { 
+                Z1index = i; Z2index = j;
+                Z1 = (*Zi); Z2 = (*Zj); 
+                if (lep_i1->Pt()>lep_i2->Pt()) { Z1_lepindex[0] = i1;  Z1_lepindex[1] = i2; }
+                else { Z1_lepindex[0] = i2;  Z1_lepindex[1] = i1; }
+                if (lep_j1->Pt()>lep_j2->Pt()) { Z2_lepindex[0] = j1;  Z2_lepindex[1] = j2; }
+                else { Z2_lepindex[0] = j2;  Z2_lepindex[1] = j1; }
+                Z1DeltaM = abs(Zi->M()-Zmass);                
+                Z2SumPt = lep_j1->Pt()+lep_j2->Pt();
+            }
+            else { 
+                Z1index = j; Z2index = i;
+                Z1 = (*Zj); Z2 = (*Zi); 
+                if (lep_j1->Pt()>lep_j2->Pt()) { Z1_lepindex[0] = j1;  Z1_lepindex[1] = j2; }
+                else { Z1_lepindex[0] = j2;  Z1_lepindex[1] = j1; }
+                if (lep_i1->Pt()>lep_i2->Pt()) { Z2_lepindex[0] = i1;  Z2_lepindex[1] = i2; }
+                else { Z2_lepindex[0] = i2;  Z2_lepindex[1] = i1; }
+                Z1DeltaM = abs(Zj->M()-Zmass);
+                Z2SumPt = lep_i1->Pt()+lep_i2->Pt();
+            }
+           
+            // Check Leading and Subleading pt Cut
+            vector<double> allPt;
+            allPt.push_back(lep_i1->Pt()); allPt.push_back(lep_i2->Pt());
+            allPt.push_back(lep_j1->Pt()); allPt.push_back(lep_j2->Pt());
+            std::sort(allPt.begin(), allPt.end());
+            if (verbose) cout<<" leading pt: "<<allPt[3]<<" cut: "<<leadingPtCut<<" subleadingPt: "<<allPt[2]<<" cut: "<<subleadingPtCut<<endl;
+            if (allPt[3]<leadingPtCut || allPt[2]<subleadingPtCut ) continue;
+            
+            // Check dR(li,lj)>0.02 for any i,j
+            vector<double> alldR;
+            alldR.push_back(deltaR(lep_i1->Eta(),lep_i1->Phi(),lep_i2->Eta(),lep_i2->Phi()));
+            alldR.push_back(deltaR(lep_i1->Eta(),lep_i1->Phi(),lep_j1->Eta(),lep_j1->Phi()));
+            alldR.push_back(deltaR(lep_i1->Eta(),lep_i1->Phi(),lep_j2->Eta(),lep_j2->Phi()));
+            alldR.push_back(deltaR(lep_i2->Eta(),lep_i2->Phi(),lep_j1->Eta(),lep_j1->Phi()));
+            alldR.push_back(deltaR(lep_i2->Eta(),lep_i2->Phi(),lep_j2->Eta(),lep_j2->Phi()));
+            alldR.push_back(deltaR(lep_j1->Eta(),lep_j1->Phi(),lep_j2->Eta(),lep_j2->Phi()));            
+            if (verbose) cout<<" minDr: "<<*min_element(alldR.begin(),alldR.end())<<endl;
+            if (*min_element(alldR.begin(),alldR.end())<0.02) continue;
+
+            // Check M(l+,l-)>4.0 GeV for any OS pair
+            // Do not include FSR photons
+            vector<double> allM;
+            TLorentzVector i1i2;
+            i1i2 = (*lep_i1)+(*lep_i2); allM.push_back(i1i2.M());
+            TLorentzVector j1j2;
+            j1j2 = (*lep_j1)+(*lep_j2); allM.push_back(j1j2.M());            
+            if (lep_id[i1]*lep_id[j1]<0) {
+                TLorentzVector i1j1;
+                i1j1 = (*lep_i1)+(*lep_j1); allM.push_back(i1j1.M());
+                TLorentzVector i2j2;
+                i2j2 = (*lep_i2)+(*lep_j2); allM.push_back(i2j2.M());
+            } else {
+                TLorentzVector i1j2;
+                i1j2 = (*lep_i1)+(*lep_j2); allM.push_back(i1j2.M());
+                TLorentzVector i2j1;
+                i2j1 = (*lep_i2)+(*lep_j1); allM.push_back(i2j1.M());
+            }
+            if (verbose) cout<<" min m(l+l-): "<<*min_element(allM.begin(),allM.end())<<endl;
+            if (*min_element(allM.begin(),allM.end())<4.0) {passedQCDcut=false; continue;}
+
+            // Check which leptons include any FSR photons in their isolation cones
+            double coneSize=0.4;
+            double isoFSRi1=0.0, isoFSRi2=0.0, isoFSRj1=0.0, isoFSRj2=0.0;
+            if (Z_fsrindex[i]>0) {
+                int ipho = Z_fsrindex[i];
+                double dR_pho_i1 = deltaR(fsrPhotons[ipho].eta(),fsrPhotons[ipho].phi(),lep_i1->Eta(),lep_i1->Phi());
+                if (dR_pho_i1<coneSize && dR_pho_i1>1e-06) isoFSRi1 += fsrPhotons[ipho].pt();
+                double dR_pho_i2 = deltaR(fsrPhotons[ipho].eta(),fsrPhotons[ipho].phi(),lep_i2->Eta(),lep_i2->Phi());
+                if (dR_pho_i2<coneSize && dR_pho_i2>1e-06) isoFSRi2 += fsrPhotons[ipho].pt();
+                double dR_pho_j1 = deltaR(fsrPhotons[ipho].eta(),fsrPhotons[ipho].phi(),lep_j1->Eta(),lep_j1->Phi());
+                if (dR_pho_j1<coneSize && dR_pho_j1>1e-06) isoFSRj1 += fsrPhotons[ipho].pt();
+                double dR_pho_j2 = deltaR(fsrPhotons[ipho].eta(),fsrPhotons[ipho].phi(),lep_j2->Eta(),lep_j2->Phi());
+                if (dR_pho_j2<coneSize && dR_pho_j2>1e-06) isoFSRj2 += fsrPhotons[ipho].pt();
+            }
+            if (Z_fsrindex[j]>0) {
+                int jpho = Z_fsrindex[j];
+                double dR_pho_i1 = deltaR(fsrPhotons[jpho].eta(),fsrPhotons[jpho].phi(),lep_i1->Eta(),lep_i1->Phi());
+                if (dR_pho_i1<coneSize && dR_pho_i1>1e-06) isoFSRi1 += fsrPhotons[jpho].pt();
+                double dR_pho_i2 = deltaR(fsrPhotons[jpho].eta(),fsrPhotons[jpho].phi(),lep_i2->Eta(),lep_i2->Phi());
+                if (dR_pho_i2<coneSize && dR_pho_i2>1e-06) isoFSRi2 += fsrPhotons[jpho].pt();
+                double dR_pho_j1 = deltaR(fsrPhotons[jpho].eta(),fsrPhotons[jpho].phi(),lep_j1->Eta(),lep_j1->Phi());
+                if (dR_pho_j1<coneSize && dR_pho_j1>1e-06) isoFSRj1 += fsrPhotons[jpho].pt();
+                double dR_pho_j2 = deltaR(fsrPhotons[jpho].eta(),fsrPhotons[jpho].phi(),lep_j2->Eta(),lep_j2->Phi());
+                if (dR_pho_j2<coneSize && dR_pho_j2>1e-06) isoFSRj2 += fsrPhotons[jpho].pt();
+            }
+
+            double isoLi1 = (lep_isoCH[i1]+std::max(lep_isoNH[i1]+lep_isoPhot[i1]-lep_isoPUcorr[i1]-isoFSRi1,0.0))/lep_i1->Pt();
+            double isoLi2 = (lep_isoCH[i2]+std::max(lep_isoNH[i2]+lep_isoPhot[i2]-lep_isoPUcorr[i2]-isoFSRi2,0.0))/lep_i2->Pt();
+            double isoLj1 = (lep_isoCH[j1]+std::max(lep_isoNH[j1]+lep_isoPhot[j1]-lep_isoPUcorr[j1]-isoFSRj1,0.0))/lep_j1->Pt();
+            double isoLj2 = (lep_isoCH[j2]+std::max(lep_isoNH[j2]+lep_isoPhot[j2]-lep_isoPUcorr[j2]-isoFSRj2,0.0))/lep_j2->Pt();
+
+            if (verbose) cout<<"isoLi1: "<<isoLi1<<" isoLi2: "<<isoLi2<<" isoLj1: "<<isoLj1<<" isoLj2: "<<isoLj2<<endl;
+            // Check isolation cut, subtracting any FSR photons
+            if (isoLi1>((abs(lep_id[i1])==11) ? isoCutEl : isoCutMu)) continue;
+            if (isoLi2>((abs(lep_id[i2])==11) ? isoCutEl : isoCutMu)) continue;
+            if (isoLj1>((abs(lep_id[j1])==11) ? isoCutEl : isoCutMu)) continue;
+            if (isoLj2>((abs(lep_id[j2])==11) ? isoCutEl : isoCutMu)) continue;
+
+
+            // Check the "smart cut": !( |mZa-mZ| < |mZ1-mZ| && mZb<12)
+            // only for 4mu or 4e ZZ candidates
+            // consider FSR photons already available in this ZZ candidate
+            bool passSmartCut=true;
+            if ( abs(lep_id[i1])==abs(lep_id[j1])) {
+
+                TLorentzVector Za, Zb;
+
+                TLorentzVector tmpZa, tmpZb;
+                int i_tmpZa, j_tmpZa, i_tmpZb, j_tmpZb;
+                if (lep_id[i1]==lep_id[j1]) {                  
+                    tmpZa = (*lep_i1)+(*lep_j2);
+                    i_tmpZa = i1; j_tmpZa = j2;
+                    tmpZb = (*lep_i2)+(*lep_j1);                    
+                    i_tmpZb = i2; j_tmpZb = j1;
+                } else {
+                    tmpZa = (*lep_i1)+(*lep_j1);
+                    i_tmpZa = i1; j_tmpZa = j1;
+                    tmpZb = (*lep_i2)+(*lep_j2);
+                    i_tmpZb = i2; j_tmpZb = j2;
+                }
+
+                double phopt_i=0.0;
+                double phodr_i=9999.9;
+                if (Z_fsrindex[i]>0 && fsrPhotons_lepindex[Z_fsrindex[i]]==i_tmpZa) {
+                    TLorentzVector pho;
+                    int p = Z_fsrindex[i];
+                    pho.SetPtEtaPhiE(fsrPhotons[p].pt(),fsrPhotons[p].eta(),fsrPhotons[p].phi(),fsrPhotons[p].energy());
+                    TLorentzVector tmpZa_fsr;
+                    tmpZa_fsr = tmpZa+pho;                
+                    if ( tmpZa_fsr.M()>4.0 && tmpZa_fsr.M()<100.0 &&  abs(tmpZa_fsr.M()-Zmass) < abs(tmpZa.M()-Zmass)) {
+                        phopt_i = fsrPhotons[p].pt();
+                        phodr_i = fsrPhotons_deltaR[p];
+                        Za = tmpZa_fsr;
+                    }
+                }
+                if (Z_fsrindex[j]>0 && fsrPhotons_lepindex[Z_fsrindex[j]]==j_tmpZa) {
+                    TLorentzVector pho;
+                    int p = Z_fsrindex[j];
+                    pho.SetPtEtaPhiE(fsrPhotons[p].pt(),fsrPhotons[p].eta(),fsrPhotons[p].phi(),fsrPhotons[p].energy());
+                    TLorentzVector tmpZa_fsr;
+                    tmpZa_fsr = tmpZa+pho;                
+                    if ( tmpZa_fsr.M()>4.0 && tmpZa_fsr.M()<100.0 &&  abs(tmpZa_fsr.M()-Zmass) < abs(tmpZa.M()-Zmass)) {
+                        if ( (max(phopt_i,fsrPhotons[p].pt())>4.0 && fsrPhotons[p].pt()>phopt_i) 
+                             || (max(phopt_i,fsrPhotons[p].pt())<4.0 && fsrPhotons_deltaR[p]<phodr_i) ) { 
+                            Za = tmpZa_fsr;
+                        }
+                    }
+                }
+                phopt_i=0.0;
+                phodr_i=9999.9;
+                if (Z_fsrindex[i]>0 && fsrPhotons_lepindex[Z_fsrindex[i]]==i_tmpZb) {
+                    TLorentzVector pho;
+                    int p = Z_fsrindex[i];
+                    pho.SetPtEtaPhiE(fsrPhotons[p].pt(),fsrPhotons[p].eta(),fsrPhotons[p].phi(),fsrPhotons[p].energy());
+                    TLorentzVector tmpZb_fsr;
+                    tmpZb_fsr = tmpZb+pho;                
+                    if ( tmpZb_fsr.M()>4.0 && tmpZb_fsr.M()<100.0 &&  abs(tmpZb_fsr.M()-Zmass) < abs(tmpZb.M()-Zmass)) {
+                        phopt_i = fsrPhotons[p].pt();
+                        phodr_i = fsrPhotons_deltaR[p];
+                        Zb = tmpZb_fsr;
+                    }
+                }
+                if (Z_fsrindex[j]>0 && fsrPhotons_lepindex[Z_fsrindex[j]]==j_tmpZb) {
+                    TLorentzVector pho;
+                    int p = Z_fsrindex[j];
+                    pho.SetPtEtaPhiE(fsrPhotons[p].pt(),fsrPhotons[p].eta(),fsrPhotons[p].phi(),fsrPhotons[p].energy());
+                    TLorentzVector tmpZb_fsr;
+                    tmpZb_fsr = tmpZb+pho;                
+                    if ( tmpZb_fsr.M()>4.0 && tmpZb_fsr.M()<100.0 &&  abs(tmpZb_fsr.M()-Zmass) < abs(tmpZb.M()-Zmass)) {
+                        if ( (max(phopt_i,fsrPhotons[p].pt())>4.0 && fsrPhotons[p].pt()>phopt_i) 
+                             || (max(phopt_i,fsrPhotons[p].pt())<4.0 && fsrPhotons_deltaR[p]<phodr_i) ) { 
+                            Zb = tmpZb_fsr;
+                        }
+                    }                                           
+                }
+                
+                if ( abs(Za.M()-Zmass)<abs(Zb.M()-Zmass) ) {                   
+                    if (verbose) cout<<"abs(Za.M()-Zmass)-abs(Z1.M()-Zmass): "<<abs(Za.M()-Zmass)-abs(Z1.M()-Zmass)<<" Zb.M(): "<<Zb.M()<<endl;
+                    if ( abs(Za.M()-Zmass)<abs(Z1.M()-Zmass) && Zb.M()<12.0 ) passSmartCut=false;
+                }
+                else {
+                    if (verbose) cout<<"abs(Zb.M()-Zmass)-abs(Z1.M()-Zmass): "<<abs(Zb.M()-Zmass)-abs(Z1.M()-Zmass)<<" Za.M(): "<<Za.M()<<endl;
+                    if ( abs(Zb.M()-Zmass)<abs(Z1.M()-Zmass) && Za.M()<12.0 ) passSmartCut=false;
+                }
+
+            }
+            if (!passSmartCut) continue;
+            
+            if (verbose) cout<<" massZ1: "<<Z1.M()<<" massZ2: "<<Z2.M()<<endl;
+            if ( (Z1.M() < mZ1Low) || (Z1.M() > mZ1High) || (Z2.M() < mZ2Low) || (Z2.M() > mZ2High) ) continue;
+
+            if (verbose) cout<<"good ZZ candidate, Z1DeltaM: "<<Z1DeltaM<<" minZ1DeltaM: "<<minZ1DeltaM<<" Z2SumPt: "<<Z2SumPt<<" maxZ2SumPt: "<<maxZ2SumPt<<endl;
+
+            // Check if this candidate has the best Z1 and highest scalar sum of Z2 lepton pt            
+            if ( Z1DeltaM<minZ1DeltaM ) {
+                minZ1DeltaM = Z1DeltaM;
+                Z1Vec = Z1;
+                Z_Hindex[0] = Z1index;
+                lep_Hindex[0] = Z1_lepindex[0]; 
+                lep_Hindex[1] = Z1_lepindex[1];   
+                if ( Z2SumPt > maxZ2SumPt)  {
+                    maxZ2SumPt = Z2SumPt;
+                    Z2Vec = Z2;
+                    HVec = Z1+Z2;
+                    if (verbose) cout<<" new best candidate: mass4l: "<<HVec.M()<<endl;
+                    if (HVec.M()>m4lLowCut) foundHiggsCandidate=true;
+                    Z_Hindex[1] = Z2index;
+                    lep_Hindex[2] = Z2_lepindex[0]; 
+                    lep_Hindex[3] = Z2_lepindex[1];                   
+                }
+            }
+
+            if (verbose) cout<<"Z_Hindex[0]: "<<Z_Hindex[0]<<" lep_Hindex[0]: "<<lep_Hindex[0]<<" lep_Hindex[1]: "<<lep_Hindex[1]
+                             <<"Z_Hindex[1]: "<<Z_Hindex[1]<<" lep_Hindex[2]: "<<lep_Hindex[2]<<" lep_Hindex[3]: "<<lep_Hindex[3]<<endl;
+
+        } // Zj
+    } // Zi
+
+
+    if(foundHiggsCandidate) {
         
-    if (!foundZ2) return;
+        massZ1 = Z1Vec.M();
+        massZ2 = Z2Vec.M();
+        mass4l = HVec.M();
 
-    TLorentzVector *lep_3, *lep_4;
-    lep_3 = (TLorentzVector*) lep_p4->At(lep_Hindex[2]);
-    lep_4 = (TLorentzVector*) lep_p4->At(lep_Hindex[3]);
+        if (verbose) cout<<" lep_Hindex[0]: "<<lep_Hindex[0]<<" lep_Hindex[1]: "<<lep_Hindex[1]<<" lep_Hindex[2]: "<<lep_Hindex[2]<<" lep_Hindex[3]: "<<lep_Hindex[3]<<endl;
 
-    if( foundPhotZ2 ) {
-        FSR_Z2 = true;
-        nFSRPhotons++;
-        new ( (*phofsr_p4)[nFSRPhotons-1] ) TLorentzVector(photVecZ2.Px(),photVecZ2.Py(), photVecZ2.Pz(), photVecZ2.E());
-        phofsr_lepindex.push_back(associatedPh2);
-        TLorentzVector *pho;
-        pho = (TLorentzVector*) phofsr_p4->At(nFSRPhotons-1);
-        TLorentzVector lepfsr;
-        if (associatedPh2==lep_Hindex[2]) lepfsr = (*lep_3)+(*pho);
-        else if (associatedPh2==lep_Hindex[3]) lepfsr = (*lep_4)+(*pho);
-        new ( (*lep_p4_FSR)[associatedPh2] ) TLorentzVector(lepfsr.Px(),lepfsr.Py(),lepfsr.Pz(),lepfsr.E());
-    }
-
-    //Determine whether a Higgs candidate was formed
-    massZ1 = Z1Vec.M();
-    massZ2 = Z2Vec.M();
-    HVec = Z1Vec + Z2Vec;
-    mass4l = HVec.M();
-
-    if( massZ1 > mZ1Low && massZ1 < mZ1High && massZ2 > mZ2Low && massZ2 < mZ2High) {
-        
-        foundHiggsCandidate = true;
+        if (verbose) cout<<" lep_id[lep_Hindex[0]]: "<<lep_id[lep_Hindex[0]]<<" lep_id[lep_Hindex[1]]: "<<lep_id[lep_Hindex[1]]
+                         <<" lep_id[lep_Hindex[2]]: "<<lep_id[lep_Hindex[2]]<<" lep_id[lep_Hindex[3]]: "<<lep_id[lep_Hindex[3]]<<endl;
 
         if ( abs(lep_id[lep_Hindex[0]])==13 && abs(lep_id[lep_Hindex[2]])==13 ) {
             RecoFourMuEvent = true;
@@ -1388,6 +1597,25 @@ UFHZZ4LAna::findHiggsCandidate(TClonesArray *lep_p4,
             selectedElectrons.push_back(recoElectrons[lep_ptindex[lep_Hindex[1]]]);
             selectedElectrons.push_back(recoElectrons[lep_ptindex[lep_Hindex[2]]]);
             selectedElectrons.push_back(recoElectrons[lep_ptindex[lep_Hindex[3]]]);
+        }
+
+        if (Z_Hindex[0]>0 && Z_fsrindex[Z_Hindex[0]]>0) {
+            nFSRPhotons++;
+            FSR_Z1 = true;
+            int p = Z_fsrindex[Z_Hindex[0]];
+            if (verbose) cout<<"found fsr Z1, Z_Hindex[0] "<<Z_Hindex[0]<<" Z_fsrindex[Z_Hindex[0]] "<<Z_fsrindex[Z_Hindex[0]]<<endl;
+            selectedFsrPhotons.push_back(fsrPhotons[p]);
+            new ( (*phofsr_p4)[nFSRPhotons-1] ) TLorentzVector(fsrPhotons[p].px(),fsrPhotons[p].py(),fsrPhotons[p].pz(),fsrPhotons[p].energy());
+            phofsr_lepindex.push_back(fsrPhotons_lepindex[p]);
+        }
+        if (Z_Hindex[1]>0 && Z_fsrindex[Z_Hindex[1]]>0) {
+            nFSRPhotons++;
+            FSR_Z2 = true;
+            int p = Z_fsrindex[Z_Hindex[1]];
+            if (verbose) cout<<"found fsr Z2, Z_Hindex[1] "<<Z_Hindex[1]<<" Z_fsrindex[Z_Hindex[1]] "<<Z_fsrindex[Z_Hindex[1]]<<endl;
+            selectedFsrPhotons.push_back(fsrPhotons[p]);
+            new ( (*phofsr_p4)[nFSRPhotons-1] ) TLorentzVector(fsrPhotons[p].px(),fsrPhotons[p].py(),fsrPhotons[p].pz(),fsrPhotons[p].energy()); 
+            phofsr_lepindex.push_back(fsrPhotons_lepindex[p]);
         }
 
     }
@@ -1482,6 +1710,7 @@ void UFHZZ4LAna::bookPassedEventTree(TString treeName, TTree *tree)
     // Z candidate variables
     Z_p4 = new TClonesArray("TLorentzVector", 10);
     tree->Branch("Z_p4","TClonesArray", &Z_p4, 128000, 0);
+    tree->Branch("Z_Hindex",&Z_Hindex,"Z_Hindex[2]/I");
     tree->Branch("massZ1",&massZ1,"massZ1/D");
     tree->Branch("massZ2",&massZ2,"massZ2/D");  
     tree->Branch("pTZ1",&pTZ1,"pTZ1/D");
@@ -2289,206 +2518,6 @@ void UFHZZ4LAna::fillResolutionHistograms(edm::Handle<edm::View<pat::Muon> > muo
     //  For Muon Pt Resolution  end
 }
 
-
-////////// Find Z ////////////
-bool UFHZZ4LAna::findZ(std::vector<pat::PFParticle> photons, std::vector<double> &deltaRVec, TLorentzVector &li, unsigned int &index1, TLorentzVector &lj, unsigned int &index2, int takenZ1, int taken, int assocLep, TLorentzVector &ZVec, TLorentzVector &photVec, bool &foundPhoton)
-{
-
-    using namespace std;
-    using namespace pat;
-    using namespace reco;
-
-    double deltaR1, deltaR2, smallestDeltaR, totalSmallestDeltaR = 999;
-    double photHighestPt = 0;
-    TLorentzVector mll, mllgam;
-    bool foundPhot = false;
-    double massDiffPhot = 999, massDiffNoPhot = 999;
-    double coneSize = 0.4;
-    double lep1Iso = 999, lep2Iso = 999;
-    double assocLepTmp = 999;
-    double photIsoCut = 1.0;
-    bool foundZ = false;
-
-    if (verbose) cout<<"i="<<index1<<" id: "<<lep_id[index1]<<"pt: "<<li.Pt()<<endl;
-    if (verbose) cout<<"j="<<index2<<" id: "<<lep_id[index2]<<"pt: "<<lj.Pt()<<endl;
-    if (verbose) cout<<" considering "<<photons.size()<<" fsr photons"<<endl;
-    
-    if( !photons.empty() && photons.size() > 0 && doFsrRecovery) {
-
-        for(unsigned int i = 0; i < photons.size(); i++) {
-
-
-            if( takenZ1 == (int)i ) continue;
-
-            double photoniso = photons[i].userFloat("fsrPhotonPFIsoChHad03pt02")+photons[i].userFloat("fsrPhotonPFIsoNHad03")
-                +photons[i].userFloat("fsrPhotonPFIsoPhoton03")
-                +photons[i].userFloat("fsrPhotonPFIsoChHadPU03pt02");
-
-            if (verbose) cout<<i<<" pt: "<<photons[i].pt()<<" iso: "<<photoniso<<endl;
-
-            //pt, eta checks
-            if( photons[i].pt() < 4 ) continue;
-            if( photons[i].eta() > 2.4 ) continue;
-            if( photoniso/photons[i].pt() > photIsoCut) { 
-                if (verbose) cout<<"fsr photon "<<i<<" failed isolation cuts"<<endl;
-                continue;
-            }
-            //calc both deltaRs
-            deltaR1 = deltaR(li.Eta(),li.Phi(),photons[i].eta(),photons[i].phi());
-            deltaR2 = deltaR(lj.Eta(),lj.Phi(),photons[i].eta(),photons[i].phi());
-
-            //associate with closest lepton
-            if( deltaR1 < deltaR2 ){ assocLepTmp = index1; smallestDeltaR = deltaR1;}
-            else{ assocLepTmp = index2; smallestDeltaR = deltaR2;}
-            if (verbose) cout<<"smallestDeltaR: "<<smallestDeltaR<<" deltaRVec[i]: "<<deltaRVec[i]<<endl;
-            if( smallestDeltaR > 0.5 || smallestDeltaR > deltaRVec[i] ) continue;
-            if( photons[i].pt() < photHighestPt ) continue;
-
-            //calc P vectors
-            TLorentzVector phoi;
-            phoi.SetPtEtaPhiE(photons[i].pt(),photons[i].eta(),photons[i].phi(),photons[i].energy());
-            mllgam = li+lj+phoi;
-            mll = li+lj;
-
-            if (verbose) cout<<"m(llgamma): "<<mllgam.M()<<" m(ll): "<<mll.M()<<endl;
-            //check inv mass
-            if( mllgam.M() < 4 || mllgam.M() > 100) continue;
-            massDiffPhot = fabs(mllgam.M() - Zmass);
-            massDiffNoPhot = fabs(mll.M() - Zmass);
-
-            //if its smaller with phot, keep phot
-            if( massDiffPhot < massDiffNoPhot ) {
-                //check iso cone
-                if( deltaR1 < coneSize && deltaR1 > 1e-06){
-                    lep1Iso = (lep_isoCH[index1]+std::max(lep_isoNH[index1]+lep_isoPhot[index1]-lep_isoPUcorr[index1]-photons[i].pt(),0.0))/li.Pt();
-                }
-                else {
-                    lep1Iso = (lep_isoCH[index1]+std::max(lep_isoNH[index1]+lep_isoPhot[index1]-lep_isoPUcorr[index1],0.0))/li.Pt();
-                }
-
-                if( deltaR2 < coneSize && deltaR2 > 1e-06){
-                    lep2Iso = (lep_isoCH[index2]+std::max(lep_isoNH[index2]+lep_isoPhot[index2]-lep_isoPUcorr[index2]-photons[i].pt(),0.0))/lj.Pt();
-                }
-                else {
-                    lep2Iso = (lep_isoCH[index2]+std::max(lep_isoNH[index2]+lep_isoPhot[index2]-lep_isoPUcorr[index2],0.0))/lj.Pt();
-                }
-                if (verbose) cout<<"new lep1iso: "<<lep1Iso<<" lep2iso: "<<lep2Iso<<" isoCut: "<<isoCut<<endl;
-                if (lep1Iso < isoCut && lep2Iso < isoCut) {
-                    if (verbose) cout<<"taking photon "<<i<<" m(llgam)="<<mllgam.M()<<endl;
-                    foundPhot = true;
-                    taken = (int)i;
-                    photHighestPt = photons[i].pt();                    
-                    photVec.SetPtEtaPhiE(photons[i].pt(),photons[i].eta(),photons[i].phi(),photons[i].energy());
-                    ZVec = mllgam;
-                    assocLep = assocLepTmp;
-                    foundZ = true;
-                }
-            }
-        }
-        
-        if(!foundPhot) {
-            
-            if (verbose) cout<<"did not find fsr photon, try method 2"<<endl;
-            bool useDR = false, usePT = false;            
-            for(unsigned int i = 0; i < photons.size(); i++) {
-                //FIXME not sure about the useDR and usePT
-                if( takenZ1 == (int)i ) continue;
-                if (verbose) cout<<i<<" pt: "<<photons[i].pt()<<endl;
-                //pt, eta checks
-                if( photons[i].pt() < 2 ) continue;
-                if( photons[i].eta() > 2.4 ) continue;
-                if( photons[i].pt() < 4 ) useDR = true;
-                if( photons[i].pt() > 4 ) usePT = true;
-                if( usePT && photons[i].pt() < photHighestPt) continue;
-                //calc both deltaRs
-                deltaR1 = deltaR(li.Eta(),li.Phi(),photons[i].eta(),photons[i].phi());
-                deltaR2 = deltaR(lj.Eta(),lj.Phi(),photons[i].eta(),photons[i].phi());
-                //associate with closest lepton
-                if( deltaR1 < deltaR2 ){ assocLepTmp = index1; smallestDeltaR = deltaR1;}
-                else{ assocLepTmp = index2; smallestDeltaR = deltaR2;}
-                if (verbose) cout<<"smallestDeltaR: "<<smallestDeltaR<<" deltaRVec[i] "<<deltaRVec[i]<<" totalSmallestDeltaR: "
-                                 <<totalSmallestDeltaR<<" useDR? "<<useDR<<endl;
-                if( smallestDeltaR > 0.07  || ( abs(smallestDeltaR - deltaRVec[i]) > 1e-4 ) ) continue;
-                if( smallestDeltaR > totalSmallestDeltaR && useDR ) continue;
-                //calc P vectors
-                TLorentzVector phoi;
-                phoi.SetPtEtaPhiE(photons[i].pt(),photons[i].eta(),photons[i].phi(),photons[i].energy());
-                mllgam = li+lj+phoi;
-                mll = li+lj;
-
-                if (verbose) cout<<"m(llgamma): "<<mllgam.M()<<" m(ll): "<<mll.M()<<endl;
-                //check inv mass
-                if( mllgam.M() < 4 || mllgam.M() > 100) continue;
-                massDiffPhot = fabs(mllgam.M() - Zmass);
-                massDiffNoPhot = fabs(mll.M() - Zmass);
-
-                //if its smaller with phot, keep phot
-                if( massDiffPhot < massDiffNoPhot ) {
-                    if( deltaR1 < coneSize && deltaR1 > 1e-06){
-                        lep1Iso = (lep_isoCH[index1]+std::max(lep_isoNH[index1]+lep_isoPhot[index1]-lep_isoPUcorr[index1]-photons[i].pt(),0.0))/li.Pt();
-                    }
-                    else {
-                        lep1Iso = (lep_isoCH[index1]+std::max(lep_isoNH[index1]+lep_isoPhot[index1]-lep_isoPUcorr[index1],0.0))/li.Pt();
-                    }
-                    if( deltaR2 < coneSize && deltaR2 > 1e-06){
-                        lep2Iso = (lep_isoCH[index2]+std::max(lep_isoNH[index2]+lep_isoPhot[index2]-lep_isoPUcorr[index2]-photons[i].pt(),0.0))/lj.Pt();
-                    }
-                    else {
-                        lep2Iso = (lep_isoCH[index2]+std::max(lep_isoNH[index2]+lep_isoPhot[index2]-lep_isoPUcorr[index2],0.0))/lj.Pt();
-                    }
-                    if (verbose) cout<<"new lep1iso: "<<lep1Iso<<" lep2iso: "<<lep2Iso<<" isoCut: "<<isoCut<<endl;
-                    if(lep1Iso < isoCut && lep2Iso < isoCut) {
-                        if (verbose) cout<<"taking photon "<<i<<" m(llgam)="<<mllgam.M()<<endl;                   
-                        foundPhot = true;
-                        taken = (int)i;
-                        if(useDR) totalSmallestDeltaR = smallestDeltaR;
-                        if(usePT) photHighestPt = photons[i].pt();
-                        photVec.SetPtEtaPhiE(photons[i].pt(),photons[i].eta(),photons[i].phi(),photons[i].energy());
-                        ZVec = mllgam;
-                        assocLep = assocLepTmp;
-                        foundZ = true;
-                    }            
-                }
-            }
-        }
-
-        if(!foundPhot) {
-
-            if (verbose) cout<<"did not find any fsr photons"<<endl;
-
-            lep1Iso = (lep_isoCH[index1]+std::max(lep_isoNH[index1]+lep_isoPhot[index1]-lep_isoPUcorr[index1],0.0))/li.Pt();
-            lep2Iso = (lep_isoCH[index2]+std::max(lep_isoNH[index2]+lep_isoPhot[index2]-lep_isoPUcorr[index2],0.0))/lj.Pt();
-
-            mll = li+lj;
-            if (verbose) cout<<"m(ll): "<<mll.M()<<endl;
-            if (verbose) cout<<"lep1iso: "<<lep1Iso<<" lep2iso: "<<lep2Iso<<" isoCut: "<<isoCut<<endl;
-            if( lep1Iso < isoCut && lep2Iso < isoCut ) {
-                ZVec = li+lj;
-                assocLep = 999;
-                foundPhot = false;
-                foundZ = true;
-            }
-        }
-    }
-    else {
-
-        lep1Iso = (lep_isoCH[index1]+std::max(lep_isoNH[index1]+lep_isoPhot[index1]-lep_isoPUcorr[index1],0.0))/li.Pt();
-        lep2Iso = (lep_isoCH[index2]+std::max(lep_isoNH[index2]+lep_isoPhot[index2]-lep_isoPUcorr[index2],0.0))/lj.Pt();
-
-        mll = li+lj;
-        if (verbose) cout<<"m(ll): "<<mll.M()<<endl;
-        if (verbose) cout<<"lep1iso: "<<lep1Iso<<" lep2iso: "<<lep2Iso<<" isoCut: "<<isoCut<<endl;
-        if( lep1Iso < isoCut && lep2Iso < isoCut ) {
-            ZVec = li+lj;
-            assocLep = 999;
-            foundPhot = false;
-            foundZ = true;
-        }
-    } 
-  
-    foundPhoton = foundPhot;
-    return foundZ;
-} 
 
 // ------------ method fills 'descriptions' with the allowed parameters for the module  ------------
 void
