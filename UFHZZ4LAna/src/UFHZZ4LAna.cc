@@ -1461,8 +1461,8 @@ UFHZZ4LAna::findHiggsCandidate(std::vector< pat::Muon > &selectedMuons, std::vec
                     i_tmpZb = i2; j_tmpZb = j2;
                 }
 
-                double phopt_i=0.0;
-                double phodr_i=9999.9;
+                float phopt_i=0.0;
+                float phodr_i=9999.9;
                 if (Z_fsrindex[i]>0 && fsrPhotons_lepindex[Z_fsrindex[i]]==i_tmpZa) {
                     TLorentzVector pho;
                     int p = Z_fsrindex[i];
