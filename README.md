@@ -57,6 +57,10 @@ chmod +x install.sh
 
       git push origin 
 
+New module for electron MVA ID:
 
+SlimmedElectronMvaIDProducer
 
+The instruction for the module can be found in 
+SlimmedElectronMvaIDProducer/doc/
 
