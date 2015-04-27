@@ -1076,15 +1076,27 @@ std::vector<pat::Muon> HZZ4LHelper::goodMuons2015_noIso(std::vector<pat::Muon> M
   double dzCut = 1;
   /**************************************/
 
+// tight muon = loose muon + pf muon
+
   for(unsigned int i = 0; i < Muons.size(); i++)
-      if( Muons[i].pt() > muPtCut && abs(Muons[i].eta()) < muEtaCut && Muons[i].isPFMuon() == 1 && (Muons[i].isGlobalMuon() || Muons[i].isTrackerMuon() ) ) {
+      if( Muons[i].pt() > muPtCut && abs(Muons[i].eta()) < muEtaCut && 
+          Muons[i].isPFMuon() == 1 && 
+          (Muons[i].isGlobalMuon() || (Muons[i].isTrackerMuon() && Muons[i].numberOfMatches(/*reco::Muon::SegmentArbitration*/) > 0 /*numberOfMatchedStations() > 0*/ ) ) &&
+	  Muons[i].muonBestTrackType() != 2 ) {
+
           if( abs(getSIP3D(Muons[i])) < sip3dCut ) {
+
               if( fabs(Muons[i].muonBestTrack()->dxy(vertex->position())) < dxyCut ) { //miniAOD 
+
                   if( fabs(Muons[i].muonBestTrack()->dz(vertex->position())) < dzCut ) {// miniAOD       
+
                       bestMuons.push_back(Muons[i]);
                   } //else {cout<<"muon "<<i<<" failed dz cut, |dz|="<<fabs(Muons[i].muonBestTrack()->dxy(vertex->position()))<<endl;}
+
               } //else {cout<<"muon "<<i<<" failed dxy cut, |dxz|="<<fabs(Muons[i].muonBestTrack()->dz(vertex->position()))<<endl;}
+
           } //else {cout<<"muon "<<i<<" failed sip cut, |sip|="<<abs(getSIP3D(Muons[i]))<<endl;}
+
       } //else {cout<<"muon "<<i<<" failed pt, eta, or (isGlobal || isTracker)"<<endl;}
 
   return bestMuons;

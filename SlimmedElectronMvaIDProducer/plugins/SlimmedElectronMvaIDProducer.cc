@@ -115,7 +115,7 @@ SlimmedElectronMvaIDProducer::SlimmedElectronMvaIDProducer(const edm::ParameterS
         if (fpMvaWeightFiles.size() > 4) type_ = EGammaMvaEleEstimatorCSA14::kNonTrigPhys14;
         else type_ = EGammaMvaEleEstimatorCSA14::kNonTrig;
 
-        idname = "NoTrig";
+        idname = "NonTrig";
     }
     bool manualCat_ = true;
     

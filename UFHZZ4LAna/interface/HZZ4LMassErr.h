@@ -119,8 +119,12 @@ HZZ4LMassErr::HZZ4LMassErr()
 {
   //declarations
   debug_ = 0;
-  fmu = boost::shared_ptr<TFile>( new TFile("UFHZZAnalysisRun2/UFHZZ4LAna/hists/ebeOverallCorrections.Legacy2013.v0.root") ); 
-  fel = boost::shared_ptr<TFile>( new TFile("UFHZZAnalysisRun2/UFHZZ4LAna/hists/ebeOverallCorrections.Legacy2013.v0.root") );
+  TString fmu_s, fel_s;
+  fmu_s = TString(edm::FileInPath ( "UFHZZAnalysisRun2/UFHZZ4LAna/hists/ebeOverallCorrections.Legacy2013.v0.root" ).fullPath());
+  fel_s = TString(edm::FileInPath ( "UFHZZAnalysisRun2/UFHZZ4LAna/hists/ebeOverallCorrections.Legacy2013.v0.root" ).fullPath());
+
+  fmu = boost::shared_ptr<TFile>( new TFile(fmu_s)); 
+  fel = boost::shared_ptr<TFile>( new TFile(fel_s));
   muon_corr_data = boost::shared_ptr<TH2F>(  (static_cast<TH2F*>(fmu->Get( "mu_reco53x" )->Clone() )) );
   muon_corr_mc = boost::shared_ptr<TH2F>(  (static_cast<TH2F*>(fmu->Get( "mu_mc53x" )->Clone() )) );
   electron_corr_data = boost::shared_ptr<TH2F>(  (static_cast<TH2F*>(fel->Get( "el_reco53x" )->Clone() )) ); 

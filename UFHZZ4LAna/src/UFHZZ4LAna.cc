@@ -402,7 +402,7 @@ private:
     bool bStudyDiLeptonResolution;
     bool bStudyFourLeptonResolution;
     bool verbose;
-
+    bool verbose1;
     // register to the TFileService
     edm::Service<TFileService> fs;
 
@@ -458,7 +458,9 @@ UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
     bStudyResolution(iConfig.getUntrackedParameter<bool>("bStudyResolution",false)),
     bStudyDiLeptonResolution(iConfig.getUntrackedParameter<bool>("bStudyDiLeptonResolution",false)),
     bStudyFourLeptonResolution(iConfig.getUntrackedParameter<bool>("bStudyFourLeptonResolution",false)),
-    verbose(iConfig.getUntrackedParameter<bool>("verbose",false))
+    verbose(iConfig.getUntrackedParameter<bool>("verbose",false)),
+    verbose1(iConfig.getUntrackedParameter<bool>("verbose1",true))
+
 {
   
     if(!isMC){reweightForPU = false;}
@@ -507,10 +509,13 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     Run = iEvent.id().run();
     Event = iEvent.id().event();
     LumiSect = iEvent.id().luminosityBlock();
-    if (verbose) cout<<Run<<":"<<Event<<":"<<LumiSect<<endl;
+
+    if (verbose) {
+       cout<<"Run: " << Run << ",Event: " << Event << ",LumiSect: "<<LumiSect<<endl;
+       }
 
     // ======= Get Collections ======= //
-    if (verbose) cout<<"getting collections"<<endl;
+    if (verbose) {cout<<"getting collections"<<endl;}
 
     // vertex collection
     edm::Handle<reco::VertexCollection> vertex;
@@ -567,21 +572,13 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     edm::Handle<edm::View<pat::Jet> > jets;
     iEvent.getByLabel(jetSrc_,jets);
   
-    edm::Handle<edm::ValueMap<float> > puJetIdMva;
-    iEvent.getByLabel("puJetMva","full53xDiscriminant",puJetIdMva);
-    //iEvent.getByLabel("puJetMva","fullDiscriminant",puJetIdMva);
-
-    edm::Handle<edm::ValueMap<int> > puJetIdFlag;
-    iEvent.getByLabel("puJetMva","full53xId",puJetIdFlag);  
-    //iEvent.getByLabel("puJetMva","fullId",puJetIdFlag);  
-  
     edm::Handle<edm::View<reco::GenJet> > genJets;
     iEvent.getByLabel("slimmedGenJets", genJets);
 
     // ============ Initialize Variables ============= //
 
     // Event Variables
-    if (verbose) cout<<"clear variables"<<endl;
+    if (verbose) {cout<<"clear variables"<<endl;}
     nVtx = -1.0;
     finalState = -1;
     passedFullSelection=false; passedZ4lSelection=false; passedQCDcut=false;
@@ -706,7 +703,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     GENabsrapidity_leadingjet_pt30_eta4p7=-1.0;
     GENabsdeltarapidity_hleadingjet_pt30_eta4p7=-1.0;
 
-    if (verbose) cout<<"clear other variables"<<endl;
+    if (verbose) {cout<<"clear other variables"<<endl; }
     // Resolution
     massErrorUCSD=-1.0; massErrorUCSDCorr=-1.0; massErrorUF=-1.0; massErrorUFCorr=-1.0; massErrorUFADCorr=-1.0;
 
@@ -729,7 +726,9 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     if(isMC && reweightForPU) {        
         edm::Handle<std::vector< PileupSummaryInfo > >  PupInfo;
         iEvent.getByLabel(edm::InputTag("addPileupInfo"), PupInfo);      
+
         if (verbose) cout<<"got pileup info"<<endl;
+
         std::vector<PileupSummaryInfo>::const_iterator PVI;      
         int npv = -1;
         for(PVI = PupInfo->begin(); PVI != PupInfo->end(); ++PVI) {
@@ -743,13 +742,13 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         histContainer_["NINTERACT_RW"]->Fill(npv,pileupWeight);
     } else { pileupWeight = 1.0;}   
     eventWeight = pileupWeight;
-    if (verbose) cout<<"finished pileup reweighting"<<endl;
+    if (verbose) {cout<<"finished pileup reweighting"<<endl; }
     
 
     if(isMC) {
         if (verbose) cout<<"setting gen variables"<<endl;       
         setGENVariables(genParticles,genJets); 
-        if (verbose) cout<<"finshed setting gen variables"<<endl;       
+        if (verbose) { cout<<"finshed setting gen variables"<<endl;  }
     }
 
     //Check for duplicate events in data
@@ -766,18 +765,18 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
             eventVec.push_back(Event);
         }      
     }
-    if (verbose) cout<<"finished checking duplicates"<<endl;       
+    if (verbose) { cout<<"finished checking duplicates"<<endl;}
 
     if( notDuplicateEvent && !vertex->empty()) {
     
         //N Vertex 
-        if (verbose) cout<<"fill nvtx histogram"<<endl;       
+        if (verbose) {cout<<"fill nvtx histogram"<<endl;}
         nVtx = vertex->size();
         histContainer_["NVTX"]->Fill(nVtx);
         histContainer_["NVTX_RW"]->Fill(nVtx,pileupWeight);
 
         //MET
-        if (verbose) cout<<"get met value"<<endl;       
+        if (verbose) {cout<<"get met value"<<endl;}
         met = mets->empty() ? 0 : (*mets)[0].et();
 
         if (verbose) cout<<"start lepton analysis"<<endl;           
@@ -858,21 +857,20 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 lep_Sip.push_back(helper.getSIP3D(recoMuons[lep_ptindex[i]]));            
                 lep_genindex.push_back(-1.0);
             }
-            if (verbose) cout<<" RelIso: "<<lep_RelIso[i]<<" isoCH: "<<lep_isoCH[i]<<" isoNH: "<<lep_isoNH[i]
-                             <<" isoPhot: "<<lep_isoPhot[i]<<" isoPUcorr: "<<lep_isoPUcorr[i]<<" Sip: "<<lep_Sip[i]<<endl;
+            if (verbose) {cout<<" RelIso: "<<lep_RelIso[i]<<" isoCH: "<<lep_isoCH[i]<<" isoNH: "<<lep_isoNH[i]
+                              <<" isoPhot: "<<lep_isoPhot[i]<<" isoPUcorr: "<<lep_isoPUcorr[i]<<" Sip: "<<lep_Sip[i]<<endl;}
         }
 
         // GEN matching
         if(isMC) {
             if (verbose) cout<<"begin gen matching"<<endl;
-            // for each reco lepton find the nearest status 1 gen lepton with same ID
+            // for each reco lepton find the nearest gen lepton with same ID
             for(unsigned int i = 0; i < lep_pt.size(); i++) {
 
                 double minDr=9999.0;
 
                 for (unsigned int j = 0; j < GENlep_id.size(); j++) {
 
-                    //if (GENlep_status[j]!=1) continue;
                     if (GENlep_id[j]!=lep_id[i]) continue;
                     TLorentzVector *reco, *gen;
                     reco = (TLorentzVector*) lep_p4->At(i);
@@ -886,7 +884,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
                 } // all gen leptons 
             } // all reco leptons
-            if (verbose) cout<<"finished gen matching"<<endl;
+            if (verbose) {cout<<"finished gen matching"<<endl;}
         } //isMC
 
         if( (recoMuons.size() + recoElectrons.size()) >= 2 ){
@@ -900,7 +898,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 recoIsoElectrons = helper.goodElectrons2012_Iso(AllElectrons,_elecPtCut, elRho, isoCutEl, elecID,PV);	   
                 PerLepReso->fillHistograms(hContainer_, hContainer2D_, hContainer3D_, recoIsoElectrons, recoIsoMuons, eventWeight, !isMC);
                 if(bStudyDiLeptonResolution) { DiLepReso->fillHistograms(hContainer_, hContainer2D_, recoIsoElectrons, recoIsoMuons, eventWeight, !isMC); }
-                if (verbose) cout<<"finished 2lep mass resolution study"<<endl;
+                if (verbose) {cout<<"finished 2lep mass resolution study"<<endl;}// cout << "" << endl;}
             }
 
             if((recoMuons.size() + recoElectrons.size()) >= 4 ) {
@@ -923,7 +921,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 // four proper charge flavor combination
                 if(properLep_ID){     
 
-                    if (verbose) cout<<"found 2 OSSF lepton pairs"<<endl;
+                    if (verbose) {cout<<"found 2 OSSF lepton pairs"<<endl;}
 
                     // FSR Photons
                     if(doFsrRecovery) {
@@ -971,13 +969,12 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
                             if (matched) continue;
                             
-                            double photoniso = (phot->userFloat("fsrPhotonPFIsoChHad03pt02")+phot->userFloat("fsrPhotonPFIsoNHad03")
-                                                +phot->userFloat("fsrPhotonPFIsoPhoton03")+phot->userFloat("fsrPhotonPFIsoChHadPU03pt02"))/phot->pt();
-
-                            if (verbose) cout<<"fsr photon cand, pt: "<<phot->pt()<<" eta: "<<phot->eta()<<" phi: "<<phot->phi()
-                                             <<" isoCH: "<<phot->userFloat("fsrPhotonPFIsoChHad03pt02")<<" isoNH: "<<phot->userFloat("fsrPhotonPFIsoNHad03")
-                                             <<" isoPhot: "<<phot->userFloat("fsrPhotonPFIsoPhoton03")<<" isoPU: "<<phot->userFloat("fsrPhotonPFIsoChHadPU03pt02")
-                                             <<" photoniso: "<<photoniso<<" mindDeltaRFSR: "<<minDeltaRFSR<<endl;
+                            double photoniso = (phot->userFloat("fsrPhotonPFIsoChHadPUNoPU03pt02")+phot->userFloat("fsrPhotonPFIsoNHadPhoton03"))/phot->pt();
+                            
+                            if ( verbose) cout<<"fsr photon cand, pt: "<<phot->pt()<<" eta: "<<phot->eta()<<" phi: "<<phot->phi()
+                                              <<" isoCHPUNoPU: "<<phot->userFloat("fsrPhotonPFIsoChHadPUNoPU03pt02")
+                                              <<" isoNHPhoton: "<<phot->userFloat("fsrPhotonPFIsoNHadPhoton03")
+                                              <<" photoniso: "<<photoniso<<" mindDeltaRFSR: "<<minDeltaRFSR<<endl;
                             
                             if ( minDeltaRFSR < 0.07 || (phot->pt() > 4.0 && minDeltaRFSR < 0.5 && photoniso<1.0) ) {
                                 if (verbose) cout<<" keeping this photon "<<endl;
@@ -987,9 +984,9 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                             }
                             
                         } // loop over fsr photon candidates
-                        if (verbose) cout<<"finished filling fsr photon candidates"<<endl;            
+                        if (verbose) {cout<<"finished filling fsr photon candidates"<<endl;}
                     } // doFsrRecovery
-                    	           
+                    
                     // creat vectors for selected objects
                     vector<pat::Muon> selectedMuons;
                     vector<pat::Electron> selectedElectrons;
@@ -997,7 +994,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                     
                     if (verbose) cout<<"begin looking for higgs candidate"<<endl;                    
                     findHiggsCandidate(selectedMuons,selectedElectrons,selectedFsrPhotons,iEvent);
-                    if (verbose) cout<<"found higgs candidate? "<<foundHiggsCandidate<<endl;                    
+                    if (verbose) {cout<<"found higgs candidate? "<<foundHiggsCandidate<<endl; }
                         
                     //VBF Jets
                     vector<pat::Jet> goodJets;
@@ -1066,7 +1063,8 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                             } // pass deltaR jet/fsr photons		    
                         } // pass loose pf jet id and pu jet id
                     } // all jets
-      
+
+
                     if( foundHiggsCandidate ){
 
                         //M4L Error
@@ -1144,6 +1142,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     else { if (verbose) cout<<Run<<":"<<LumiSect<<":"<<Event<<" failed notDuplicate"<<endl;}
     if (isMC) passedEventsTree_All->Fill();
 }
+
 
 
 // ------------ method called once each job just before starting event loop  ------------
@@ -1234,11 +1233,13 @@ UFHZZ4LAna::findHiggsCandidate(std::vector< pat::Muon > &selectedMuons, std::vec
     vector<int> Z_lepindex1;
     vector<int> Z_lepindex2;
     vector<int> Z_fsrindex;
+
     for(unsigned int i=0; i<Nlep; i++){
         for(unsigned int j=i+1; j<Nlep; j++){
 
             // same flavor opposite charge
             if((lep_id[i]+lep_id[j])!=0) continue;
+
 
             TLorentzVector *li, *lj;
             li = (TLorentzVector*) lep_p4->At(i);
@@ -1247,8 +1248,11 @@ UFHZZ4LAna::findHiggsCandidate(std::vector< pat::Muon > &selectedMuons, std::vec
 
             TLorentzVector lilj = (*li)+(*lj);
 
-            if (verbose) cout<<"OSSF pair: i="<<i<<" id1="<<lep_id[i]<<" j="<<j<<" id2="<<lep_id[j]<<" pt1: "<<li->Pt()<<" pt2: "<<lj->Pt()<<" M: "<<lilj.M()<<endl;    
+            if (verbose) {
 
+  	       cout<<"OSSF pair: i="<<i<<" id1="<<lep_id[i]<<" j="<<j<<" id2="<<lep_id[j]<<" pt1: "<<li->Pt()<<" pt2: "<<lj->Pt()<<" M: "<<lilj.M()<<endl;    
+	
+}
 
             int phoindex=-1;
             int goodfsr_Npt4=0;
@@ -1257,15 +1261,15 @@ UFHZZ4LAna::findHiggsCandidate(std::vector< pat::Muon > &selectedMuons, std::vec
 
             for (unsigned int p=0; p<fsrPhotons.size(); p++) {
 
-                if (!(fsrPhotons_lepindex[(int)p]==(int)i) || (fsrPhotons_lepindex[(int)p]==(int)j)) continue; 
-                
+                if (!((fsrPhotons_lepindex[(int)p]==(int)i) || (fsrPhotons_lepindex[(int)p]==(int)j))) continue;
+
                 TLorentzVector pho;
                 pho.SetPtEtaPhiE(fsrPhotons[p].pt(),fsrPhotons[p].eta(),fsrPhotons[p].phi(),fsrPhotons[p].energy());
 
                 TLorentzVector liljpho;
                 liljpho = (*li)+(*lj)+pho;
                 
-                if (verbose) cout<<" fsr photon "<<p<<" mllgam "<<liljpho.M()<<" abs(mllgam-mz)-abs(mll-ms): "<<abs(liljpho.M()-Zmass) - abs(lilj.M()-Zmass)<<endl;
+                if (verbose) cout<<" fsr photon "<<p<<" mllgam "<<liljpho.M()<<" abs(mllgam-mz)-abs(mll-mz): "<<abs(liljpho.M()-Zmass) - abs(lilj.M()-Zmass)<<endl;
                 if ( liljpho.M()<4.0 || liljpho.M()>100.0 ) continue;
                 if ( abs(liljpho.M()-Zmass) > abs(lilj.M()-Zmass) ) continue;
 
@@ -1278,7 +1282,7 @@ UFHZZ4LAna::findHiggsCandidate(std::vector< pat::Muon > &selectedMuons, std::vec
                         phoindex=p;
                     }
                 }
-                // if all photons have pT < 4 GeV, pick the one that has the else  smallestR to its closest lepton
+                // if all photons have pT < 4 GeV, pick the one that has the else  smallest dR to its closest lepton
                 if (goodfsr_Npt4==0) {
                     if (fsrPhotons_deltaR[p]<goodfsr_mindr) {
                         goodfsr_mindr=fsrPhotons_deltaR[p];
@@ -1289,14 +1293,14 @@ UFHZZ4LAna::findHiggsCandidate(std::vector< pat::Muon > &selectedMuons, std::vec
             }
             
             TLorentzVector Z;
-            if (phoindex>0) {
+            if (phoindex>=0) {
                 TLorentzVector pho;
                 pho.SetPtEtaPhiE(fsrPhotons[phoindex].pt(),fsrPhotons[phoindex].eta(),fsrPhotons[phoindex].phi(),fsrPhotons[phoindex].energy());
                 Z = (*li)+(*lj)+pho;
             } else {
                 Z = (*li)+(*lj);
             }
-
+            
             if (verbose) cout<<"this Z mass: "<<Z.M()<<" mZ2Low: "<<mZ2Low<<endl;
 
             if (Z.M()>mZ2Low) {
@@ -1321,6 +1325,8 @@ UFHZZ4LAna::findHiggsCandidate(std::vector< pat::Muon > &selectedMuons, std::vec
             int i1 = Z_lepindex1[i]; int i2 = Z_lepindex2[i];                            
             int j1 = Z_lepindex1[j]; int j2 = Z_lepindex2[j];                            
 
+            if (i1 == j1 || i1 == j2 || i2 == j1 || i2 == j2) continue;
+
             TLorentzVector *lep_i1, *lep_i2, *lep_j1, *lep_j2;
             lep_i1 = (TLorentzVector*) lep_p4->At(i1);
             lep_i2 = (TLorentzVector*) lep_p4->At(i2);
@@ -1330,8 +1336,8 @@ UFHZZ4LAna::findHiggsCandidate(std::vector< pat::Muon > &selectedMuons, std::vec
             TLorentzVector *Zi, *Zj;
             Zi = (TLorentzVector*) Z_p4->At(i);
             Zj = (TLorentzVector*) Z_p4->At(j);
-
-            if (verbose) cout<<"ZZ candiate Zi->M() "<<Zi->M()<<" Zj->M() "<<Zj->M()<<endl;
+            
+            if (verbose) {cout<<"ZZ candiate Zi->M() "<<Zi->M()<<" Zj->M() "<<Zj->M()<<endl;}
 
             TLorentzVector Z1, Z2;
             int Z1index, Z2index;
@@ -1341,11 +1347,11 @@ UFHZZ4LAna::findHiggsCandidate(std::vector< pat::Muon > &selectedMuons, std::vec
 
             if (abs(Zi->M()-Zmass)<abs(Zj->M()-Zmass)) { 
                 Z1index = i; Z2index = j;
-                Z1 = (*Zi); Z2 = (*Zj); 
+                Z1 = (*Zi); Z2 = (*Zj);                 
                 if (lep_i1->Pt()>lep_i2->Pt()) { Z1_lepindex[0] = i1;  Z1_lepindex[1] = i2; }
-                else { Z1_lepindex[0] = i2;  Z1_lepindex[1] = i1; }
-                if (lep_j1->Pt()>lep_j2->Pt()) { Z2_lepindex[0] = j1;  Z2_lepindex[1] = j2; }
-                else { Z2_lepindex[0] = j2;  Z2_lepindex[1] = j1; }
+                else { Z1_lepindex[0] = i2;  Z1_lepindex[1] = i1; }                
+                if (lep_j1->Pt()>lep_j2->Pt()) { Z2_lepindex[0] = j1;  Z2_lepindex[1] = j2; } 
+                else { Z2_lepindex[0] = j2;  Z2_lepindex[1] = j1; }                
                 Z1DeltaM = abs(Zi->M()-Zmass);                
                 Z2SumPt = lep_j1->Pt()+lep_j2->Pt();
             }
@@ -1386,6 +1392,7 @@ UFHZZ4LAna::findHiggsCandidate(std::vector< pat::Muon > &selectedMuons, std::vec
             i1i2 = (*lep_i1)+(*lep_i2); allM.push_back(i1i2.M());
             TLorentzVector j1j2;
             j1j2 = (*lep_j1)+(*lep_j2); allM.push_back(j1j2.M());            
+
             if (lep_id[i1]*lep_id[j1]<0) {
                 TLorentzVector i1j1;
                 i1j1 = (*lep_i1)+(*lep_j1); allM.push_back(i1j1.M());
@@ -1403,27 +1410,31 @@ UFHZZ4LAna::findHiggsCandidate(std::vector< pat::Muon > &selectedMuons, std::vec
             // Check which leptons include any FSR photons in their isolation cones
             double coneSize=0.4;
             double isoFSRi1=0.0, isoFSRi2=0.0, isoFSRj1=0.0, isoFSRj2=0.0;
-            if (Z_fsrindex[i]>0) {
+
+            double  isoVeto = 0.01; //1e-06
+            //hualin: this isoVeto is only useful for 4mu, e needs further modification of code
+
+            if (Z_fsrindex[i]>=0) {//hualin: change > to >=
                 int ipho = Z_fsrindex[i];
                 double dR_pho_i1 = deltaR(fsrPhotons[ipho].eta(),fsrPhotons[ipho].phi(),lep_i1->Eta(),lep_i1->Phi());
-                if (dR_pho_i1<coneSize && dR_pho_i1>1e-06) isoFSRi1 += fsrPhotons[ipho].pt();
+                if (dR_pho_i1<coneSize && dR_pho_i1>isoVeto) isoFSRi1 += fsrPhotons[ipho].pt();
                 double dR_pho_i2 = deltaR(fsrPhotons[ipho].eta(),fsrPhotons[ipho].phi(),lep_i2->Eta(),lep_i2->Phi());
-                if (dR_pho_i2<coneSize && dR_pho_i2>1e-06) isoFSRi2 += fsrPhotons[ipho].pt();
+                if (dR_pho_i2<coneSize && dR_pho_i2>isoVeto) isoFSRi2 += fsrPhotons[ipho].pt();
                 double dR_pho_j1 = deltaR(fsrPhotons[ipho].eta(),fsrPhotons[ipho].phi(),lep_j1->Eta(),lep_j1->Phi());
-                if (dR_pho_j1<coneSize && dR_pho_j1>1e-06) isoFSRj1 += fsrPhotons[ipho].pt();
+                if (dR_pho_j1<coneSize && dR_pho_j1>isoVeto) isoFSRj1 += fsrPhotons[ipho].pt();
                 double dR_pho_j2 = deltaR(fsrPhotons[ipho].eta(),fsrPhotons[ipho].phi(),lep_j2->Eta(),lep_j2->Phi());
-                if (dR_pho_j2<coneSize && dR_pho_j2>1e-06) isoFSRj2 += fsrPhotons[ipho].pt();
+                if (dR_pho_j2<coneSize && dR_pho_j2>isoVeto) isoFSRj2 += fsrPhotons[ipho].pt();
             }
-            if (Z_fsrindex[j]>0) {
+            if (Z_fsrindex[j]>=0) { //hualin: change > to >=
                 int jpho = Z_fsrindex[j];
                 double dR_pho_i1 = deltaR(fsrPhotons[jpho].eta(),fsrPhotons[jpho].phi(),lep_i1->Eta(),lep_i1->Phi());
-                if (dR_pho_i1<coneSize && dR_pho_i1>1e-06) isoFSRi1 += fsrPhotons[jpho].pt();
+                if (dR_pho_i1<coneSize && dR_pho_i1>isoVeto) isoFSRi1 += fsrPhotons[jpho].pt();
                 double dR_pho_i2 = deltaR(fsrPhotons[jpho].eta(),fsrPhotons[jpho].phi(),lep_i2->Eta(),lep_i2->Phi());
-                if (dR_pho_i2<coneSize && dR_pho_i2>1e-06) isoFSRi2 += fsrPhotons[jpho].pt();
+                if (dR_pho_i2<coneSize && dR_pho_i2>isoVeto) isoFSRi2 += fsrPhotons[jpho].pt();
                 double dR_pho_j1 = deltaR(fsrPhotons[jpho].eta(),fsrPhotons[jpho].phi(),lep_j1->Eta(),lep_j1->Phi());
-                if (dR_pho_j1<coneSize && dR_pho_j1>1e-06) isoFSRj1 += fsrPhotons[jpho].pt();
+                if (dR_pho_j1<coneSize && dR_pho_j1>isoVeto) isoFSRj1 += fsrPhotons[jpho].pt();
                 double dR_pho_j2 = deltaR(fsrPhotons[jpho].eta(),fsrPhotons[jpho].phi(),lep_j2->Eta(),lep_j2->Phi());
-                if (dR_pho_j2<coneSize && dR_pho_j2>1e-06) isoFSRj2 += fsrPhotons[jpho].pt();
+                if (dR_pho_j2<coneSize && dR_pho_j2>isoVeto) isoFSRj2 += fsrPhotons[jpho].pt();
             }
 
             double isoLi1 = (lep_isoCH[i1]+std::max(lep_isoNH[i1]+lep_isoPhot[i1]-lep_isoPUcorr[i1]-isoFSRi1,0.0))/lep_i1->Pt();
@@ -1461,9 +1472,14 @@ UFHZZ4LAna::findHiggsCandidate(std::vector< pat::Muon > &selectedMuons, std::vec
                     i_tmpZb = i2; j_tmpZb = j2;
                 }
 
+
                 float phopt_i=0.0;
                 float phodr_i=9999.9;
-                if (Z_fsrindex[i]>0 && fsrPhotons_lepindex[Z_fsrindex[i]]==i_tmpZa) {
+
+                Za = tmpZa;//hualin
+                Zb = tmpZb;//hualin		
+                
+                if (Z_fsrindex[i]>=0 && fsrPhotons_lepindex[Z_fsrindex[i]]==i_tmpZa) {
                     TLorentzVector pho;
                     int p = Z_fsrindex[i];
                     pho.SetPtEtaPhiE(fsrPhotons[p].pt(),fsrPhotons[p].eta(),fsrPhotons[p].phi(),fsrPhotons[p].energy());
@@ -1475,13 +1491,13 @@ UFHZZ4LAna::findHiggsCandidate(std::vector< pat::Muon > &selectedMuons, std::vec
                         Za = tmpZa_fsr;
                     }
                 }
-                if (Z_fsrindex[j]>0 && fsrPhotons_lepindex[Z_fsrindex[j]]==j_tmpZa) {
+                if (Z_fsrindex[j]>=0 && fsrPhotons_lepindex[Z_fsrindex[j]]==j_tmpZa) {
                     TLorentzVector pho;
                     int p = Z_fsrindex[j];
                     pho.SetPtEtaPhiE(fsrPhotons[p].pt(),fsrPhotons[p].eta(),fsrPhotons[p].phi(),fsrPhotons[p].energy());
                     TLorentzVector tmpZa_fsr;
                     tmpZa_fsr = tmpZa+pho;                
-                    if ( tmpZa_fsr.M()>4.0 && tmpZa_fsr.M()<100.0 &&  abs(tmpZa_fsr.M()-Zmass) < abs(tmpZa.M()-Zmass)) {
+                    if ( tmpZa_fsr.M()>4.0 && tmpZa_fsr.M()<100.0 &&  abs(tmpZa_fsr.M()-Zmass) < abs(Za.M()-Zmass)) {
                         if ( (max(phopt_i,fsrPhotons[p].pt())>4.0 && fsrPhotons[p].pt()>phopt_i) 
                              || (max(phopt_i,fsrPhotons[p].pt())<4.0 && fsrPhotons_deltaR[p]<phodr_i) ) { 
                             Za = tmpZa_fsr;
@@ -1490,7 +1506,7 @@ UFHZZ4LAna::findHiggsCandidate(std::vector< pat::Muon > &selectedMuons, std::vec
                 }
                 phopt_i=0.0;
                 phodr_i=9999.9;
-                if (Z_fsrindex[i]>0 && fsrPhotons_lepindex[Z_fsrindex[i]]==i_tmpZb) {
+                if (Z_fsrindex[i]>=0 && fsrPhotons_lepindex[Z_fsrindex[i]]==i_tmpZb) {
                     TLorentzVector pho;
                     int p = Z_fsrindex[i];
                     pho.SetPtEtaPhiE(fsrPhotons[p].pt(),fsrPhotons[p].eta(),fsrPhotons[p].phi(),fsrPhotons[p].energy());
@@ -1502,13 +1518,13 @@ UFHZZ4LAna::findHiggsCandidate(std::vector< pat::Muon > &selectedMuons, std::vec
                         Zb = tmpZb_fsr;
                     }
                 }
-                if (Z_fsrindex[j]>0 && fsrPhotons_lepindex[Z_fsrindex[j]]==j_tmpZb) {
+                if (Z_fsrindex[j]>=0 && fsrPhotons_lepindex[Z_fsrindex[j]]==j_tmpZb) {
                     TLorentzVector pho;
                     int p = Z_fsrindex[j];
                     pho.SetPtEtaPhiE(fsrPhotons[p].pt(),fsrPhotons[p].eta(),fsrPhotons[p].phi(),fsrPhotons[p].energy());
                     TLorentzVector tmpZb_fsr;
                     tmpZb_fsr = tmpZb+pho;                
-                    if ( tmpZb_fsr.M()>4.0 && tmpZb_fsr.M()<100.0 &&  abs(tmpZb_fsr.M()-Zmass) < abs(tmpZb.M()-Zmass)) {
+                    if ( tmpZb_fsr.M()>4.0 && tmpZb_fsr.M()<100.0 &&  abs(tmpZb_fsr.M()-Zmass) < abs(Zb.M()-Zmass)) {
                         if ( (max(phopt_i,fsrPhotons[p].pt())>4.0 && fsrPhotons[p].pt()>phopt_i) 
                              || (max(phopt_i,fsrPhotons[p].pt())<4.0 && fsrPhotons_deltaR[p]<phodr_i) ) { 
                             Zb = tmpZb_fsr;
@@ -1516,7 +1532,7 @@ UFHZZ4LAna::findHiggsCandidate(std::vector< pat::Muon > &selectedMuons, std::vec
                     }                                           
                 }
                 
-                if ( abs(Za.M()-Zmass)<abs(Zb.M()-Zmass) ) {                   
+                if ( abs(Za.M()-Zmass)<abs(Zb.M()-Zmass) ) {
                     if (verbose) cout<<"abs(Za.M()-Zmass)-abs(Z1.M()-Zmass): "<<abs(Za.M()-Zmass)-abs(Z1.M()-Zmass)<<" Zb.M(): "<<Zb.M()<<endl;
                     if ( abs(Za.M()-Zmass)<abs(Z1.M()-Zmass) && Zb.M()<12.0 ) passSmartCut=false;
                 }
@@ -1599,7 +1615,7 @@ UFHZZ4LAna::findHiggsCandidate(std::vector< pat::Muon > &selectedMuons, std::vec
             selectedElectrons.push_back(recoElectrons[lep_ptindex[lep_Hindex[3]]]);
         }
 
-        if (Z_Hindex[0]>0 && Z_fsrindex[Z_Hindex[0]]>0) {
+        if (Z_Hindex[0]>=0 && Z_fsrindex[Z_Hindex[0]]>=0) {
             nFSRPhotons++;
             FSR_Z1 = true;
             int p = Z_fsrindex[Z_Hindex[0]];
@@ -1608,7 +1624,7 @@ UFHZZ4LAna::findHiggsCandidate(std::vector< pat::Muon > &selectedMuons, std::vec
             new ( (*phofsr_p4)[nFSRPhotons-1] ) TLorentzVector(fsrPhotons[p].px(),fsrPhotons[p].py(),fsrPhotons[p].pz(),fsrPhotons[p].energy());
             phofsr_lepindex.push_back(fsrPhotons_lepindex[p]);
         }
-        if (Z_Hindex[1]>0 && Z_fsrindex[Z_Hindex[1]]>0) {
+        if (Z_Hindex[1]>=0 && Z_fsrindex[Z_Hindex[1]]>=0) {
             nFSRPhotons++;
             FSR_Z2 = true;
             int p = Z_fsrindex[Z_Hindex[1]];
@@ -1788,7 +1804,6 @@ void UFHZZ4LAna::bookPassedEventTree(TString treeName, TTree *tree)
     tree->Branch("massErrorUFCorr",&massErrorUFCorr,"massErrorUFCorr/D");
     tree->Branch("massErrorUCSD",&massErrorUCSD,"massErrorUCSD/D");
     tree->Branch("massErrorUCSDCorr",&massErrorUCSDCorr,"massErrorUCSDCorr/D");
-
 
     // -------------------------                                                                                                                                                                        
     // GEN level information                                                                                                                                                                            
@@ -2374,11 +2389,9 @@ bool UFHZZ4LAna::mZ1_mZ2(unsigned int& L1, unsigned int& L2, unsigned int& L3, u
     unsigned int N = GENlep_p4->GetLast()+1;
 
     for(unsigned int i=0; i<N; i++){
-        //if(GENlep_status[i]!=1) continue;
         for(unsigned int j=i+1; j<N; j++){
 
             if((GENlep_id[i]+GENlep_id[j])!=0) continue;
-            //if(GENlep_status[j]!=1) continue;
 
             TLorentzVector *li, *lj;
             li = (TLorentzVector*) GENlep_p4->At(i);
@@ -2411,11 +2424,9 @@ bool UFHZZ4LAna::mZ1_mZ2(unsigned int& L1, unsigned int& L2, unsigned int& L3, u
 
     for(unsigned int i=0; i<N; i++){
         if(i==L1 || i==L2) continue; // can not be the lep from Z1
-        //if(GENlep_status[i]!=1) continue;
         for(unsigned int j=i+1; j<N; j++){
             if(j==L1 || j==L2) continue; // can not be the lep from Z1
             if((GENlep_id[i]+GENlep_id[j])!=0) continue;            
-            //if(GENlep_status[j]!=1) continue;
 
             TLorentzVector *li, *lj;
             li = (TLorentzVector*) GENlep_p4->At(i);
@@ -2433,7 +2444,6 @@ bool UFHZZ4LAna::mZ1_mZ2(unsigned int& L1, unsigned int& L2, unsigned int& L3, u
             if ( ( (*li).Pt()+(*lj).Pt() ) >=pTL34 ) { // choose high sum pT pair satisfy the following selection
                 double mZ2 = Z2.M();
                 if(mZ2>12 && mZ2<120){
-                    //cout<<"mZ2: "<<mZ2<<endl;
                     L3 = i; L4 = j; findZ2 = true; pTL34 = (*li).Pt()+(*lj).Pt();
                 } else {
                     // still assign L3 and L4 to this pair if we don't have a passing Z2 yet
