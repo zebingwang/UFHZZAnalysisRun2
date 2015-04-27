@@ -37,9 +37,11 @@ myfilelist.extend( [
 )
 
 process.source = cms.Source("PoolSource",fileNames = myfilelist,
-                             duplicateCheckMode = cms.untracked.string('noDuplicateCheck'),
-                             eventsToProcess = cms.untracked.VEventRange('1:1-1:1000')
-                             #eventsToProcess = cms.untracked.VEventRange('1:506-1:506')
+#                             duplicateCheckMode = cms.untracked.string('noDuplicateCheck'),
+#                             eventsToProcess = cms.untracked.VEventRange('1:1-1:1000')
+#                             eventsToProcess = cms.untracked.VEventRange('1:66718-1:66718')
+#                             eventsToProcess = cms.untracked.VEventRange('1:171190-1:171190')
+
                             )
 
 process.TFileService = cms.Service("TFileService",
@@ -57,7 +59,7 @@ process.reCorrectedPatJets = cms.EDProducer("PatJetReCorrector",
 process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
                               photonSrc    = cms.untracked.InputTag("slimmedPhotons"),
                               electronSrc  = cms.untracked.InputTag("slimmedElectrons"),
-                              muonSrc      = cms.untracked.InputTag("slimmedMuons"),
+                              muonSrc      = cms.untracked.InputTag("boostedMuons"),
                               correctedJetSrc = cms.untracked.InputTag("slimmedJets"),
                               jetSrc       = cms.untracked.InputTag("slimmedJets"),
                               metSrc       = cms.untracked.InputTag("slimmedMETs"),
@@ -72,13 +74,13 @@ process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
                               muRhoSrc     = cms.untracked.InputTag("fixedGridRhoFastjetCentralNeutral"),
                               reweightForPU = cms.untracked.bool(True),
                               verbose = cms.untracked.bool(False)              
-                              #verbose = cms.untracked.bool(True)              
+#                              verbose = cms.untracked.bool(True)              
                              )
 
 process.AnaAfterHlt = cms.EDAnalyzer('UFHZZ4LAna',
                               photonSrc    = cms.untracked.InputTag("slimmedPhotons"),
                               electronSrc  = cms.untracked.InputTag("slimmedElectrons"),
-                              muonSrc      = cms.untracked.InputTag("slimmedMuons"),
+                              muonSrc      = cms.untracked.InputTag("boostedMuons"),
                               correctedJetSrc = cms.untracked.InputTag("slimmedJets"),
                               jetSrc       = cms.untracked.InputTag("slimmedJets"),
                               metSrc       = cms.untracked.InputTag("slimmedMETs"),
@@ -92,42 +94,46 @@ process.AnaAfterHlt = cms.EDAnalyzer('UFHZZ4LAna',
                               elRhoSrc     = cms.untracked.InputTag("fixedGridRhoFastjetAll"),
                               muRhoSrc     = cms.untracked.InputTag("fixedGridRhoFastjetCentralNeutral"),
                               reweightForPU = cms.untracked.bool(True),
-                              #verbose = cms.untracked.bool(False)                          
-                              verbose = cms.untracked.bool(True)                          
+#                              verbose = cms.untracked.bool(True)
+                              verbose = cms.untracked.bool(False)                          
                              )
-
-
 
 
 # Trigger
 process.hltHighLevel = cms.EDFilter("HLTHighLevel",
                                     TriggerResultsTag = cms.InputTag("TriggerResults","","HLT"),
                                     HLTPaths = cms.vstring(
-                                           'HLT_Ele17_Ele12_Ele10_CaloId_TrackId_v1',
-                                           'HLT_Ele23_Ele12_CaloId_TrackId_Iso_v1',
-                                           'HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_v1',
-                                           'HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL_v1',
-                                           'HLT_Mu23_TrkIsoVVL_Ele12_Gsf_CaloId_TrackId_Iso_MediumWP_v1',
-                                           'HLT_Mu8_TrkIsoVVL_Ele23_Gsf_CaloId_TrackId_Iso_MediumWP_v1'
-                                                             ),
+                                         'HLT_Ele17_Ele12_Ele10_CaloId_TrackId_v1',
+                                         'HLT_Ele23_Ele12_CaloId_TrackId_Iso_v1',
+                                         'HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_v1',
+                                         'HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL_v1',
+                                         'HLT_Mu23_TrkIsoVVL_Ele12_Gsf_CaloId_TrackId_Iso_MediumWP_v1',
+                                         'HLT_Mu8_TrkIsoVVL_Ele23_Gsf_CaloId_TrackId_Iso_MediumWP_v1'
+                                    ),
                                     # provide list of HLT paths (or patterns) you want
                                     eventSetupPathsKey = cms.string(''), # not empty => use read paths from AlCaRecoTriggerBitsRcd via this key
-                                    andOr = cms.bool(True),             # how to deal with multiple triggers: True (OR) accept if ANY is true, False (AND) accept if ALL are true  
-                                    throw = cms.bool(False)    # throw exception on unknown path names 
+                                    andOr = cms.bool(True),              # how to deal with multiple triggers: True (OR) accept if ANY is true, False (AND) accept if ALL are true  
+                                    throw = cms.bool(False)              # throw exception on unknown path names 
                                     )
 
 
 process.load('UFHZZAnalysisRun2.FSRPhotons.fsrPhotons_cff')
 
+##clean muons by segments 
+process.boostedMuons = cms.EDProducer("PATMuonCleanerBySegments",
+				     src = cms.InputTag("slimmedMuons"),
+				     preselection = cms.string("track.isNonnull"),
+				     passthrough = cms.string("isGlobalMuon && numberOfMatches >= 2"),
+				     fractionOfSharedSegments = cms.double(0.499),
+				     )
+
+
 process.p = cms.Path(#process.reCorrectedPatJets
                      process.fsrPhotonSequence*
+		     process.boostedMuons*
                      process.Ana*
                      process.hltHighLevel*
                      process.AnaAfterHlt
                      )
-
-
-
-
 
 
