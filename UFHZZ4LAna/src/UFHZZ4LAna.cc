@@ -431,8 +431,8 @@ UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
     m4lLowCut(iConfig.getUntrackedParameter<double>("m4lLowCut",70.0)),
     pt_cut(iConfig.getUntrackedParameter<double>("pt_cut",10.0)),
     eta_cut(iConfig.getUntrackedParameter<double>("eta_cut",4.7)),
-    //elecID(iConfig.getUntrackedParameter<std::string>("elecID","mvaNonTrigV0")),
-    elecID(iConfig.getUntrackedParameter<std::string>("elecID","cutBasedElectronID-CSA14-PU20bx25-V0-standalone-medium")), //FIXME
+    elecID(iConfig.getUntrackedParameter<std::string>("elecID","NonTrig")),
+    //elecID(iConfig.getUntrackedParameter<std::string>("elecID","cutBasedElectronID-CSA14-PU20bx25-V0-standalone-medium")), //FIXME
     isMC(iConfig.getUntrackedParameter<bool>("isMC",true)),
     isSignal(iConfig.getUntrackedParameter<bool>("isSignal",false)),
     mH(iConfig.getUntrackedParameter<double>("mH",0.0)),

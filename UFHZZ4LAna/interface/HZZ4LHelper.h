@@ -244,6 +244,7 @@ class HZZ4LHelper
 
   enum ElecEffectiveAreaTarget {
     kElNoCorr,
+    kElEAData2015,
     kElEAData2012,
     kElEAData2011,
     kElEAFall11MC
@@ -279,8 +280,7 @@ HZZ4LHelper::HZZ4LHelper()
   muEAtype = kMuGammaAndNeutralHadronIso04;
   muEAtarget = kMuEAData2012;
   elEAtype = kEGammaNeutralHadIso04;
-  elEAtarget = kElEAData2012;
-
+  elEAtarget = kElEAData2015;
 
   //declarations
 
@@ -1200,45 +1200,45 @@ std::vector<pat::Electron> HZZ4LHelper::goodElectrons2015_noIso(std::vector<pat:
   vector<pat::Electron> bestElectrons;
   
   /****** E L E C T R O N  C U T S ******/
-  double elecEtaCut = 2.5;
+  //double elecEtaCut = 2.5;
   int missingHitsCuts = 2;
   double dxyCut = 0.5;
   double dzCut = 1;
   /**************************************/
+  /*
 
-  //Legacy
-  double bdtCutLoPt_0_08 = 0.47;
-  double bdtCutLoPt_08_14 = 0.004;
-  double bdtCutLoPt_14_25 = 0.295;
-  double bdtCutHiPt_0_08 = -0.34;
-  double bdtCutHiPt_08_14 = -0.65;
-  double bdtCutHiPt_14_25 = 0.6;
-  
-  ///MVA ID = mvaNonTrigV0
-  
+float fSCeta = fabs(l.superCluster()->eta());
+bool isBDT = (pt <= 10 && (( fSCeta < 0.8 && BDT > -0.202)  ||
+   (fSCeta >= 0.8 && fSCeta < 1.479 && BDT > -0.444) ||
+   (fSCeta >= 1.479               && BDT > 0.264))) || 
+   (pt >  10 && ((fSCeta < 0.8 && BDT > -0.110)  ||
+   (fSCeta >= 0.8 && fSCeta < 1.479 && BDT > -0.284) || 
+  (fSCeta >= 1.479               && BDT > -0.212)));  
+ 
+  */
   for(unsigned int i = 0; i < Electrons.size(); i++) {
 
       if( abs(getSIP3D(Electrons[i])) < sip3dCut) { 
       if (fabs(Electrons[i].gsfTrack()->dxy(vertex->position())) < dxyCut) {
       if (fabs(Electrons[i].gsfTrack()->dz(vertex->position())) < dzCut ) {
-
-          if( Electrons[i].pt() > elecPtCut && abs(Electrons[i].eta()) < elecEtaCut) { 
-              double cutVal = 1000;
-              if( Electrons[i].pt() > 0 && Electrons[i].pt() < 10.0 ) {
-                  if(fabs(Electrons[i].superCluster()->eta()) > 0 && fabs(Electrons[i].superCluster()->eta()) < 0.8 ){ cutVal = bdtCutLoPt_0_08;}
-                  if(fabs(Electrons[i].superCluster()->eta()) >= 0.8 && fabs(Electrons[i].superCluster()->eta()) < 1.479 ){ cutVal = bdtCutLoPt_08_14;}
-                  if(fabs(Electrons[i].superCluster()->eta()) >= 1.479){ cutVal = bdtCutLoPt_14_25;}
+ 
+              float fSCeta = fabs(Electrons[i].superCluster()->eta()); 
+              float cutVal = 1000;
+ 
+              if(Electrons[i].pt()<=10){ 
+                 if(fSCeta < 0.8) cutVal = -0.202; 
+                 if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = -0.444;
+                 if(fSCeta >= 1.479) cutVal = 0.264;  
               }
-              if( Electrons[i].pt() >= 10.0 ) {
-                  if(fabs(Electrons[i].superCluster()->eta()) > 0 && fabs(Electrons[i].superCluster()->eta()) < 0.8 ){ cutVal = bdtCutHiPt_0_08;}
-                  if(fabs(Electrons[i].superCluster()->eta()) >= 0.8 && fabs(Electrons[i].superCluster()->eta()) < 1.479 ){ cutVal = bdtCutHiPt_08_14;}
-                  if(fabs(Electrons[i].superCluster()->eta()) >= 1.479){ cutVal = bdtCutHiPt_14_25;}
+              else {
+                 if(fSCeta < 0.8) cutVal = -0.110; 
+                 if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = -0.284;
+                 if(fSCeta >= 1.479) cutVal = -0.212;
               }
               //int misHits = Electrons[i].gsfTrack()->trackerExpectedHitsInner().numberOfLostHits(); // for miniADO
-              int misHits = 0; // for miniAOD
-              if (elecID=="noEID" && misHits < missingHitsCuts ) { bestElectrons.push_back(Electrons[i]); } 
-              else if (Electrons[i].electronID(elecID) > cutVal && misHits < missingHitsCuts) { bestElectrons.push_back(Electrons[i]);}
-          }
+              int misHits = Electrons[i].gsfTrack()->hitPattern().numberOfHits(reco::HitPattern::MISSING_INNER_HITS); // for miniAOD
+              if (Electrons[i].electronID(elecID) > cutVal && misHits < missingHitsCuts) { bestElectrons.push_back(Electrons[i]);}
+       
       } //else {cout<<"electron "<<i<<" failed dz, |dz|="<<fabs(Electrons[i].gsfTrack()->dz(vertex->position()))<<endl;}
       } //else {cout<<"electron "<<i<<" failed dxy, |dxy|="<<fabs(Electrons[i].gsfTrack()->dxy(vertex->position()))<<endl;}
       } //else {cout<<"electron "<<i<<" failed sip, |sip|="<<abs(getSIP3D(Electrons[i]))<<endl;}
@@ -4042,6 +4042,21 @@ double HZZ4LHelper::ElecEffArea(ElecEffectiveAreaType type, double SCEta, ElecEf
   if (EffectiveAreaTarget == kElNoCorr) {
     return 0.0;
   }
+
+  if(EffectiveAreaTarget == kElEAData2015)
+    {
+
+      if (type == kEGammaNeutralHadIso04){
+        if (fabs(SCEta) >= 0.0 && fabs(SCEta) < 0.8 )   EffectiveArea = 0.1830;
+        if (fabs(SCEta) >= 0.8 && fabs(SCEta) < 1.3 )   EffectiveArea = 0.1734;
+        if (fabs(SCEta) >= 1.3 && fabs(SCEta) < 2.0 )   EffectiveArea = 0.1077;
+        if (fabs(SCEta) >= 2.0 && fabs(SCEta) < 2.2 )   EffectiveArea = 0.1565;
+        if (fabs(SCEta) >= 2.2 )                        EffectiveArea = 0.2680;
+      }
+
+      return EffectiveArea;
+    }
+
   
   if(EffectiveAreaTarget == kElEAData2012)
     {
