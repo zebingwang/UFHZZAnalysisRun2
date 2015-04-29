@@ -119,8 +119,12 @@ HZZ4LMassErr::HZZ4LMassErr()
 {
   //declarations
   debug_ = 0;
-  fmu = boost::shared_ptr<TFile>( new TFile("UFHZZAnalysisRun2/UFHZZ4LAna/hists/ebeOverallCorrections.Legacy2013.v0.root") ); 
-  fel = boost::shared_ptr<TFile>( new TFile("UFHZZAnalysisRun2/UFHZZ4LAna/hists/ebeOverallCorrections.Legacy2013.v0.root") );
+  TString fmu_s, fel_s;
+  fmu_s = TString(edm::FileInPath ( "UFHZZAnalysisRun2/UFHZZ4LAna/hists/ebeOverallCorrections.Legacy2013.v0.root" ).fullPath());
+  fel_s = TString(edm::FileInPath ( "UFHZZAnalysisRun2/UFHZZ4LAna/hists/ebeOverallCorrections.Legacy2013.v0.root" ).fullPath());
+
+  fmu = boost::shared_ptr<TFile>( new TFile(fmu_s)); 
+  fel = boost::shared_ptr<TFile>( new TFile(fel_s));
   muon_corr_data = boost::shared_ptr<TH2F>(  (static_cast<TH2F*>(fmu->Get( "mu_reco53x" )->Clone() )) );
   muon_corr_mc = boost::shared_ptr<TH2F>(  (static_cast<TH2F*>(fmu->Get( "mu_mc53x" )->Clone() )) );
   electron_corr_data = boost::shared_ptr<TH2F>(  (static_cast<TH2F*>(fel->Get( "el_reco53x" )->Clone() )) ); 
@@ -283,20 +287,21 @@ double HZZ4LMassErr::getMassResolutionCorr(std::vector<pat::Electron>& electrons
 {
   double dm2 = 0.0;
   int o = 0;   
-
+  std::cout <<"i am at 290 \n";
   int nel = electrons.size(); int nmu = muons.size(); int nph = fsrPhotons.size();
 
   // electron
   TH2F* el_corr;
-
+   std::cout <<"i am at 295 \n";
   if(isData) el_corr = dynamic_cast<TH2F*>(electron_corr_data->Clone());
   else el_corr = dynamic_cast<TH2F*>(electron_corr_mc->Clone());
-
+  std:: cout <<"i am at 298 \n";
   TAxis* x_elpTaxis = el_corr->GetXaxis(); TAxis* y_eletaaxis = el_corr->GetYaxis();
   double maxPt = x_elpTaxis->GetXmax(); double minPt = x_elpTaxis->GetXmin();
-
+  std:: cout <<"i am at 301 \n";
   for(int i =0; i<nel; i++)
   {
+     std::cout <<"i am at 304 \n";
     const reco::Candidate &ci = *dynamic_cast<const reco::Candidate* >(&electrons[i]);
     double dm_raw = getIndividualMassError( ci, o, electrons, muons, fsrPhotons);
     o = o+3;  
@@ -311,15 +316,16 @@ double HZZ4LMassErr::getMassResolutionCorr(std::vector<pat::Electron>& electrons
 
   // muon
   TH2F* mu_corr;
-
+   std::cout <<"i am at 319 \n";
   if(isData) mu_corr = dynamic_cast<TH2F*>(muon_corr_data->Clone());
   else mu_corr = dynamic_cast<TH2F*>(muon_corr_mc->Clone());
 
   TAxis* x_mupTaxis = mu_corr->GetXaxis(); TAxis* y_muetaaxis = mu_corr->GetYaxis();
   double maxPt_mu = x_mupTaxis->GetXmax(); double minPt_mu = x_mupTaxis->GetXmin();
-
+   std::cout <<"i am at 325 \n";
   for(int i =0; i<nmu; i++)
   {
+     std::cout <<"i am at 328 \n";
     const reco::Candidate &ci = *dynamic_cast<const reco::Candidate* >(&muons[i]);
     double dm_raw = getIndividualMassError( ci, o, electrons, muons, fsrPhotons);
     o = o+3;  
@@ -333,6 +339,7 @@ double HZZ4LMassErr::getMassResolutionCorr(std::vector<pat::Electron>& electrons
   // fsr photon
   for(int i =0; i<nph; i++)
   {
+    std:: cout <<"i am at 342 \n";
     const reco::Candidate &ci = *dynamic_cast<const reco::Candidate* >(&fsrPhotons[i]);
     double dm_raw = getIndividualMassError( ci, o, electrons, muons, fsrPhotons);
     o = o+3;  
