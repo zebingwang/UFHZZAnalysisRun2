@@ -431,8 +431,7 @@ UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
     m4lLowCut(iConfig.getUntrackedParameter<double>("m4lLowCut",70.0)),
     pt_cut(iConfig.getUntrackedParameter<double>("pt_cut",10.0)),
     eta_cut(iConfig.getUntrackedParameter<double>("eta_cut",4.7)),
-    //elecID(iConfig.getUntrackedParameter<std::string>("elecID","mvaNonTrigV0")),
-    elecID(iConfig.getUntrackedParameter<std::string>("elecID","cutBasedElectronID-CSA14-PU20bx25-V0-standalone-medium")), //FIXME
+    elecID(iConfig.getUntrackedParameter<std::string>("elecID","NonTrig")),
     isMC(iConfig.getUntrackedParameter<bool>("isMC",true)),
     isSignal(iConfig.getUntrackedParameter<bool>("isSignal",false)),
     mH(iConfig.getUntrackedParameter<double>("mH",0.0)),
@@ -440,7 +439,7 @@ UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
     filterEff(iConfig.getUntrackedParameter<double>("FilterEff",1.0)),
     Lumi(iConfig.getUntrackedParameter<double>("Lumi",1.0)),
     weightEvents(iConfig.getUntrackedParameter<bool>("weightEvents",false)),
-    isoCutEl(iConfig.getUntrackedParameter<double>("isoCutEl",0.4)),
+    isoCutEl(iConfig.getUntrackedParameter<double>("isoCutEl",0.5)),
     isoCutMu(iConfig.getUntrackedParameter<double>("isoCutMu",0.4)),
     earlyIsoCut(iConfig.getUntrackedParameter<double>("earlyIsoCut",0.4)),
     sip3dCut(iConfig.getUntrackedParameter<double>("sip3dCut",4)),
@@ -1068,6 +1067,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                     if( foundHiggsCandidate ){
 
                         //M4L Error
+                        /*
                         if (verbose) cout<<"getting mass errors"<<endl;  
                         massErrorUCSD = massErr.getMassResolution(selectedElectrons, selectedMuons, selectedFsrPhotons);
                         massErrorUCSDCorr = massErr.getMassResolutionCorr(selectedElectrons, selectedMuons, selectedFsrPhotons, true, !isMC);
@@ -1083,7 +1083,8 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                             massErrorUF = massErr.calc2e2muErr(selectedElectrons,selectedMuons,selectedFsrPhotons,false,!isMC);
                             massErrorUFCorr = massErr.calc2e2muErr(selectedElectrons,selectedMuons,selectedFsrPhotons,true,!isMC);               
                         }
-                        
+                        */
+
                         if (verbose) cout<<"storing H_p4_noFSR"<<endl; 
                         if(RecoFourMuEvent) {
                             math::XYZTLorentzVector tmpHVec;
@@ -1337,7 +1338,7 @@ UFHZZ4LAna::findHiggsCandidate(std::vector< pat::Muon > &selectedMuons, std::vec
             Zi = (TLorentzVector*) Z_p4->At(i);
             Zj = (TLorentzVector*) Z_p4->At(j);
             
-            if (verbose) {cout<<"ZZ candiate Zi->M() "<<Zi->M()<<" Zj->M() "<<Zj->M()<<endl;}
+            if (verbose) {cout<<"ZZ candidate Zi->M() "<<Zi->M()<<" Zj->M() "<<Zj->M()<<endl;}
 
             TLorentzVector Z1, Z2;
             int Z1index, Z2index;
@@ -1411,30 +1412,61 @@ UFHZZ4LAna::findHiggsCandidate(std::vector< pat::Muon > &selectedMuons, std::vec
             double coneSize=0.4;
             double isoFSRi1=0.0, isoFSRi2=0.0, isoFSRj1=0.0, isoFSRj2=0.0;
 
-            double  isoVeto = 0.01; //1e-06
-            //hualin: this isoVeto is only useful for 4mu, e needs further modification of code
-
             if (Z_fsrindex[i]>=0) {//hualin: change > to >=
                 int ipho = Z_fsrindex[i];
+
+                bool isoVeto=true;
                 double dR_pho_i1 = deltaR(fsrPhotons[ipho].eta(),fsrPhotons[ipho].phi(),lep_i1->Eta(),lep_i1->Phi());
-                if (dR_pho_i1<coneSize && dR_pho_i1>isoVeto) isoFSRi1 += fsrPhotons[ipho].pt();
+                if (abs(lep_id[i1])==13 && dR_pho_i1>0.01) isoVeto=false;
+                if (abs(lep_id[i1])==11 && (abs(recoElectrons[lep_ptindex[i1]].superCluster()->eta())<1.479 || dR_pho_i1>0.08)) isoVeto=false;
+                if (dR_pho_i1<coneSize && !isoVeto) isoFSRi1 += fsrPhotons[ipho].pt();
+
+                isoVeto=true;
                 double dR_pho_i2 = deltaR(fsrPhotons[ipho].eta(),fsrPhotons[ipho].phi(),lep_i2->Eta(),lep_i2->Phi());
-                if (dR_pho_i2<coneSize && dR_pho_i2>isoVeto) isoFSRi2 += fsrPhotons[ipho].pt();
+                if (abs(lep_id[i2])==13 && dR_pho_i2>0.01) isoVeto=false;
+                if (abs(lep_id[i2])==11 && (abs(recoElectrons[lep_ptindex[i2]].superCluster()->eta())<1.479 || dR_pho_i2>0.08)) isoVeto=false;
+                if (dR_pho_i2<coneSize && !isoVeto) isoFSRi2 += fsrPhotons[ipho].pt();
+
+                isoVeto=true;
                 double dR_pho_j1 = deltaR(fsrPhotons[ipho].eta(),fsrPhotons[ipho].phi(),lep_j1->Eta(),lep_j1->Phi());
-                if (dR_pho_j1<coneSize && dR_pho_j1>isoVeto) isoFSRj1 += fsrPhotons[ipho].pt();
+                if (abs(lep_id[j1])==13 && dR_pho_j1>0.01) isoVeto=false;
+                if (abs(lep_id[j1])==11 && (abs(recoElectrons[lep_ptindex[j1]].superCluster()->eta())<1.479 || dR_pho_j1>0.08)) isoVeto=false;
+                if (dR_pho_j1<coneSize && !isoVeto) isoFSRj1 += fsrPhotons[ipho].pt();
+
+                isoVeto=true;
                 double dR_pho_j2 = deltaR(fsrPhotons[ipho].eta(),fsrPhotons[ipho].phi(),lep_j2->Eta(),lep_j2->Phi());
-                if (dR_pho_j2<coneSize && dR_pho_j2>isoVeto) isoFSRj2 += fsrPhotons[ipho].pt();
+                if (abs(lep_id[j2])==13 && dR_pho_j2>0.01) isoVeto=false;
+                if (abs(lep_id[j2])==11 && (abs(recoElectrons[lep_ptindex[j2]].superCluster()->eta())<1.479 || dR_pho_j2>0.08)) isoVeto=false;
+                if (dR_pho_j2<coneSize && !isoVeto) isoFSRj2 += fsrPhotons[ipho].pt();
+
             }
             if (Z_fsrindex[j]>=0) { //hualin: change > to >=
                 int jpho = Z_fsrindex[j];
+
+                bool isoVeto=true;
                 double dR_pho_i1 = deltaR(fsrPhotons[jpho].eta(),fsrPhotons[jpho].phi(),lep_i1->Eta(),lep_i1->Phi());
-                if (dR_pho_i1<coneSize && dR_pho_i1>isoVeto) isoFSRi1 += fsrPhotons[jpho].pt();
+                if (abs(lep_id[i1])==13 && dR_pho_i1>0.01) isoVeto=false;
+                if (abs(lep_id[i1])==11 && (abs(recoElectrons[lep_ptindex[i1]].superCluster()->eta())<1.479 || dR_pho_i1>0.08)) isoVeto=false;
+                if (dR_pho_i1<coneSize && !isoVeto) isoFSRi1 += fsrPhotons[jpho].pt();
+
+                isoVeto=true;
                 double dR_pho_i2 = deltaR(fsrPhotons[jpho].eta(),fsrPhotons[jpho].phi(),lep_i2->Eta(),lep_i2->Phi());
-                if (dR_pho_i2<coneSize && dR_pho_i2>isoVeto) isoFSRi2 += fsrPhotons[jpho].pt();
+                if (abs(lep_id[i2])==13 && dR_pho_i2>0.01) isoVeto=false;
+                if (abs(lep_id[i2])==11 && (abs(recoElectrons[lep_ptindex[i2]].superCluster()->eta())<1.479 || dR_pho_i2>0.08)) isoVeto=false;
+                if (dR_pho_i2<coneSize && !isoVeto) isoFSRi2 += fsrPhotons[jpho].pt();
+
+                isoVeto=true;
                 double dR_pho_j1 = deltaR(fsrPhotons[jpho].eta(),fsrPhotons[jpho].phi(),lep_j1->Eta(),lep_j1->Phi());
-                if (dR_pho_j1<coneSize && dR_pho_j1>isoVeto) isoFSRj1 += fsrPhotons[jpho].pt();
+                if (abs(lep_id[j1])==13 && dR_pho_j1>0.01) isoVeto=false;
+                if (abs(lep_id[j1])==11 && (abs(recoElectrons[lep_ptindex[j1]].superCluster()->eta())<1.479 || dR_pho_j1>0.08)) isoVeto=false;
+                if (dR_pho_j1<coneSize && !isoVeto) isoFSRj1 += fsrPhotons[jpho].pt();
+
+                isoVeto=true;
                 double dR_pho_j2 = deltaR(fsrPhotons[jpho].eta(),fsrPhotons[jpho].phi(),lep_j2->Eta(),lep_j2->Phi());
-                if (dR_pho_j2<coneSize && dR_pho_j2>isoVeto) isoFSRj2 += fsrPhotons[jpho].pt();
+                if (abs(lep_id[j2])==13 && dR_pho_j2>0.01) isoVeto=false;
+                if (abs(lep_id[j2])==11 && (abs(recoElectrons[lep_ptindex[j2]].superCluster()->eta())<1.479 || dR_pho_j2>0.08)) isoVeto=false;
+                if (dR_pho_j2<coneSize && !isoVeto) isoFSRj2 += fsrPhotons[jpho].pt();
+
             }
 
             double isoLi1 = (lep_isoCH[i1]+std::max(lep_isoNH[i1]+lep_isoPhot[i1]-lep_isoPUcorr[i1]-isoFSRi1,0.0))/lep_i1->Pt();
@@ -1550,22 +1582,29 @@ UFHZZ4LAna::findHiggsCandidate(std::vector< pat::Muon > &selectedMuons, std::vec
             if (verbose) cout<<"good ZZ candidate, Z1DeltaM: "<<Z1DeltaM<<" minZ1DeltaM: "<<minZ1DeltaM<<" Z2SumPt: "<<Z2SumPt<<" maxZ2SumPt: "<<maxZ2SumPt<<endl;
 
             // Check if this candidate has the best Z1 and highest scalar sum of Z2 lepton pt            
-            if ( Z1DeltaM<minZ1DeltaM ) {
+
+            if ( Z1DeltaM<=minZ1DeltaM ) {
+
                 minZ1DeltaM = Z1DeltaM;
-                Z1Vec = Z1;
+
+                if (Z_Hindex[0]==Z1index && Z2SumPt<maxZ2SumPt) continue;
+
                 Z_Hindex[0] = Z1index;
-                lep_Hindex[0] = Z1_lepindex[0]; 
-                lep_Hindex[1] = Z1_lepindex[1];   
-                if ( Z2SumPt > maxZ2SumPt)  {
-                    maxZ2SumPt = Z2SumPt;
-                    Z2Vec = Z2;
-                    HVec = Z1+Z2;
-                    if (verbose) cout<<" new best candidate: mass4l: "<<HVec.M()<<endl;
-                    if (HVec.M()>m4lLowCut) foundHiggsCandidate=true;
-                    Z_Hindex[1] = Z2index;
-                    lep_Hindex[2] = Z2_lepindex[0]; 
-                    lep_Hindex[3] = Z2_lepindex[1];                   
-                }
+                lep_Hindex[0] = Z1_lepindex[0];
+                lep_Hindex[1] = Z1_lepindex[1];
+
+                maxZ2SumPt = Z2SumPt;
+                Z_Hindex[1] = Z2index;
+                lep_Hindex[2] = Z2_lepindex[0];
+                lep_Hindex[3] = Z2_lepindex[1];
+
+                Z1Vec = Z1;
+                Z2Vec = Z2;
+                HVec = Z1+Z2;
+
+                if (verbose) cout<<" new best candidate: mass4l: "<<HVec.M()<<endl;
+                if (HVec.M()>m4lLowCut) foundHiggsCandidate=true;
+
             }
 
             if (verbose) cout<<"Z_Hindex[0]: "<<Z_Hindex[0]<<" lep_Hindex[0]: "<<lep_Hindex[0]<<" lep_Hindex[1]: "<<lep_Hindex[1]
