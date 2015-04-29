@@ -56,9 +56,33 @@ process.reCorrectedPatJets = cms.EDProducer("PatJetReCorrector",
                                             )
 '''
 
+# clean muons by segments 
+process.boostedMuons = cms.EDProducer("PATMuonCleanerBySegments",
+				     src = cms.InputTag("slimmedMuons"),
+				     preselection = cms.string("track.isNonnull"),
+				     passthrough = cms.string("isGlobalMuon && numberOfMatches >= 2"),
+				     fractionOfSharedSegments = cms.double(0.499),
+				     )
+
+# Electron MVA ID producer
+process.mvaNonTrigV025nsPHYS14 = cms.EDProducer("SlimmedElectronMvaIDProducer",
+                                     electronsCollection = cms.InputTag("slimmedElectrons","","PAT"),
+                                     method = cms.string("BDTSimpleCat"),
+                                     mvaWeightFile = cms.vstring(
+                                                  "EgammaAnalysis/ElectronTools/data/PHYS14/EIDmva_EB1_5_oldscenario2phys14_BDT.weights.xml",
+                                                  "EgammaAnalysis/ElectronTools/data/PHYS14/EIDmva_EB2_5_oldscenario2phys14_BDT.weights.xml",
+                                                  "EgammaAnalysis/ElectronTools/data/PHYS14/EIDmva_EE_5_oldscenario2phys14_BDT.weights.xml",
+                                                  "EgammaAnalysis/ElectronTools/data/PHYS14/EIDmva_EB1_10_oldscenario2phys14_BDT.weights.xml",
+                                                  "EgammaAnalysis/ElectronTools/data/PHYS14/EIDmva_EB2_10_oldscenario2phys14_BDT.weights.xml",
+                                                  "EgammaAnalysis/ElectronTools/data/PHYS14/EIDmva_EE_10_oldscenario2phys14_BDT.weights.xml",
+                                     ),
+                                     Trig = cms.bool(False),
+                                     )
+     
+
 process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
                               photonSrc    = cms.untracked.InputTag("slimmedPhotons"),
-                              electronSrc  = cms.untracked.InputTag("slimmedElectrons"),
+                              electronSrc  = cms.untracked.InputTag("mvaNonTrigV025nsPHYS14","NonTrig"),
                               muonSrc      = cms.untracked.InputTag("boostedMuons"),
                               correctedJetSrc = cms.untracked.InputTag("slimmedJets"),
                               jetSrc       = cms.untracked.InputTag("slimmedJets"),
@@ -79,7 +103,7 @@ process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
 
 process.AnaAfterHlt = cms.EDAnalyzer('UFHZZ4LAna',
                               photonSrc    = cms.untracked.InputTag("slimmedPhotons"),
-                              electronSrc  = cms.untracked.InputTag("slimmedElectrons"),
+                              electronSrc  = cms.untracked.InputTag("mvaNonTrigV025nsPHYS14","NonTrig"),
                               muonSrc      = cms.untracked.InputTag("boostedMuons"),
                               correctedJetSrc = cms.untracked.InputTag("slimmedJets"),
                               jetSrc       = cms.untracked.InputTag("slimmedJets"),
@@ -119,18 +143,11 @@ process.hltHighLevel = cms.EDFilter("HLTHighLevel",
 
 process.load('UFHZZAnalysisRun2.FSRPhotons.fsrPhotons_cff')
 
-##clean muons by segments 
-process.boostedMuons = cms.EDProducer("PATMuonCleanerBySegments",
-				     src = cms.InputTag("slimmedMuons"),
-				     preselection = cms.string("track.isNonnull"),
-				     passthrough = cms.string("isGlobalMuon && numberOfMatches >= 2"),
-				     fractionOfSharedSegments = cms.double(0.499),
-				     )
-
 
 process.p = cms.Path(#process.reCorrectedPatJets
                      process.fsrPhotonSequence*
 		     process.boostedMuons*
+                     process.mvaNonTrigV025nsPHYS14*
                      process.Ana*
                      process.hltHighLevel*
                      process.AnaAfterHlt
