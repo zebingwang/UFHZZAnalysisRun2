@@ -1508,8 +1508,8 @@ UFHZZ4LAna::findHiggsCandidate(std::vector< pat::Muon > &selectedMuons, std::vec
                 float phopt_i=0.0;
                 float phodr_i=9999.9;
 
-                Za = tmpZa;//hualin
-                Zb = tmpZb;//hualin		
+                Za = tmpZa;
+                Zb = tmpZb;
                 
                 if (Z_fsrindex[i]>=0 && fsrPhotons_lepindex[Z_fsrindex[i]]==i_tmpZa) {
                     TLorentzVector pho;
@@ -2018,10 +2018,12 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
             }
         }
 
+        /*
         double factor = 1.0;
         double factorup = 1.0;
         double factordn = 1.0;
 
+        
         if ( abs(goodJets[k].eta()) < 0.5 ) {
             factor = 1.079;
             factorup = 1.105;
@@ -2058,6 +2060,7 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
             factordn = 0.865;
         }
     
+        
         double pt_jer = goodJets[k].pt();
         double pt_jerup = goodJets[k].pt();
         double pt_jerdn = goodJets[k].pt();
@@ -2072,6 +2075,12 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
         double jercorrection = pt_jer/goodJets[k].pt();
         double jercorrectionup = pt_jerup/goodJets[k].pt();
         double jercorrectiondn = pt_jerdn/goodJets[k].pt();
+        */
+
+        // FIXME: For now, no smearing
+        double jercorrection = 1.0;
+        double jercorrectionup = 1.0;
+        double jercorrectiondn = 1.0;
 
         double jetPx_jer = jercorrection * goodJets[k].px();
         double jetPy_jer = jercorrection * goodJets[k].py();
