@@ -22,7 +22,8 @@ myfilelist = cms.untracked.vstring()
 myfilelist.extend( [
 
        # the sync file
-       '/store/mc/Phys14DR/GluGluToHToZZTo4L_M-125_13TeV-powheg-pythia6/MINIAODSIM/PU20bx25_tsg_PHYS14_25_V1-v1/00000/3295EF7C-2070-E411-89C4-7845C4FC35DB.root'
+       'file:/cms/data/store/mc/Phys14DR/GluGluToHToZZTo4L_M-125_13TeV-powheg-pythia6/MINIAODSIM/PU20bx25_tsg_PHYS14_25_V1-v1/00000/3295EF7C-2070-E411-89C4-7845C4FC35DB.root'
+       #'file:/scratch/osg/ahmad/RUN2/tset/CMSSW_7_2_0/src/UFHZZAnalysisRun2/3295EF7C-2070-E411-89C4-7845C4FC35DB.root'
 
        # all files
        #'/store/mc/Phys14DR/GluGluToHToZZTo4L_M-125_13TeV-powheg-pythia6/MINIAODSIM/PU20bx25_tsg_PHYS14_25_V1-v1/00000/148E558C-946F-E411-AFA7-7845C4FC3A52.root',
