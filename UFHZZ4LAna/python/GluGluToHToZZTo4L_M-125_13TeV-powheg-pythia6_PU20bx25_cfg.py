@@ -22,8 +22,8 @@ myfilelist = cms.untracked.vstring()
 myfilelist.extend( [
 
        # the sync file
-       'file:/cms/data/store/mc/Phys14DR/GluGluToHToZZTo4L_M-125_13TeV-powheg-pythia6/MINIAODSIM/PU20bx25_tsg_PHYS14_25_V1-v1/00000/3295EF7C-2070-E411-89C4-7845C4FC35DB.root'
-       #'file:/scratch/osg/ahmad/RUN2/tset/CMSSW_7_2_0/src/UFHZZAnalysisRun2/3295EF7C-2070-E411-89C4-7845C4FC35DB.root'
+       #'file:/cms/data/store/mc/Phys14DR/GluGluToHToZZTo4L_M-125_13TeV-powheg-pythia6/MINIAODSIM/PU20bx25_tsg_PHYS14_25_V1-v1/00000/3295EF7C-2070-E411-89C4-7845C4FC35DB.root'
+       'root://cmsxrootd.fnal.gov//store/mc/Phys14DR/GluGluToHToZZTo4L_M-125_13TeV-powheg-pythia6/MINIAODSIM/PU20bx25_tsg_PHYS14_25_V1-v1/00000/3295EF7C-2070-E411-89C4-7845C4FC35DB.root'
 
        # all files
        #'/store/mc/Phys14DR/GluGluToHToZZTo4L_M-125_13TeV-powheg-pythia6/MINIAODSIM/PU20bx25_tsg_PHYS14_25_V1-v1/00000/148E558C-946F-E411-AFA7-7845C4FC3A52.root',
@@ -41,7 +41,7 @@ process.source = cms.Source("PoolSource",fileNames = myfilelist,
 #                             duplicateCheckMode = cms.untracked.string('noDuplicateCheck'),
 #                             eventsToProcess = cms.untracked.VEventRange('1:1-1:1000')
 #                             eventsToProcess = cms.untracked.VEventRange('1:66718-1:66718')
-#                             eventsToProcess = cms.untracked.VEventRange('1:171190-1:171190')
+#                             eventsToProcess = cms.untracked.VEventRange('1:86646-1:86646','1:312169-1:312169','1:423353-1:423353')
 
                             )
 
@@ -119,8 +119,8 @@ process.AnaAfterHlt = cms.EDAnalyzer('UFHZZ4LAna',
                               elRhoSrc     = cms.untracked.InputTag("fixedGridRhoFastjetAll"),
                               muRhoSrc     = cms.untracked.InputTag("fixedGridRhoFastjetCentralNeutral"),
                               reweightForPU = cms.untracked.bool(True),
-#                              verbose = cms.untracked.bool(True)
                               verbose = cms.untracked.bool(False)                          
+#                              verbose = cms.untracked.bool(True)
                              )
 
 
@@ -144,7 +144,6 @@ process.hltHighLevel = cms.EDFilter("HLTHighLevel",
 
 process.load('UFHZZAnalysisRun2.FSRPhotons.fsrPhotons_cff')
 
-
 process.p = cms.Path(#process.reCorrectedPatJets
                      process.fsrPhotonSequence*
 		     process.boostedMuons*
@@ -153,5 +152,3 @@ process.p = cms.Path(#process.reCorrectedPatJets
                      process.hltHighLevel*
                      process.AnaAfterHlt
                      )
-
-

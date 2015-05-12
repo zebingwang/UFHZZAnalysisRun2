@@ -3577,8 +3577,9 @@ bool HZZ4LHelper::isPFMuon(pat::Muon muon,edm::Handle<edm::View<reco::PFCandidat
 double HZZ4LHelper::pfIso(pat::Muon muon, double Rho)
 {
   //double PUCorr = Rho*MuonEffArea(muEAtype,muon.eta(),muEAtarget);
-  double PUCorr = 0.5*muon.userIsolation("PfPUChargedHadronIso");
-  if (Rho<0.0) PUCorr = 0.;
+  //double PUCorr = 0.5*muon.userIsolation("PfPUChargedHadronIso");
+  double PUCorr = 0.5*muon.puChargedHadronIso();
+  //if (Rho<0.0) PUCorr = 0.;
   double iso = (muon.chargedHadronIso()+std::max(muon.photonIso()+muon.neutralHadronIso()-PUCorr,0.0))/muon.pt();
   return iso;
 }
@@ -3586,7 +3587,8 @@ double HZZ4LHelper::pfIso(pat::Muon muon, double Rho)
 
 double HZZ4LHelper::pfIso(pat::Electron elec, double Rho)
 {
-  double PUCorr = Rho*ElecEffArea(elEAtype,elec.superCluster()->eta(),elEAtarget);
+    //double PUCorr = Rho*ElecEffArea(elEAtype,elec.superCluster()->eta(),elEAtarget);
+  double PUCorr = Rho*ElecEffArea(elEAtype,elec.eta(),elEAtarget);
   double iso = (elec.chargedHadronIso()+std::max(elec.photonIso()+elec.neutralHadronIso()-PUCorr,0.0))/elec.pt();
   return iso;
 }
