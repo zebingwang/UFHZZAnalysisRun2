@@ -2112,6 +2112,10 @@ void UFHZZ4LAna::bookPassedEventTree(TString treeName, TTree *tree)
     tree->Branch("bkg_m4l", &bkg_m4l, "bkg_m4l/D");
     tree->Branch("D_bkg_kin", &D_bkg_kin, "D_bkg_kin/D");
     tree->Branch("D_bkg", &D_bkg, "D_bkg/D");
+    tree->Branch("Dgg10_VAMCFM", &Dgg10_VAMCFM, "Dgg10_VAMCFM/D");
+    tree->Branch("Djet_VAJHU", &Djet_VAJHU, "Djet_VAJHU/D");
+    tree->Branch("D_g4", &D_g4, "D_g4/D");
+
 
 }
 
