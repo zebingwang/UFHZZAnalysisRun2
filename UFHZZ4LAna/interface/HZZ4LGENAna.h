@@ -271,7 +271,7 @@ int HZZ4LGENAna::MotherID(const reco::GenParticle* p){
     const reco::Candidate* g= (const reco::Candidate*)p;
     while (nMo>0) {
         //cout<<"id: "<<g->pdgId()<<" pt: "<<g->pt()<<" eta: "<<g->eta()<<" status: "<<g->status()<<" motherId: "<<g->mother()->pdgId()<<endl;
-        if(g->mother()->status() == 3) { ID = g->mother()->pdgId(); return ID;  } // from Z W+ W-
+        if(g->pdgId()!=g->mother()->pdgId()) { ID = g->mother()->pdgId(); return ID;  } // from Z W+ W-
         else {
             g = (g->mother());
             nMo = g->numberOfMothers();
@@ -287,7 +287,7 @@ int HZZ4LGENAna::MotherMotherID(const reco::GenParticle* p){
     while (nMo>0) {
         int nMoMo = g->mother()->numberOfMothers();
         if (nMoMo==0) return 0;
-        if(g->mother()->status() == 3 && g->mother()->mother()->status()==3 && g->pdgId()!=g->mother()->pdgId() && g->pdgId()!=g->mother()->mother()->pdgId() && g->mother()->pdgId()!=g->mother()->mother()->pdgId()) { ID = g->mother()->mother()->pdgId(); return ID; } // from Z W+ W-
+        if(g->pdgId()!=g->mother()->pdgId() && g->pdgId()!=g->mother()->mother()->pdgId() && g->mother()->pdgId()!=g->mother()->mother()->pdgId()) { ID = g->mother()->mother()->pdgId(); return ID; } // from Z W+ W-
         else {
             g = (g->mother());
             nMo = g->numberOfMothers();
@@ -364,7 +364,7 @@ bool HZZ4LGENAna::IsFSR(const reco::GenParticle* p, int id){
     if (g->pdgId()!=22) return false;
 
     while (nMo>0) {
-        if(g->mother()->pdgId() == id and g->mother()->status()==3) return true;
+        if(g->mother()->pdgId() == id ) return true;
         else {
             g = (g->mother());
             nMo = g->numberOfMothers();

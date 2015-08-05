@@ -15,11 +15,14 @@
 <use   name="FWCore/Framework"/>
 <use   name="FWCore/ParameterSet"/>
 <use   name="FWCore/ServiceRegistry"/>
+<use   name="FWCore/Common"/>
 <use   name="PhysicsTools/PatUtils"/>
 <use   name="PhysicsTools/UtilAlgos"/>
 <use   name="PhysicsTools/Utilities"/>
 <use   name="SimDataFormats/PileupSummaryInfo"/>
-<use   name="EgammaAnalysis/ElectronTools"/>
+<use   name="SimDataFormats/GeneratorProducts">
+<use   name="EgammaAnalysis/ElectronTools"/> 
+<use   name="RecoEgamma/EgammaTools"/>
 <use   name="RecoParticleFlow/PFClusterTools"/>
 <use   name="DataFormats/METReco"/>
 <use   name="TrackingTools/IPTools"/>
@@ -38,7 +41,6 @@
 <use   name="ZZMatrixElement/MELA"/>
 <use   name="ZZMatrixElement/MEKD"/>
 <use   name="ZZMatrixElement/MEMCalculators"/>
-<use   name="CMGTools/External"/>
 <use   name="CondFormats/JetMETObjects"/>
 <flags EDM_PLUGIN="1"/>
 <Flags CXXFLAGS="-g"/>

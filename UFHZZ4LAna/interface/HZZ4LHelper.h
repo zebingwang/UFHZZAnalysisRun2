@@ -58,6 +58,7 @@
 #include "CommonTools/Utils/interface/StringCutObjectSelector.h"
 #include "DataFormats/VertexReco/interface/Vertex.h"
 #include "RecoVertex/VertexTools/interface/VertexDistance3D.h"
+#include "RecoEgamma/EgammaTools/interface/ConversionTools.h"
 
 // PAT
 #include "DataFormats/PatCandidates/interface/Electron.h"
@@ -119,7 +120,15 @@ class HZZ4LHelper
   std::vector<pat::Electron> goodElectrons2012_noIso(std::vector<pat::Electron> Electrons, double elecPtCut, std::string elecID, const reco::Vertex *&vertex,const edm::Event& iEvent);
 
   std::vector<pat::Muon> goodMuons2015_noIso(std::vector<pat::Muon> Muons, double muPtCut, const reco::Vertex *&vertex, double sip3dCut);
+  std::vector<pat::Muon> goodMuons2015_noIso_noPf(std::vector<pat::Muon> Muons, double muPtCut, const reco::Vertex *&vertex, double sip3dCut);
+
   std::vector<pat::Electron> goodElectrons2015_noIso(std::vector<pat::Electron> Electrons, double elecPtCut, std::string elecID, const reco::Vertex *&vertex,const edm::Event& iEvent, double sip3dCut);
+  std::vector<pat::Electron> goodElectrons2015_noIso_noBdt(std::vector<pat::Electron> Electrons, double elecPtCut, std::string elecID, const reco::Vertex *&vertex,const edm::Event& iEvent, double sip3dCut); 
+
+  std::vector<pat::Muon> goodMuons2015_SUSY(std::vector<pat::Muon> Muons, double muPtCut, const reco::Vertex *&vertex, edm::Handle<pat::PackedCandidateCollection> pfcands, edm::Handle<edm::View<pat::Jet> > jets, double sip3dCut, double rho, double isoCut, bool tight);
+  std::vector<pat::Electron> goodElectrons2015_SUSY(std::vector<pat::Electron> Electrons, double elecPtCut, std::string elecID, const reco::Vertex *&vertex, const reco::BeamSpot BS, edm::Handle<pat::PackedCandidateCollection> pfcands,  edm::Handle< std::vector<reco::Conversion> > theConversions, edm::Handle<edm::View<pat::Jet> > jets, double sip3dCut, double rho, double isoCut, bool tight);
+
+  double miniIsolation(edm::Handle<pat::PackedCandidateCollection> pfcands, const reco::Candidate* ptcl, double r_iso_min, double r_iso_max, double kt_scale, double rho, bool charged_only);
 
   std::vector<pat::Muon> goodLooseMuons2012(edm::Handle<edm::View<pat::Muon> > Muons, double muPtCut);
   std::vector<pat::Electron> goodLooseElectrons2012(edm::Handle<edm::View<pat::Electron> > Electrons, double elPtCut);
@@ -130,9 +139,9 @@ class HZZ4LHelper
   std::vector<pat::Muon> goodTightMuons(std::vector<pat::Muon>  Muons, double muPtCut);
   std::vector<pat::Electron> goodTightElectrons(std::vector<pat::Electron> Electrons, double elecPtCut, std::string elecID);
 
-
-
   void cleanOverlappingLeptons(std::vector<pat::Muon> &Muons, std::vector<pat::Electron> &Electrons,const reco::Vertex *&vertex);
+  void cleanOverlappingLeptons_SUSY(std::vector<pat::Muon> &Muons, std::vector<pat::Electron> &Electrons,const reco::Vertex *&vertex);
+
   void m2lCutAt4GeV(std::vector<pat::Muon> &Muons, std::vector<pat::Electron> &Electrons);
   void m2lCutAt4GeV(std::vector<pat::Muon> inputMuons, std::vector<pat::Electron> inputElectrons, std::vector<pat::Muon> &outputMuons, 
                     std::vector<pat::Electron> &outputElectrons);
@@ -175,6 +184,7 @@ class HZZ4LHelper
 			 double earlyIsoCut, TString isoType, TString muPUCorr, TString elPUCorr, double Rho );
 
   double getSIP3D(pat::Muon muon);
+  bool passTight_BDT_Id(pat::Electron electron, std::string elecID);
   double getSIP3D(pat::Electron electron);
   TString getStringFromDouble(double number);
 
@@ -1102,6 +1112,109 @@ std::vector<pat::Muon> HZZ4LHelper::goodMuons2015_noIso(std::vector<pat::Muon> M
   return bestMuons;
   
 }
+std::vector<pat::Muon> HZZ4LHelper::goodMuons2015_noIso_noPf(std::vector<pat::Muon> Muons, double muPtCut, const reco::Vertex *&vertex, double sip3dCut)
+{
+ //using namespace edm;
+  using namespace pat;
+  using namespace std;
+  vector<pat::Muon> bestMuons;
+  /********** M U O N  C U T S **********/
+  double muEtaCut = 2.4;
+  double dxyCut = 0.5;
+  double dzCut = 1;
+  /**************************************/
+  for(unsigned int i = 0; i < Muons.size(); i++)
+      if( Muons[i].pt() > muPtCut && abs(Muons[i].eta()) < muEtaCut &&
+          (Muons[i].isGlobalMuon() || (Muons[i].isTrackerMuon() && Muons[i].numberOfMatches(/*reco::Muon::SegmentArbitration*/) > 0 /*numberOfMatchedStations() > 0*/ ) ) &&
+          Muons[i].muonBestTrackType() != 2 ) {
+
+          if( abs(getSIP3D(Muons[i])) < sip3dCut ) {
+
+              if( fabs(Muons[i].muonBestTrack()->dxy(vertex->position())) < dxyCut ) { //miniAOD 
+
+                  if( fabs(Muons[i].muonBestTrack()->dz(vertex->position())) < dzCut ) {// miniAOD       
+
+                      bestMuons.push_back(Muons[i]);
+                  } //else {cout<<"muon "<<i<<" failed dz cut, |dz|="<<fabs(Muons[i].muonBestTrack()->dxy(vertex->position()))<<endl;}
+
+              } //else {cout<<"muon "<<i<<" failed dxy cut, |dxz|="<<fabs(Muons[i].muonBestTrack()->dz(vertex->position()))<<endl;}
+
+          } //else {cout<<"muon "<<i<<" failed sip cut, |sip|="<<abs(getSIP3D(Muons[i]))<<endl;}
+
+      } //else {cout<<"muon "<<i<<" failed pt, eta, or (isGlobal || isTracker)"<<endl;}
+
+  return bestMuons;
+
+}
+
+std::vector<pat::Muon> HZZ4LHelper::goodMuons2015_SUSY(std::vector<pat::Muon> Muons, double muPtCut, const reco::Vertex *&vertex, edm::Handle<pat::PackedCandidateCollection> pfcands, edm::Handle<edm::View<pat::Jet> > jets, double sip3dCut, double rho, double isoCut, bool tight)
+{
+    //using namespace edm;                                                                                                                                                                                                                                                                                                                                       
+    using namespace pat;
+    using namespace std;
+
+    vector<pat::Muon> bestMuons;
+    /********** M U O N  C U T S **********/
+    double muEtaCut = 2.4;
+    double dxyCut = 0.05;
+    double dzCut = 0.1;
+    /**************************************/
+
+    for(unsigned int i = 0; i < Muons.size(); i++) {
+        //cout<<"mu ispf: "<<Muons[i].isPFMuon()<<" glb: "<<Muons[i].isGlobalMuon()<<" trk: "<<Muons[i].isTrackerMuon()<<" nmatch: "<<Muons[i].numberOfMatches()<<" type: "<<Muons[i].muonBestTrackType()<<endl;                                                                                                                                                 
+        if( Muons[i].pt() > muPtCut && abs(Muons[i].eta()) < muEtaCut &&
+            Muons[i].isPFMuon() == 1 &&
+            (Muons[i].isGlobalMuon() || (Muons[i].isTrackerMuon() && Muons[i].numberOfMatches() > 0 ) ) &&
+            Muons[i].muonBestTrackType() != 2 ) {
+            if( abs(getSIP3D(Muons[i])) < sip3dCut ) {
+                if( fabs(Muons[i].muonBestTrack()->dxy(vertex->position())) < dxyCut ) { //miniAOD                                                                                                                                                                                                                                                               
+                    if( fabs(Muons[i].muonBestTrack()->dz(vertex->position())) < dzCut ) {// miniAOD                                                                                                                                                                                                                                                             
+
+                        double miniiso = miniIsolation(pfcands, dynamic_cast<const reco::Candidate *>(&Muons[i]), 0.05, 0.2, 10., rho, false);
+
+                        double ptratio = 9999.0;
+                        double mindR=9999.0;
+                        double ptrel=9999.0;
+
+                        for(unsigned int j = 0; j < jets->size(); ++j) {
+                            const pat::Jet & patjet = jets->at(j);
+                            double tmpdR = deltaR(Muons[i].eta(),Muons[i].phi(),patjet.eta(),patjet.phi());
+                            if (tmpdR<mindR && tmpdR<0.4) {
+                                mindR = tmpdR;
+                                ptratio = Muons[i].pt()/patjet.pt();
+
+                                TVector3 pl(Muons[i].px(),Muons[i].py(),Muons[i].pz());
+                                math::XYZTLorentzVector p4jminusl;
+                                p4jminusl = Muons[i].p4() - patjet.p4();
+                                TVector3 pjminusl(p4jminusl.Px(),p4jminusl.Py(),p4jminusl.Pz());
+                                double sin_alpha = (pl.Cross(pjminusl)).Mag()/pl.Mag()/pjminusl.Mag();
+                                ptrel = pl.Mag()*sin_alpha;
+
+                            }
+                        }
+
+                        if (miniiso<isoCut && (ptratio>0.63 || ptrel>6.0) ) {
+
+                            if (tight) {
+                                bool goodGlb = (Muons[i].isGlobalMuon() &&
+                                                Muons[i].globalTrack()->normalizedChi2() < 3 &&
+                                                Muons[i].combinedQuality().chi2LocalPosition < 12 &&
+                                                Muons[i].combinedQuality().trkKink < 20 );
+                                bool good = (Muons[i].innerTrack()->validFraction() >= 0.8 &&
+                                             Muons[i].segmentCompatibility() >= (goodGlb ? 0.303 : 0.451) );
+                                if (good) bestMuons.push_back(Muons[i]);
+                            } else {
+                                bestMuons.push_back(Muons[i]);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return bestMuons;
+}
+
 
 std::vector<pat::Electron> HZZ4LHelper::goodElectrons2012_noIso(std::vector<pat::Electron> Electrons, double elecPtCut, std::string elecID, const reco::Vertex *&vertex,const edm::Event& iEvent)
 {
@@ -1205,17 +1318,15 @@ std::vector<pat::Electron> HZZ4LHelper::goodElectrons2015_noIso(std::vector<pat:
   double dxyCut = 0.5;
   double dzCut = 1;
   /**************************************/
-  /*
-
-float fSCeta = fabs(l.superCluster()->eta());
-bool isBDT = (pt <= 10 && (( fSCeta < 0.8 && BDT > -0.202)  ||
-   (fSCeta >= 0.8 && fSCeta < 1.479 && BDT > -0.444) ||
-   (fSCeta >= 1.479               && BDT > 0.264))) || 
-   (pt >  10 && ((fSCeta < 0.8 && BDT > -0.110)  ||
-   (fSCeta >= 0.8 && fSCeta < 1.479 && BDT > -0.284) || 
-  (fSCeta >= 1.479               && BDT > -0.212)));  
- 
-  */
+/*
+ float fSCeta = fabs(l.superCluster()->eta());
+bool isBDT = (pt<=10 && ((fSCeta<0.8                  && BDT > -0.586) ||
+                         (fSCeta>=0.8 && fSCeta<1.479 && BDT > -0.712) ||
+                         (fSCeta>=1.479               && BDT > -0.662))) 
+          || (pt>10  && ((fSCeta<0.8                  && BDT > -0.652) ||
+                         (fSCeta>=0.8 && fSCeta<1.479 && BDT > -0.701) || 
+                         (fSCeta>=1.479               && BDT > -0.350)));
+ */ 
   for(unsigned int i = 0; i < Electrons.size(); i++) {
 
       if( abs(getSIP3D(Electrons[i])) < sip3dCut) { 
@@ -1226,14 +1337,14 @@ bool isBDT = (pt <= 10 && (( fSCeta < 0.8 && BDT > -0.202)  ||
               float cutVal = 1000;
  
               if(Electrons[i].pt()<=10){ 
-                 if(fSCeta < 0.8) cutVal = -0.202; 
-                 if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = -0.444;
-                 if(fSCeta >= 1.479) cutVal = 0.264;  
+                 if(fSCeta < 0.8) cutVal = -0.586; 
+                 if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = -0.712;
+                 if(fSCeta >= 1.479) cutVal = -0.662;  
               }
               else {
-                 if(fSCeta < 0.8) cutVal = -0.110; 
-                 if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = -0.284;
-                 if(fSCeta >= 1.479) cutVal = -0.212;
+                 if(fSCeta < 0.8) cutVal = -0.652; 
+                 if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = -0.701;
+                 if(fSCeta >= 1.479) cutVal = -0.350;
               }
               //int misHits = Electrons[i].gsfTrack()->trackerExpectedHitsInner().numberOfLostHits(); // for miniADO
               int misHits = Electrons[i].gsfTrack()->hitPattern().numberOfHits(reco::HitPattern::MISSING_INNER_HITS); // for miniAOD
@@ -1247,6 +1358,195 @@ bool isBDT = (pt <= 10 && (( fSCeta < 0.8 && BDT > -0.202)  ||
   return bestElectrons;
   
 }
+
+
+//Returns vector of good muons for analysis
+std::vector<pat::Electron> HZZ4LHelper::goodElectrons2015_noIso_noBdt(std::vector<pat::Electron> Electrons, double elecPtCut, std::string elecID, const reco::Vertex *&vertex,const edm::Event& iEvent, double sip3dCut)
+{
+  using namespace edm;
+  using namespace pat;
+  using namespace std;
+
+  vector<pat::Electron> bestElectrons;
+
+         /****** E L E C T R O N  C U T S ******/
+  int missingHitsCuts = 2;
+  double dxyCut = 0.5;
+  double dzCut = 1;
+
+  for(unsigned int i = 0; i < Electrons.size(); i++) {
+
+      if( abs(getSIP3D(Electrons[i])) < sip3dCut) {
+      if (fabs(Electrons[i].gsfTrack()->dxy(vertex->position())) < dxyCut) {
+      if (fabs(Electrons[i].gsfTrack()->dz(vertex->position())) < dzCut ) {
+
+      int misHits = Electrons[i].gsfTrack()->hitPattern().numberOfHits(reco::HitPattern::MISSING_INNER_HITS); // for miniAOD
+      if (misHits < missingHitsCuts) { bestElectrons.push_back(Electrons[i]);}
+
+      }
+      }
+      }
+  }
+
+  return bestElectrons;
+}
+
+
+std::vector<pat::Electron> HZZ4LHelper::goodElectrons2015_SUSY(std::vector<pat::Electron> Electrons, double elecPtCut, std::string elecID, const reco::Vertex *&vertex, const reco::BeamSpot BS, edm::Handle<pat::PackedCandidateCollection> pfcands,  edm::Handle< std::vector<reco::Conversion> > theConversions, edm::Handle<edm::View<pat::Jet> > jets, double sip3dCut, double rho, double isoCut, bool tight)
+{
+    using namespace pat;
+    using namespace std;
+
+    vector<pat::Electron> bestElectrons;
+
+    /****** E L E C T R O N  C U T S ******/
+    double elecEtaCut = 2.5;
+    int missingHitsCuts = 1;
+    double dxyCut = 0.05;
+    double dzCut = 0.1;
+    /**************************************/
+
+    for(unsigned int i = 0; i < Electrons.size(); i++) {
+
+        if (abs(Electrons[i].eta())<elecEtaCut && Electrons[i].pt()>=elecPtCut) {
+            if( abs(getSIP3D(Electrons[i])) < sip3dCut) {
+                if (fabs(Electrons[i].gsfTrack()->dxy(vertex->position())) < dxyCut) {
+                    if (fabs(Electrons[i].gsfTrack()->dz(vertex->position())) < dzCut ) {
+
+                        float fSCeta = fabs(Electrons[i].eta());
+                        float cutVal = 1000;
+
+                        if(Electrons[i].pt()<=10){
+                            if(fSCeta < 0.8) cutVal = -0.202;
+                            if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = -0.444;
+                            if(fSCeta >= 1.479) cutVal = 0.264;
+                        }
+                        else {
+                            if(fSCeta < 0.8) cutVal = 0.73;
+                            if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = 0.57;
+                            if(fSCeta >= 1.479) cutVal = 0.05;
+                        }
+
+                        int misHits = Electrons[i].gsfTrack()->hitPattern().numberOfHits(reco::HitPattern::MISSING_INNER_HITS);
+                        double miniiso = miniIsolation(pfcands, dynamic_cast<const reco::Candidate *>(&Electrons[i]), 0.05, 0.2, 10., rho, false);
+
+                        double ptratio = 9999.0;
+                        double mindR=9999.0;
+                        double ptrel=9999.0;
+
+                        for(unsigned int j = 0; j < jets->size(); ++j) {
+
+                            const pat::Jet & patjet = jets->at(j);
+                            double tmpdR = deltaR(Electrons[i].eta(),Electrons[i].phi(),patjet.eta(),patjet.phi());
+
+                            if (tmpdR<mindR && tmpdR<0.4) {
+                                mindR = tmpdR;
+                                ptratio = Electrons[i].pt()/patjet.pt();
+
+                                TVector3 pl(Electrons[i].px(),Electrons[i].py(),Electrons[i].pz());
+                                math::XYZTLorentzVector p4jminusl;
+                                p4jminusl = Electrons[i].p4() - patjet.p4();
+                                TVector3 pjminusl(p4jminusl.Px(),p4jminusl.Py(),p4jminusl.Pz());
+                                double sin_alpha = (pl.Cross(pjminusl)).Mag()/pl.Mag()/pjminusl.Mag();
+                                ptrel = pl.Mag()*sin_alpha;
+
+                            }
+
+                        }
+
+
+                        bool vtxFitConversion = ConversionTools::hasMatchedConversion(reco::GsfElectron(Electrons[i]), theConversions, BS.position());
+                        if( vtxFitConversion )  continue;
+                        if (Electrons[i].electronID(elecID) > cutVal && misHits < missingHitsCuts && miniiso<isoCut && (ptratio>0.68 || ptrel>6.7)) { bestElectrons.push_back(Electrons[i]);}
+
+                    }
+                }
+            }
+        }
+    }
+    
+    return bestElectrons;
+    
+}
+
+
+double HZZ4LHelper::miniIsolation(edm::Handle<pat::PackedCandidateCollection> pfcands, const reco::Candidate* ptcl, double r_iso_min, double r_iso_max, double kt_scale, double rho, bool charged_only) {
+
+    double deadcone_nh(0.), deadcone_ch(0.), deadcone_ph(0.), deadcone_pu(0.);
+    double EA=0.0;
+    if(ptcl->isElectron()) {
+        if (fabs(ptcl->eta())>1.479) {deadcone_ch = 0.015; deadcone_pu = 0.015; deadcone_ph = 0.08;}
+        // 72X
+        if (fabs(ptcl->eta())>=0.0 && fabs(ptcl->eta())<0.8) EA=0.1013;
+        if (fabs(ptcl->eta())>=0.8 && fabs(ptcl->eta())<1.3) EA=0.0988;
+        if (fabs(ptcl->eta())>=1.3 && fabs(ptcl->eta())<2.0) EA=0.0572;
+        if (fabs(ptcl->eta())>=2.0 && fabs(ptcl->eta())<2.2) EA=0.0842;
+        if (fabs(ptcl->eta())>=2.2 && fabs(ptcl->eta())<2.5) EA=0.1530;
+
+    } else if(ptcl->isMuon()) {
+        deadcone_ch = 0.0001; deadcone_pu = 0.01; deadcone_ph = 0.01;deadcone_nh = 0.01;
+        // 72X
+        if (fabs(ptcl->eta())>=0.0 && fabs(ptcl->eta())<0.8) EA=0.0913;
+        if (fabs(ptcl->eta())>=0.8 && fabs(ptcl->eta())<1.3) EA=0.0765;
+        if (fabs(ptcl->eta())>=1.3 && fabs(ptcl->eta())<2.0) EA=0.0546;
+        if (fabs(ptcl->eta())>=2.0 && fabs(ptcl->eta())<2.2) EA=0.0728;
+        if (fabs(ptcl->eta())>=2.2 && fabs(ptcl->eta())<2.5) EA=0.1177;
+    }
+
+    double iso_nh(0.); double iso_ch(0.);
+    double iso_ph(0.); double iso_pu(0.);
+    double ptThresh(0.5);
+    if (ptcl->isElectron()) ptThresh = 0;
+    double r_iso = max(r_iso_min,min(r_iso_max, kt_scale/ptcl->pt()));
+
+    for (const pat::PackedCandidate &pfc : *pfcands) {
+        if (abs(pfc.pdgId())<7) continue;
+
+        double dr = deltaR(pfc, *ptcl);
+        if (dr > r_iso) continue;
+
+        //////////////////  NEUTRALS  /////////////////////////
+        if (pfc.charge()==0){
+            if (pfc.pt()>ptThresh) {
+                /////////// PHOTONS ////////////
+                if (abs(pfc.pdgId())==22) {
+                    if(dr < deadcone_ph) continue;
+                    iso_ph += pfc.pt();
+                    /////////// NEUTRAL HADRONS ////////////
+                } else if (abs(pfc.pdgId())==130) {
+                    if(dr < deadcone_nh) continue;
+                    iso_nh += pfc.pt();
+                }
+            }
+            //////////////////  CHARGED from PV  /////////////////////////
+        } else if (pfc.fromPV()>1){
+            if (abs(pfc.pdgId())==211) {
+                if(dr < deadcone_ch) continue;
+                iso_ch += pfc.pt();
+            }
+            //////////////////  CHARGED from PU  /////////////////////////
+        } else {
+            if (pfc.pt()>ptThresh){
+                if(dr < deadcone_pu) continue;
+                iso_pu += pfc.pt();
+            }
+        }
+    }
+    double iso(0.);
+    if (charged_only){
+        iso = iso_ch;
+    } else {
+        iso = iso_ph + iso_nh;
+        iso -= rho*EA*(r_iso/0.3)*(r_iso/0.3);
+        if (iso>0) iso += iso_ch;
+        else iso = iso_ch;
+    }
+    iso = iso/ptcl->pt();
+
+    return iso;
+
+}
+
 
 
 //Returns vector of good muons for analysis
@@ -1482,8 +1782,8 @@ HZZ4LHelper::cleanOverlappingLeptons(std::vector<pat::Muon> &Muons, std::vector<
 
   for( unsigned int i = 0; i < Muons.size(); i++ )
     {
-      if( Muons[i].pt() > muPtCut && abs(Muons[i].eta()) < muEtaCut && 
-          Muons[i].isPFMuon() == 1 && 
+      if( Muons[i].pt() > muPtCut && abs(Muons[i].eta()) < muEtaCut &&
+           Muons[i].isPFMuon() == 1 &&
           (Muons[i].isGlobalMuon() || (Muons[i].isTrackerMuon() && Muons[i].numberOfMatches(/*reco::Muon::SegmentArbitration*/) > 0 /*numberOfMatchedStations() > 0*/ ) ) &&
 	  Muons[i].muonBestTrackType() != 2 ) {
 	     if( abs(getSIP3D(Muons[i])) < sip3dCut ) {
@@ -1508,6 +1808,47 @@ HZZ4LHelper::cleanOverlappingLeptons(std::vector<pat::Muon> &Muons, std::vector<
 }
 
 }
+
+
+void
+HZZ4LHelper::cleanOverlappingLeptons_SUSY(std::vector<pat::Muon> &Muons, std::vector<pat::Electron> &Electrons,const reco::Vertex *&vertex)
+{
+
+    //using namespace edm;                                                                                                                                                            
+    using namespace pat;
+    using namespace std;
+    /********** M U O N  C U T S **********/
+    double muEtaCut = 2.4;
+    double dxyCut = 0.05;
+    double dzCut = 0.1;
+    double tmpDeltR =100;
+    double muPtCut = 5;
+    /**************************************/
+
+    for( unsigned int i = 0; i < Muons.size(); i++ ) {
+        if( Muons[i].pt() > muPtCut && abs(Muons[i].eta()) < muEtaCut &&
+            Muons[i].isPFMuon() == 1 && (Muons[i].isGlobalMuon() || Muons[i].isTrackerMuon()) ) {
+
+            if( fabs(Muons[i].muonBestTrack()->dxy(vertex->position())) < dxyCut ) {
+                if( fabs(Muons[i].muonBestTrack()->dz(vertex->position())) < dzCut ) {
+
+                    //std::cout<<"muon pt: "<<Muons[i].pt()<<" eta: "<<Muons[i].eta()<<" phi: "<<Muons[i].phi()<<std::endl;                                                           
+
+                    for( unsigned int j = 0; j < Electrons.size(); j++ ) {
+                        tmpDeltR = deltaR(Muons[i].eta(),Muons[i].phi(),Electrons[j].eta(),Electrons[j].phi());
+                        //std::cout<<"el pt: "<<Electrons[j].pt()<<" eta: "<<Electrons[j].eta()<<" phi: "<<Electrons[j].phi()<<" dr: "<<tmpDeltR<<std::endl;                          
+                        if( tmpDeltR < 0.05 ) {
+                            Electrons.erase(Electrons.begin()+j);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+
 void 
 HZZ4LHelper::m2lCutAt4GeV(std::vector<pat::Muon> &Muons, std::vector<pat::Electron> &Electrons)
 {
@@ -3461,7 +3802,6 @@ double HZZ4LHelper::getSIP3D(pat::Muon muon)
   return sip;
 
 }
-
 double HZZ4LHelper::getSIP3D(pat::Electron electron)
 {
   //using namespace edm;
@@ -3476,9 +3816,23 @@ double HZZ4LHelper::getSIP3D(pat::Electron electron)
   return sip;
 
 }
-
-
-
+bool HZZ4LHelper::passTight_BDT_Id(pat::Electron electron, std::string elecID)
+{
+ float cutVal=1000;
+ float fSCeta = fabs(electron.superCluster()->eta());
+if(electron.pt()<=10){ 
+                 if(fSCeta < 0.8) cutVal = -0.586; 
+                 if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = -0.712;
+                 if(fSCeta >= 1.479) cutVal = -0.662;  
+              }
+              else {
+                 if(fSCeta < 0.8) cutVal = -0.652; 
+                 if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = -0.701;
+                 if(fSCeta >= 1.479) cutVal = -0.350;
+              }
+  if (electron.electronID(elecID) > cutVal ) { return true;}
+  return false;
+}
 
 TString HZZ4LHelper::getStringFromDouble(double number)
 {
@@ -3587,7 +3941,7 @@ double HZZ4LHelper::pfIso(pat::Muon muon, double Rho)
 
 double HZZ4LHelper::pfIso(pat::Electron elec, double Rho)
 {
-    //double PUCorr = Rho*ElecEffArea(elEAtype,elec.superCluster()->eta(),elEAtarget);
+   //double PUCorr = Rho*ElecEffArea(elEAtype,elec.superCluster()->eta(),elEAtarget);
   double PUCorr = Rho*ElecEffArea(elEAtype,elec.eta(),elEAtarget);
   double iso = (elec.chargedHadronIso()+std::max(elec.photonIso()+elec.neutralHadronIso()-PUCorr,0.0))/elec.pt();
   return iso;
@@ -3604,8 +3958,8 @@ double HZZ4LHelper::getPUIso(pat::Muon muon, double Rho)
 
 double HZZ4LHelper::getPUIso(pat::Electron elec, double Rho)
 {
-//   double puiso = Rho*ElecEffArea(elEAtype,elec.superCluster()->eta(),elEAtarget);
-     double puiso = Rho*ElecEffArea(elEAtype,elec.eta(),elEAtarget);
+//     double puiso = Rho*ElecEffArea(elEAtype,elec.superCluster()->eta(),elEAtarget);
+     double puiso = Rho*ElecEffArea(elEAtype,elec.eta(),elEAtarget); 
   return puiso;
 }
 

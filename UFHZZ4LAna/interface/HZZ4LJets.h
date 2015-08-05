@@ -74,8 +74,8 @@ int HZZ4LJets::patjetID(const pat::Jet& jet)
 
   bool looseID = jet.neutralHadronEnergyFraction() < 0.99
     && jet.neutralEmEnergyFraction() < 0.99
-    && jet.nConstituents() > 1;
-
+    && jet.nConstituents() > 1
+    && jet.muonEnergyFraction()<0.8;
       
   bool loEtaID = jet.chargedMultiplicity() > 0
     && jet.chargedHadronEnergyFraction() > 0.0
