@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include <cmath>
 #include <iomanip>
+#include <set>
 
 #define PI 3.14159
 
@@ -56,6 +57,7 @@
 #include "DataFormats/Common/interface/Association.h"
 #include "DataFormats/Common/interface/ValueMap.h"
 #include "DataFormats/HepMCCandidate/interface/GenParticle.h"
+#include "DataFormats/PatCandidates/interface/PackedGenParticle.h"
 #include "FWCore/Common/interface/TriggerNames.h"
 #include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"
 
@@ -195,9 +197,9 @@ private:
     void bookPassedEventTree(TString treeName, TTree *tree);
     void setTreeVariables( const edm::Event&, const edm::EventSetup&, 
                            std::vector<pat::Muon> selectedMuons, std::vector<pat::Electron> selectedElectrons, std::vector<pat::Muon> recoMuons, std::vector<pat::Electron> recoElectrons, std::vector<pat::Jet> goodJets);
-    void setGENVariables(edm::Handle<reco::GenParticleCollection> genParticles,
+    void setGENVariables(edm::Handle<reco::GenParticleCollection> prunedgenParticles,
+                         edm::Handle<edm::View<pat::PackedGenParticle> > packedgenParticles,
                          edm::Handle<edm::View<reco::GenJet> > genJets);
-
     bool mZ1_mZ2(unsigned int& L1, unsigned int& L2, unsigned int& L3, unsigned int& L4);
 
     // -------------------------
@@ -419,6 +421,7 @@ private:
     double isoCutEl, isoCutMu, sip3dCut;
     double leadingPtCut, subleadingPtCut;
     double genIsoCut;
+    double genFSRDrCut;
     double _elecPtCut, _muPtCut;
     double BTagCut;
     bool reweightForPU;
@@ -474,7 +477,8 @@ UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
     sip3dCut(iConfig.getUntrackedParameter<double>("sip3dCut",4)),
     leadingPtCut(iConfig.getUntrackedParameter<double>("leadingPtCut",20.0)),
     subleadingPtCut(iConfig.getUntrackedParameter<double>("subleadingPtCut",10.0)),
-    genIsoCut(iConfig.getUntrackedParameter<double>("genIsoCut",0.4)), // was 0.4
+    genIsoCut(iConfig.getUntrackedParameter<double>("genIsoCut",0.4)), 
+    genFSRDrCut(iConfig.getUntrackedParameter<double>("genFSRDrCut",0.1)), 
     _elecPtCut(iConfig.getUntrackedParameter<double>("_elecPtCut",7)),
     _muPtCut(iConfig.getUntrackedParameter<double>("_muPtCut",5)),
     BTagCut(iConfig.getUntrackedParameter<double>("BTagCut",0.814)),
@@ -618,8 +622,11 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     iEvent.getByLabel(jetSrc_,jets);
   
     // GEN collections
-    edm::Handle<reco::GenParticleCollection> genParticles;
-    iEvent.getByLabel("prunedGenParticles", genParticles);
+    edm::Handle<reco::GenParticleCollection> prunedgenParticles;
+    iEvent.getByLabel("prunedGenParticles", prunedgenParticles);
+
+    edm::Handle<edm::View<pat::PackedGenParticle> > packedgenParticles;
+    iEvent.getByLabel("packedGenParticles", packedgenParticles);
     
     edm::Handle<edm::View<reco::GenJet> > genJets;
     iEvent.getByLabel("slimmedGenJets", genJets);
@@ -807,7 +814,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         double tmpWeight = genEventInfo->weight();
         genWeight = (tmpWeight > 0 ? 1.0 : -1.0);
         if (verbose) cout<<"setting gen variables"<<endl;       
-        setGENVariables(genParticles,genJets); 
+        setGENVariables(prunedgenParticles,packedgenParticles,genJets); 
         if (verbose) { cout<<"finshed setting gen variables"<<endl;  }
     }
     sumWeightsTotal += genWeight;
@@ -967,11 +974,12 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
                 double minDr=9999.0;
 
+                TLorentzVector *reco, *gen;
+                reco = (TLorentzVector*) lep_p4->At(i);
+
                 for (unsigned int j = 0; j < GENlep_id.size(); j++) {
 
                     if (GENlep_id[j]!=lep_id[i]) continue;
-                    TLorentzVector *reco, *gen;
-                    reco = (TLorentzVector*) lep_p4->At(i);
                     gen = (TLorentzVector*) GENlep_p4->At(j);
                     double thisDr = deltaR(reco->Eta(),reco->Phi(),gen->Eta(),gen->Phi());
 
@@ -980,13 +988,14 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                         minDr=thisDr;
                     }
 
-                } // all gen leptons 
+                } // all gen leptons
+ 
             } // all reco leptons
             if (verbose) {cout<<"finished gen matching"<<endl;}
         } //isMC
 
-        if( (recoMuons.size() + recoElectrons.size()) >= 1 ){
-            if (verbose) cout<<"found one lepton"<<endl;
+        if( (recoMuons.size() + recoElectrons.size()) >= 2 ) {
+            if (verbose) cout<<"found two leptons"<<endl;
 
             // Mass Resolution Study
             if((recoMuons.size() + recoElectrons.size()) >=2 && bStudyResolution) {
@@ -1272,22 +1281,24 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 }
 
                 D_bkg_kin = me_0plus_JHU / (me_0plus_JHU + me_qqZZ_MCFM);
-                D_bkg = me_0plus_JHU * p0plus_m4l / (me_0plus_JHU * p0plus_m4l + me_qqZZ_MCFM * bkg_m4l); // superMELA                                                                                                                               
-                D_g4 = me_0plus_JHU / ( me_0plus_JHU + p0minus_VAJHU ); // D_0-                                                                                                                                                                      
+                D_bkg = me_0plus_JHU * p0plus_m4l / (me_0plus_JHU * p0plus_m4l + me_qqZZ_MCFM * bkg_m4l); // superMELA 
+                D_g4 = me_0plus_JHU / ( me_0plus_JHU + p0minus_VAJHU ); // D_0- 
 
-                mela::computeAngles(P4s[0], tmpIDs[0], P4s[1], tmpIDs[1], P4s[2], tmpIDs[2], P4s[3], tmpIDs[3], cosThetaStar,cosTheta1,cosTheta2,Phi,Phi1);                                                                                        
+                mela::computeAngles(P4s[0], tmpIDs[0], P4s[1], tmpIDs[1], P4s[2], tmpIDs[2], P4s[3], tmpIDs[3], cosThetaStar,cosTheta1,cosTheta2,Phi,Phi1);
 
                 if (verbose) cout<<"D_bkg_kin: "<<D_bkg_kin<< ", D_bkg: " << D_bkg << ", Dgg: " << Dgg10_VAMCFM << ", HJJ_VBF: " << Djet_VAJHU << " ,D0-: " << D_g4 << endl;
                 if (verbose) cout<<"cosThetaStar: "<<cosThetaStar<< ", cosTheta1: " << cosTheta1 << ", cosTheta2: " << cosTheta2 << ", Phi: " << Phi << " , Phi1: " << Phi1 << endl;
                 
             }
 
-            passedEventsTree_All->Fill();
+            if (!isMC) passedEventsTree_All->Fill();        
 
-        } //if 1 lepID
-        else { if (verbose) cout<<Run<<":"<<LumiSect<<":"<<Event<<" failed  1 ID"<<endl;}
-    } //notDuplicate
+        } //if 2 lepID
+        else { if (verbose) cout<<Run<<":"<<LumiSect<<":"<<Event<<" failed  2 ID"<<endl;}
+    } //primary vertex,notDuplicate
     else { if (verbose) cout<<Run<<":"<<LumiSect<<":"<<Event<<" failed notDuplicate"<<endl;}
+    if (isMC) passedEventsTree_All->Fill();
+
 }
 
 
@@ -2462,7 +2473,8 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
 
 
 
-void UFHZZ4LAna::setGENVariables(edm::Handle<reco::GenParticleCollection> genParticles,
+void UFHZZ4LAna::setGENVariables(edm::Handle<reco::GenParticleCollection> prunedgenParticles,
+                                 edm::Handle<edm::View<pat::PackedGenParticle> > packedgenParticles,
                                  edm::Handle<edm::View<reco::GenJet> > genJets)
 {
 
@@ -2471,47 +2483,77 @@ void UFHZZ4LAna::setGENVariables(edm::Handle<reco::GenParticleCollection> genPar
     int nGENLeptons=-1;
 
     if (verbose) cout<<"begin looping on gen particles"<<endl;
-    for(genPart = genParticles->begin(); genPart != genParticles->end(); genPart++) {
+    for(genPart = prunedgenParticles->begin(); genPart != prunedgenParticles->end(); genPart++) {
         j++;
+
         if (abs(genPart->pdgId())==11  || abs(genPart->pdgId())==13 || abs(genPart->pdgId())==15) {
 
-            if ( !(genAna.MotherID(&genParticles->at(j))==23 || abs(genAna.MotherID(&genParticles->at(j)))==24) && genPart->status()==23 ) continue;
+            if (!(genPart->status()==1)) continue;
+            if ( !(genAna.MotherID(&prunedgenParticles->at(j))==23 || abs(genAna.MotherID(&prunedgenParticles->at(j)))==24) ) continue;
 
             nGENLeptons++;
 
-            new ( (*GENlep_p4)[nGENLeptons] ) TLorentzVector(genPart->px(),genPart->py(),genPart->pz(),genPart->energy());
+            // Collect FSR photons within dR<0.1
+            TLorentzVector lep_dressed;            
+            lep_dressed.SetPtEtaPhiE(genPart->pt(),genPart->eta(),genPart->phi(),genPart->energy());
+            set<int> gen_fsrset;
+            for(size_t k=0; k<packedgenParticles->size();k++){
+
+                //const Candidate * motherInPrunedCollection = (*packed)[k].mother(0) ;
+                if( (*packedgenParticles)[k].status() != 1) continue; // stable particles only
+                if( (*packedgenParticles)[k].pdgId() != 22) continue; // only photons
+                double this_dR_lgamma = deltaR(genPart->eta(), genPart->phi(), (*packedgenParticles)[k].eta(), (*packedgenParticles)[k].phi());
+                if (verbose) cout<<"lep id: "<<genPart->pdgId()<<" lep eta: "<< genPart->eta()<<" pho pt: "<<(*packedgenParticles)[k].pt()<<" pho eta: "<<(*packedgenParticles)[k].eta() <<" mother0 id: "<<(*packedgenParticles)[j].mother(0)->pdgId()<<" dr: "<<this_dR_lgamma<<endl;
+                //if( (*packedgenParticles)[j].mother(0)->pdgId() != genPart->pdgId()) continue; //only photons with mother id equal to this lepton's id
+                bool idmatch=false;
+                if ((*packedgenParticles)[k].mother(0)->pdgId()==genPart->pdgId() ) idmatch=true;
+                const reco::Candidate * mother = (*packedgenParticles)[k].mother(0);
+                for(size_t m=0;m<mother->numberOfMothers();m++) {
+                    if (verbose) cout<<"pho mother "<<m<<" pho mother id: "<<(*packedgenParticles)[k].mother(m)->pdgId()<<endl;
+                    if ( (*packedgenParticles)[k].mother(m)->pdgId() == genPart->pdgId() ) idmatch=true;
+                }
+                if (!idmatch) continue;
+                if(this_dR_lgamma<genFSRDrCut) {
+                    gen_fsrset.insert(k);
+                    TLorentzVector gamma;
+                    gamma.SetPtEtaPhiE((*packedgenParticles)[k].pt(),(*packedgenParticles)[k].eta(),(*packedgenParticles)[k].phi(),(*packedgenParticles)[k].energy());
+                    lep_dressed = lep_dressed+gamma;
+                }
+            } // Dressed leptons loop
+            if (verbose) cout<<"lep pt "<<genPart->pt()<< " dressed pt: " << lep_dressed.Pt()<<endl;
+  
+            new ( (*GENlep_p4)[nGENLeptons] ) TLorentzVector(lep_dressed.Px(),lep_dressed.Py(),lep_dressed.Pz(),lep_dressed.Energy());
             GENlep_id.push_back( genPart->pdgId() );
             GENlep_status.push_back(genPart->status());
-            GENlep_MomId.push_back(genAna.MotherID(&genParticles->at(j)));
-            GENlep_MomMomId.push_back(genAna.MotherMotherID(&genParticles->at(j)));
+            GENlep_MomId.push_back(genAna.MotherID(&prunedgenParticles->at(j)));
+            GENlep_MomMomId.push_back(genAna.MotherMotherID(&prunedgenParticles->at(j)));
 
             TLorentzVector *thisLep;
             thisLep = (TLorentzVector*) GENlep_p4->At(nGENLeptons);
             // GEN iso calculation
-            reco::GenParticleCollection::const_iterator OtherGenPart;
-            int k = -1;
             double this_GENiso=0.0;
             double this_GENneutraliso=0.0;
             double this_GENchargediso=0.0;
-            for(OtherGenPart = genParticles->begin(); OtherGenPart != genParticles->end(); OtherGenPart++) {
-                k++;
-                if (k==j) continue;
-                if( OtherGenPart->status() != 1 ) continue; // stable particles only         
-                if (abs(OtherGenPart->pdgId())==12 || abs(OtherGenPart->pdgId())==14 || abs(OtherGenPart->pdgId())==16) continue; // excluding neutrino
-                if ((abs(OtherGenPart->pdgId())==11 || abs(OtherGenPart->pdgId())==13)) continue; // excluding leptons
-                if (OtherGenPart->pdgId()==22 && genAna.IsFSR(&genParticles->at(k),GENlep_id[nGENLeptons])) continue;
-                double this_dRvL = deltaR(thisLep->Eta(), thisLep->Phi(), OtherGenPart->eta(), OtherGenPart->phi());
+            if (verbose) cout<<"gen iso calculation"<<endl;
+            for(size_t k=0; k<packedgenParticles->size();k++){
+                if( (*packedgenParticles)[k].status() != 1 ) continue; // stable particles only         
+                if (abs((*packedgenParticles)[k].pdgId())==12 || abs((*packedgenParticles)[k].pdgId())==14 || abs((*packedgenParticles)[k].pdgId())==16) continue; // exclude neutrinos
+                if ((abs((*packedgenParticles)[k].pdgId())==11 || abs((*packedgenParticles)[k].pdgId())==13)) continue; // exclude leptons
+                if (gen_fsrset.find(k)!=gen_fsrset.end()) continue; // exclude particles which were selected as fsr photons
+                double this_dRvL = deltaR(thisLep->Eta(), thisLep->Phi(), (*packedgenParticles)[k].eta(), (*packedgenParticles)[k].phi());
                 if(this_dRvL<0.4) {
-                    this_GENiso = this_GENiso + OtherGenPart->pt();
-                    if (genPart->charge()==0) this_GENneutraliso = this_GENneutraliso + OtherGenPart->pt();
-                    if (genPart->charge()!=0) this_GENchargediso = this_GENchargediso + OtherGenPart->pt();
+                    if (verbose) cout<<"adding to geniso id: "<<(*packedgenParticles)[k].pdgId()<<" status: "<<(*packedgenParticles)[k].status()<<" pt: "<<(*packedgenParticles)[k].pt()<<" dR: "<<this_dRvL<<endl;
+                    this_GENiso = this_GENiso + (*packedgenParticles)[k].pt();
+                    if ((*packedgenParticles)[k].charge()==0) this_GENneutraliso = this_GENneutraliso + (*packedgenParticles)[k].pt();
+                    if ((*packedgenParticles)[k].charge()!=0) this_GENchargediso = this_GENchargediso + (*packedgenParticles)[k].pt();
                 }
             } // GEN iso loop
-            this_GENiso = this_GENiso/genPart->pt();
+            this_GENiso = this_GENiso/thisLep->Pt();
             GENlep_RelIso.push_back(this_GENiso);
             // END GEN iso calculation
-        } //leptons
 
+        } // leptons
+        
         if (genPart->pdgId()==25) {
             GENMH=genPart->mass();
         }
@@ -2519,9 +2561,8 @@ void UFHZZ4LAna::setGENVariables(edm::Handle<reco::GenParticleCollection> genPar
         if (genPart->pdgId()==23) {
             const reco::Candidate *Zdau0=genPart->daughter(0);
             if (Zdau0) GENZ_DaughtersId.push_back(fabs(Zdau0->pdgId()));
-            const reco::Candidate *Zmom0=genPart->mother(0);
-            if (Zmom0) GENZ_MomId.push_back(Zmom0->pdgId());
-                
+            if (verbose) cout<<"GENZ status "<<genPart->status()<<" MomId: "<<genAna.MotherID(&prunedgenParticles->at(j))<<endl;
+            GENZ_MomId.push_back(genAna.MotherID(&prunedgenParticles->at(j)));                
         }
       
     }
