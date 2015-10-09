@@ -37,14 +37,6 @@ process.source = cms.Source("PoolSource",fileNames = myfilelist,
 process.TFileService = cms.Service("TFileService",
                                    fileName = cms.string("Sync_74x.root")
                                    )
-'''
-process.reCorrectedPatJets = cms.EDProducer("PatJetReCorrector",
-                                            jets = cms.InputTag('selectedPatJets'),
-                                            payload = cms.string('AK5PF'),
-                                            rho = cms.InputTag('kt6PFJets', 'rho','RECO'),
-                                            levels = cms.vstring('L1FastJet','L2Relative','L3Absolute')
-                                            )
-'''
 
 # clean muons by segments 
 process.boostedMuons = cms.EDProducer("PATMuonCleanerBySegments",

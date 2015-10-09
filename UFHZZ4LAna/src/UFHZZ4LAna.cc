@@ -477,8 +477,8 @@ UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
     sip3dCut(iConfig.getUntrackedParameter<double>("sip3dCut",4)),
     leadingPtCut(iConfig.getUntrackedParameter<double>("leadingPtCut",20.0)),
     subleadingPtCut(iConfig.getUntrackedParameter<double>("subleadingPtCut",10.0)),
-    genIsoCut(iConfig.getUntrackedParameter<double>("genIsoCut",0.4)), 
-    genFSRDrCut(iConfig.getUntrackedParameter<double>("genFSRDrCut",0.1)), 
+    genIsoCut(iConfig.getUntrackedParameter<double>("genIsoCut",0.5)), 
+    genFSRDrCut(iConfig.getUntrackedParameter<double>("genFSRDrCut",0.4)), 
     _elecPtCut(iConfig.getUntrackedParameter<double>("_elecPtCut",7)),
     _muPtCut(iConfig.getUntrackedParameter<double>("_muPtCut",5)),
     BTagCut(iConfig.getUntrackedParameter<double>("BTagCut",0.814)),
@@ -1464,7 +1464,7 @@ UFHZZ4LAna::findHiggsCandidate(std::vector< pat::Muon > &selectedMuons, std::vec
             
             if (verbose) cout<<"this Z mass: "<<Z.M()<<" mZ2Low: "<<mZ2Low<<endl;
 
-            if (Z.M()>mZ2Low) {
+            if (Z.M()>0.0) {
                 n_Zs++;
                 new ( (*Z_p4)[n_Zs-1] ) TLorentzVector(Z.Px(),Z.Py(),Z.Pz(),Z.E());
                 Z_fsrindex.push_back(phoindex);
@@ -1620,7 +1620,7 @@ UFHZZ4LAna::findHiggsCandidate(std::vector< pat::Muon > &selectedMuons, std::vec
                 if (dR_pho_j2<coneSize && !isoVeto) isoFSRj2 += fsrPhotons[ipho].pt();
 
             }
-            if (Z_fsrindex[j]>=0) { //hualin: change > to >=
+            if (Z_fsrindex[j]>=0) {
                 int jpho = Z_fsrindex[j];
 
                 bool isoVeto=true;
@@ -2494,6 +2494,7 @@ void UFHZZ4LAna::setGENVariables(edm::Handle<reco::GenParticleCollection> pruned
             nGENLeptons++;
 
             // Collect FSR photons within dR<0.1
+
             TLorentzVector lep_dressed;            
             lep_dressed.SetPtEtaPhiE(genPart->pt(),genPart->eta(),genPart->phi(),genPart->energy());
             set<int> gen_fsrset;
@@ -2558,11 +2559,20 @@ void UFHZZ4LAna::setGENVariables(edm::Handle<reco::GenParticleCollection> pruned
             GENMH=genPart->mass();
         }
 
-        if (genPart->pdgId()==23) {
+        
+        if (genPart->pdgId()==23 && (genPart->status()>=20 && genPart->status()<30) ) {
             const reco::Candidate *Zdau0=genPart->daughter(0);
+            if (fabs(Zdau0->pdgId())==23) {
+                int ndau = genPart->numberOfDaughters();
+                for (int d=0; d<ndau; d++) {
+                    const reco::Candidate *Zdau=genPart->daughter(d);
+                    if (verbose) cout<<"ZDau "<<d<<" id "<<fabs(Zdau->pdgId())<<endl;
+                }
+            }
             if (Zdau0) GENZ_DaughtersId.push_back(fabs(Zdau0->pdgId()));
-            if (verbose) cout<<"GENZ status "<<genPart->status()<<" MomId: "<<genAna.MotherID(&prunedgenParticles->at(j))<<endl;
+           
             GENZ_MomId.push_back(genAna.MotherID(&prunedgenParticles->at(j)));                
+            if (verbose) cout<<"GENZ status "<<genPart->status()<<" MomId: "<<genAna.MotherID(&prunedgenParticles->at(j))<< "DauId: "<<fabs(Zdau0->pdgId())<< endl;
         }
       
     }
