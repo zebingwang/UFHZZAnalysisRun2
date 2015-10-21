@@ -2,19 +2,21 @@ HZZ Analyzer for CMS Run2
 
 ------
 
+
 To install:
 
-1.) make a dedicated directory for it, and go inside.
+setenv SCRAM_ARCH slc6_amd64_gcc491
+cmsrel CMSSW_7_4_12_patch2
+cd CMSSW_7_4_12_patch2/src
+cmsenv
+git clone https://github.com/VBF-HZZ/UFHZZAnalysisRun2.git
+git clone -b 74x-root6 https://github.com/cms-analysis/HiggsAnalysis-CombinedLimit.git HiggsAnalysis/CombinedLimit
+git clone https://github.com/cms-analysis/HiggsAnalysis-ZZMatrixElement.git ZZMatrixElement
+cd ZZMatrixElement
+git checkout -b from-V00-02-01 V00-02-01
+cd ..
 
-2.) get the installation script:
-
-curl -O https://raw.githubusercontent.com/VBF-HZZ/UFHZZAnalysisRun2/csa14/install.sh
-
-3.) run it:
-
-chmod +x install.sh
-
-./install.sh
+Instructions on how to use git:
 
 4.) Development of the codes and put your codes to git:
 
@@ -35,7 +37,6 @@ chmod +x install.sh
 4.2.3.) Put your new branch to the to remote git repository https://github.com/
 
        git push origin your_own_branch_name:your_own_branch_name
-
 
 4.3.) Update your changes to github after you made some modifications:
 
