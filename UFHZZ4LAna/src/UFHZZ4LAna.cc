@@ -248,6 +248,7 @@ private:
 
     // Z candidate variables
     TClonesArray *Z_p4;
+    TClonesArray *Z_p4_noFSR;
     int Z_Hindex[2]; // position of Z1 and Z2 in Z_p4
     double massZ1, massZ2, pTZ1, pTZ2;
 
@@ -386,6 +387,9 @@ private:
     vector<pat::PFParticle> fsrPhotons; 
     vector<int> fsrPhotons_lepindex; 
     vector<double> fsrPhotons_deltaR;
+    vector<double> newfsrPhotons_dR;
+    vector<double> newfsrPhotons_pt;
+    vector<double> newfsrPhotons_iso;
     TLorentzVector HVec, HVecNoFSR, Z1Vec, Z2Vec;
     bool RecoFourMuEvent, RecoFourEEvent, RecoTwoETwoMuEvent, RecoTwoMuTwoEEvent;
     bool foundHiggsCandidate;
@@ -399,13 +403,13 @@ private:
     edm::InputTag photonSrc_;
     edm::InputTag elecSrc_;
     edm::InputTag muonSrc_;
-    edm::InputTag correctedJetSrc_;
     edm::InputTag jetSrc_;
     edm::InputTag metSrc_;
     edm::InputTag triggerSrc_;
     edm::InputTag vertexSrc_;
     edm::InputTag muRhoSrc_;
     edm::InputTag elRhoSrc_;
+    edm::InputTag pileupSrc_;
 
     // Configuration
     const double Zmass;
@@ -449,13 +453,13 @@ UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
     photonSrc_(iConfig.getUntrackedParameter<edm::InputTag>("photonSrc")),
     elecSrc_(iConfig.getUntrackedParameter<edm::InputTag>("electronSrc")),
     muonSrc_(iConfig.getUntrackedParameter<edm::InputTag>("muonSrc")),
-    correctedJetSrc_(iConfig.getUntrackedParameter<edm::InputTag>("correctedJetSrc" )),
     jetSrc_(iConfig.getUntrackedParameter<edm::InputTag>("jetSrc" )),
     metSrc_(iConfig.getUntrackedParameter<edm::InputTag>("metSrc" )),
     triggerSrc_(iConfig.getUntrackedParameter<edm::InputTag>("triggerSrc")),
     vertexSrc_(iConfig.getUntrackedParameter<edm::InputTag>("vertexSrc")),
     muRhoSrc_(iConfig.getUntrackedParameter<edm::InputTag>("muRhoSrc")),
     elRhoSrc_(iConfig.getUntrackedParameter<edm::InputTag>("elRhoSrc")),
+    pileupSrc_(iConfig.getUntrackedParameter<edm::InputTag>("pileupSrc")),
     Zmass(91.1876),
     mZ1Low(iConfig.getUntrackedParameter<double>("mZ1Low",40.0)),
     mZ2Low(iConfig.getUntrackedParameter<double>("mZ2Low",12.0)), // was 12
@@ -484,7 +488,7 @@ UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
     BTagCut(iConfig.getUntrackedParameter<double>("BTagCut",0.814)),
     reweightForPU(iConfig.getUntrackedParameter<bool>("reweightForPU",true)),
     interactiveRun(iConfig.getUntrackedParameter<bool>("interactiveRun",false)),
-    PUVersion(iConfig.getUntrackedParameter<std::string>("PUVersion","Legacy53X")),
+    PUVersion(iConfig.getUntrackedParameter<std::string>("PUVersion","Fall15_74X")),
     doFsrRecovery(iConfig.getUntrackedParameter<bool>("doFsrRecovery",true)),
     doPUJetID(iConfig.getUntrackedParameter<bool>("doPUJetID",true)),
     doSUSYSelection(iConfig.getUntrackedParameter<bool>("doSUSYSelection",false)),
@@ -615,9 +619,6 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     iEvent.getByLabel("boostedFsrPhotons",photonsForFsr);
   
     // Jets
-    edm::Handle<edm::View<pat::Jet> > correctedJets;
-    iEvent.getByLabel(correctedJetSrc_,correctedJets);
-
     edm::Handle<edm::View<pat::Jet> > jets;
     iEvent.getByLabel(jetSrc_,jets);
   
@@ -775,8 +776,9 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
     // Global variables not stored in tree
     lep_pt.clear(); lep_ptid.clear(); lep_ptindex.clear();
-    recoMuons.clear(); recoElectrons.clear(); fsrPhotons.clear();
-    fsrPhotons_lepindex.clear(); fsrPhotons_deltaR.clear();
+    recoMuons.clear(); recoElectrons.clear(); 
+    fsrPhotons.clear(); fsrPhotons_lepindex.clear(); fsrPhotons_deltaR.clear();
+    newfsrPhotons_dR.clear(); newfsrPhotons_pt.clear(); newfsrPhotons_iso.clear();
     HVec.SetPtEtaPhiM(0.0,0.0,0.0,0.0);
     HVecNoFSR.SetPtEtaPhiM(0.0,0.0,0.0,0.0);
     Z1Vec.SetPtEtaPhiM(0.0,0.0,0.0,0.0);
@@ -791,7 +793,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     // PU information
     if(isMC && reweightForPU) {        
         edm::Handle<std::vector< PileupSummaryInfo > >  PupInfo;
-        iEvent.getByLabel(edm::InputTag("addPileupInfo"), PupInfo);      
+        iEvent.getByLabel(pileupSrc_, PupInfo);      
 
         if (verbose) cout<<"got pileup info"<<endl;
 
@@ -880,8 +882,8 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         if (doSUSYSelection) {
             helper.cleanOverlappingLeptons_SUSY(AllMuons,AllElectrons,PV);
             if (verbose) cout<<AllMuons.size()<<" loose muons "<<AllElectrons.size()<<" loose elctrons"<<endl;
-            recoMuons = helper.goodMuons2015_SUSY(AllMuons,_muPtCut,PV,pfCands,correctedJets,sip3dCut,muRho,0.22,true);
-            recoElectrons = helper.goodElectrons2015_SUSY(AllElectrons,_elecPtCut,elecID,PV,BS,pfCands,theConversions,correctedJets,sip3dCut,elRho,0.14,true);
+            recoMuons = helper.goodMuons2015_SUSY(AllMuons,_muPtCut,PV,pfCands,jets,sip3dCut,muRho,0.22,true);
+            recoElectrons = helper.goodElectrons2015_SUSY(AllElectrons,_elecPtCut,elecID,PV,BS,pfCands,theConversions,jets,sip3dCut,elRho,0.14,true);
         } else { 
             helper.cleanOverlappingLeptons(AllMuons,AllElectrons,PV);
             if (verbose) cout<<AllMuons.size()<<" loose muons "<<AllElectrons.size()<<" loose elctrons"<<endl;
@@ -1060,6 +1062,12 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                                       <<" isoNHPhoton: "<<phot->userFloat("fsrPhotonPFIsoNHadPhoton03")
                                       <<" photoniso: "<<photoniso<<" mindDeltaRFSR: "<<minDeltaRFSR<<endl;
                     
+                    if (minDeltaRFSR < 0.5) {
+                        newfsrPhotons_dR.push_back(minDeltaRFSR);
+                        newfsrPhotons_iso.push_back(photoniso);
+                        newfsrPhotons_pt.push_back(phot->pt());
+                    }
+
                     if ( minDeltaRFSR < 0.07 || (phot->pt() > 4.0 && minDeltaRFSR < 0.5 && photoniso<1.0) ) {
                         if (verbose) cout<<" keeping this photon "<<endl;
                         fsrPhotons.push_back(*phot); 
@@ -1088,37 +1096,36 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
             if (verbose) cout<<"begin filling jet candidates"<<endl;                                        
             for(unsigned int i = 0; i < jets->size(); ++i) {
                 
-                const pat::Jet & patjet = jets->at(i);
-                const pat::Jet & correctedJet = correctedJets->at(i);
+                const pat::Jet & jet = jets->at(i);
                 
                 //JetID ID
                 if (verbose) cout<<"checking jetid..."<<endl;
                 float jpumva=0.;
                 bool passPU=true;
-                jpumva=correctedJet.userFloat("pileupJetId:fullDiscriminant");
+                jpumva=jet.userFloat("pileupJetId:fullDiscriminant");
                 if (verbose) cout<< " jet pu mva  "<<jpumva <<endl;
-                if(correctedJet.pt()>20){
-                    if(abs(correctedJet.eta())>3.){
+                if(jet.pt()>20){
+                    if(abs(jet.eta())>3.){
                         if(jpumva<=-0.45)passPU=false;
-                    }else if(abs(correctedJet.eta())>2.75){
+                    }else if(abs(jet.eta())>2.75){
                         if(jpumva<=-0.55)passPU=false;
-                    }else if(abs(correctedJet.eta())>2.5){
+                    }else if(abs(jet.eta())>2.5){
                         if(jpumva<=-0.6)passPU=false;
                     }else if(jpumva<=-0.63)passPU=false;
                 }else{
-                    if(abs(correctedJet.eta())>3.){
+                    if(abs(jet.eta())>3.){
                         if(jpumva<=-0.95)passPU=false;
-                    }else if(abs(correctedJet.eta())>2.75){
+                    }else if(abs(jet.eta())>2.75){
                         if(jpumva<=-0.94)passPU=false;
-                    }else if(abs(correctedJet.eta())>2.5){
+                    }else if(abs(jet.eta())>2.5){
                         if(jpumva<=-0.96)passPU=false;
                     }else if(jpumva<=-0.95)passPU=false;
                 }
                 
-                if (verbose) cout<<"pt: "<<correctedJet.pt()<<" eta: "<<correctedJet.eta()<<" passPU: "<<passPU
-                                 <<" jetid: "<<jetHelper.patjetID(correctedJet)<<endl;
+                if (verbose) cout<<"pt: "<<jet.pt()<<" eta: "<<jet.eta()<<" passPU: "<<passPU
+                                 <<" jetid: "<<jetHelper.patjetID(jet)<<endl;
                 
-                if( jetHelper.patjetID(correctedJet)==1 && (passPU || !doPUJetID) ) {
+                if( jetHelper.patjetID(jet)==1 && (passPU || !doPUJetID) ) {
                     
                     if (verbose) cout<<"passed pf jet id and pu jet id"<<endl;
                     if (verbose) cout<<"checking overlap with fsr photons..."<<endl;                                        
@@ -1126,30 +1133,30 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                     bool isDeltaR_FSR = true;
                     /*
                       for(unsigned int phIndex = 0; phIndex < selectedFsrPhotons.size(); phIndex++) {
-                      tempDeltaR = deltaR(patjet.eta(),patjet.phi(),selectedFsrPhotons[phIndex].eta(),selectedFsrPhotons[phIndex].phi());
+                      tempDeltaR = deltaR(jet.eta(),jet.phi(),selectedFsrPhotons[phIndex].eta(),selectedFsrPhotons[phIndex].phi());
                       if (tempDeltaR < 0.4) isDeltaR_FSR = false;
                       }
                     */
                     
                     // apply loose pt cut here (10 GeV cut is already applied in MINIAOD) since we are before JES/JER corrections
-                    if(correctedJet.pt() > 10.0 && fabs(patjet.eta()) < jeteta_cut && isDeltaR_FSR) {
+                    if(jet.pt() > 10.0 && fabs(jet.eta()) < jeteta_cut && isDeltaR_FSR) {
                         
                         // apply scale factor for PU Jets by demoting 1-data/MC % of jets jets in certain pt/eta range 
                         // Configured now that SF is 1.0
                         if (verbose) cout<<"adding pu jet scale factors..."<<endl;       
                         bool dropit=false;
-                        if (abs(patjet.eta())>3.0 && isMC) {
+                        if (abs(jet.eta())>3.0 && isMC) {
                             TRandom3 rand;
-                            rand.SetSeed(abs(static_cast<int>(sin(patjet.phi())*100000)));
+                            rand.SetSeed(abs(static_cast<int>(sin(jet.phi())*100000)));
                             float coin = rand.Uniform(1.); 
-                            if (correctedJet.pt()>=20.0 && correctedJet.pt()<36.0 && coin>1.0) dropit=true;
-                            if (correctedJet.pt()>=36.0 && correctedJet.pt()<50.0 && coin>1.0) dropit=true;
-                            if (correctedJet.pt()>=50.0 && coin>1.0) dropit=true;
+                            if (jet.pt()>=20.0 && jet.pt()<36.0 && coin>1.0) dropit=true;
+                            if (jet.pt()>=36.0 && jet.pt()<50.0 && coin>1.0) dropit=true;
+                            if (jet.pt()>=50.0 && coin>1.0) dropit=true;
                         }                                        
                         
                         if (!dropit) {
-                            if (verbose) cout<<"adding jet candidate, pt: "<<correctedJet.pt()<<" eta: "<<correctedJet.eta()<<endl;
-                            goodJets.push_back(correctedJet);
+                            if (verbose) cout<<"adding jet candidate, pt: "<<jet.pt()<<" eta: "<<jet.eta()<<endl;
+                            goodJets.push_back(jet);
                         } // pu jet scale factor
                         
                     } // pass deltaR jet/fsr photons		    
@@ -1453,13 +1460,15 @@ UFHZZ4LAna::findHiggsCandidate(std::vector< pat::Muon > &selectedMuons, std::vec
                 if (verbose) cout<<"phoindex is: "<<phoindex<<endl;
             }
             
-            TLorentzVector Z;
+            TLorentzVector Z, Z_noFSR;
             if (phoindex>=0) {
                 TLorentzVector pho;
                 pho.SetPtEtaPhiE(fsrPhotons[phoindex].pt(),fsrPhotons[phoindex].eta(),fsrPhotons[phoindex].phi(),fsrPhotons[phoindex].energy());
                 Z = (*li)+(*lj)+pho;
+                Z_noFSR = (*li)+(*lj);
             } else {
                 Z = (*li)+(*lj);
+                Z_noFSR = (*li)+(*lj);
             }
             
             if (verbose) cout<<"this Z mass: "<<Z.M()<<" mZ2Low: "<<mZ2Low<<endl;
@@ -1467,6 +1476,7 @@ UFHZZ4LAna::findHiggsCandidate(std::vector< pat::Muon > &selectedMuons, std::vec
             if (Z.M()>0.0) {
                 n_Zs++;
                 new ( (*Z_p4)[n_Zs-1] ) TLorentzVector(Z.Px(),Z.Py(),Z.Pz(),Z.E());
+                new ( (*Z_p4_noFSR)[n_Zs-1] ) TLorentzVector(Z_noFSR.Px(),Z_noFSR.Py(),Z_noFSR.Pz(),Z_noFSR.E());
                 Z_fsrindex.push_back(phoindex);
                 Z_lepindex1.push_back(i);
                 Z_lepindex2.push_back(j);
@@ -1684,9 +1694,6 @@ UFHZZ4LAna::findHiggsCandidate(std::vector< pat::Muon > &selectedMuons, std::vec
                     i_tmpZb = i2; j_tmpZb = j2;
                 }
 
-
-                //float phopt_i=0.0;
-                //float phodr_i=9999.9;
                 double phopt_i=0.0;
                 double phodr_i=9999.9;
 
@@ -1748,11 +1755,11 @@ UFHZZ4LAna::findHiggsCandidate(std::vector< pat::Muon > &selectedMuons, std::vec
                 
                 if ( abs(Za.M()-Zmass)<abs(Zb.M()-Zmass) ) {
                     if (verbose) cout<<"abs(Za.M()-Zmass)-abs(Z1.M()-Zmass): "<<abs(Za.M()-Zmass)-abs(Z1.M()-Zmass)<<" Zb.M(): "<<Zb.M()<<endl;
-                    if ( abs(Za.M()-Zmass)<abs(Z1.M()-Zmass) && Zb.M()<12.0 ) passSmartCut=false;
+                    if ( abs(Za.M()-Zmass)<abs(Z1.M()-Zmass) && Zb.M()<mZ2Low ) passSmartCut=false;
                 }
                 else {
                     if (verbose) cout<<"abs(Zb.M()-Zmass)-abs(Z1.M()-Zmass): "<<abs(Zb.M()-Zmass)-abs(Z1.M()-Zmass)<<" Za.M(): "<<Za.M()<<endl;
-                    if ( abs(Zb.M()-Zmass)<abs(Z1.M()-Zmass) && Za.M()<12.0 ) passSmartCut=false;
+                    if ( abs(Zb.M()-Zmass)<abs(Z1.M()-Zmass) && Za.M()<mZ2Low ) passSmartCut=false;
                 }
 
             }
@@ -1971,6 +1978,8 @@ void UFHZZ4LAna::bookPassedEventTree(TString treeName, TTree *tree)
     // Z candidate variables
     Z_p4 = new TClonesArray("TLorentzVector", 10);
     tree->Branch("Z_p4","TClonesArray", &Z_p4, 128000, 0);
+    Z_p4_noFSR = new TClonesArray("TLorentzVector", 10);
+    tree->Branch("Z_p4_noFSR","TClonesArray", &Z_p4_noFSR, 128000, 0);
     tree->Branch("Z_Hindex",&Z_Hindex,"Z_Hindex[2]/I");
     tree->Branch("massZ1",&massZ1,"massZ1/D");
     tree->Branch("massZ2",&massZ2,"massZ2/D");  
@@ -2035,6 +2044,9 @@ void UFHZZ4LAna::bookPassedEventTree(TString treeName, TTree *tree)
     tree->Branch("FSR_Z1",&FSR_Z1,"FSR_Z1/O");
     tree->Branch("FSR_Z2",&FSR_Z1,"FSR_Z2/O");
     tree->Branch("phofsr_lepindex",&phofsr_lepindex);
+    tree->Branch("newfsrPhotons_dR",&newfsrPhotons_dR);
+    tree->Branch("newfsrPhotons_iso",&newfsrPhotons_iso);
+    tree->Branch("newfsrPhotons_pt",&newfsrPhotons_pt);
 
     // Z4l? FIXME
     tree->Branch("theta12",&theta12,"theta12/D"); 

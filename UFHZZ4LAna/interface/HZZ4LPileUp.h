@@ -47,6 +47,7 @@ class HZZ4LPileUp
   double weightTruePileupV10toHcp53X(double input);
   double weightTruePileupMoriond53X(double input);
   double weightTruePileupLegacy53X(double input);
+  double weightTruePileupFall15_74X(double input);
   double weightTrue2011(double input);
   double weightTrue2011to2012(double input);
 
@@ -87,10 +88,11 @@ double HZZ4LPileUp::getPUWeight(double nInteraction, std::string version)
   else if(version == "HCP53X") return weightTruePileupV10toHcp53X(nInteraction);
   else if(version == "Moriond53X") return weightTruePileupMoriond53X(nInteraction);
   else if(version == "Legacy53X") return weightTruePileupLegacy53X(nInteraction);
+  else if(version == "Fall15_74X") return weightTruePileupFall15_74X(nInteraction);
   else{
     std::string msg;
     msg = "HZZ4LPileUp::getPUWeight() unknown version\n";
-    msg += "Possibilities are ICHEP52X, ICHEP53X, HCP52X, HCP53X, Moriond53X, Legacy53X";
+    msg += "Possibilities are ICHEP52X, ICHEP53X, HCP52X, HCP53X, Moriond53X, Legacy53X, Fall15_74X";
     cout << msg << endl;
   }  
   
@@ -601,15 +603,67 @@ double HZZ4LPileUp::weightTruePileupLegacy53X(double input){
 }
 
 
+double HZZ4LPileUp::weightTruePileupFall15_74X(double input){
+
+  if(input > 50) return 1;
+
+  double w[50] = {      
+      1.0,
+      62.0328,
+      127.684,
+      26.3246,
+      11.7935,
+      1.93741,
+      1.19097,
+      1.75016,
+      2.64093,
+      2.79245,
+      2.73297,
+      2.69972,
+      2.28104,
+      1.51755,
+      0.823049,
+      0.40988,
+      0.217516,
+      0.150572,
+      0.131613,
+      0.130142,
+      0.13647,
+      0.146055,
+      0.157809,
+      0.16763,
+      0.181474,
+      0.194794,
+      0.207437,
+      0.225198,
+      0.241257,
+      0.24882,
+      0.232305,
+      0.188029,
+      0.115387,
+      0.0716294,
+      0.0336887,
+      0.0172542,
+      0.00910616,
+      0.00434859,
+      0.00255437,
+      0.00128735,
+      0.000759695,
+      0.000365098,
+      0.000222273,
+      0.000115664,
+      7.24593e-05,
+      3.20141e-05,
+      1.76595e-05,
+      3.21068e-05,
+      3.38514e-05,
+      1.0
+  };  
 
 
+ return w[(int)floor(input)];
 
-
-
-
-
-
-
+}
 
 
 

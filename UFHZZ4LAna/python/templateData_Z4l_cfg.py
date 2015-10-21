@@ -92,6 +92,7 @@ process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
                               weightEvents = cms.untracked.bool(False),
                               elRhoSrc     = cms.untracked.InputTag("fixedGridRhoFastjetAll"),
                               muRhoSrc     = cms.untracked.InputTag("fixedGridRhoFastjetAll"),
+                              pileupSrc     = cms.untracked.InputTag("slimmedAddPileupInfo"),
                               reweightForPU = cms.untracked.bool(False),
                               triggerSrc = cms.untracked.InputTag("TriggerResults","","HLT"),
                               triggerList = cms.untracked.vstring(
@@ -106,6 +107,7 @@ process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
                                     'HLT_DiMu9_Ele9_CaloIdL_TrackIdL_v',
                                     'HLT_Ele27_WPLoose_Gsf_v', 
                               ),
+                              mZ2Low = cms.untracked.double(4.0),
                               verbose = cms.untracked.bool(False)              
 #                              verbose = cms.untracked.bool(True)              
                              )

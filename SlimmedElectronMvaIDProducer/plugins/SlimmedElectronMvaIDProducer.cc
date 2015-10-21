@@ -68,12 +68,15 @@ class SlimmedElectronMvaIDProducer : public edm::EDProducer {
 
       // ----------member data ---------------------------
 
+     edm::EDGetTokenT<edm::ValueMap<float> > mvaValuesMapToken_;
+     edm::EDGetToken electronsToken_;
      edm::InputTag electronsCollection_;
 
      string method_;
      vector<string> mvaWeightFiles_;
      bool Trig_;
     
+
      EGammaMvaEleEstimatorCSA14* mvaID_;
 
      std::string idname; 
@@ -94,57 +97,22 @@ class SlimmedElectronMvaIDProducer : public edm::EDProducer {
 //
 // constructors and destructor
 //
-SlimmedElectronMvaIDProducer::SlimmedElectronMvaIDProducer(const edm::ParameterSet& iConfig)
+SlimmedElectronMvaIDProducer::SlimmedElectronMvaIDProducer(const edm::ParameterSet& iConfig):
+   mvaValuesMapToken_(consumes<edm::ValueMap<float> >(iConfig.getParameter<edm::InputTag>("mvaValuesMap")))
 {
 
    electronsCollection_ = iConfig.getParameter<edm::InputTag>("electronsCollection");
-   //electronToken_ = consumes<reco::GsfElectronCollection>(iConfig.getParameter<edm::InputTag>("electronTag"));
-   method_ = iConfig.getParameter<string>("method");
-   std::vector<string> fpMvaWeightFiles = iConfig.getParameter<std::vector<std::string> >("mvaWeightFile");
+   electronsToken_ = mayConsume<edm::View<reco::GsfElectron> >(iConfig.getParameter<edm::InputTag>("electronsCollection"));
    Trig_ = iConfig.getParameter<bool>("Trig");
 
-   // initial mva
-
-    mvaID_ = new EGammaMvaEleEstimatorCSA14();
-    
-    EGammaMvaEleEstimatorCSA14::MVAType type_;
-    
-    if(Trig_){type_ = EGammaMvaEleEstimatorCSA14::kTrig; idname = "Trig";}    
-
-    if(!Trig_){
-        if (fpMvaWeightFiles.size() > 4) type_ = EGammaMvaEleEstimatorCSA14::kNonTrigPhys14;
-        else type_ = EGammaMvaEleEstimatorCSA14::kNonTrig;
-
-        idname = "NonTrig";
-    }
-    bool manualCat_ = true;
-    
-    string path_mvaWeightFileEleID;
-
-    for(unsigned ifile=0 ; ifile < fpMvaWeightFiles.size() ; ++ifile) {
-
-        path_mvaWeightFileEleID = edm::FileInPath ( fpMvaWeightFiles[ifile].c_str() ).fullPath();
-        mvaWeightFiles_.push_back(path_mvaWeightFileEleID);
-
-    }
-    
-    mvaID_->initialize(method_, type_, manualCat_, mvaWeightFiles_);
+    if(Trig_){ idname = "Trig";}    
+    if(!Trig_){ idname = "NonTrig";    }
 
    //register your products
 
    produces<edm::ValueMap<float> >();
    produces<std::vector<pat::Electron> >(idname);      
 
-/* Examples
-   produces<ExampleData2>();
-   //if do put with a label
-   produces<ExampleData2>("label");
- 
-   //if you want to put into the Run
-   produces<ExampleData2,InRun>();
-*/
-   //now do what ever other initialization is needed
-  
 }
 
 
@@ -167,9 +135,18 @@ SlimmedElectronMvaIDProducer::produce(edm::Event& iEvent, const edm::EventSetup&
 {
    using namespace edm;
 
+
+
     edm::Handle<vector<pat::Electron>> electronsCollection;
     iEvent.getByLabel(electronsCollection_ , electronsCollection);
-    
+
+    edm::Handle<edm::View<reco::GsfElectron> > gsfelectrons;
+    iEvent.getByToken(electronsToken_,gsfelectrons);
+        
+    // electron mva values            
+    edm::Handle<edm::ValueMap<float> > mvaValues;
+    iEvent.getByToken(mvaValuesMapToken_,mvaValues);
+
     // output electrons
     std::vector<pat::Electron> * patElectrons = new std::vector<pat::Electron>();
 
@@ -185,8 +162,11 @@ SlimmedElectronMvaIDProducer::produce(edm::Event& iEvent, const edm::EventSetup&
 
     for(unsigned i = 0 ; i < nbElectron; i++){
 
-      float idvalue = mvaID_->mvaValue(theElectrons->at(i),false);
-      
+      const auto gsf = gsfelectrons->ptrAt((size_t)i);
+
+      //const edm::Ptr<reco::GsfElectron>& gsf = (edm::Ptr<reco::GsfElectron>&)theElectrons->at(i);
+      float idvalue = (*mvaValues)[gsf]; 
+
       pat::Electron anElectron = theElectrons->at(i); 
 
       std::vector<pat::Electron::IdPair> ids;
@@ -217,23 +197,6 @@ SlimmedElectronMvaIDProducer::produce(edm::Event& iEvent, const edm::EventSetup&
   std::auto_ptr<std::vector<pat::Electron> > ptr(patElectrons);
   iEvent.put(ptr,idname);
 
-/* This is an event example
-   //Read 'ExampleData' from the Event
-   Handle<ExampleData> pIn;
-   iEvent.getByLabel("example",pIn);
-
-   //Use the ExampleData to create an ExampleData2 which 
-   // is put into the Event
-   std::auto_ptr<ExampleData2> pOut(new ExampleData2(*pIn));
-   iEvent.put(pOut);
-*/
-
-/* this is an EventSetup example
-   //Read SetupData from the SetupRecord in the EventSetup
-   ESHandle<SetupData> pSetup;
-   iSetup.get<SetupRecord>().get(pSetup);
-*/
- 
 }
 
 // ------------ method called once each job just before starting event loop  ------------

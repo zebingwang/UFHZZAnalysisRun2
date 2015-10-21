@@ -9,7 +9,7 @@ process.MessageLogger.categories.append('UFHZZ4LAna')
 process.load("Configuration.StandardSequences.MagneticField_cff")
 process.load("Configuration.StandardSequences.Geometry_cff")
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_condDBv2_cff')
-process.GlobalTag.globaltag='74X_dataRun2_reMiniAOD_v0'
+process.GlobalTag.globaltag='74X_mcRun2_asymptotic_v2'
 
 process.Timing = cms.Service("Timing",
                              summaryOnly = cms.untracked.bool(True)
@@ -23,9 +23,6 @@ myfilelist = cms.untracked.vstring(DUMMYFILELIST)
 process.source = cms.Source("PoolSource",fileNames = myfilelist,
                              duplicateCheckMode = cms.untracked.string('noDuplicateCheck'),
                             )
-
-import FWCore.PythonUtilities.LumiList as LumiList
-process.source.lumisToProcess = LumiList.LumiList(filename = 'Run2015_17Oct_JSON.txt').getVLuminosityBlockRange()
 
 process.TFileService = cms.Service("TFileService",
                                    fileName = cms.string("DUMMYFILENAME.root")
@@ -66,9 +63,7 @@ process.jetCorrFactors = process.patJetCorrFactorsUpdated.clone(
     src = cms.InputTag("slimmedJets"),
     levels = ['L1FastJet', 
               'L2Relative', 
-              'L3Absolute',
-              'L2L3Residual'
-              ],
+              'L3Absolute'],
     payload = 'AK4PFchs' ) 
 
 process.slimmedJetsJEC = process.patJetsUpdated.clone(
@@ -76,7 +71,6 @@ process.slimmedJetsJEC = process.patJetsUpdated.clone(
     jetCorrFactorsSource = cms.VInputTag(cms.InputTag("jetCorrFactors"))
     )
 
-# UF Ntuplizer
 process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
                               photonSrc    = cms.untracked.InputTag("slimmedPhotons"),
                               electronSrc  = cms.untracked.InputTag("mvaSpring15NonTrig25nsV1","NonTrig"),
@@ -84,28 +78,30 @@ process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
                               jetSrc       = cms.untracked.InputTag("slimmedJetsJEC"),
                               metSrc       = cms.untracked.InputTag("slimmedMETs"),
                               vertexSrc    = cms.untracked.InputTag("offlineSlimmedPrimaryVertices"), #or selectedVertices 
-                              isMC         = cms.untracked.bool(False),
-                              isSignal     = cms.untracked.bool(False),
+                              isMC         = cms.untracked.bool(True),
+                              isSignal     = cms.untracked.bool(True),
                               mH           = cms.untracked.double(125.0),
-                              CrossSection = cms.untracked.double(1.0),
+                              CrossSection = cms.untracked.double(DUMMYCROSSSECTION),
                               FilterEff    = cms.untracked.double(1),
-                              weightEvents = cms.untracked.bool(False),
+                              weightEvents = cms.untracked.bool(True),
                               elRhoSrc     = cms.untracked.InputTag("fixedGridRhoFastjetAll"),
                               muRhoSrc     = cms.untracked.InputTag("fixedGridRhoFastjetAll"),
-                              reweightForPU = cms.untracked.bool(False),
+                              pileupSrc     = cms.untracked.InputTag("slimmedAddPileupInfo"),
+                              reweightForPU = cms.untracked.bool(True),
                               triggerSrc = cms.untracked.InputTag("TriggerResults","","HLT"),
                               triggerList = cms.untracked.vstring(
-                                    'HLT_Ele17_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v',
-                                    'HLT_Ele16_Ele12_Ele8_CaloIdL_TrackIdL_v',
-                                    'HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_v',
-                                    'HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL_DZ_v',
-                                    'HLT_TripleMu_12_10_5_v',
-                                    'HLT_Mu8_TrkIsoVVL_Ele17_CaloIdL_TrackIdL_IsoVL_v',
-                                    'HLT_Mu17_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_v',
-                                    'HLT_Mu8_DiEle12_CaloIdL_TrackIdL_v',
-                                    'HLT_DiMu9_Ele9_CaloIdL_TrackIdL_v',
-                                    'HLT_Ele27_WPLoose_Gsf_v', 
+                                            'HLT_Ele17_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v',
+                                            'HLT_Ele16_Ele12_Ele8_CaloIdL_TrackIdL_v',
+                                            'HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_v',
+                                            'HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL_DZ_v',
+                                            'HLT_TripleMu_12_10_5_v',
+                                            'HLT_Mu8_TrkIsoVVL_Ele17_CaloIdL_TrackIdL_IsoVL_v',
+                                            'HLT_Mu17_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_v',
+                                            'HLT_Mu8_DiEle12_CaloIdL_TrackIdL_v',
+                                            'HLT_DiMu9_Ele9_CaloIdL_TrackIdL_v',
+                                            'HLT_Ele27_WP85_Gsf_v',
                               ),
+                              mZ2Low = cms.untracked.double(4.0),
                               verbose = cms.untracked.bool(False)              
 #                              verbose = cms.untracked.bool(True)              
                              )

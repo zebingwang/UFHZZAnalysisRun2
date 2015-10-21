@@ -7,9 +7,9 @@ process.MessageLogger.cerr.FwkReport.reportEvery = 1000
 process.MessageLogger.categories.append('UFHZZ4LAna')
 
 process.load("Configuration.StandardSequences.MagneticField_cff")
-process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
-
-process.GlobalTag.globaltag='MCRUN2_74_V9::All'
+process.load("Configuration.StandardSequences.Geometry_cff")
+process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_condDBv2_cff')
+process.GlobalTag.globaltag='74X_mcRun2_asymptotic_v2'
 
 process.Timing = cms.Service("Timing",
                              summaryOnly = cms.untracked.bool(True)
@@ -37,27 +37,45 @@ process.boostedMuons = cms.EDProducer("PATMuonCleanerBySegments",
 				     )
 
 # Electron MVA ID producer
-process.mvaNonTrigV025nsPHYS14 = cms.EDProducer("SlimmedElectronMvaIDProducer",
+
+from PhysicsTools.SelectorUtils.tools.vid_id_tools import *
+dataFormat = DataFormat.MiniAOD
+switchOnVIDElectronIdProducer(process, dataFormat)
+# define which IDs we want to produce
+my_id_modules = ['RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Spring15_25ns_nonTrig_V1_cff']
+# add them to the VID producer
+for idmod in my_id_modules:
+    setupAllVIDIdsInModule(process,idmod,setupVIDElectronSelection)
+
+process.mvaSpring15NonTrig25nsV1 = cms.EDProducer("SlimmedElectronMvaIDProducer",
+                                     mvaValuesMap = cms.InputTag("electronMVAValueMapProducer:ElectronMVAEstimatorRun2Spring15NonTrig25nsV1Values"),
                                      electronsCollection = cms.InputTag("slimmedElectrons","","PAT"),
-                                     method = cms.string("BDTSimpleCat"),
-                                     mvaWeightFile = cms.vstring(
-        "EgammaAnalysis/ElectronTools/data/PHYS14FIX/EIDmva_EB1_5_oldscenario2phys14FIX_BDT.weights.xml",
-        "EgammaAnalysis/ElectronTools/data/PHYS14FIX/EIDmva_EB2_5_oldscenario2phys14FIX_BDT.weights.xml",
-        "EgammaAnalysis/ElectronTools/data/PHYS14FIX/EIDmva_EE_5_oldscenario2phys14FIX_BDT.weights.xml",
-        "EgammaAnalysis/ElectronTools/data/PHYS14FIX/EIDmva_EB1_10_oldscenario2phys14FIX_BDT.weights.xml",
-        "EgammaAnalysis/ElectronTools/data/PHYS14FIX/EIDmva_EB2_10_oldscenario2phys14FIX_BDT.weights.xml",
-        "EgammaAnalysis/ElectronTools/data/PHYS14FIX/EIDmva_EE_10_oldscenario2phys14FIX_BDT.weights.xml"
-        ),
                                      Trig = cms.bool(False),
                                      )
      
+# FSR Photons
+process.load('UFHZZAnalysisRun2.FSRPhotons.fsrPhotons_cff')
+
+# Jet Energy Corrections
+process.load("PhysicsTools.PatAlgos.producersLayer1.jetUpdater_cff")
+
+process.jetCorrFactors = process.patJetCorrFactorsUpdated.clone(
+    src = cms.InputTag("slimmedJets"),
+    levels = ['L1FastJet', 
+              'L2Relative', 
+              'L3Absolute'],
+    payload = 'AK4PFchs' ) 
+
+process.slimmedJetsJEC = process.patJetsUpdated.clone(
+    jetSource = cms.InputTag("slimmedJets"),
+    jetCorrFactorsSource = cms.VInputTag(cms.InputTag("jetCorrFactors"))
+    )
 
 process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
                               photonSrc    = cms.untracked.InputTag("slimmedPhotons"),
-                              electronSrc  = cms.untracked.InputTag("mvaNonTrigV025nsPHYS14","NonTrig"),
+                              electronSrc  = cms.untracked.InputTag("mvaSpring15NonTrig25nsV1","NonTrig"),
                               muonSrc      = cms.untracked.InputTag("boostedMuons"),
-                              correctedJetSrc = cms.untracked.InputTag("slimmedJets"),
-                              jetSrc       = cms.untracked.InputTag("slimmedJets"),
+                              jetSrc       = cms.untracked.InputTag("slimmedJetsJEC"),
                               metSrc       = cms.untracked.InputTag("slimmedMETs"),
                               vertexSrc    = cms.untracked.InputTag("offlineSlimmedPrimaryVertices"), #or selectedVertices 
                               isMC         = cms.untracked.bool(True),
@@ -68,37 +86,31 @@ process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
                               weightEvents = cms.untracked.bool(True),
                               elRhoSrc     = cms.untracked.InputTag("fixedGridRhoFastjetAll"),
                               muRhoSrc     = cms.untracked.InputTag("fixedGridRhoFastjetAll"),
+                              pileupSrc     = cms.untracked.InputTag("slimmedAddPileupInfo"),
                               reweightForPU = cms.untracked.bool(True),
                               triggerSrc = cms.untracked.InputTag("TriggerResults","","HLT"),
                               triggerList = cms.untracked.vstring(
-                                            'HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v',
                                             'HLT_Ele17_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v',
                                             'HLT_Ele16_Ele12_Ele8_CaloIdL_TrackIdL_v',
                                             'HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_v',
                                             'HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL_DZ_v',
                                             'HLT_TripleMu_12_10_5_v',
-                                            'HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_v',
                                             'HLT_Mu8_TrkIsoVVL_Ele17_CaloIdL_TrackIdL_IsoVL_v',
-                                            'HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_v',
                                             'HLT_Mu17_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_v',
                                             'HLT_Mu8_DiEle12_CaloIdL_TrackIdL_v',
                                             'HLT_DiMu9_Ele9_CaloIdL_TrackIdL_v',
-                                            'HLT_Ele32_eta2p1_WP75_Gsf_v',
-                                            'HLT_Ele22_eta2p1_WP75_Gsf_v',
                                             'HLT_Ele27_WP85_Gsf_v',
-                                            'HLT_Ele27_eta2p1_WP75_Gsf_v',
-                                            'HLT_IsoMu20_v',
-                                            'HLT_IsoTkMu20_v',
                               ),
                               verbose = cms.untracked.bool(False)              
 #                              verbose = cms.untracked.bool(True)              
                              )
 
-process.load('UFHZZAnalysisRun2.FSRPhotons.fsrPhotons_cff')
 
-process.p = cms.Path(#process.reCorrectedPatJets
-                     process.fsrPhotonSequence*
-		     process.boostedMuons*
-                     process.mvaNonTrigV025nsPHYS14*
+process.p = cms.Path(process.fsrPhotonSequence*
+                     process.boostedMuons*
+                     process.egmGsfElectronIDSequence*
+                     process.mvaSpring15NonTrig25nsV1*
+                     process.jetCorrFactors*
+                     process.slimmedJetsJEC*
                      process.Ana
                      )
