@@ -72,21 +72,29 @@ HZZ4LJets::~HZZ4LJets()
 int HZZ4LJets::patjetID(const pat::Jet& jet)
 {
 
-  bool looseID = jet.neutralHadronEnergyFraction() < 0.99
-    && jet.neutralEmEnergyFraction() < 0.99
-    && jet.nConstituents() > 1
-    && jet.muonEnergyFraction()<0.8;
-      
-  bool loEtaID = jet.chargedMultiplicity() > 0
-    && jet.chargedHadronEnergyFraction() > 0.0
-    && jet.chargedEmEnergyFraction() < 0.99;
+  double NHF = jet.neutralHadronEnergyFraction();
+  double NEMF = jet.neutralEmEnergyFraction();
+  double CHF = jet.chargedHadronEnergyFraction();
+  //double MUF = jet.muonEnergyFraction();
+  double CEMF = jet.chargedEmEnergyFraction();
+  double NumConst = jet.chargedMultiplicity()+jet.neutralMultiplicity();
+  double NumNeutralParticles =jet.neutralMultiplicity();
+  double CHM = jet.chargedMultiplicity(); 
 
+  bool tightestJetID_CEN = ((NHF<0.70 && NEMF<0.90 && NumConst>1) && ((fabs(jet.eta())<=2.4 && CHF>0.2 && CHM>0 && CEMF<0.99) || fabs(jet.eta())>2.4) && fabs(jet.eta())<=3.0);
+  bool tightestJetID_FWD = (NEMF<0.90 && NumNeutralParticles>10 && fabs(jet.eta())>3.0);
+  if (tightestJetID_CEN || tightestJetID_FWD) return 3;
 
-  if(fabs(jet.eta()) < 2.4 && looseID && loEtaID) return 1;
-  if(fabs(jet.eta()) >= 2.4 && looseID) return 1;
-  
+  bool tightJetID_CEN = ((NHF<0.90 && NEMF<0.90 && NumConst>1) && ((fabs(jet.eta())<=2.4 && CHF>0 && CHM>0 && CEMF<0.99) || fabs(jet.eta())>2.4) && fabs(jet.eta())<=3.0);
+  bool tightJetID_FWD = (NEMF<0.90 && NumNeutralParticles>10 && fabs(jet.eta())>3.0);
+  if (tightJetID_CEN || tightJetID_FWD) return 2;
+ 
+  bool looseJetID_CEN = ((NHF<0.99 && NEMF<0.99 && NumConst>1) && ((fabs(jet.eta())<=2.4 && CHF>0 && CHM>0 && CEMF<0.99) || fabs(jet.eta())>2.4) && fabs(jet.eta())<=3.0);
+  bool looseJetID_FWD = (NEMF<0.90 && NumNeutralParticles>10 && fabs(jet.eta())>3.0);
+  if (looseJetID_CEN || looseJetID_FWD) return 1;
 
   return 0;
+
 }
 
 #endif

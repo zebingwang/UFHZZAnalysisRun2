@@ -1,13 +1,14 @@
 #!/bin/sh
-
-scramv1 project CMSSW CMSSW_7_0_6_patch1
-cd CMSSW_7_0_6_patch1/src
-eval `scramv1 runtime -sh`
+setenv SCRAM_ARCH slc6_amd64_gcc491
+cmsrel CMSSW_7_4_12_patch2
+cd CMSSW_7_4_12_patch2/src
+cmsenv
 git clone https://github.com/VBF-HZZ/UFHZZAnalysisRun2.git
-cd UFHZZAnalysisRun2
-git checkout -b csa14 origin/csa14
-cd ../
-scram b -j12
-
-
-
+git clone -b 74x-root6 https://github.com/cms-analysis/HiggsAnalysis-CombinedLi
+mit.git HiggsAnalysis/CombinedLimit
+git clone https://github.com/cms-analysis/HiggsAnalysis-ZZMatrixElement.git ZZM
+atrixElement
+cd ZZMatrixElement
+git checkout -b from-V00-02-01 V00-02-01
+cd ..
+scram b -j 8

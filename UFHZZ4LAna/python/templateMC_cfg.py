@@ -104,7 +104,6 @@ process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
                                             'HLT_DiMu9_Ele9_CaloIdL_TrackIdL_v',
                                             'HLT_Ele27_WP85_Gsf_v',
                               ),
-                              mZ2Low = cms.untracked.double(4.0),
                               verbose = cms.untracked.bool(False)              
 #                              verbose = cms.untracked.bool(True)              
                              )

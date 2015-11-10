@@ -20,15 +20,19 @@ process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
 
 myfilelist = cms.untracked.vstring()
 myfilelist.extend( [
-       '/store/mc/RunIISpring15DR74/VBF_HToZZTo4L_M125_13TeV_powheg_JHUgen_pythia8/MINIAODSIM/Asympt25ns_MCRUN2_74_V9-v1/00000/68791C0A-3013-E511-88FD-D4AE5269F5FF.root',
-       '/store/mc/RunIISpring15DR74/WplusH_HToZZTo4L_M125_13TeV_powheg-minlo-HWJ_JHUgen_pythia8/MINIAODSIM/Asympt25ns_MCRUN2_74_V9-v1/60000/04BD6860-9F08-E511-8A80-842B2B1858FB.root',
-       '/store/mc/RunIISpring15DR74/WminusH_HToZZTo4L_M125_13TeV_powheg-minlo-HWJ_JHUgen_pythia8/MINIAODSIM/Asympt25ns_MCRUN2_74_V9-v2/70000/4A9FED55-DF0C-E511-A4B2-3417EBE6471D.root',
-       '/store/mc/RunIISpring15DR74/ZH_HToZZ_4LFilter_M125_13TeV_powheg-minlo-HZJ_JHUgen_pythia8/MINIAODSIM/Asympt25ns_MCRUN2_74_V9-v1/00000/104B7067-0C02-E511-8FFB-0030487D07BA.root'
+    'root://cmsxrootd.fnal.gov//store/mc/RunIISpring15MiniAODv2/VBF_HToZZTo4L_M125_13TeV_powheg_JHUgen_pythia8/MINIAODSIM/74X_mcRun2_asymptotic_v2-v1/30000/3E964C5D-1D6E-E511-8B9A-0050560207C5.root',
+    'root://cmsxrootd.fnal.gov//store/mc/RunIISpring15MiniAODv2/WminusH_HToZZTo4L_M125_13TeV_powheg-minlo-HWJ_JHUgen_pythia8/MINIAODSIM/74X_mcRun2_asymptotic_v2-v1/30000/D8CA6B54-056F-E511-BB1A-02163E014CE3.root',
+    'root://cmsxrootd.fnal.gov//store/mc/RunIISpring15MiniAODv2/WplusH_HToZZTo4L_M125_13TeV_powheg-minlo-HWJ_JHUgen_pythia8/MINIAODSIM/74X_mcRun2_asymptotic_v2-v1/40000/D22BEE88-C26D-E511-B330-002590A81EF0.root',
+    'root://cmsxrootd.fnal.gov//store/mc/RunIISpring15MiniAODv2/ttH_HToZZ_4LFilter_M125_13TeV_powheg_JHUgen_pythia8/MINIAODSIM/74X_mcRun2_asymptotic_v2-v1/80000/84F62DD7-1475-E511-9F59-009C02AB98A6.root'
 ]
 )
 
 process.source = cms.Source("PoolSource",fileNames = myfilelist,
-                             duplicateCheckMode = cms.untracked.string('noDuplicateCheck'),
+                            duplicateCheckMode = cms.untracked.string('noDuplicateCheck'),
+#                            eventsToProcess = cms.untracked.VEventRange('1:243086-1:243086',),
+                            inputCommands = cms.untracked.vstring('keep *',
+                                                                  'drop LHEEventProduct_*_*_*',
+                                                                  'drop LHERunInfoProduct_*_*_*')
                             )
 
 process.TFileService = cms.Service("TFileService",
@@ -82,9 +86,10 @@ process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
                               photonSrc    = cms.untracked.InputTag("slimmedPhotons"),
                               electronSrc  = cms.untracked.InputTag("mvaSpring15NonTrig25nsV1","NonTrig"),
                               muonSrc      = cms.untracked.InputTag("boostedMuons"),
-                              jetSrc       = cms.untracked.InputTag("slimmedJetsJEC"),
+                              jetSrc       = cms.untracked.InputTag("slimmedJets"),
+#                              jetSrc       = cms.untracked.InputTag("slimmedJetsJEC"),
                               metSrc       = cms.untracked.InputTag("slimmedMETs"),
-                              vertexSrc    = cms.untracked.InputTag("offlineSlimmedPrimaryVertices"), #or selectedVertices 
+                              vertexSrc    = cms.untracked.InputTag("offlineSlimmedPrimaryVertices"),
                               isMC         = cms.untracked.bool(True),
                               isSignal     = cms.untracked.bool(True),
                               mH           = cms.untracked.double(125.0),
@@ -93,9 +98,12 @@ process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
                               weightEvents = cms.untracked.bool(True),
                               elRhoSrc     = cms.untracked.InputTag("fixedGridRhoFastjetAll"),
                               muRhoSrc     = cms.untracked.InputTag("fixedGridRhoFastjetAll"),
-                              pileupSrc     = cms.untracked.InputTag("addPileupInfo"),
+                              rhoSrcSUS    = cms.untracked.InputTag("fixedGridRhoFastjetCentralNeutral"),
+                              pileupSrc     = cms.untracked.InputTag("slimmedAddPileupInfo"),
+#                              pileupSrc     = cms.untracked.InputTag("addPileupInfo"),
                               reweightForPU = cms.untracked.bool(True),
                               triggerSrc = cms.untracked.InputTag("TriggerResults","","HLT"),
+                              triggerObjects = cms.InputTag("selectedPatTrigger"),
                               triggerList = cms.untracked.vstring(
                                             'HLT_Ele17_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v',
                                             'HLT_Ele16_Ele12_Ele8_CaloIdL_TrackIdL_v',

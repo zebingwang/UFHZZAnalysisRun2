@@ -25,7 +25,7 @@ process.source = cms.Source("PoolSource",fileNames = myfilelist,
                             )
 
 import FWCore.PythonUtilities.LumiList as LumiList
-process.source.lumisToProcess = LumiList.LumiList(filename = 'Run2015_17Oct_JSON.txt').getVLuminosityBlockRange()
+process.source.lumisToProcess = LumiList.LumiList(filename = 'Run2015_30Oct_JSON.txt').getVLuminosityBlockRange()
 
 process.TFileService = cms.Service("TFileService",
                                    fileName = cms.string("DUMMYFILENAME.root")
@@ -92,9 +92,11 @@ process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
                               weightEvents = cms.untracked.bool(False),
                               elRhoSrc     = cms.untracked.InputTag("fixedGridRhoFastjetAll"),
                               muRhoSrc     = cms.untracked.InputTag("fixedGridRhoFastjetAll"),
+                              rhoSrcSUS    = cms.untracked.InputTag("fixedGridRhoFastjetCentralNeutral"),
                               pileupSrc     = cms.untracked.InputTag("slimmedAddPileupInfo"),
                               reweightForPU = cms.untracked.bool(False),
                               triggerSrc = cms.untracked.InputTag("TriggerResults","","HLT"),
+                              triggerObjects = cms.InputTag("selectedPatTrigger"),
                               triggerList = cms.untracked.vstring(
                                     'HLT_Ele17_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v',
                                     'HLT_Ele16_Ele12_Ele8_CaloIdL_TrackIdL_v',
