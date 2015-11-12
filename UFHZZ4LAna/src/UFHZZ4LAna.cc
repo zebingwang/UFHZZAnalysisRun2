@@ -216,7 +216,7 @@ private:
     bool passedTrig, passedFullSelection, passedZ4lSelection, passedQCDcut;
 
     // Event Weights
-    double genWeight, pileupWeight, dataMCWeight, eventWeight;
+    float genWeight, pileupWeight, dataMCWeight, eventWeight;
 
     // lepton variables
     vector<double> lep_pt;

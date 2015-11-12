@@ -25,7 +25,8 @@ process.source = cms.Source("PoolSource",fileNames = myfilelist,
                             )
 
 import FWCore.PythonUtilities.LumiList as LumiList
-process.source.lumisToProcess = LumiList.LumiList(filename = 'Run2015_30Oct_JSON.txt').getVLuminosityBlockRange()
+#process.source.lumisToProcess = LumiList.LumiList(filename = 'Run2015_30Oct_JSON.txt').getVLuminosityBlockRange()
+process.source.lumisToProcess = LumiList.LumiList(filename = 'Run2015_Nov11_Silver.txt').getVLuminosityBlockRange()
 
 process.TFileService = cms.Service("TFileService",
                                    fileName = cms.string("DUMMYFILENAME.root")
@@ -81,7 +82,8 @@ process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
                               photonSrc    = cms.untracked.InputTag("slimmedPhotons"),
                               electronSrc  = cms.untracked.InputTag("mvaSpring15NonTrig25nsV1","NonTrig"),
                               muonSrc      = cms.untracked.InputTag("boostedMuons"),
-                              jetSrc       = cms.untracked.InputTag("slimmedJetsJEC"),
+                              jetSrc       = cms.untracked.InputTag("slimmedJets"),
+#                              jetSrc       = cms.untracked.InputTag("slimmedJetsJEC"),
                               metSrc       = cms.untracked.InputTag("slimmedMETs"),
                               vertexSrc    = cms.untracked.InputTag("offlineSlimmedPrimaryVertices"), #or selectedVertices 
                               isMC         = cms.untracked.bool(False),
