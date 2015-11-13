@@ -626,7 +626,7 @@ double HZZ4LPileUp::weightTruePileupFall15_74X(double input){
       0.398645,
       0.177599,
       0.0997793,
-      0.077409,
+      0.0774095,
       0.069421,
       0.0652572,
       0.0642129,
