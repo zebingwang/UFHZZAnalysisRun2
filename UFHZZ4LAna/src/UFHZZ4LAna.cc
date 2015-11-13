@@ -65,6 +65,9 @@
 #include "HLTrigger/HLTcore/interface/HLTConfigProvider.h"
 #include "DataFormats/HLTReco/interface/TriggerEventWithRefs.h"
 #include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"
+#include "SimDataFormats/GeneratorProducts/interface/LHERunInfoProduct.h"
+#include "SimDataFormats/GeneratorProducts/interface/LHEEventProduct.h"
+#include "SimDataFormats/GeneratorProducts/interface/HepMCProduct.h"
 
 // PAT
 #include "DataFormats/PatCandidates/interface/PFParticle.h"
@@ -217,7 +220,10 @@ private:
 
     // Event Weights
     float genWeight, pileupWeight, dataMCWeight, eventWeight;
-
+    // pdf weights                                                                   
+    vector<float> pdfWeights;
+    vector<int> pdfWeightIDs;
+    float pdfRMSup, pdfRMSdown, pdfENVup, pdfENVdown;
     // lepton variables
     vector<double> lep_pt;
     vector<double> lep_eta;
@@ -561,6 +567,8 @@ private:
     // Counters
     float nEventsTotal;
     float sumWeightsTotal;
+
+
 };
 
 
@@ -763,6 +771,9 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     edm::Handle<GenEventInfoProduct> genEventInfo;
     iEvent.getByLabel("generator",genEventInfo);
     
+    edm::Handle<LHEEventProduct> lheInfo;
+    iEvent.getByLabel("externalLHEProducer", lheInfo);
+
     // ============ Initialize Variables ============= //
 
     // Event Variables
@@ -774,6 +785,8 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
     // Event Weights
     genWeight=1.0; pileupWeight=1.0; dataMCWeight=1.0; eventWeight=1.0;
+    pdfWeights.clear();
+    pdfRMSup=1.0; pdfRMSdown=1.0; pdfENVup=1.0; pdfENVdown=1.0;
 
     //lepton variables
     lep_pt.clear(); lep_eta.clear(); lep_phi.clear(); lep_mass.clear(); 
@@ -942,6 +955,22 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     if(isMC) {
         float tmpWeight = genEventInfo->weight();
         genWeight = (tmpWeight > 0 ? 1.0 : -1.0);
+        double rms = 0.0;
+        for(unsigned int i = 0; i < pdfWeightIDs.size(); i++) {
+            tmpWeight = genEventInfo->weight();
+            //tmpWeight *= lheInfo->weights()[pdfWeightIDs[i]].wgt/lheInfo->originalXWGTUP();
+            tmpWeight *= lheInfo->weights()[i].wgt/lheInfo->originalXWGTUP();
+            pdfWeights.push_back(tmpWeight);
+            // NNPDF30 variations
+            if (pdfWeightIDs[i]>=2001 && pdfWeightIDs[i]<=2100) {
+                rms += tmpWeight*tmpWeight;
+                if (tmpWeight>pdfENVup) pdfENVup=tmpWeight;
+                if (tmpWeight<pdfENVdown) pdfENVdown=tmpWeight;
+            }
+        }
+        pdfRMSup=sqrt(rms/100.0); pdfRMSdown=1.0/pdfRMSup;
+        if (verbose) cout<<"pdfRMSup "<<pdfRMSup<<" pdfRMSdown "<<pdfRMSdown<<endl;
+
         if (verbose) cout<<"setting gen variables"<<endl;       
         setGENVariables(prunedgenParticles,packedgenParticles,genJets); 
         if (verbose) { cout<<"finshed setting gen variables"<<endl;  }
@@ -1606,9 +1635,35 @@ UFHZZ4LAna::endJob()
 }
 
 void
-UFHZZ4LAna::beginRun(edm::Run const&, const edm::EventSetup& iSetup)
+UFHZZ4LAna::beginRun(const edm::Run& iRun, const edm::EventSetup& iSetup)
 {
     massErr.init(iSetup);
+    if (isMC) {
+        pdfWeightIDs.clear();
+        edm::Handle<LHERunInfoProduct> run;
+        typedef std::vector<LHERunInfoProduct::Header>::const_iterator headers_const_iterator;
+        try {
+            iRun.getByLabel( "externalLHEProducer", run );
+            LHERunInfoProduct myLHERunInfoProduct = *(run.product());
+            for (headers_const_iterator iter=myLHERunInfoProduct.headers_begin(); iter!=myLHERunInfoProduct.headers_end(); iter++){
+                std::cout << iter->tag() << std::endl;
+                std::vector<std::string> lines = iter->lines();
+                for (unsigned int iLine = 0; iLine<lines.size(); iLine++) {
+                    std::string pdfid=lines.at(iLine);
+                    if (pdfid.substr(1,6)=="weight" && pdfid.substr(8,2)=="id") {
+                        std::cout<<pdfid<<std::endl;
+                        std::string pdf_weight_id = pdfid.substr(12,4);
+                        int pdf_weightid=atoi(pdf_weight_id.c_str());
+                        std::cout<<"parsed id: "<<pdf_weightid<<std::endl;
+                        pdfWeightIDs.push_back(pdf_weightid);
+                    }
+                }
+            }
+        } 
+        catch(...) {
+            std::cout<<"No LHERunInfoProduct"<<std::endl;
+        }
+    }
 }
 
 
@@ -1962,6 +2017,12 @@ void UFHZZ4LAna::bookPassedEventTree(TString treeName, TTree *tree)
     tree->Branch("passedZ4lSelection",&passedZ4lSelection,"passedZ4lSelection/O");
     tree->Branch("passedQCDcut",&passedQCDcut,"passedQCDcut/O");
     tree->Branch("genWeight",&genWeight,"genWeight/F");
+    tree->Branch("pdfWeights",&pdfWeights);
+    tree->Branch("pdfWeightIDs",&pdfWeightIDs);
+    tree->Branch("pdfRMSup",&pdfRMSup,"pdfRMSup/F");
+    tree->Branch("pdfRMSdown",&pdfRMSdown,"pdfRMSdown/F");
+    tree->Branch("pdfENVup",&pdfENVup,"pdfENVup/F");
+    tree->Branch("pdfENVdown",&pdfENVdown,"pdfENVdown/F");
     tree->Branch("pileupWeight",&pileupWeight,"pileupWeight/F");
     tree->Branch("dataMCWeight",&dataMCWeight,"dataMCWeight/F");
     tree->Branch("eventWeight",&eventWeight,"eventWeight/F");
