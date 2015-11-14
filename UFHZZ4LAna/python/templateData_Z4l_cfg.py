@@ -26,7 +26,7 @@ process.source = cms.Source("PoolSource",fileNames = myfilelist,
 
 import FWCore.PythonUtilities.LumiList as LumiList
 #process.source.lumisToProcess = LumiList.LumiList(filename = 'Run2015_30Oct_JSON.txt').getVLuminosityBlockRange()
-process.source.lumisToProcess = LumiList.LumiList(filename = 'Run2015_Nov11_Silver.txt').getVLuminosityBlockRange()
+process.source.lumisToProcess = LumiList.LumiList(filename = 'Run2015_Nov13_Silver.txt').getVLuminosityBlockRange()
 
 process.TFileService = cms.Service("TFileService",
                                    fileName = cms.string("DUMMYFILENAME.root")

@@ -617,7 +617,7 @@ UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
     interactiveRun(iConfig.getUntrackedParameter<bool>("interactiveRun",false)),
     PUVersion(iConfig.getUntrackedParameter<std::string>("PUVersion","Fall15_74X")),
     doFsrRecovery(iConfig.getUntrackedParameter<bool>("doFsrRecovery",true)),
-    doPUJetID(iConfig.getUntrackedParameter<bool>("doPUJetID",true)),
+    doPUJetID(iConfig.getUntrackedParameter<bool>("doPUJetID",false)),
     jetIDLevel(iConfig.getUntrackedParameter<int>("jetIDLevel",1)),
     doSUSYSelection(iConfig.getUntrackedParameter<bool>("doSUSYSelection",false)),
     bStudyResolution(iConfig.getUntrackedParameter<bool>("bStudyResolution",false)),
@@ -2652,6 +2652,7 @@ void UFHZZ4LAna::setGENVariables(edm::Handle<reco::GenParticleCollection> pruned
             if ( !(genAna.MotherID(&prunedgenParticles->at(j))==23 || abs(genAna.MotherID(&prunedgenParticles->at(j)))==24) ) continue;
 
             nGENLeptons++;
+            if (verbose) cout<<"found a gen lepton: id "<<genPart->pdgId()<<" pt: "<<genPart->pt()<<" eta: "<<genPart->eta()<<endl;
 
             // Collect FSR photons within dR<0.1
 
@@ -2681,7 +2682,7 @@ void UFHZZ4LAna::setGENVariables(edm::Handle<reco::GenParticleCollection> pruned
                     lep_dressed = lep_dressed+gamma;
                 }
             } // Dressed leptons loop
-            if (verbose) cout<<"lep pt "<<genPart->pt()<< " dressed pt: " << lep_dressed.Pt()<<endl;
+            if (verbose) cout<<"gen lep pt "<<genPart->pt()<< " dressed pt: " << lep_dressed.Pt()<<endl;
   
             GENlep_id.push_back( genPart->pdgId() );
             GENlep_status.push_back(genPart->status());
@@ -2693,7 +2694,7 @@ void UFHZZ4LAna::setGENVariables(edm::Handle<reco::GenParticleCollection> pruned
             GENlep_MomMomId.push_back(genAna.MotherMotherID(&prunedgenParticles->at(j)));
 
             TLorentzVector thisLep;
-            thisLep.SetPtEtaPhiM(GENlep_pt[nGENLeptons-1],GENlep_eta[nGENLeptons-1],GENlep_phi[nGENLeptons-1],GENlep_mass[nGENLeptons-1]);
+            thisLep.SetPtEtaPhiM(lep_dressed.Pt(),lep_dressed.Eta(),lep_dressed.Phi(),lep_dressed.M());
             // GEN iso calculation
             double this_GENiso=0.0;
             double this_GENneutraliso=0.0;
@@ -2713,6 +2714,7 @@ void UFHZZ4LAna::setGENVariables(edm::Handle<reco::GenParticleCollection> pruned
                 }
             } // GEN iso loop
             this_GENiso = this_GENiso/thisLep.Pt();
+            if (verbose) cout<<"gen lep pt: "<<thisLep.Pt()<<" rel iso: "<<this_GENiso<<endl;
             GENlep_RelIso.push_back(this_GENiso);
             // END GEN iso calculation
 
@@ -2756,11 +2758,12 @@ void UFHZZ4LAna::setGENVariables(edm::Handle<reco::GenParticleCollection> pruned
                || (abs(GENlep_id[i]) == 11 && thisLep.Pt() > 7.0 && abs(thisLep.Eta()) < 2.5) )
              && GENlep_RelIso[i]<genIsoCut ) {
                 nFiducialLeptons++;
+                if (verbose) cout<<nFiducialLeptons<<" fiducial leptons, id;"<<GENlep_id[i]<<" pt: "<<thisLep.Pt()<<" eta: "<<thisLep.Eta()<<endl; 
                 if (thisLep.Pt()>leadingPtCut) nFiducialPtLead++;
                 if (thisLep.Pt()>subleadingPtCut) nFiducialPtSublead++;
         }                
     }
-
+   
     if (nFiducialLeptons>=4 && nFiducialPtLead>=1 && nFiducialPtSublead>=2) {
                                 
         // START FIDUCIAL EVENT TOPOLOGY CUTS
@@ -2780,6 +2783,7 @@ void UFHZZ4LAna::setGENVariables(edm::Handle<reco::GenParticleCollection> pruned
             LS3_Z2_2.SetPtEtaPhiM(GENlep_pt[L4],GENlep_eta[L4],GENlep_phi[L4],GENlep_mass[L4]);
             
             GENmass4l = (LS3_Z1_1+LS3_Z1_2+LS3_Z2_1+LS3_Z2_2).M();
+          
             if (abs(GENlep_id[L1])==11 && abs(GENlep_id[L3])==11) {GENmass4e = GENmass4l;};
             if (abs(GENlep_id[L1])==13 && abs(GENlep_id[L3])==13) {GENmass4mu = GENmass4l;};
             if ( (abs(GENlep_id[L1])==11 || abs(GENlep_id[L1])==13) &&
@@ -2909,11 +2913,14 @@ bool UFHZZ4LAna::mZ1_mZ2(unsigned int& L1, unsigned int& L2, unsigned int& L3, u
     for(unsigned int i=0; i<N; i++){
         for(unsigned int j=i+1; j<N; j++){
 
+
             if((GENlep_id[i]+GENlep_id[j])!=0) continue;
 
             TLorentzVector li, lj;
             li.SetPtEtaPhiM(GENlep_pt[i],GENlep_eta[i],GENlep_phi[i],GENlep_mass[i]);
             lj.SetPtEtaPhiM(GENlep_pt[j],GENlep_eta[j],GENlep_phi[j],GENlep_mass[j]);
+
+            if (verbose) cout<<"gen lep i id: "<<GENlep_id[i]<<" pt: "<<li.Pt()<<" lep j id: "<<GENlep_id[j]<<" pt: "<<lj.Pt()<<endl;
 
             if ( abs(GENlep_id[i]) == 13 && (li.Pt() < 5.0 || abs(li.Eta()) > 2.4)) continue;
             if ( abs(GENlep_id[i]) == 11 && (li.Pt() < 7.0 || abs(li.Eta()) > 2.5)) continue;
@@ -2924,6 +2931,8 @@ bool UFHZZ4LAna::mZ1_mZ2(unsigned int& L1, unsigned int& L2, unsigned int& L3, u
             if ( GENlep_RelIso[j]>genIsoCut ) continue;
 
             TLorentzVector mll = li+lj;
+            if (verbose) cout<<"gen mass ij: "<<mll.M()<<endl;
+
             if(abs(mll.M()-Zmass)<offshell){
                 double mZ1 = mll.M();
                 L1 = i; L2 = j; findZ1 = true; offshell = abs(mZ1-Zmass);          
@@ -2933,7 +2942,7 @@ bool UFHZZ4LAna::mZ1_mZ2(unsigned int& L1, unsigned int& L2, unsigned int& L3, u
 
     TLorentzVector l1, l2;
     l1.SetPtEtaPhiM(GENlep_pt[L1],GENlep_eta[L1],GENlep_phi[L1],GENlep_mass[L1]);
-    l1.SetPtEtaPhiM(GENlep_pt[L2],GENlep_eta[L2],GENlep_phi[L2],GENlep_mass[L2]);
+    l2.SetPtEtaPhiM(GENlep_pt[L2],GENlep_eta[L2],GENlep_phi[L2],GENlep_mass[L2]);
     TLorentzVector ml1l2 = l1+l2;
 
     if(ml1l2.M()>40 && ml1l2.M()<120 && findZ1) passZ1 = true;
