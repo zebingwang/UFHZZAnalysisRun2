@@ -459,11 +459,12 @@ bool HZZ4LHelper::passTight_Id_SUS(pat::Electron electron, std::string elecID, c
 
     double dxyCut = 0.05;
     double dzCut = 0.1;
+    //std::cout<<"dxy: "<<fabs(electron.gsfTrack()->dxy(vertex->position()))<<" dz: "<<fabs(electron.gsfTrack()->dz(vertex->position()))<<std::endl;
     if( fabs(electron.gsfTrack()->dxy(vertex->position())) >= dxyCut ) return false;
     if( fabs(electron.gsfTrack()->dz(vertex->position())) >= dzCut ) return false;
 
     float cutVal=1000;
-    float fSCeta = fabs(electron.superCluster()->eta());
+    float fSCeta = fabs(electron.eta());
     if(electron.pt()<=10){
         if(fSCeta < 0.8) cutVal = 0.87;
         if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = 0.60;
@@ -474,15 +475,40 @@ bool HZZ4LHelper::passTight_Id_SUS(pat::Electron electron, std::string elecID, c
         if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = 0.60;
         if(fSCeta >= 1.479) cutVal = 0.17;
     }
+    //std::cout<<"el |eta|: "<<fabs(electron.eta())<<" el |SCEta|: "<< fabs(electron.superCluster()->eta())<<" el mva: "<<electron.electronID(elecID)<<std::endl;
     if (electron.electronID(elecID) <= cutVal ) return false;
 
     bool vtxFitConversion = ConversionTools::hasMatchedConversion(reco::GsfElectron(electron), theConversions, BS.position());
+    //std::cout<<"vtxFitConverstion: "<<vtxFitConversion<<std::endl;
     if( vtxFitConversion )  return false;
 
     int missingHitsCuts = 1;
     int misHits = electron.gsfTrack()->hitPattern().numberOfHits(reco::HitPattern::MISSING_INNER_HITS);
+    //std::cout<<"misHits: "<<misHits<<std::endl;
     if (misHits >= missingHitsCuts) return false;
     
+    //std::cout<<"check id emulation"<<std::endl;
+    // Trigger ID Emulation
+    //if (fabs(electron.eta())<1.479) {
+    //std::cout<<"isEB: "<<electron.isEB()<<" iEtaieta: "<<electron.full5x5_sigmaIetaIeta()<<" hOe: "<<electron.hcalOverEcal()<<" dEta: "<<electron.deltaEtaSuperClusterTrackAtVtx()<<" dPhi: "<<electron.deltaPhiSuperClusterTrackAtVtx()<<" |1/e - 1/p| "<<fabs(1.0/electron.correctedEcalEnergy() - electron.eSuperClusterOverP()/electron.correctedEcalEnergy())<<std::endl;
+
+    if (electron.isEB()) {
+        if (electron.full5x5_sigmaIetaIeta()>=0.011) return false;
+        if (electron.hcalOverEcal()>=0.08) return false;
+        if (fabs(electron.deltaEtaSuperClusterTrackAtVtx())>=0.01) return false;
+        if (fabs(electron.deltaPhiSuperClusterTrackAtVtx())>=0.04) return false;
+        if (fabs(1.0/electron.correctedEcalEnergy() - electron.eSuperClusterOverP()/electron.correctedEcalEnergy())>=0.01) return false;
+    }
+    if (electron.isEE()) {
+        if (electron.full5x5_sigmaIetaIeta()>=0.031) return false;
+        if (electron.hcalOverEcal()>=0.08) return false;
+        if (fabs(electron.deltaEtaSuperClusterTrackAtVtx())>=0.01) return false;
+        if (fabs(electron.deltaPhiSuperClusterTrackAtVtx())>=0.08) return false;
+        if (fabs(1.0/electron.correctedEcalEnergy() - electron.eSuperClusterOverP()/electron.correctedEcalEnergy())>=0.01) return false;
+    }
+
+    //std::cout<<"passed id emulation"<<std::endl;
+
     return true;
 }
 
@@ -493,16 +519,9 @@ double HZZ4LHelper::ptRatio(pat::Electron electron, edm::Handle<edm::View<pat::J
     
     for(unsigned int j = 0; j < jets->size(); ++j) {        
         const pat::Jet & patjet = jets->at(j);
-
         
         TLorentzVector jet_lepawareJEC(patjet.correctedP4(0).px(),patjet.correctedP4(0).py(),patjet.correctedP4(0).pz(),patjet.correctedP4(0).energy());
         TLorentzVector lep(electron.px(),electron.py(),electron.pz(),electron.energy());
-
-        //jetcorrector->setJetEta(jet_lepawareJEC.Eta());
-        //jetcorrector->setJetPt(jet_lepawareJEC.Eta());
-        //jetcorrector->setJetA(patjet.jetArea());
-        //jetcorrector->setRho(rho); 
-        //vector<double> factors = JetCorrector->getSubCorrections();
         double corr_L1 = patjet.jecFactor("L1FastJet")/patjet.jecFactor("Uncorrected");
         double corr_L2L3 = patjet.jecFactor("L3Absolute")/patjet.jecFactor("Uncorrected");
         if (!isMC) corr_L2L3=patjet.jecFactor("L2L3Residual")/patjet.jecFactor("Uncorrected");
@@ -528,11 +547,7 @@ double HZZ4LHelper::ptRatio(pat::Muon muon, edm::Handle<edm::View<pat::Jet> > je
     
     for(unsigned int j = 0; j < jets->size(); ++j) {        
         const pat::Jet & patjet = jets->at(j);
-        // pt(corr)*facl1 = pt(l1)
-        // pt(corr)*facl3 = pt(l3)
-        // pt(corr)*facraw = pt(raw)
-        // pt(l1)=pt(raw)*facl1/facraw
-        // pt(l3)=pt(raw)*facl3/facraw
+
         TLorentzVector jet_lepawareJEC(patjet.correctedP4(0).px(),patjet.correctedP4(0).py(),patjet.correctedP4(0).pz(),patjet.correctedP4(0).energy());
         TLorentzVector lep(muon.px(),muon.py(),muon.pz(),muon.energy());
         double corr_L1 = patjet.jecFactor("L1FastJet")/patjet.jecFactor("Uncorrected");

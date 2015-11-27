@@ -120,7 +120,7 @@ process.p = cms.Path(process.fsrPhotonSequence*
                      process.boostedMuons*
                      process.egmGsfElectronIDSequence*
                      process.mvaSpring15NonTrig25nsV1*
-                     process.jetCorrFactors*
-                     process.slimmedJetsJEC*
+#                     process.jetCorrFactors*
+#                     process.slimmedJetsJEC*
                      process.Ana
                      )

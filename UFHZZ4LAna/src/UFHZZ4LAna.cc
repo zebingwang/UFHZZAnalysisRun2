@@ -403,7 +403,7 @@ private:
     vector<double> GENZ_phi; 
     vector<double> GENZ_mass; 
     vector<int> GENZ_DaughtersId; vector<int> GENZ_MomId;
-    float  GENmassZ1, GENmassZ2, GENpTZ1, GENpTZ2;
+    float  GENmassZ1, GENmassZ2, GENpTZ1, GENpTZ2, GENdPhiZZ;
 
     // Higgs variables directly from GEN particle
     float GENHmass;
@@ -892,12 +892,14 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     GENlep_RelIso.clear();
 
     // Higgs candidate variables (calculated using selected gen leptons)
+    GENH_pt.clear(); GENH_eta.clear(); GENH_phi.clear(); GENH_mass.clear();
     GENmass4l=-1.0; GENmassZ1=-1.0; GENmassZ2=-1.0; GENpT4l=-1.0; GENeta4l=9999.0; GENrapidity4l=9999.0; GENMH=-1.0;
     GENcosTheta1=9999.0; GENcosTheta2=9999.0; GENcosThetaStar=9999.0; GENPhi=9999.0; GENPhi1=9999.0;
 
     // Z candidate variables
     GENZ_DaughtersId.clear(); GENZ_MomId.clear();
-    GENmassZ1=-1.0; GENmassZ2=-1.0; GENpTZ1=-1.0; GENpTZ2=-1.0;
+    GENZ_pt.clear(); GENZ_eta.clear(); GENZ_phi.clear(); GENZ_mass.clear();
+    GENmassZ1=-1.0; GENmassZ2=-1.0; GENpTZ1=-1.0; GENpTZ2=-1.0, GENdPhiZZ=9999.0;
 
     // Higgs variables directly from GEN particle
     GENHmass=-1.0;
@@ -926,6 +928,20 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     RecoFourMuEvent = false; RecoFourEEvent = false;
     RecoTwoETwoMuEvent = false; RecoTwoMuTwoEEvent = false;
     foundHiggsCandidate = false;
+
+    // Float vectors
+    lep_pt_float.clear(); lep_eta_float.clear(); lep_phi_float.clear(); lep_mass_float.clear();
+    lepFSR_pt_float.clear(); lepFSR_eta_float.clear(); lepFSR_phi_float.clear(); lepFSR_mass_float.clear();
+    H_pt_float.clear(); H_eta_float.clear(); H_phi_float.clear(); H_mass_float.clear();
+    H_noFSR_pt_float.clear(); H_noFSR_eta_float.clear(); H_noFSR_phi_float.clear(); H_noFSR_mass_float.clear();
+    Z_pt_float.clear(); Z_eta_float.clear(); Z_phi_float.clear(); Z_mass_float.clear();
+    Z_noFSR_pt_float.clear(); Z_noFSR_eta_float.clear(); Z_noFSR_phi_float.clear(); Z_noFSR_mass_float.clear();
+    jet_pt_float.clear(); jet_eta_float.clear(); jet_phi_float.clear(); jet_mass_float.clear();
+    jet_jesup_pt_float.clear(); jet_jesup_eta_float.clear(); jet_jesup_phi_float.clear(); jet_jesup_mass_float.clear();
+    jet_jesdn_pt_float.clear(); jet_jesdn_eta_float.clear(); jet_jesdn_phi_float.clear(); jet_jesdn_mass_float.clear();
+    jet_jerup_pt_float.clear(); jet_jerup_eta_float.clear(); jet_jerup_phi_float.clear(); jet_jerup_mass_float.clear();
+    jet_jerdn_pt_float.clear(); jet_jerdn_eta_float.clear(); jet_jerdn_phi_float.clear();  jet_jerdn_mass_float.clear();
+    fsrPhotons_pt_float.clear(); fsrPhotons_eta_float.clear(); fsrPhotons_phi_float.clear(); fsrPhotons_mass_float.clear();
 
     // ====================== Do Analysis ======================== //
 
@@ -1524,54 +1540,54 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
             }
 
             // fill the vector<float>
-            lep_pt_float.clear();  lep_pt_float.assign( lep_pt.begin(), lep_pt.end());
-            lep_eta_float.clear();  lep_eta_float.assign( lep_eta.begin(), lep_eta.end());
-            lep_phi_float.clear();  lep_phi_float.assign( lep_phi.begin(), lep_phi.end());
-            lep_mass_float.clear();  lep_mass_float.assign( lep_mass.begin(), lep_mass.end());
-            lepFSR_pt_float.clear();  lepFSR_pt_float.assign( lepFSR_pt.begin(), lepFSR_pt.end());
-            lepFSR_eta_float.clear();  lepFSR_eta_float.assign( lepFSR_eta.begin(), lepFSR_eta.end());
-            lepFSR_phi_float.clear();  lepFSR_phi_float.assign( lepFSR_phi.begin(), lepFSR_phi.end());
-            lepFSR_mass_float.clear();  lepFSR_mass_float.assign( lepFSR_mass.begin(), lepFSR_mass.end());
-            H_pt_float.clear();  H_pt_float.assign( H_pt.begin(), H_pt.end());
-            H_eta_float.clear();  H_eta_float.assign( H_eta.begin(), H_eta.end());
-            H_phi_float.clear();  H_phi_float.assign( H_phi.begin(), H_phi.end());
-            H_mass_float.clear();  H_mass_float.assign( H_mass.begin(), H_mass.end());
-            H_noFSR_pt_float.clear();  H_noFSR_pt_float.assign( H_noFSR_pt.begin(), H_noFSR_pt.end());
-            H_noFSR_eta_float.clear();  H_noFSR_eta_float.assign( H_noFSR_eta.begin(), H_noFSR_eta.end());
-            H_noFSR_phi_float.clear();  H_noFSR_phi_float.assign( H_noFSR_phi.begin(), H_noFSR_phi.end());
-            H_noFSR_mass_float.clear();  H_noFSR_mass_float.assign( H_noFSR_mass.begin(), H_noFSR_mass.end());
-            Z_pt_float.clear();  Z_pt_float.assign( Z_pt.begin(), Z_pt.end());
-            Z_eta_float.clear();  Z_eta_float.assign( Z_eta.begin(), Z_eta.end());
-            Z_phi_float.clear();  Z_phi_float.assign( Z_phi.begin(), Z_phi.end());
-            Z_mass_float.clear();  Z_mass_float.assign( Z_mass.begin(), Z_mass.end());
-            Z_noFSR_pt_float.clear();  Z_noFSR_pt_float.assign( Z_noFSR_pt.begin(), Z_noFSR_pt.end());
-            Z_noFSR_eta_float.clear();  Z_noFSR_eta_float.assign( Z_noFSR_eta.begin(), Z_noFSR_eta.end());
-            Z_noFSR_phi_float.clear();  Z_noFSR_phi_float.assign( Z_noFSR_phi.begin(), Z_noFSR_phi.end());
-            Z_noFSR_mass_float.clear();  Z_noFSR_mass_float.assign( Z_noFSR_mass.begin(), Z_noFSR_mass.end());
-            jet_pt_float.clear();  jet_pt_float.assign( jet_pt.begin(), jet_pt.end());
-            jet_eta_float.clear();  jet_eta_float.assign( jet_eta.begin(), jet_eta.end());
-            jet_phi_float.clear();  jet_phi_float.assign( jet_phi.begin(), jet_phi.end());
-            jet_mass_float.clear();  jet_mass_float.assign( jet_mass.begin(), jet_mass.end());
-            jet_jesup_pt_float.clear();  jet_jesup_pt_float.assign( jet_jesup_pt.begin(), jet_jesup_pt.end());
-            jet_jesup_eta_float.clear();  jet_jesup_eta_float.assign( jet_jesup_eta.begin(), jet_jesup_eta.end());
-            jet_jesup_phi_float.clear();  jet_jesup_phi_float.assign( jet_jesup_phi.begin(), jet_jesup_phi.end());
-            jet_jesup_mass_float.clear();  jet_jesup_mass_float.assign( jet_jesup_mass.begin(), jet_jesup_mass.end());
-            jet_jesdn_pt_float.clear();  jet_jesdn_pt_float.assign( jet_jesdn_pt.begin(), jet_jesdn_pt.end());
-            jet_jesdn_eta_float.clear();  jet_jesdn_eta_float.assign( jet_jesdn_eta.begin(), jet_jesdn_eta.end());
-            jet_jesdn_phi_float.clear();  jet_jesdn_phi_float.assign( jet_jesdn_phi.begin(), jet_jesdn_phi.end());
-            jet_jesdn_mass_float.clear();  jet_jesdn_mass_float.assign( jet_jesdn_mass.begin(), jet_jesdn_mass.end());
-            jet_jerup_pt_float.clear();  jet_jerup_pt_float.assign( jet_jerup_pt.begin(), jet_jerup_pt.end());
-            jet_jerup_eta_float.clear();  jet_jerup_eta_float.assign( jet_jerup_eta.begin(), jet_jerup_eta.end());
-            jet_jerup_phi_float.clear();  jet_jerup_phi_float.assign( jet_jerup_phi.begin(), jet_jerup_phi.end());
-            jet_jerup_mass_float.clear();  jet_jerup_mass_float.assign( jet_jerup_mass.begin(), jet_jerup_mass.end());
-            jet_jerdn_pt_float.clear();  jet_jerdn_pt_float.assign( jet_jerdn_pt.begin(), jet_jerdn_pt.end());
-            jet_jerdn_eta_float.clear();  jet_jerdn_eta_float.assign( jet_jerdn_eta.begin(), jet_jerdn_eta.end());
-            jet_jerdn_phi_float.clear();  jet_jerdn_phi_float.assign( jet_jerdn_phi.begin(), jet_jerdn_phi.end());
-            jet_jerdn_mass_float.clear();  jet_jerdn_mass_float.assign( jet_jerdn_mass.begin(), jet_jerdn_mass.end());
-            fsrPhotons_pt_float.clear();  fsrPhotons_pt_float.assign( fsrPhotons_pt.begin(), fsrPhotons_pt.end());
-            fsrPhotons_eta_float.clear();  fsrPhotons_eta_float.assign( fsrPhotons_eta.begin(), fsrPhotons_eta.end());
-            fsrPhotons_phi_float.clear();  fsrPhotons_phi_float.assign( fsrPhotons_phi.begin(), fsrPhotons_phi.end());
-            fsrPhotons_mass_float.clear();  fsrPhotons_mass_float.assign( fsrPhotons_mass.begin(), fsrPhotons_mass.end());
+            lep_pt_float.assign(lep_pt.begin(),lep_pt.end());
+            lep_eta_float.assign(lep_eta.begin(),lep_eta.end());
+            lep_phi_float.assign(lep_phi.begin(),lep_phi.end());
+            lep_mass_float.assign(lep_mass.begin(),lep_mass.end());
+            lepFSR_pt_float.assign(lepFSR_pt.begin(),lepFSR_pt.end());
+            lepFSR_eta_float.assign(lepFSR_eta.begin(),lepFSR_eta.end());
+            lepFSR_phi_float.assign(lepFSR_phi.begin(),lepFSR_phi.end());
+            lepFSR_mass_float.assign(lepFSR_mass.begin(),lepFSR_mass.end());
+            H_pt_float.assign(H_pt.begin(),H_pt.end());
+            H_eta_float.assign(H_eta.begin(),H_eta.end());
+            H_phi_float.assign(H_phi.begin(),H_phi.end());
+            H_mass_float.assign(H_mass.begin(),H_mass.end());
+            H_noFSR_pt_float.assign(H_noFSR_pt.begin(),H_noFSR_pt.end());
+            H_noFSR_eta_float.assign(H_noFSR_eta.begin(),H_noFSR_eta.end());
+            H_noFSR_phi_float.assign(H_noFSR_phi.begin(),H_noFSR_phi.end());
+            H_noFSR_mass_float.assign(H_noFSR_mass.begin(),H_noFSR_mass.end());
+            Z_pt_float.assign(Z_pt.begin(),Z_pt.end());
+            Z_eta_float.assign(Z_eta.begin(),Z_eta.end());
+            Z_phi_float.assign(Z_phi.begin(),Z_phi.end());
+            Z_mass_float.assign(Z_mass.begin(),Z_mass.end());
+            Z_noFSR_pt_float.assign(Z_noFSR_pt.begin(),Z_noFSR_pt.end());
+            Z_noFSR_eta_float.assign(Z_noFSR_eta.begin(),Z_noFSR_eta.end());
+            Z_noFSR_phi_float.assign(Z_noFSR_phi.begin(),Z_noFSR_phi.end());
+            Z_noFSR_mass_float.assign(Z_noFSR_mass.begin(),Z_noFSR_mass.end());
+            jet_pt_float.assign(jet_pt.begin(),jet_pt.end());
+            jet_eta_float.assign(jet_eta.begin(),jet_eta.end());
+            jet_phi_float.assign(jet_phi.begin(),jet_phi.end());
+            jet_mass_float.assign(jet_mass.begin(),jet_mass.end());
+            jet_jesup_pt_float.assign(jet_jesup_pt.begin(),jet_jesup_pt.end());
+            jet_jesup_eta_float.assign(jet_jesup_eta.begin(),jet_jesup_eta.end());
+            jet_jesup_phi_float.assign(jet_jesup_phi.begin(),jet_jesup_phi.end());
+            jet_jesup_mass_float.assign(jet_jesup_mass.begin(),jet_jesup_mass.end());
+            jet_jesdn_pt_float.assign(jet_jesdn_pt.begin(),jet_jesdn_pt.end());
+            jet_jesdn_eta_float.assign(jet_jesdn_eta.begin(),jet_jesdn_eta.end());
+            jet_jesdn_phi_float.assign(jet_jesdn_phi.begin(),jet_jesdn_phi.end());
+            jet_jesdn_mass_float.assign(jet_jesdn_mass.begin(),jet_jesdn_mass.end());
+            jet_jerup_pt_float.assign(jet_jerup_pt.begin(),jet_jerup_pt.end());
+            jet_jerup_eta_float.assign(jet_jerup_eta.begin(),jet_jerup_eta.end());
+            jet_jerup_phi_float.assign(jet_jerup_phi.begin(),jet_jerup_phi.end());
+            jet_jerup_mass_float.assign(jet_jerup_mass.begin(),jet_jerup_mass.end());
+            jet_jerdn_pt_float.assign(jet_jerdn_pt.begin(),jet_jerdn_pt.end());
+            jet_jerdn_eta_float.assign(jet_jerdn_eta.begin(),jet_jerdn_eta.end());
+            jet_jerdn_phi_float.assign(jet_jerdn_phi.begin(),jet_jerdn_phi.end());
+            jet_jerdn_mass_float.assign(jet_jerdn_mass.begin(),jet_jerdn_mass.end());
+            fsrPhotons_pt_float.assign(fsrPhotons_pt.begin(),fsrPhotons_pt.end());
+            fsrPhotons_eta_float.assign(fsrPhotons_eta.begin(),fsrPhotons_eta.end());
+            fsrPhotons_phi_float.assign(fsrPhotons_phi.begin(),fsrPhotons_phi.end());
+            fsrPhotons_mass_float.assign(fsrPhotons_mass.begin(),fsrPhotons_mass.end());
 
             if (!isMC) passedEventsTree_All->Fill();        
 
@@ -1580,22 +1596,23 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     } //primary vertex,notDuplicate
     else { if (verbose) cout<<Run<<":"<<LumiSect<<":"<<Event<<" failed primary vertex"<<endl;}
     
-    GENlep_pt_float.clear();  GENlep_pt_float.assign( GENlep_pt.begin(), GENlep_pt.end());
-    GENlep_eta_float.clear();  GENlep_eta_float.assign( GENlep_eta.begin(), GENlep_eta.end());
-    GENlep_phi_float.clear();  GENlep_phi_float.assign( GENlep_phi.begin(), GENlep_phi.end());
-    GENlep_mass_float.clear();  GENlep_mass_float.assign( GENlep_mass.begin(), GENlep_mass.end());
-    GENH_pt_float.clear();  GENH_pt_float.assign( GENH_pt.begin(), GENH_pt.end());
-    GENH_eta_float.clear();  GENH_eta_float.assign( GENH_eta.begin(), GENH_eta.end());
-    GENH_phi_float.clear();  GENH_phi_float.assign( GENH_phi.begin(), GENH_phi.end());
-    GENH_mass_float.clear();  GENH_mass_float.assign( GENH_mass.begin(), GENH_mass.end());
-    GENZ_pt_float.clear();  GENZ_pt_float.assign( GENZ_pt.begin(), GENZ_pt.end());
-    GENZ_eta_float.clear();  GENZ_eta_float.assign( GENZ_eta.begin(), GENZ_eta.end());
-    GENZ_phi_float.clear();  GENZ_phi_float.assign( GENZ_phi.begin(), GENZ_phi.end());
-    GENZ_mass_float.clear();  GENZ_mass_float.assign( GENZ_mass.begin(), GENZ_mass.end());
-    GENjet_pt_float.clear();  GENjet_pt_float.assign( GENjet_pt.begin(), GENjet_pt.end());
-    GENjet_eta_float.clear();  GENjet_eta_float.assign( GENjet_eta.begin(), GENjet_eta.end());
-    GENjet_phi_float.clear();  GENjet_phi_float.assign( GENjet_phi.begin(), GENjet_phi.end());
-    GENjet_mass_float.clear();  GENjet_mass_float.assign( GENjet_mass.begin(), GENjet_mass.end());
+
+    GENlep_pt_float.clear(); GENlep_pt_float.assign(GENlep_pt.begin(),GENlep_pt.end());
+    GENlep_eta_float.clear(); GENlep_eta_float.assign(GENlep_eta.begin(),GENlep_eta.end());
+    GENlep_phi_float.clear(); GENlep_phi_float.assign(GENlep_phi.begin(),GENlep_phi.end());
+    GENlep_mass_float.clear(); GENlep_mass_float.assign(GENlep_mass.begin(),GENlep_mass.end());
+    GENH_pt_float.clear(); GENH_pt_float.assign(GENH_pt.begin(),GENH_pt.end());
+    GENH_eta_float.clear(); GENH_eta_float.assign(GENH_eta.begin(),GENH_eta.end());
+    GENH_phi_float.clear(); GENH_phi_float.assign(GENH_phi.begin(),GENH_phi.end());
+    GENH_mass_float.clear(); GENH_mass_float.assign(GENH_mass.begin(),GENH_mass.end());
+    GENZ_pt_float.clear(); GENZ_pt_float.assign(GENZ_pt.begin(),GENZ_pt.end());
+    GENZ_eta_float.clear(); GENZ_eta_float.assign(GENZ_eta.begin(),GENZ_eta.end());
+    GENZ_phi_float.clear(); GENZ_phi_float.assign(GENZ_phi.begin(),GENZ_phi.end());
+    GENZ_mass_float.clear(); GENZ_mass_float.assign(GENZ_mass.begin(),GENZ_mass.end());
+    GENjet_pt_float.clear(); GENjet_pt_float.assign(GENjet_pt.begin(),GENjet_pt.end());
+    GENjet_eta_float.clear(); GENjet_eta_float.assign(GENjet_eta.begin(),GENjet_eta.end());
+    GENjet_phi_float.clear(); GENjet_phi_float.assign(GENjet_phi.begin(),GENjet_phi.end());
+    GENjet_mass_float.clear(); GENjet_mass_float.assign(GENjet_mass.begin(),GENjet_mass.end());
 
     if (isMC) passedEventsTree_All->Fill();
 
@@ -2257,6 +2274,7 @@ void UFHZZ4LAna::bookPassedEventTree(TString treeName, TTree *tree)
     tree->Branch("GENmassZ2",&GENmassZ2,"GENmassZ2/F");  
     tree->Branch("GENpTZ1",&GENpTZ1,"GENpTZ1/F");
     tree->Branch("GENpTZ2",&GENpTZ2,"GENpTZ2/F");
+    tree->Branch("GENdPhiZZ",&GENdPhiZZ,"GENdPhiZZ/F");
 
     // Higgs variables directly from GEN particle
     tree->Branch("GENHmass",&GENHmass,"GENHmass/F");
@@ -2722,22 +2740,39 @@ void UFHZZ4LAna::setGENVariables(edm::Handle<reco::GenParticleCollection> pruned
         
         if (genPart->pdgId()==25) {
             GENMH=genPart->mass();
+            GENH_pt.push_back(genPart->pt());
+            GENH_eta.push_back(genPart->eta());
+            GENH_phi.push_back(genPart->phi());
+            GENH_mass.push_back(genPart->mass());
+
         }
 
         
         if (genPart->pdgId()==23 && (genPart->status()>=20 && genPart->status()<30) ) {
             const reco::Candidate *Zdau0=genPart->daughter(0);
+            int ZdauId = fabs(Zdau0->pdgId());
             if (fabs(Zdau0->pdgId())==23) {
                 int ndau = genPart->numberOfDaughters();
                 for (int d=0; d<ndau; d++) {
                     const reco::Candidate *Zdau=genPart->daughter(d);
                     if (verbose) cout<<"ZDau "<<d<<" id "<<fabs(Zdau->pdgId())<<endl;
+                    if (fabs(Zdau->pdgId())<17) {
+                        ZdauId = fabs(Zdau->pdgId());
+                        break;
+                    }
                 }
             }
-            if (Zdau0) GENZ_DaughtersId.push_back(fabs(Zdau0->pdgId()));
-           
+            if (verbose) cout<<"GENZ status "<<genPart->status()<<" MomId: "<<genAna.MotherID(&prunedgenParticles->at(j))<< "DauId: "<<ZdauId<<endl;
+
+            if (Zdau0) GENZ_DaughtersId.push_back(ZdauId);           
             GENZ_MomId.push_back(genAna.MotherID(&prunedgenParticles->at(j)));                
-            if (verbose) cout<<"GENZ status "<<genPart->status()<<" MomId: "<<genAna.MotherID(&prunedgenParticles->at(j))<< "DauId: "<<fabs(Zdau0->pdgId())<< endl;
+            GENZ_pt.push_back(genPart->pt());
+            GENZ_eta.push_back(genPart->eta());
+            GENZ_phi.push_back(genPart->phi());
+            GENZ_mass.push_back(genPart->mass());
+            if (GENZ_pt.size()==2) {
+                GENdPhiZZ = deltaPhi(GENZ_phi[0],GENZ_phi[1]);
+            }
         }
       
     }
