@@ -29,14 +29,15 @@ myfilelist.extend( [
 
 process.source = cms.Source("PoolSource",fileNames = myfilelist,
                             duplicateCheckMode = cms.untracked.string('noDuplicateCheck'),
-#                            eventsToProcess = cms.untracked.VEventRange('1:243086-1:243086',),
+#                            eventsToProcess = cms.untracked.VEventRange('1:264711-1:264711'),
                             inputCommands = cms.untracked.vstring('keep *',
                                                                   'drop LHEEventProduct_*_*_*',
                                                                   'drop LHERunInfoProduct_*_*_*')
                             )
 
 process.TFileService = cms.Service("TFileService",
-                                   fileName = cms.string("Sync_v2_74X.root")
+#                                   fileName = cms.string("Sync_v2_74X.root")
+                                   fileName = cms.string("test.root")
 )
 
 # clean muons by segments 
@@ -47,8 +48,15 @@ process.boostedMuons = cms.EDProducer("PATMuonCleanerBySegments",
 				     fractionOfSharedSegments = cms.double(0.499),
 				     )
 
-# Electron MVA ID producer
+# Electron Calibrations
+process.calibratedElectrons = cms.EDProducer("CalibratedPatElectronProducerRun2",
+    electrons = cms.InputTag("slimmedElectrons","","PAT"),
+    grbForestName = cms.string("gedelectron_p4combination_25ns"),
+    isMC = cms.bool(True),
+    isSynchronization = cms.bool(True)
+)
 
+# Electron MVA ID producers
 from PhysicsTools.SelectorUtils.tools.vid_id_tools import *
 dataFormat = DataFormat.MiniAOD
 switchOnVIDElectronIdProducer(process, dataFormat)
@@ -57,13 +65,14 @@ my_id_modules = ['RecoEgamma.ElectronIdentification.Identification.mvaElectronID
 # add them to the VID producer
 for idmod in my_id_modules:
     setupAllVIDIdsInModule(process,idmod,setupVIDElectronSelection)
+process.electronMVAValueMapProducer.srcMiniAOD = cms.InputTag("calibratedElectrons")
 
 process.mvaSpring15NonTrig25nsV1 = cms.EDProducer("SlimmedElectronMvaIDProducer",
                                      mvaValuesMap = cms.InputTag("electronMVAValueMapProducer:ElectronMVAEstimatorRun2Spring15NonTrig25nsV1Values"),
-                                     electronsCollection = cms.InputTag("slimmedElectrons","","PAT"),
+                                     electronsCollection = cms.InputTag("calibratedElectrons"),
                                      Trig = cms.bool(False),
                                      )
-     
+
 # FSR Photons
 process.load('UFHZZAnalysisRun2.FSRPhotons.fsrPhotons_cff')
 
@@ -100,7 +109,6 @@ process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
                               muRhoSrc     = cms.untracked.InputTag("fixedGridRhoFastjetAll"),
                               rhoSrcSUS    = cms.untracked.InputTag("fixedGridRhoFastjetCentralNeutral"),
                               pileupSrc     = cms.untracked.InputTag("slimmedAddPileupInfo"),
-#                              pileupSrc     = cms.untracked.InputTag("addPileupInfo"),
                               reweightForPU = cms.untracked.bool(True),
                               triggerSrc = cms.untracked.InputTag("TriggerResults","","HLT"),
                               triggerObjects = cms.InputTag("selectedPatTrigger"),
@@ -123,9 +131,10 @@ process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
 
 process.p = cms.Path(process.fsrPhotonSequence*
                      process.boostedMuons*
-                     process.egmGsfElectronIDSequence*
+                     process.calibratedElectrons*
+                     process.electronMVAValueMapProducer*
                      process.mvaSpring15NonTrig25nsV1*
-                     process.jetCorrFactors*
-                     process.slimmedJetsJEC*
+#                     process.jetCorrFactors*
+#                     process.slimmedJetsJEC*
                      process.Ana
                      )

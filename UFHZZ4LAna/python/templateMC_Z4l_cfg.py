@@ -36,8 +36,16 @@ process.boostedMuons = cms.EDProducer("PATMuonCleanerBySegments",
 				     fractionOfSharedSegments = cms.double(0.499),
 				     )
 
-# Electron MVA ID producer
 
+# Electron Calibrations
+process.calibratedElectrons = cms.EDProducer("CalibratedPatElectronProducerRun2",
+    electrons = cms.InputTag("slimmedElectrons","","PAT"),
+    grbForestName = cms.string("gedelectron_p4combination_25ns"),
+    isMC = cms.bool(True),
+    isSynchronization = cms.bool(False)
+)
+
+# Electron MVA ID producer
 from PhysicsTools.SelectorUtils.tools.vid_id_tools import *
 dataFormat = DataFormat.MiniAOD
 switchOnVIDElectronIdProducer(process, dataFormat)
@@ -46,10 +54,11 @@ my_id_modules = ['RecoEgamma.ElectronIdentification.Identification.mvaElectronID
 # add them to the VID producer
 for idmod in my_id_modules:
     setupAllVIDIdsInModule(process,idmod,setupVIDElectronSelection)
+process.electronMVAValueMapProducer.srcMiniAOD = cms.InputTag("calibratedElectrons")
 
 process.mvaSpring15NonTrig25nsV1 = cms.EDProducer("SlimmedElectronMvaIDProducer",
                                      mvaValuesMap = cms.InputTag("electronMVAValueMapProducer:ElectronMVAEstimatorRun2Spring15NonTrig25nsV1Values"),
-                                     electronsCollection = cms.InputTag("slimmedElectrons","","PAT"),
+                                     electronsCollection = cms.InputTag("calibratedElectrons"),
                                      Trig = cms.bool(False),
                                      )
      
@@ -112,9 +121,10 @@ process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
 
 process.p = cms.Path(process.fsrPhotonSequence*
                      process.boostedMuons*
-                     process.egmGsfElectronIDSequence*
+                     process.calibratedElectrons*
+                     process.electronMVAValueMapProducer*
                      process.mvaSpring15NonTrig25nsV1*
-                     process.jetCorrFactors*
-                     process.slimmedJetsJEC*
+#                     process.jetCorrFactors*
+#                     process.slimmedJetsJEC*
                      process.Ana
                      )

@@ -136,67 +136,65 @@ SlimmedElectronMvaIDProducer::produce(edm::Event& iEvent, const edm::EventSetup&
    using namespace edm;
 
 
+   edm::Handle<vector<pat::Electron>> electronsCollection;
+   iEvent.getByLabel(electronsCollection_ , electronsCollection);
 
-    edm::Handle<vector<pat::Electron>> electronsCollection;
-    iEvent.getByLabel(electronsCollection_ , electronsCollection);
-
-    edm::Handle<edm::View<reco::GsfElectron> > gsfelectrons;
-    iEvent.getByToken(electronsToken_,gsfelectrons);
+   edm::Handle<edm::View<reco::GsfElectron> > gsfelectrons;
+   iEvent.getByToken(electronsToken_,gsfelectrons);
         
-    // electron mva values            
-    edm::Handle<edm::ValueMap<float> > mvaValues;
-    iEvent.getByToken(mvaValuesMapToken_,mvaValues);
+   // electron mva values            
+   edm::Handle<edm::ValueMap<float> > mvaValues;
+   iEvent.getByToken(mvaValuesMapToken_,mvaValues);
+   
+   // output electrons
+   std::vector<pat::Electron> * patElectrons = new std::vector<pat::Electron>();
+   
+   // output valuemap
+   std::auto_ptr<edm::ValueMap<float> > ID(new edm::ValueMap<float>() );
 
-    // output electrons
-    std::vector<pat::Electron> * patElectrons = new std::vector<pat::Electron>();
+   std::vector<float> values;
 
-    // output valuemap
-    std::auto_ptr<edm::ValueMap<float> > ID(new edm::ValueMap<float>() );
+   // input electrons
+   const vector<pat::Electron> * theElectrons = electronsCollection.product();
+   unsigned int nbElectron =  theElectrons->size();
+   values.reserve(theElectrons->size());    
 
-    std::vector<float> values;
+   for(unsigned i = 0 ; i < nbElectron; i++){
 
-    // input electrons
-    const vector<pat::Electron> * theElectrons = electronsCollection.product();
-    unsigned int nbElectron =  theElectrons->size();
-    values.reserve(theElectrons->size());    
+        const auto gsf = gsfelectrons->ptrAt((size_t)i);
 
-    for(unsigned i = 0 ; i < nbElectron; i++){
+        float idvalue = (*mvaValues)[gsf]; 
 
-      const auto gsf = gsfelectrons->ptrAt((size_t)i);
+        pat::Electron anElectron = theElectrons->at(i); 
 
-      //const edm::Ptr<reco::GsfElectron>& gsf = (edm::Ptr<reco::GsfElectron>&)theElectrons->at(i);
-      float idvalue = (*mvaValues)[gsf]; 
-
-      pat::Electron anElectron = theElectrons->at(i); 
-
-      std::vector<pat::Electron::IdPair> ids;
-      pat::Electron::IdPair id;
-      //std::pair<std::string,float> id;
-      id.first  =  idname;    
-      id.second =  idvalue;
-     
-      ids.push_back(id);     
-      anElectron.setElectronIDs(ids);
-
-      patElectrons->push_back(anElectron);    
-     
-      values.push_back( idvalue );
+        std::vector<pat::Electron::IdPair> ids;
+        pat::Electron::IdPair id;
+        //std::pair<std::string,float> id;
+        id.first  =  idname;    
+        id.second =  idvalue;
+        
+        ids.push_back(id);     
+        anElectron.setElectronIDs(ids);
+        
+        patElectrons->push_back(anElectron);    
+        
+        values.push_back( idvalue );
     }
-
-  // add the value map to the input electron collection
-  edm::ValueMap<float>::Filler filler(*ID);
-  filler.insert(electronsCollection, values.begin(), values.end() );
-
-  filler.fill();
-  iEvent.put(ID);
-
-  // sort electrons in pt
-  std::sort(patElectrons->begin(), patElectrons->end(), pTComparator_);
-  
-  // add the electrons to the event output
-  std::auto_ptr<std::vector<pat::Electron> > ptr(patElectrons);
-  iEvent.put(ptr,idname);
-
+    
+    // add the value map to the input electron collection
+    edm::ValueMap<float>::Filler filler(*ID);
+    filler.insert(electronsCollection, values.begin(), values.end() );
+    
+    filler.fill();
+    iEvent.put(ID);
+    
+    // sort electrons in pt
+    //std::sort(patElectrons->begin(), patElectrons->end(), pTComparator_);
+    
+    // add the electrons to the event output
+    std::auto_ptr<std::vector<pat::Electron> > ptr(patElectrons);
+    iEvent.put(ptr,idname);
+    
 }
 
 // ------------ method called once each job just before starting event loop  ------------
