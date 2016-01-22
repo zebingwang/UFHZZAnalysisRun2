@@ -120,8 +120,8 @@ HZZ4LMassErr::HZZ4LMassErr()
   //declarations
   debug_ = 0;
   TString fmu_s, fel_s;
-  fmu_s = TString(edm::FileInPath ( "UFHZZAnalysisRun2/UFHZZ4LAna/hists/ebeOverallCorrections.Legacy2013.v0.root" ).fullPath());
-  fel_s = TString(edm::FileInPath ( "UFHZZAnalysisRun2/UFHZZ4LAna/hists/ebeOverallCorrections.Legacy2013.v0.root" ).fullPath());
+  fmu_s = TString(edm::FileInPath ( "UFHZZAnalysisRun2/UFHZZ4LAna/data/ebeOverallCorrections.Legacy2013.v0.root" ).fullPath());
+  fel_s = TString(edm::FileInPath ( "UFHZZAnalysisRun2/UFHZZ4LAna/data/ebeOverallCorrections.Legacy2013.v0.root" ).fullPath());
 
   fmu = boost::shared_ptr<TFile>( new TFile(fmu_s)); 
   fel = boost::shared_ptr<TFile>( new TFile(fel_s));

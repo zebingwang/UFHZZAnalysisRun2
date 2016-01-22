@@ -98,9 +98,13 @@ public:
     double getSIP3D(pat::Muon muon);
     double getSIP3D(pat::Electron electron);
     double getPUIso(pat::Muon muon, double Rho);
+    double getPUIso03(pat::Muon muon, double Rho);
     double getPUIso(pat::Electron elec, double Rho);
+    double getPUIso03(pat::Electron elec, double Rho);
     double pfIso(pat::Muon muon, double Rho);
+    double pfIso03(pat::Muon muon, double Rho);
     double pfIso(pat::Electron elec, double Rho);
+    double pfIso03(pat::Electron elec, double Rho);
     double miniIsolation(edm::Handle<pat::PackedCandidateCollection> pfcands, const reco::Candidate* ptcl, double r_iso_min, double r_iso_max, double kt_scale, double rho, bool charged_only);
     double ptRatio(pat::Electron electron, edm::Handle<edm::View<pat::Jet> > jets,bool isMC);
     double ptRatio(pat::Muon muon, edm::Handle<edm::View<pat::Jet> > jets,bool isMC);
@@ -633,33 +637,55 @@ double HZZ4LHelper::ptRel(pat::Muon muon, edm::Handle<edm::View<pat::Jet> > jets
 }
 
 double HZZ4LHelper::pfIso(pat::Muon muon, double Rho) {
-    //double PUCorr = Rho*MuonEffArea(muEAtype,muon.eta(),muEAtarget);
-    //double PUCorr = 0.5*muon.userIsolation("PfPUChargedHadronIso");
     double PUCorr = 0.5*muon.puChargedHadronIso();
-    //if (Rho<0.0) PUCorr = 0.;
     double iso = (muon.chargedHadronIso()+std::max(muon.photonIso()+muon.neutralHadronIso()-PUCorr,0.0))/muon.pt();
+    return iso;
+}
+
+double HZZ4LHelper::pfIso03(pat::Muon muon, double Rho) {
+    double PUCorr = 0.5*muon.pfIsolationR03().sumPUPt;
+    double isoCH = muon.pfIsolationR03().sumChargedHadronPt;
+    double isoNH = muon.pfIsolationR03().sumNeutralHadronEt;
+    double isoPhot = muon.pfIsolationR03().sumPhotonEt;
+    double iso = (isoCH+std::max(isoPhot+isoNH-PUCorr,0.0))/muon.pt();    
     return iso;
 }
 
 
 double HZZ4LHelper::pfIso(pat::Electron elec, double Rho) {
-    //double PUCorr = Rho*ElecEffArea(elEAtype,elec.superCluster()->eta(),elEAtarget);
     double PUCorr = Rho*ElecEffArea(elEAtype,elec.eta(),elEAtarget);
     double iso = (elec.chargedHadronIso()+std::max(elec.photonIso()+elec.neutralHadronIso()-PUCorr,0.0))/elec.pt();
     return iso;
 }
 
+double HZZ4LHelper::pfIso03(pat::Electron elec, double Rho) {
+    double PUCorr = Rho*ElecEffArea(kEGammaNeutralHadIso03,elec.superCluster()->eta(),elEAtarget);
+    double isoCH = elec.pfIsolationVariables().sumChargedHadronPt;
+    double isoNH = elec.pfIsolationVariables().sumNeutralHadronEt;
+    double isoPhot = elec.pfIsolationVariables().sumPhotonEt;
+    double iso = (isoCH+std::max(isoPhot+isoNH-PUCorr,0.0))/elec.pt();    
+    return iso;
+}
+
 double HZZ4LHelper::getPUIso(pat::Muon muon, double Rho) {
-    //double puiso = 0.5*muon.userIsolation("PfPUChargedHadronIso");
     double puiso = 0.5*muon.puChargedHadronIso();
     if (Rho<0.0) puiso = 0.;
     return puiso;
 }
 
+double HZZ4LHelper::getPUIso03(pat::Muon muon, double Rho) {
+    double puiso = 0.5*muon.pfIsolationR03().sumPUPt;
+    if (Rho<0.0) puiso = 0.;
+    return puiso;
+}
 
 double HZZ4LHelper::getPUIso(pat::Electron elec, double Rho) {
-//     double puiso = Rho*ElecEffArea(elEAtype,elec.superCluster()->eta(),elEAtarget);
     double puiso = Rho*ElecEffArea(elEAtype,elec.eta(),elEAtarget); 
+    return puiso;
+}
+
+double HZZ4LHelper::getPUIso03(pat::Electron elec, double Rho) {
+    double puiso = Rho*ElecEffArea(kEGammaNeutralHadIso03,elec.superCluster()->eta(),elEAtarget); 
     return puiso;
 }
 
@@ -1073,6 +1099,15 @@ double HZZ4LHelper::ElecEffArea(ElecEffectiveAreaType type, double SCEta, ElecEf
             if (fabs(SCEta) >= 1.3 && fabs(SCEta) < 2.0 )   EffectiveArea = 0.1077;
             if (fabs(SCEta) >= 2.0 && fabs(SCEta) < 2.2 )   EffectiveArea = 0.1565;
             if (fabs(SCEta) >= 2.2 )                        EffectiveArea = 0.2680;
+        }
+        if (type == kEGammaNeutralHadIso03){
+            if (fabs(SCEta) >= 0.0 && fabs(SCEta) < 1.0 )    EffectiveArea = 0.1752;
+            if (fabs(SCEta) >= 1.0 && fabs(SCEta) < 1.479 )  EffectiveArea = 0.1862;
+            if (fabs(SCEta) >= 1.479 && fabs(SCEta) < 2.0 )  EffectiveArea = 0.1411;
+            if (fabs(SCEta) >= 2.0 && fabs(SCEta) < 2.2 )    EffectiveArea = 0.1534;
+            if (fabs(SCEta) >= 2.2 && fabs(SCEta) < 2.3 )    EffectiveArea = 0.1903;
+            if (fabs(SCEta) >= 2.3 && fabs(SCEta) < 2.4 )    EffectiveArea = 0.2243;
+            if (fabs(SCEta) >= 2.4 && fabs(SCEta) < 2.5 )    EffectiveArea = 0.2687;
         }
 
         return EffectiveArea;

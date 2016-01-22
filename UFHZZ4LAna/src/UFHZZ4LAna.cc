@@ -132,8 +132,7 @@
 #include "UFHZZAnalysisRun2/UFHZZ4LAna/interface/HZZ4LPileUp.h"
 #include "PhysicsTools/Utilities/interface/LumiReWeighting.h"
 #include "SimDataFormats/PileupSummaryInfo/interface/PileupSummaryInfo.h"
-//Iso
-#include "UFHZZAnalysisRun2/UFHZZ4LAna/interface/HZZ4LIsoEff.h"
+
 //Mass Error
 #include "UFHZZAnalysisRun2/UFHZZ4LAna/interface/HZZ4LMassErr.h"
 #include "UFHZZAnalysisRun2/UFHZZ4LAna/interface/HZZ4LPerLepResolution.h"
@@ -183,8 +182,6 @@ private:
     HZZ4LHelper helper;
     //Sip Class
     HZZ4LSipAna sipAna;
-    //Iso Class
-    HZZ4LIsoEff *isoEff;
     //Mass Err
     HZZ4LMassErr massErr;
     //GEN
@@ -205,7 +202,7 @@ private:
     void setGENVariables(edm::Handle<reco::GenParticleCollection> prunedgenParticles,
                          edm::Handle<edm::View<pat::PackedGenParticle> > packedgenParticles,
                          edm::Handle<edm::View<reco::GenJet> > genJets);
-    bool mZ1_mZ2(unsigned int& L1, unsigned int& L2, unsigned int& L3, unsigned int& L4);
+    bool mZ1_mZ2(unsigned int& L1, unsigned int& L2, unsigned int& L3, unsigned int& L4, bool makeCuts);
 
     // -------------------------
     // RECO level information
@@ -518,19 +515,29 @@ private:
     std::map<std::string,TH1F*> histContainer_;
     std::map<std::string,TH2F*> histContainer2D_;
  
-    //Input tags
-    edm::InputTag photonSrc_;
-    edm::InputTag elecSrc_;
-    edm::InputTag muonSrc_;
-    edm::InputTag jetSrc_;
-    edm::InputTag metSrc_;
-    edm::InputTag triggerSrc_;
+    //Input edm
+    edm::EDGetTokenT<edm::View<pat::Photon> > photonSrc_;
+    edm::EDGetTokenT<edm::View<pat::Electron> > elecSrc_;
+    edm::EDGetTokenT<edm::View<pat::Muon> > muonSrc_;
+    edm::EDGetTokenT<edm::View<pat::Jet> > jetSrc_;
+    edm::EDGetTokenT<edm::View<pat::MET> > metSrc_;
+    //edm::InputTag triggerSrc_;
+    edm::EDGetTokenT<edm::TriggerResults> triggerSrc_;
     edm::EDGetTokenT<pat::TriggerObjectStandAloneCollection> triggerObjects_;
-    edm::InputTag vertexSrc_;
-    edm::InputTag muRhoSrc_;
-    edm::InputTag elRhoSrc_;
-    edm::InputTag rhoSrcSUS_;
-    edm::InputTag pileupSrc_;
+    edm::EDGetTokenT<reco::VertexCollection> vertexSrc_;
+    edm::EDGetTokenT<reco::BeamSpot> beamSpotSrc_;
+    edm::EDGetTokenT<std::vector<reco::Conversion> > conversionSrc_;
+    edm::EDGetTokenT<double> muRhoSrc_;
+    edm::EDGetTokenT<double> elRhoSrc_;
+    edm::EDGetTokenT<double> rhoSrcSUS_;
+    edm::EDGetTokenT<std::vector<PileupSummaryInfo> > pileupSrc_;
+    edm::EDGetTokenT<pat::PackedCandidateCollection> pfCandsSrc_;
+    edm::EDGetTokenT<edm::View<pat::PFParticle> > fsrPhotonsSrc_;
+    edm::EDGetTokenT<reco::GenParticleCollection> prunedgenParticlesSrc_;
+    edm::EDGetTokenT<edm::View<pat::PackedGenParticle> > packedgenParticlesSrc_;
+    edm::EDGetTokenT<edm::View<reco::GenJet> > genJetsSrc_;
+    edm::EDGetTokenT<GenEventInfoProduct> generatorSrc_;
+    edm::EDGetTokenT<LHEEventProduct> lheInfoSrc_;
 
     // Configuration
     const float Zmass;
@@ -543,10 +550,12 @@ private:
     float mH;
     float crossSection, filterEff, Lumi;
     bool weightEvents;
-    float isoCutEl, isoCutMu, sip3dCut;
+    float isoCutEl, isoCutMu; 
+    double isoConeSizeEl, isoConeSizeMu;
+    float sip3dCut;
     float leadingPtCut, subleadingPtCut;
-    float genIsoCut;
-    float genFSRDrCut;
+    float genIsoCutEl, genIsoCutMu;
+    double genIsoConeSizeEl, genIsoConeSizeMu;
     float _elecPtCut, _muPtCut;
     float BTagCut;
     bool reweightForPU;
@@ -575,18 +584,27 @@ private:
 UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
     histContainer_(),
     histContainer2D_(),
-    photonSrc_(iConfig.getUntrackedParameter<edm::InputTag>("photonSrc")),
-    elecSrc_(iConfig.getUntrackedParameter<edm::InputTag>("electronSrc")),
-    muonSrc_(iConfig.getUntrackedParameter<edm::InputTag>("muonSrc")),
-    jetSrc_(iConfig.getUntrackedParameter<edm::InputTag>("jetSrc")),
-    metSrc_(iConfig.getUntrackedParameter<edm::InputTag>("metSrc")),
-    triggerSrc_(iConfig.getUntrackedParameter<edm::InputTag>("triggerSrc")),
+    photonSrc_(consumes<edm::View<pat::Photon> >(iConfig.getUntrackedParameter<edm::InputTag>("photonSrc"))),
+    elecSrc_(consumes<edm::View<pat::Electron> >(iConfig.getUntrackedParameter<edm::InputTag>("electronSrc"))),
+    muonSrc_(consumes<edm::View<pat::Muon> >(iConfig.getUntrackedParameter<edm::InputTag>("muonSrc"))),
+    jetSrc_(consumes<edm::View<pat::Jet> >(iConfig.getUntrackedParameter<edm::InputTag>("jetSrc"))),
+    metSrc_(consumes<edm::View<pat::MET> >(iConfig.getUntrackedParameter<edm::InputTag>("metSrc"))),
+    triggerSrc_(consumes<edm::TriggerResults>(iConfig.getParameter<edm::InputTag>("triggerSrc"))),
     triggerObjects_(consumes<pat::TriggerObjectStandAloneCollection>(iConfig.getParameter<edm::InputTag>("triggerObjects"))),
-    vertexSrc_(iConfig.getUntrackedParameter<edm::InputTag>("vertexSrc")),
-    muRhoSrc_(iConfig.getUntrackedParameter<edm::InputTag>("muRhoSrc")),
-    elRhoSrc_(iConfig.getUntrackedParameter<edm::InputTag>("elRhoSrc")),
-    rhoSrcSUS_(iConfig.getUntrackedParameter<edm::InputTag>("rhoSrcSUS")),
-    pileupSrc_(iConfig.getUntrackedParameter<edm::InputTag>("pileupSrc")),
+    vertexSrc_(consumes<reco::VertexCollection>(iConfig.getUntrackedParameter<edm::InputTag>("vertexSrc"))),
+    beamSpotSrc_(consumes<reco::BeamSpot>(iConfig.getUntrackedParameter<edm::InputTag>("beamSpotSrc"))),
+    conversionSrc_(consumes<std::vector<reco::Conversion> >(iConfig.getUntrackedParameter<edm::InputTag>("conversionSrc"))),
+    muRhoSrc_(consumes<double>(iConfig.getUntrackedParameter<edm::InputTag>("muRhoSrc"))),
+    elRhoSrc_(consumes<double>(iConfig.getUntrackedParameter<edm::InputTag>("elRhoSrc"))),
+    rhoSrcSUS_(consumes<double>(iConfig.getUntrackedParameter<edm::InputTag>("rhoSrcSUS"))),
+    pileupSrc_(consumes<std::vector<PileupSummaryInfo> >(iConfig.getUntrackedParameter<edm::InputTag>("pileupSrc"))),
+    pfCandsSrc_(consumes<pat::PackedCandidateCollection>(iConfig.getUntrackedParameter<edm::InputTag>("pfCandsSrc"))),
+    fsrPhotonsSrc_(consumes<edm::View<pat::PFParticle> >(iConfig.getUntrackedParameter<edm::InputTag>("fsrPhotonsSrc"))),
+    prunedgenParticlesSrc_(consumes<reco::GenParticleCollection>(iConfig.getUntrackedParameter<edm::InputTag>("prunedgenParticlesSrc"))),
+    packedgenParticlesSrc_(consumes<edm::View<pat::PackedGenParticle> >(iConfig.getUntrackedParameter<edm::InputTag>("packedgenParticlesSrc"))),
+    genJetsSrc_(consumes<edm::View<reco::GenJet> >(iConfig.getUntrackedParameter<edm::InputTag>("genJetsSrc"))),
+    generatorSrc_(consumes<GenEventInfoProduct>(iConfig.getUntrackedParameter<edm::InputTag>("generatorSrc"))),
+    lheInfoSrc_(consumes<LHEEventProduct>(iConfig.getUntrackedParameter<edm::InputTag>("lheInfoSrc"))),
     Zmass(91.1876),
     mZ1Low(iConfig.getUntrackedParameter<double>("mZ1Low",40.0)),
     mZ2Low(iConfig.getUntrackedParameter<double>("mZ2Low",12.0)), // was 12
@@ -603,13 +621,17 @@ UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
     filterEff(iConfig.getUntrackedParameter<double>("FilterEff",1.0)),
     Lumi(iConfig.getUntrackedParameter<double>("Lumi",1.0)),
     weightEvents(iConfig.getUntrackedParameter<bool>("weightEvents",false)),
-    isoCutEl(iConfig.getUntrackedParameter<double>("isoCutEl",0.5)),
+    isoCutEl(iConfig.getUntrackedParameter<double>("isoCutEl",0.4)),
     isoCutMu(iConfig.getUntrackedParameter<double>("isoCutMu",0.4)),
+    isoConeSizeEl(iConfig.getUntrackedParameter<double>("isoConeSizeEl",0.3)),
+    isoConeSizeMu(iConfig.getUntrackedParameter<double>("isoConeSizeMu",0.4)),
     sip3dCut(iConfig.getUntrackedParameter<double>("sip3dCut",4)),
     leadingPtCut(iConfig.getUntrackedParameter<double>("leadingPtCut",20.0)),
     subleadingPtCut(iConfig.getUntrackedParameter<double>("subleadingPtCut",10.0)),
-    genIsoCut(iConfig.getUntrackedParameter<double>("genIsoCut",0.5)), 
-    genFSRDrCut(iConfig.getUntrackedParameter<double>("genFSRDrCut",0.4)), 
+    genIsoCutEl(iConfig.getUntrackedParameter<double>("genIsoCutEl",0.4)), 
+    genIsoCutMu(iConfig.getUntrackedParameter<double>("genIsoCutMu",0.4)), 
+    genIsoConeSizeEl(iConfig.getUntrackedParameter<double>("genIsoConeSizeEl",0.3)), 
+    genIsoConeSizeMu(iConfig.getUntrackedParameter<double>("genIsoConeSizeMu",0.4)), 
     _elecPtCut(iConfig.getUntrackedParameter<double>("_elecPtCut",7)),
     _muPtCut(iConfig.getUntrackedParameter<double>("_muPtCut",5)),
     BTagCut(iConfig.getUntrackedParameter<double>("BTagCut",0.89)),
@@ -642,15 +664,14 @@ UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
 
     passedEventsTree_All = new TTree("passedEvents","passedEvents");
    
-    isoEff = new HZZ4LIsoEff("");
-    
     if(bStudyResolution) {
         PerLepReso = new HZZ4LPerLepResolution();
         if(bStudyDiLeptonResolution) {  DiLepReso = new HZZ4LDiLepResolution(); }
         if(bStudyFourLeptonResolution)  { FourLepReso = new HZZ4LResolution(); }
     }
 
-    jecunc = new JetCorrectionUncertainty(*(new JetCorrectorParameters("UFHZZAnalysisRun2/UFHZZ4LAna/hists/Summer13_V5_DATA_UncertaintySources_AK5PF.txt","Total")));
+    edm::FileInPath jecfileInPath("UFHZZAnalysisRun2/UFHZZ4LAna/data/Summer13_V5_DATA_UncertaintySources_AK5PF.txt");
+    jecunc = new JetCorrectionUncertainty(*(new JetCorrectorParameters(jecfileInPath.fullPath().c_str(),"Total")));
 
     combinedMEM = new MEMs(13.0,125,"CTEQ6L",false);
  
@@ -691,7 +712,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
     // trigger collection
     edm::Handle<edm::TriggerResults> trigger;
-    iEvent.getByLabel(triggerSrc_,trigger);
+    iEvent.getByToken(triggerSrc_,trigger);
     const edm::TriggerNames trigNames = iEvent.triggerNames(*trigger);
 
     // trigger Objects
@@ -700,79 +721,75 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
     // vertex collection
     edm::Handle<reco::VertexCollection> vertex;
-    iEvent.getByLabel(vertexSrc_,vertex);
+    iEvent.getByToken(vertexSrc_,vertex);
 
     // photon collection 
     edm::Handle<edm::View<pat::Photon> > photons;
-    iEvent.getByLabel(photonSrc_,photons);
+    iEvent.getByToken(photonSrc_,photons);
   
     // electron collection
     edm::Handle<edm::View<pat::Electron> > electrons;
-    iEvent.getByLabel(elecSrc_,electrons);
+    iEvent.getByToken(elecSrc_,electrons);
     if (verbose) cout<<electrons->size()<<" total electrons in the collection"<<endl;
 
     // muon collection
     edm::Handle<edm::View<pat::Muon> > muons;
-    iEvent.getByLabel(muonSrc_,muons);
+    iEvent.getByToken(muonSrc_,muons);
     if (verbose) cout<<muons->size()<<" total muons in the collection"<<endl;
 
     // met collection 
     edm::Handle<edm::View<pat::MET> > mets;
-    iEvent.getByLabel(metSrc_,mets);
+    iEvent.getByToken(metSrc_,mets);
     
-    // beamspot collection
-    edm::Handle<reco::BeamSpot> beamspot;
-    iEvent.getByLabel("offlineBeamSpot",beamspot);
-  
     // Rho Correction
     edm::Handle<double> eventRhoMu;
-    iEvent.getByLabel(muRhoSrc_,eventRhoMu);
+    iEvent.getByToken(muRhoSrc_,eventRhoMu);
     muRho = *eventRhoMu;
 
     edm::Handle<double> eventRhoE;
-    iEvent.getByLabel(elRhoSrc_,eventRhoE);
+    iEvent.getByToken(elRhoSrc_,eventRhoE);
     elRho = *eventRhoE;
 
     edm::Handle<double> eventRhoSUS;
-    iEvent.getByLabel(rhoSrcSUS_,eventRhoSUS);
+    iEvent.getByToken(rhoSrcSUS_,eventRhoSUS);
     rhoSUS = *eventRhoSUS;
 
     // Conversions
     edm::Handle< std::vector<reco::Conversion> > theConversions;
-    iEvent.getByLabel("reducedEgamma","reducedConversions", theConversions);
+    iEvent.getByToken(conversionSrc_, theConversions);
  
     // Beam Spot
     edm::Handle<reco::BeamSpot> beamSpot;
-    iEvent.getByLabel("offlineBeamSpot",beamSpot);
+    iEvent.getByToken(beamSpotSrc_,beamSpot);
     const reco::BeamSpot BS = *beamSpot;
 
     // Particle Flow Cands
     edm::Handle<pat::PackedCandidateCollection> pfCands;
-    iEvent.getByLabel("packedPFCandidates",pfCands);
+    iEvent.getByToken(pfCandsSrc_,pfCands);
 
     // Photons
     edm::Handle<edm::View<pat::PFParticle> > photonsForFsr;
-    iEvent.getByLabel("boostedFsrPhotons",photonsForFsr);
+    iEvent.getByToken(fsrPhotonsSrc_,photonsForFsr);
   
     // Jets
     edm::Handle<edm::View<pat::Jet> > jets;
-    iEvent.getByLabel(jetSrc_,jets);
+    iEvent.getByToken(jetSrc_,jets);
 
     // GEN collections
     edm::Handle<reco::GenParticleCollection> prunedgenParticles;
-    iEvent.getByLabel("prunedGenParticles", prunedgenParticles);
+    iEvent.getByToken(prunedgenParticlesSrc_, prunedgenParticles);
 
     edm::Handle<edm::View<pat::PackedGenParticle> > packedgenParticles;
-    iEvent.getByLabel("packedGenParticles", packedgenParticles);
+    iEvent.getByToken(packedgenParticlesSrc_, packedgenParticles);
     
     edm::Handle<edm::View<reco::GenJet> > genJets;
-    iEvent.getByLabel("slimmedGenJets", genJets);
+    iEvent.getByToken(genJetsSrc_, genJets);
     
     edm::Handle<GenEventInfoProduct> genEventInfo;
-    iEvent.getByLabel("generator",genEventInfo);
+    iEvent.getByToken(generatorSrc_,genEventInfo);
     
     edm::Handle<LHEEventProduct> lheInfo;
-    iEvent.getByLabel("externalLHEProducer", lheInfo);
+    iEvent.getByToken(lheInfoSrc_, lheInfo);
 
     // ============ Initialize Variables ============= //
 
@@ -949,7 +966,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     // PU information
     if(isMC && reweightForPU) {        
         edm::Handle<std::vector< PileupSummaryInfo > >  PupInfo;
-        iEvent.getByLabel(pileupSrc_, PupInfo);      
+        iEvent.getByToken(pileupSrc_, PupInfo);      
 
         if (verbose) cout<<"got pileup info"<<endl;
 
@@ -1098,14 +1115,24 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 lepFSR_eta.push_back(recoElectrons[lep_ptindex[i]].eta());
                 lepFSR_phi.push_back(recoElectrons[lep_ptindex[i]].phi());
                 lepFSR_mass.push_back(recoElectrons[lep_ptindex[i]].mass());
-                lep_RelIso.push_back(helper.pfIso(recoElectrons[lep_ptindex[i]],elRho));
-                lep_RelIsoNoFSR.push_back(helper.pfIso(recoElectrons[lep_ptindex[i]],elRho));
+                if (isoConeSizeEl==0.4) {
+                    lep_RelIso.push_back(helper.pfIso(recoElectrons[lep_ptindex[i]],elRho));
+                    lep_RelIsoNoFSR.push_back(helper.pfIso(recoElectrons[lep_ptindex[i]],elRho));
+                    lep_isoCH.push_back(recoElectrons[lep_ptindex[i]].chargedHadronIso());
+                    lep_isoNH.push_back(recoElectrons[lep_ptindex[i]].neutralHadronIso());
+                    lep_isoPhot.push_back(recoElectrons[lep_ptindex[i]].photonIso());
+                    lep_isoPU.push_back(recoElectrons[lep_ptindex[i]].puChargedHadronIso());
+                    lep_isoPUcorr.push_back(helper.getPUIso(recoElectrons[lep_ptindex[i]],elRho));
+                } else if (isoConeSizeEl==0.3) {
+                    lep_RelIso.push_back(helper.pfIso03(recoElectrons[lep_ptindex[i]],elRho));
+                    lep_RelIsoNoFSR.push_back(helper.pfIso03(recoElectrons[lep_ptindex[i]],elRho));
+                    lep_isoCH.push_back(recoElectrons[lep_ptindex[i]].pfIsolationVariables().sumChargedHadronPt);
+                    lep_isoNH.push_back(recoElectrons[lep_ptindex[i]].pfIsolationVariables().sumNeutralHadronEt);
+                    lep_isoPhot.push_back(recoElectrons[lep_ptindex[i]].pfIsolationVariables().sumPhotonEt);
+                    lep_isoPU.push_back(recoElectrons[lep_ptindex[i]].pfIsolationVariables().sumPUPt);
+                    lep_isoPUcorr.push_back(helper.getPUIso03(recoElectrons[lep_ptindex[i]],elRho));
+                }
                 lep_MiniIso.push_back(helper.miniIsolation(pfCands, dynamic_cast<const reco::Candidate *>(&recoElectrons[lep_ptindex[i]]), 0.05, 0.2, 10., rhoSUS, false));
-                lep_isoCH.push_back(recoElectrons[lep_ptindex[i]].chargedHadronIso());
-                lep_isoNH.push_back(recoElectrons[lep_ptindex[i]].neutralHadronIso());
-                lep_isoPhot.push_back(recoElectrons[lep_ptindex[i]].photonIso());
-                lep_isoPU.push_back(recoElectrons[lep_ptindex[i]].puChargedHadronIso());
-                lep_isoPUcorr.push_back(helper.getPUIso(recoElectrons[lep_ptindex[i]],elRho));
                 lep_Sip.push_back(helper.getSIP3D(recoElectrons[lep_ptindex[i]]));           
                 lep_mva.push_back(recoElectrons[lep_ptindex[i]].electronID(elecID)); 
                 lep_tightId.push_back(helper.passTight_BDT_Id(recoElectrons[lep_ptindex[i]],elecID));           
@@ -1124,14 +1151,24 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 lepFSR_eta.push_back(recoMuons[lep_ptindex[i]].eta());
                 lepFSR_phi.push_back(recoMuons[lep_ptindex[i]].phi());
                 lepFSR_mass.push_back(recoMuons[lep_ptindex[i]].mass());
-                lep_RelIso.push_back(helper.pfIso(recoMuons[lep_ptindex[i]],muRho));
-                lep_RelIsoNoFSR.push_back(helper.pfIso(recoMuons[lep_ptindex[i]],muRho));
+                if (isoConeSizeMu==0.4) {
+                    lep_RelIso.push_back(helper.pfIso(recoMuons[lep_ptindex[i]],muRho));
+                    lep_RelIsoNoFSR.push_back(helper.pfIso(recoMuons[lep_ptindex[i]],muRho));
+                    lep_isoCH.push_back(recoMuons[lep_ptindex[i]].chargedHadronIso());
+                    lep_isoNH.push_back(recoMuons[lep_ptindex[i]].neutralHadronIso());
+                    lep_isoPhot.push_back(recoMuons[lep_ptindex[i]].photonIso());
+                    lep_isoPU.push_back(recoMuons[lep_ptindex[i]].puChargedHadronIso());
+                    lep_isoPUcorr.push_back(helper.getPUIso(recoMuons[lep_ptindex[i]],muRho));
+                } else if (isoConeSizeMu==0.3) {
+                    lep_RelIso.push_back(helper.pfIso03(recoMuons[lep_ptindex[i]],muRho));
+                    lep_RelIsoNoFSR.push_back(helper.pfIso03(recoMuons[lep_ptindex[i]],muRho));
+                    lep_isoCH.push_back(recoMuons[lep_ptindex[i]].pfIsolationR03().sumChargedHadronPt);
+                    lep_isoNH.push_back(recoMuons[lep_ptindex[i]].pfIsolationR03().sumNeutralHadronEt);
+                    lep_isoPhot.push_back(recoMuons[lep_ptindex[i]].pfIsolationR03().sumPhotonEt);
+                    lep_isoPU.push_back(recoMuons[lep_ptindex[i]].pfIsolationR03().sumPUPt);
+                    lep_isoPUcorr.push_back(helper.getPUIso03(recoMuons[lep_ptindex[i]],muRho));
+                }
                 lep_MiniIso.push_back(helper.miniIsolation(pfCands, dynamic_cast<const reco::Candidate *>(&recoMuons[lep_ptindex[i]]), 0.05, 0.2, 10., rhoSUS, false));
-                lep_isoCH.push_back(recoMuons[lep_ptindex[i]].chargedHadronIso());
-                lep_isoNH.push_back(recoMuons[lep_ptindex[i]].neutralHadronIso());
-                lep_isoPhot.push_back(recoMuons[lep_ptindex[i]].photonIso());
-                lep_isoPU.push_back(recoMuons[lep_ptindex[i]].puChargedHadronIso());
-                lep_isoPUcorr.push_back(helper.getPUIso(recoMuons[lep_ptindex[i]],muRho));
                 lep_Sip.push_back(helper.getSIP3D(recoMuons[lep_ptindex[i]]));            
                 lep_mva.push_back(recoMuons[lep_ptindex[i]].isPFMuon());  
                 lep_tightId.push_back(recoMuons[lep_ptindex[i]].isPFMuon());         
@@ -1323,10 +1360,9 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                     for (unsigned int j=0; j<fsrPhotons.size(); j++) {
                         double fsrDr = deltaR(lep_nofsr.Eta(),lep_nofsr.Phi(),fsrPhotons[j].eta(),fsrPhotons[j].phi());
                         bool isoVeto=true;
-                        double coneSize=0.4;
                         if (abs(lep_id[i])==13 && fsrDr>0.01) isoVeto=false;
                         if (abs(lep_id[i])==11 && (abs(recoElectrons[lep_ptindex[i]].superCluster()->eta())<1.479 || fsrDr>0.08)) isoVeto=false;
-                        if (fsrDr<coneSize && !isoVeto) isoFSR += fsrPhotons[j].pt();
+                        if (fsrDr<((abs(lep_id[i])==11)?isoConeSizeEl:isoConeSizeMu) && !isoVeto) isoFSR += fsrPhotons[j].pt();
                     }
 
                     double RelIsoNoFSR = (lep_isoCH[i]+std::max(lep_isoNH[i]+lep_isoPhot[i]-lep_isoPUcorr[i]-isoFSR,0.0))/lep_nofsr.Pt();
@@ -1711,8 +1747,6 @@ UFHZZ4LAna::endLuminosityBlock(edm::LuminosityBlock const& lumiSeg,edm::EventSet
     }
 }
 
-
-
 // ============================ UF Functions ============================= //
 
 
@@ -1865,20 +1899,20 @@ UFHZZ4LAna::findHiggsCandidate(std::vector< pat::Muon > &selectedMuons, std::vec
            
             // Check Leading and Subleading pt Cut
             vector<double> allPt;
-            allPt.push_back(lep_i1.Pt()); allPt.push_back(lep_i2.Pt());
-            allPt.push_back(lep_j1.Pt()); allPt.push_back(lep_j2.Pt());
+            allPt.push_back(lep_i1_nofsr.Pt()); allPt.push_back(lep_i2_nofsr.Pt());
+            allPt.push_back(lep_j1_nofsr.Pt()); allPt.push_back(lep_j2_nofsr.Pt());
             std::sort(allPt.begin(), allPt.end());
             if (verbose) cout<<" leading pt: "<<allPt[3]<<" cut: "<<leadingPtCut<<" subleadingPt: "<<allPt[2]<<" cut: "<<subleadingPtCut<<endl;
             if (allPt[3]<leadingPtCut || allPt[2]<subleadingPtCut ) continue;
             
             // Check dR(li,lj)>0.02 for any i,j
             vector<double> alldR;
-            alldR.push_back(deltaR(lep_i1.Eta(),lep_i1.Phi(),lep_i2.Eta(),lep_i2.Phi()));
-            alldR.push_back(deltaR(lep_i1.Eta(),lep_i1.Phi(),lep_j1.Eta(),lep_j1.Phi()));
-            alldR.push_back(deltaR(lep_i1.Eta(),lep_i1.Phi(),lep_j2.Eta(),lep_j2.Phi()));
-            alldR.push_back(deltaR(lep_i2.Eta(),lep_i2.Phi(),lep_j1.Eta(),lep_j1.Phi()));
-            alldR.push_back(deltaR(lep_i2.Eta(),lep_i2.Phi(),lep_j2.Eta(),lep_j2.Phi()));
-            alldR.push_back(deltaR(lep_j1.Eta(),lep_j1.Phi(),lep_j2.Eta(),lep_j2.Phi()));            
+            alldR.push_back(deltaR(lep_i1_nofsr.Eta(),lep_i1_nofsr.Phi(),lep_i2_nofsr.Eta(),lep_i2_nofsr.Phi()));
+            alldR.push_back(deltaR(lep_i1_nofsr.Eta(),lep_i1_nofsr.Phi(),lep_j1_nofsr.Eta(),lep_j1_nofsr.Phi()));
+            alldR.push_back(deltaR(lep_i1_nofsr.Eta(),lep_i1_nofsr.Phi(),lep_j2_nofsr.Eta(),lep_j2_nofsr.Phi()));
+            alldR.push_back(deltaR(lep_i2_nofsr.Eta(),lep_i2_nofsr.Phi(),lep_j1_nofsr.Eta(),lep_j1_nofsr.Phi()));
+            alldR.push_back(deltaR(lep_i2_nofsr.Eta(),lep_i2_nofsr.Phi(),lep_j2_nofsr.Eta(),lep_j2_nofsr.Phi()));
+            alldR.push_back(deltaR(lep_j1_nofsr.Eta(),lep_j1_nofsr.Phi(),lep_j2_nofsr.Eta(),lep_j2_nofsr.Phi()));            
             if (verbose) cout<<" minDr: "<<*min_element(alldR.begin(),alldR.end())<<endl;
             if (*min_element(alldR.begin(),alldR.end())<0.02) continue;
 
@@ -2667,33 +2701,27 @@ void UFHZZ4LAna::setGENVariables(edm::Handle<reco::GenParticleCollection> pruned
         if (abs(genPart->pdgId())==11  || abs(genPart->pdgId())==13 || abs(genPart->pdgId())==15) {
 
             if (!(genPart->status()==1)) continue;
-            if ( !(genAna.MotherID(&prunedgenParticles->at(j))==23 || abs(genAna.MotherID(&prunedgenParticles->at(j)))==24) ) continue;
+            if (!(genAna.MotherID(&prunedgenParticles->at(j))==23 || abs(genAna.MotherID(&prunedgenParticles->at(j)))==24) ) continue;
 
             nGENLeptons++;
             if (verbose) cout<<"found a gen lepton: id "<<genPart->pdgId()<<" pt: "<<genPart->pt()<<" eta: "<<genPart->eta()<<endl;
 
-            // Collect FSR photons within dR<0.1
-
+            // Collect FSR photons
             TLorentzVector lep_dressed;            
             lep_dressed.SetPtEtaPhiE(genPart->pt(),genPart->eta(),genPart->phi(),genPart->energy());
             set<int> gen_fsrset;
             for(size_t k=0; k<packedgenParticles->size();k++){
-
-                //const Candidate * motherInPrunedCollection = (*packed)[k].mother(0) ;
                 if( (*packedgenParticles)[k].status() != 1) continue; // stable particles only
                 if( (*packedgenParticles)[k].pdgId() != 22) continue; // only photons
                 double this_dR_lgamma = deltaR(genPart->eta(), genPart->phi(), (*packedgenParticles)[k].eta(), (*packedgenParticles)[k].phi());
-                //if (verbose) cout<<"lep id: "<<genPart->pdgId()<<" lep eta: "<< genPart->eta()<<" pho pt: "<<(*packedgenParticles)[k].pt()<<" pho eta: "<<(*packedgenParticles)[k].eta() <<" mother0 id: "<<(*packedgenParticles)[j].mother(0)->pdgId()<<" dr: "<<this_dR_lgamma<<endl;
-                //if( (*packedgenParticles)[j].mother(0)->pdgId() != genPart->pdgId()) continue; //only photons with mother id equal to this lepton's id
                 bool idmatch=false;
                 if ((*packedgenParticles)[k].mother(0)->pdgId()==genPart->pdgId() ) idmatch=true;
                 const reco::Candidate * mother = (*packedgenParticles)[k].mother(0);
                 for(size_t m=0;m<mother->numberOfMothers();m++) {
-                    //if (verbose) cout<<"pho mother "<<m<<" pho mother id: "<<(*packedgenParticles)[k].mother(m)->pdgId()<<endl;
                     if ( (*packedgenParticles)[k].mother(m)->pdgId() == genPart->pdgId() ) idmatch=true;
                 }
                 if (!idmatch) continue;
-                if(this_dR_lgamma<genFSRDrCut) {
+                if(this_dR_lgamma<((abs(genPart->pdgId())==11)?genIsoConeSizeEl:genIsoConeSizeMu)) {
                     gen_fsrset.insert(k);
                     TLorentzVector gamma;
                     gamma.SetPtEtaPhiE((*packedgenParticles)[k].pt(),(*packedgenParticles)[k].eta(),(*packedgenParticles)[k].phi(),(*packedgenParticles)[k].energy());
@@ -2724,7 +2752,7 @@ void UFHZZ4LAna::setGENVariables(edm::Handle<reco::GenParticleCollection> pruned
                 if ((abs((*packedgenParticles)[k].pdgId())==11 || abs((*packedgenParticles)[k].pdgId())==13)) continue; // exclude leptons
                 if (gen_fsrset.find(k)!=gen_fsrset.end()) continue; // exclude particles which were selected as fsr photons
                 double this_dRvL = deltaR(thisLep.Eta(), thisLep.Phi(), (*packedgenParticles)[k].eta(), (*packedgenParticles)[k].phi());
-                if(this_dRvL<0.4) {
+                if(this_dRvL<((abs(genPart->pdgId())==11)?genIsoConeSizeEl:genIsoConeSizeMu)) {
                     //if (verbose) cout<<"adding to geniso id: "<<(*packedgenParticles)[k].pdgId()<<" status: "<<(*packedgenParticles)[k].status()<<" pt: "<<(*packedgenParticles)[k].pt()<<" dR: "<<this_dRvL<<endl;
                     this_GENiso = this_GENiso + (*packedgenParticles)[k].pt();
                     if ((*packedgenParticles)[k].charge()==0) this_GENneutraliso = this_GENneutraliso + (*packedgenParticles)[k].pt();
@@ -2744,7 +2772,6 @@ void UFHZZ4LAna::setGENVariables(edm::Handle<reco::GenParticleCollection> pruned
             GENH_eta.push_back(genPart->eta());
             GENH_phi.push_back(genPart->phi());
             GENH_mass.push_back(genPart->mass());
-
         }
 
         
@@ -2770,13 +2797,25 @@ void UFHZZ4LAna::setGENVariables(edm::Handle<reco::GenParticleCollection> pruned
             GENZ_eta.push_back(genPart->eta());
             GENZ_phi.push_back(genPart->phi());
             GENZ_mass.push_back(genPart->mass());
-            if (GENZ_pt.size()==2) {
-                GENdPhiZZ = deltaPhi(GENZ_phi[0],GENZ_phi[1]);
-            }
         }
-      
+
     }
+
+    if (GENlep_pt.size()>=4) {
+        
+        unsigned int L1_nocuts=99; unsigned int L2_nocuts=99; unsigned int L3_nocuts=99; unsigned int L4_nocuts=99;
+        bool passedFiducialSelectionNoCuts = mZ1_mZ2(L1_nocuts, L2_nocuts, L3_nocuts, L4_nocuts, false);
+        if (passedFiducialSelectionNoCuts) {
+            TLorentzVector Z1_1, Z1_2, Z2_1, Z2_2;
+            Z1_1.SetPtEtaPhiM(GENlep_pt[L1_nocuts],GENlep_eta[L1_nocuts],GENlep_phi[L1_nocuts],GENlep_mass[L1_nocuts]);
+            Z1_2.SetPtEtaPhiM(GENlep_pt[L2_nocuts],GENlep_eta[L2_nocuts],GENlep_phi[L2_nocuts],GENlep_mass[L2_nocuts]);
+            Z2_1.SetPtEtaPhiM(GENlep_pt[L3_nocuts],GENlep_eta[L3_nocuts],GENlep_phi[L3_nocuts],GENlep_mass[L3_nocuts]);
+            Z2_2.SetPtEtaPhiM(GENlep_pt[L4_nocuts],GENlep_eta[L4_nocuts],GENlep_phi[L4_nocuts],GENlep_mass[L4_nocuts]);         
+            GENdPhiZZ = deltaPhi((Z1_1+Z1_2).Phi(),(Z2_1+Z2_2).Phi());            
+        }
+    }    
     
+   
     /////// DO THE FIDUCIAL VOLUME CALCULATION //////////////
     if (verbose) cout<<"begin fiducial volume calculation"<<endl;
     passedFiducialSelection=false;
@@ -2791,7 +2830,7 @@ void UFHZZ4LAna::setGENVariables(edm::Handle<reco::GenParticleCollection> pruned
         
         if ( ( (abs(GENlep_id[i]) == 13 && thisLep.Pt() > 5.0 && abs(thisLep.Eta()) < 2.4)
                || (abs(GENlep_id[i]) == 11 && thisLep.Pt() > 7.0 && abs(thisLep.Eta()) < 2.5) )
-             && GENlep_RelIso[i]<genIsoCut ) {
+             && GENlep_RelIso[i]<((abs(GENlep_id[i])==11)?genIsoCutEl:genIsoCutMu) ) {
                 nFiducialLeptons++;
                 if (verbose) cout<<nFiducialLeptons<<" fiducial leptons, id;"<<GENlep_id[i]<<" pt: "<<thisLep.Pt()<<" eta: "<<thisLep.Eta()<<endl; 
                 if (thisLep.Pt()>leadingPtCut) nFiducialPtLead++;
@@ -2805,7 +2844,7 @@ void UFHZZ4LAna::setGENVariables(edm::Handle<reco::GenParticleCollection> pruned
         unsigned int L1=99; unsigned int L2=99; unsigned int L3=99; unsigned int L4=99;
         GENmass4l = -1.0; GENmass4e = -1.0; GENmass4mu = -1.0; GENmass2e2mu = -1.0;
         GENmassZ1 = -1.0; GENmassZ2 = -1.0; GENpT4l = -1.0; GENeta4l = 999.; GENrapidity4l = 999.;
-        passedFiducialSelection = mZ1_mZ2(L1, L2, L3, L4);      
+        passedFiducialSelection = mZ1_mZ2(L1, L2, L3, L4, true);      
                 
         GENlep_Hindex[0] = L1; GENlep_Hindex[1] = L2; GENlep_Hindex[2] = L3; GENlep_Hindex[3] = L4;
 
@@ -2936,7 +2975,7 @@ void UFHZZ4LAna::setGENVariables(edm::Handle<reco::GenParticleCollection> pruned
 
 }
 
-bool UFHZZ4LAna::mZ1_mZ2(unsigned int& L1, unsigned int& L2, unsigned int& L3, unsigned int& L4)
+bool UFHZZ4LAna::mZ1_mZ2(unsigned int& L1, unsigned int& L2, unsigned int& L3, unsigned int& L4, bool makeCuts)
 {
 
     double offshell = 999.0; bool findZ1 = false; bool passZ1 = false;
@@ -2957,13 +2996,15 @@ bool UFHZZ4LAna::mZ1_mZ2(unsigned int& L1, unsigned int& L2, unsigned int& L3, u
 
             if (verbose) cout<<"gen lep i id: "<<GENlep_id[i]<<" pt: "<<li.Pt()<<" lep j id: "<<GENlep_id[j]<<" pt: "<<lj.Pt()<<endl;
 
-            if ( abs(GENlep_id[i]) == 13 && (li.Pt() < 5.0 || abs(li.Eta()) > 2.4)) continue;
-            if ( abs(GENlep_id[i]) == 11 && (li.Pt() < 7.0 || abs(li.Eta()) > 2.5)) continue;
-            if ( GENlep_RelIso[i]>genIsoCut ) continue;
-
-            if ( abs(GENlep_id[j]) == 13 && (lj.Pt() < 5.0 || abs(lj.Eta()) > 2.4)) continue;
-            if ( abs(GENlep_id[j]) == 11 && (lj.Pt() < 7.0 || abs(lj.Eta()) > 2.5)) continue;
-            if ( GENlep_RelIso[j]>genIsoCut ) continue;
+            if (makeCuts) {
+                if ( abs(GENlep_id[i]) == 13 && (li.Pt() < 5.0 || abs(li.Eta()) > 2.4)) continue;
+                if ( abs(GENlep_id[i]) == 11 && (li.Pt() < 7.0 || abs(li.Eta()) > 2.5)) continue;
+                if ( GENlep_RelIso[i]>((abs(GENlep_id[i])==11)?genIsoCutEl:genIsoCutMu)) continue;
+                
+                if ( abs(GENlep_id[j]) == 13 && (lj.Pt() < 5.0 || abs(lj.Eta()) > 2.4)) continue;
+                if ( abs(GENlep_id[j]) == 11 && (lj.Pt() < 7.0 || abs(lj.Eta()) > 2.5)) continue;
+                if ( GENlep_RelIso[j]>((abs(GENlep_id[i])==11)?genIsoCutEl:genIsoCutMu)) continue;                
+            }
 
             TLorentzVector mll = li+lj;
             if (verbose) cout<<"gen mass ij: "<<mll.M()<<endl;
@@ -2981,6 +3022,7 @@ bool UFHZZ4LAna::mZ1_mZ2(unsigned int& L1, unsigned int& L2, unsigned int& L3, u
     TLorentzVector ml1l2 = l1+l2;
 
     if(ml1l2.M()>40 && ml1l2.M()<120 && findZ1) passZ1 = true;
+    if (!makeCuts) passZ1 = true;
 
     double pTL34 = 0.0; bool findZ2 = false;
 
@@ -2995,17 +3037,19 @@ bool UFHZZ4LAna::mZ1_mZ2(unsigned int& L1, unsigned int& L2, unsigned int& L3, u
             lj.SetPtEtaPhiM(GENlep_pt[j],GENlep_eta[j],GENlep_phi[j],GENlep_mass[j]);
             TLorentzVector Z2 = li+lj;
 
-            if ( abs(GENlep_id[i]) == 13 && (li.Pt() < 5.0 || abs(li.Eta()) > 2.4)) continue;
-            if ( abs(GENlep_id[i]) == 11 && (li.Pt() < 7.0 || abs(li.Eta()) > 2.5)) continue;
-            if ( GENlep_RelIso[i]>genIsoCut ) continue;
-
-            if ( abs(GENlep_id[j]) == 13 && (lj.Pt() < 5.0 || abs(lj.Eta()) > 2.4)) continue;
-            if ( abs(GENlep_id[j]) == 11 && (lj.Pt() < 7.0 || abs(lj.Eta()) > 2.5)) continue;
-            if ( GENlep_RelIso[j]>genIsoCut ) continue;
+            if (makeCuts) {
+                if ( abs(GENlep_id[i]) == 13 && (li.Pt() < 5.0 || abs(li.Eta()) > 2.4)) continue;
+                if ( abs(GENlep_id[i]) == 11 && (li.Pt() < 7.0 || abs(li.Eta()) > 2.5)) continue;
+                if ( GENlep_RelIso[i]>((abs(GENlep_id[i])==11)?genIsoCutEl:genIsoCutMu)) continue;
+                
+                if ( abs(GENlep_id[j]) == 13 && (lj.Pt() < 5.0 || abs(lj.Eta()) > 2.4)) continue;
+                if ( abs(GENlep_id[j]) == 11 && (lj.Pt() < 7.0 || abs(lj.Eta()) > 2.5)) continue;
+                if ( GENlep_RelIso[j]>((abs(GENlep_id[i])==11)?genIsoCutEl:genIsoCutMu)) continue;
+            }
 
             if ( ( li.Pt()+lj.Pt() ) >=pTL34 ) { // choose high sum pT pair satisfy the following selection
                 double mZ2 = Z2.M();
-                if(mZ2>12 && mZ2<120){
+                if( (mZ2>12 && mZ2<120) || (!makeCuts) ) {
                     L3 = i; L4 = j; findZ2 = true; pTL34 = li.Pt()+lj.Pt();
                 } else {
                     // still assign L3 and L4 to this pair if we don't have a passing Z2 yet

@@ -184,8 +184,8 @@ HZZ4LPerLepResolution::HZZ4LPerLepResolution()
 
 /////////////////////////////////////
 
-	fmu = boost::shared_ptr<TFile>( new TFile("UFHZZAnalysisRun2/UFHZZ4LAna/hists/finalCorrections.2012.root") ); 
-	fel = boost::shared_ptr<TFile>( new TFile("UFHZZAnalysisRun2/UFHZZ4LAna/hists/finalCorrections.2012.root") );
+	fmu = boost::shared_ptr<TFile>( new TFile("UFHZZAnalysisRun2/UFHZZ4LAna/data/finalCorrections.2012.root") ); 
+	fel = boost::shared_ptr<TFile>( new TFile("UFHZZAnalysisRun2/UFHZZ4LAna/data/finalCorrections.2012.root") );
 
         muon_corr_data = boost::shared_ptr<TH2F>(  (static_cast<TH2F*>(fmu->Get( "mu_reco53x" )->Clone() )) );
         muon_corr_mc = boost::shared_ptr<TH2F>(  (static_cast<TH2F*>(fmu->Get( "mu_mc53x" )->Clone() )) );

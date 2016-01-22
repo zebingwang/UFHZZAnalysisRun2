@@ -28,9 +28,6 @@
 #include "FWCore/Framework/interface/MakerMacros.h"
 
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
-
-#include "CommonTools/Utils/interface/PtComparator.h"
-
 #include "DataFormats/PatCandidates/interface/Electron.h"
 
 // electron MvaID related
@@ -72,16 +69,8 @@ class SlimmedElectronMvaIDProducer : public edm::EDProducer {
      edm::EDGetToken electronsToken_;
      edm::InputTag electronsCollection_;
 
-     string method_;
-     vector<string> mvaWeightFiles_;
      bool Trig_;
-    
-
-     EGammaMvaEleEstimatorCSA14* mvaID_;
-
      std::string idname; 
-
-     GreaterByPt<pat::Electron> pTComparator_;
 
 };
 
@@ -134,7 +123,7 @@ void
 SlimmedElectronMvaIDProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
    using namespace edm;
-
+   using namespace std;
 
    edm::Handle<vector<pat::Electron>> electronsCollection;
    iEvent.getByLabel(electronsCollection_ , electronsCollection);
@@ -187,9 +176,6 @@ SlimmedElectronMvaIDProducer::produce(edm::Event& iEvent, const edm::EventSetup&
     
     filler.fill();
     iEvent.put(ID);
-    
-    // sort electrons in pt
-    //std::sort(patElectrons->begin(), patElectrons->end(), pTComparator_);
     
     // add the electrons to the event output
     std::auto_ptr<std::vector<pat::Electron> > ptr(patElectrons);
