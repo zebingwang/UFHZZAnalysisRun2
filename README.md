@@ -5,31 +5,31 @@ HZZ Analyzer for CMS Run2
 
 To install:
 
-setenv SCRAM_ARCH slc6_amd64_gcc491
+setenv SCRAM_ARCH slc6_amd64_gcc493
 
-cmsrel CMSSW_7_4_12_patch2
+cmsrel CMSSW_7_6_3
 
-cd CMSSW_7_4_12_patch2/src
+cd CMSSW_7_6_3/src
 
 cmsenv
 
 git clone https://github.com/VBF-HZZ/UFHZZAnalysisRun2.git
 
-git clone -b 74x-root6 https://github.com/cms-analysis/HiggsAnalysis-CombinedLi
-mit.git HiggsAnalysis/CombinedLimit
+git clone -b 74x-root6 https://github.com/cms-analysis/HiggsAnalysis-CombinedLimit.git HiggsAnalysis/CombinedLimit
 
-git clone https://github.com/cms-analysis/HiggsAnalysis-ZZMatrixElement.git ZZM
-atrixElement
+git clone https://github.com/cms-analysis/HiggsAnalysis-ZZMatrixElement.git ZZMatrixElement
 
 cd ZZMatrixElement
 
-git checkout -b from-V00-02-01 V00-02-01
+git checkout -b from-V00-02-01-patch1 V00-02-01-patch1
 
 cd ..
 
 scram b -j 8
 
-cmsRun UFHZZAnalysisRun2/UFHZZ4LAna/python/Sync_v2_cfg.py
+cmsRun UFHZZAnalysisRun2/UFHZZ4LAna/python/Sync_76X_cfg.py
+
+
 Instructions on how to use git:
 
 4.) Development of the codes and put your codes to git:
