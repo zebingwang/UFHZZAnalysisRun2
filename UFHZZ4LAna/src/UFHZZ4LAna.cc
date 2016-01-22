@@ -148,6 +148,8 @@
 #include "CondFormats/JetMETObjects/interface/JetCorrectionUncertainty.h"
 #include <vector>
 
+#include "KinZfitter/KinZfitter/interface/KinZfitter.h"
+
 //
 // class declaration
 //
@@ -268,6 +270,9 @@ private:
     vector<double> H_noFSR_mass;
     float mass4l, mass4l_noFSR, mass4e, mass4mu, mass2e2mu, pT4l, eta4l, phi4l, rapidity4l;
     float cosTheta1, cosTheta2, cosThetaStar, Phi, Phi1;
+
+    // kin fit
+    double mass4lREFIT, mass4lErr, mass4lErrREFIT;
 
     // Z candidate variables
     vector<double> Z_pt;
@@ -414,6 +419,9 @@ private:
     float GENpt_leadingjet_pt30_eta4p7;
     float GENabsrapidity_leadingjet_pt30_eta4p7;
     float GENabsdeltarapidity_hleadingjet_pt30_eta4p7;
+
+    //KinZfitter
+    KinZfitter *kinZfitter;
 
     // MEM
     MEMs*  combinedMEM;
@@ -673,8 +681,10 @@ UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
     edm::FileInPath jecfileInPath("UFHZZAnalysisRun2/UFHZZ4LAna/data/Summer13_V5_DATA_UncertaintySources_AK5PF.txt");
     jecunc = new JetCorrectionUncertainty(*(new JetCorrectorParameters(jecfileInPath.fullPath().c_str(),"Total")));
 
+    kinZfitter = new KinZfitter(!isMC);
     combinedMEM = new MEMs(13.0,125,"CTEQ6L",false);
  
+    
 }
 
 
@@ -829,6 +839,9 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     mass4l=-1.0; mass4l_noFSR=-1.0; mass4e=-1.0; mass4mu=-1.0; mass2e2mu=-1.0; pT4l=-1.0; eta4l=9999.0; phi4l=9999.0; rapidity4l=9999.0;
     cosTheta1=9999.0; cosTheta2=9999.0; cosThetaStar=9999.0; Phi=9999.0; Phi1=9999.0;
 
+    // kin fitter
+    mass4lREFIT = -999; mass4lErr = -999; mass4lErrREFIT = -999;
+
     // Z candidate variables
     Z_pt.clear(); Z_eta.clear(); Z_phi.clear(); Z_mass.clear(); 
     Z_noFSR_pt.clear(); Z_noFSR_eta.clear(); Z_noFSR_phi.clear(); Z_noFSR_mass.clear(); 
@@ -961,6 +974,14 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     fsrPhotons_pt_float.clear(); fsrPhotons_eta_float.clear(); fsrPhotons_phi_float.clear(); fsrPhotons_mass_float.clear();
 
     // ====================== Do Analysis ======================== //
+
+    std::map<int, TLorentzVector> fsrmap;
+    vector<reco::Candidate*> selectedLeptons;
+    std::map<unsigned int, TLorentzVector> selectedFsrMap;
+
+    fsrmap.clear();
+    selectedFsrMap.clear();
+    selectedLeptons.clear();
 
     if (verbose) cout<<"start pileup reweighting"<<endl;
     // PU information
@@ -1346,6 +1367,9 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                         lepFSR_eta[i] = lepfsr.Eta();
                         lepFSR_phi[i] = lepfsr.Phi();
                         lepFSR_mass[i] = lepfsr.M();
+
+                        fsrmap[i] = phofsr;
+ 
                     }
 
                 } // all leptons
@@ -1447,38 +1471,76 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                         
             if( foundHiggsCandidate ){
                 
-                //M4L Error
-                /*
-                  if (verbose) cout<<"getting mass errors"<<endl;  
-                  massErrorUCSD = massErr.getMassResolution(selectedElectrons, selectedMuons, fsrPhotons);
-                  massErrorUCSDCorr = massErr.getMassResolutionCorr(selectedElectrons, selectedMuons, fsrPhotons, true, !isMC);
-                  if(RecoFourMuEvent) {
-                  massErrorUF = massErr.calc4muErr(selectedMuons,fsrPhotons,false,!isMC);
-                  massErrorUFCorr = massErr.calc4muErr(selectedMuons,fsrPhotons,true,!isMC);
+                for(unsigned int i = 0; i<4;i++){
+
+                  int index = lep_Hindex[i];
+                  if(fsrmap[index].Pt()!=0){
+
+                    cout<<"find a fsr photon for "<<i<<" th Higgs lepton"<<endl;
+                    selectedFsrMap[i] = fsrmap[index];
                   }
-                  else if (RecoFourEEvent) {
-                  massErrorUF = massErr.calc4eErr(selectedElectrons,fsrPhotons,false,!isMC);
-                  massErrorUFCorr = massErr.calc4eErr(selectedElectrons,fsrPhotons,true,!isMC);                      
-                  }
-                  else if(RecoTwoETwoMuEvent || RecoTwoMuTwoEEvent) { 
-                  massErrorUF = massErr.calc2e2muErr(selectedElectrons,selectedMuons,fsrPhotons,false,!isMC);
-                  massErrorUFCorr = massErr.calc2e2muErr(selectedElectrons,selectedMuons,fsrPhotons,true,!isMC);               
-                  }
-                */
+                }
+
                 
                 if (verbose) cout<<"storing H_p4_noFSR"<<endl; 
                 math::XYZTLorentzVector tmpHVec;
+                cout<<"selectedMuons "<<selectedMuons.size()<<" selectedElectrons "<<selectedElectrons.size()<<endl;
                 if(RecoFourMuEvent) {
                     tmpHVec = selectedMuons[0].p4() + selectedMuons[1].p4() + selectedMuons[2].p4() + selectedMuons[3].p4();
                     HVecNoFSR.SetPtEtaPhiM(tmpHVec.Pt(),tmpHVec.Eta(),tmpHVec.Phi(),tmpHVec.M());
+
+                       reco::Candidate *c1 = dynamic_cast<reco::Candidate* >(&selectedMuons[0]);
+                       selectedLeptons.push_back(c1);
+                       reco::Candidate *c2 = dynamic_cast<reco::Candidate* >(&selectedMuons[1]);
+                       selectedLeptons.push_back(c2);
+                       reco::Candidate *c3 = dynamic_cast<reco::Candidate* >(&selectedMuons[2]);
+                       selectedLeptons.push_back(c3);
+                       reco::Candidate *c4 = dynamic_cast<reco::Candidate* >(&selectedMuons[3]);
+                       selectedLeptons.push_back(c4);
+
                 }
                 else if(RecoFourEEvent) {
                     tmpHVec = selectedElectrons[0].p4() + selectedElectrons[1].p4() + selectedElectrons[2].p4() + selectedElectrons[3].p4();
                     HVecNoFSR.SetPtEtaPhiM(tmpHVec.Pt(),tmpHVec.Eta(),tmpHVec.Phi(),tmpHVec.M());
+
+                       reco::Candidate *c1 = dynamic_cast<reco::Candidate* >(&selectedElectrons[0]);
+                       selectedLeptons.push_back(c1);
+                       reco::Candidate *c2 = dynamic_cast<reco::Candidate* >(&selectedElectrons[1]);
+                       selectedLeptons.push_back(c2);
+                       reco::Candidate *c3 = dynamic_cast<reco::Candidate* >(&selectedElectrons[2]);
+                       selectedLeptons.push_back(c3);
+                       reco::Candidate *c4 = dynamic_cast<reco::Candidate* >(&selectedElectrons[3]);
+                       selectedLeptons.push_back(c4);
+
                 }
                 else if(RecoTwoETwoMuEvent || RecoTwoMuTwoEEvent){
                     tmpHVec = selectedMuons[0].p4() + selectedMuons[1].p4() + selectedElectrons[0].p4() + selectedElectrons[1].p4();
                     HVecNoFSR.SetPtEtaPhiM(tmpHVec.Pt(),tmpHVec.Eta(),tmpHVec.Phi(),tmpHVec.M());
+
+                    if(RecoTwoETwoMuEvent){
+
+                       reco::Candidate *c1 = dynamic_cast<reco::Candidate* >(&selectedElectrons[0]);
+                       selectedLeptons.push_back(c1);
+                       reco::Candidate *c2 = dynamic_cast<reco::Candidate* >(&selectedElectrons[1]);
+                       selectedLeptons.push_back(c2);
+                       reco::Candidate *c3 = dynamic_cast<reco::Candidate* >(&selectedMuons[0]);
+                       selectedLeptons.push_back(c3);
+                       reco::Candidate *c4 = dynamic_cast<reco::Candidate* >(&selectedMuons[1]);
+                       selectedLeptons.push_back(c4);
+                    }
+                   else{
+
+                       reco::Candidate *c1 = dynamic_cast<reco::Candidate* >(&selectedMuons[0]);
+                       selectedLeptons.push_back(c1);
+                       reco::Candidate *c2 = dynamic_cast<reco::Candidate* >(&selectedMuons[1]);
+                       selectedLeptons.push_back(c2);
+                       reco::Candidate *c3 = dynamic_cast<reco::Candidate* >(&selectedElectrons[0]);
+                       selectedLeptons.push_back(c3);
+                       reco::Candidate *c4 = dynamic_cast<reco::Candidate* >(&selectedElectrons[1]);
+                       selectedLeptons.push_back(c4);
+                   }
+
+
                 }
                 H_noFSR_pt.push_back(HVecNoFSR.Pt());
                 H_noFSR_eta.push_back(HVecNoFSR.Eta());
@@ -1490,22 +1552,28 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                     if(Z2Vec.M() > mZ2Low && passedTrig) passedFullSelection = true;
                 }
                 
-                if(bStudyResolution && bStudyFourLeptonResolution){
-                    if (passedFullSelection) {
-                        FourLepReso->fillHistograms(hContainer_, hContainer2D_, selectedElectrons, selectedMuons, fsrPhotons, eventWeight,!isMC);
-                    }
-                } // bStudyFourLepResolution
                 
             } // found higgs candidate 
             else { if (verbose) cout<<Run<<":"<<LumiSect<<":"<<Event<<" failed higgs candidate"<<endl;}
-            
-            //Set All the Variables for Saved Trees (after finding higgs candidate) 
-            if (verbose) cout<<"begin setting tree variables"<<endl; 
-            setTreeVariables(iEvent, iSetup, selectedMuons, selectedElectrons, recoMuons, recoElectrons, goodJets);
-            if (verbose) cout<<"finshed setting tree variables"<<endl;                            
 
             // Comput Matrix Elelements (after filling jets)
             if (foundHiggsCandidate) {
+
+            //Set All the Variables for Saved Trees (after finding higgs candidate)
+            if (verbose) cout<<"begin setting tree variables"<<endl;
+            setTreeVariables(iEvent, iSetup, selectedMuons, selectedElectrons, recoMuons, recoElectrons, goodJets);
+            if (verbose) cout<<"finshed setting tree variables"<<endl;
+
+            cout<<"Kin fitter begin with lep size "<<selectedLeptons.size()<<" fsr size "<<selectedFsrMap.size()<<endl;
+
+            kinZfitter->Setup(selectedLeptons, selectedFsrMap);
+            kinZfitter->KinRefitZ1();
+
+            mass4lREFIT = kinZfitter->GetRefitM4l();
+            mass4lErrREFIT = kinZfitter->GetRefitM4lErrFullCov();
+            mass4lErr = kinZfitter->GetM4lErr();
+
+            cout<<"mass4l "<<mass4l<<" mass4lREFIT "<<mass4lREFIT<<" massErr "<<mass4lErr<<" massErrREFIT "<<mass4lErrREFIT<<endl;
 
                 int tmpIdL1,tmpIdL2,tmpIdL3,tmpIdL4;
 
@@ -2140,6 +2208,10 @@ void UFHZZ4LAna::bookPassedEventTree(TString treeName, TTree *tree)
     tree->Branch("H_noFSR_mass",&H_noFSR_mass_float);
     tree->Branch("mass4l",&mass4l,"mass4l/F");
     tree->Branch("mass4l_noFSR",&mass4l_noFSR,"mass4l_noFSR/F");
+    tree->Branch("mass4lErr",&mass4lErr,"mass4lErr/D");
+    tree->Branch("mass4lREFIT",&mass4lREFIT,"mass4lREFIT/D");
+    tree->Branch("mass4lErrREFIT",&mass4lErrREFIT,"mass4lErrREFIT/D");
+
     tree->Branch("mass4mu",&mass4mu,"mass4mu/F");
     tree->Branch("mass4e",&mass4e,"mass4e/F");
     tree->Branch("mass2e2mu",&mass2e2mu,"mass2e2mu/F");
