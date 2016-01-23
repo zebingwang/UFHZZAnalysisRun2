@@ -41,6 +41,7 @@
 <use   name="ZZMatrixElement/MELA"/>
 <use   name="ZZMatrixElement/MEKD"/>
 <use   name="ZZMatrixElement/MEMCalculators"/>
+<use   name="KinZfitter/KinZfitter"/>
 <use   name="CondFormats/JetMETObjects"/>
 <use   name="JetMETCorrections/Objects"/>
 <flags EDM_PLUGIN="1"/>
