@@ -1570,9 +1570,9 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 kinZfitter->Setup(selectedLeptons, selectedFsrMap);
                 kinZfitter->KinRefitZ1();
                 
-                mass4lREFIT = kinZfitter->GetRefitM4l();
-                mass4lErrREFIT = kinZfitter->GetRefitM4lErrFullCov();
-                mass4lErr = kinZfitter->GetM4lErr();
+                mass4lREFIT = (float)kinZfitter->GetRefitM4l();
+                mass4lErrREFIT = (float)kinZfitter->GetRefitM4lErrFullCov();
+                mass4lErr = (float)kinZfitter->GetM4lErr();
                 
                 if (verbose) cout<<"mass4l "<<mass4l<<" mass4lREFIT "<<mass4lREFIT<<" massErr "<<mass4lErr<<" massErrREFIT "<<mass4lErrREFIT<<endl;
 
