@@ -25,6 +25,8 @@ git checkout -b from-V00-02-01-patch1 V00-02-01-patch1
 
 cd ..
 
+git clone https://github.com/tocheng/KinZfitter.git
+
 scram b -j 8
 
 cmsRun UFHZZAnalysisRun2/UFHZZ4LAna/python/Sync_76X_cfg.py
