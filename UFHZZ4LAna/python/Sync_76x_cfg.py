@@ -36,7 +36,7 @@ process.source = cms.Source("PoolSource",fileNames = myfilelist,
                             )
 
 process.TFileService = cms.Service("TFileService",
-                                   fileName = cms.string("Sync_76X.root")
+                                   fileName = cms.string("Sync_76X_v2.root")
 #                                   fileName = cms.string("test.root")
 )
 
