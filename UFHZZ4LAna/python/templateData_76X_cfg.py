@@ -24,9 +24,8 @@ process.source = cms.Source("PoolSource",fileNames = myfilelist,
                              duplicateCheckMode = cms.untracked.string('noDuplicateCheck'),
                             )
 
-import FWCore.PythonUtilities.LumiList as LumiList
-#process.source.lumisToProcess = LumiList.LumiList(filename = 'Run2015_30Oct_JSON.txt').getVLuminosityBlockRange()
-process.source.lumisToProcess = LumiList.LumiList(filename = 'Run2015_Nov13_Silver.txt').getVLuminosityBlockRange()
+#import FWCore.PythonUtilities.LumiList as LumiList
+#process.source.lumisToProcess = LumiList.LumiList(filename = 'Run2015_18Dec_Silver.txt').getVLuminosityBlockRange()
 
 process.TFileService = cms.Service("TFileService",
                                    fileName = cms.string("DUMMYFILENAME.root")
@@ -113,6 +112,7 @@ process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
                               packedgenParticlesSrc = cms.untracked.InputTag("packedGenParticles"),
                               genJetsSrc = cms.untracked.InputTag("slimmedGenJets"),
                               generatorSrc = cms.untracked.InputTag("generator"),
+                              lheInfoSrc = cms.untracked.InputTag("externalLHEProducer"),
                               reweightForPU = cms.untracked.bool(False),
                               triggerSrc = cms.InputTag("TriggerResults","","HLT"),
                               triggerObjects = cms.InputTag("selectedPatTrigger"),

@@ -6,38 +6,27 @@ process.load("FWCore.MessageService.MessageLogger_cfi")
 process.MessageLogger.cerr.FwkReport.reportEvery = 1000
 process.MessageLogger.categories.append('UFHZZ4LAna')
 
+process.load('Configuration.StandardSequences.Services_cff')
 process.load("Configuration.StandardSequences.MagneticField_cff")
-process.load("Configuration.Geometry.GeometryRecoDB_cff")
+process.load("Configuration.StandardSequences.Geometry_cff")
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_condDBv2_cff')
-process.GlobalTag.globaltag='76X_mcRun2_asymptotic_v12'
+process.GlobalTag.globaltag='74X_mcRun2_asymptotic_v2'
 
 process.Timing = cms.Service("Timing",
                              summaryOnly = cms.untracked.bool(True)
                              )
 
 
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(2000) )
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
 
-myfilelist = cms.untracked.vstring()
-myfilelist.extend( [
-'root://cmsxrootd.fnal.gov//store/mc/RunIIFall15MiniAODv1/VBF_HToZZTo4L_M125_13TeV_powheg2_JHUgenV6_pythia8/MINIAODSIM/PU25nsData2015v1_76X_mcRun2_asymptotic_v12-v1/00000/E2490ECF-CBA7-E511-9B19-001E67398458.root',
-'root://cmsxrootd.fnal.gov//store/mc/RunIIFall15MiniAODv1/WminusH_HToZZTo4L_M125_13TeV_powheg2-minlo-HWJ_JHUgenV6_pythia8/MINIAODSIM/PU25nsData2015v1_76X_mcRun2_asymptotic_v12-v1/50000/282C35FB-68A3-E511-A0C4-0CC47A4C8E5E.root',
-'root://cmsxrootd.fnal.gov//store/mc/RunIIFall15MiniAODv1/WplusH_HToZZTo4L_M125_13TeV_powheg2-minlo-HWJ_JHUgenV6_pythia8/MINIAODSIM/PU25nsData2015v1_76X_mcRun2_asymptotic_v12-v1/20000/E2DA5AA7-C5AC-E511-97E0-0CC47A4C8E98.root'
-
-]
-)
+myfilelist = cms.untracked.vstring(DUMMYFILELIST)
 
 process.source = cms.Source("PoolSource",fileNames = myfilelist,
-                            duplicateCheckMode = cms.untracked.string('noDuplicateCheck'),
-#                            eventsToProcess = cms.untracked.VEventRange('1:57782-1:57782'),
-                            inputCommands = cms.untracked.vstring('keep *',
-                                                                  'drop LHEEventProduct_*_*_*',
-                                                                  'drop LHERunInfoProduct_*_*_*')
+                             duplicateCheckMode = cms.untracked.string('noDuplicateCheck'),
                             )
 
 process.TFileService = cms.Service("TFileService",
-#                                   fileName = cms.string("Sync_76X_v2.root")
-                                   fileName = cms.string("test.root")
+                                   fileName = cms.string("DUMMYFILENAME.root")
 )
 
 # clean muons by segments 
@@ -48,15 +37,24 @@ process.boostedMuons = cms.EDProducer("PATMuonCleanerBySegments",
 				     fractionOfSharedSegments = cms.double(0.499),
 				     )
 
-# Electron Calibrations
-#process.calibratedElectrons = cms.EDProducer("CalibratedPatElectronProducerRun2",
-#    electrons = cms.InputTag("slimmedElectrons","","PAT"),
-#    grbForestName = cms.string("gedelectron_p4combination_25ns"),
-#    isMC = cms.bool(True),
-#    isSynchronization = cms.bool(True)
-#)
 
-# Electron MVA ID producers
+# Electron Calibrations
+process.calibratedElectrons = cms.EDProducer("CalibratedPatElectronProducerRun2",
+    electrons = cms.InputTag("slimmedElectrons","","PAT"),
+    grbForestName = cms.string("gedelectron_p4combination_25ns"),
+    isMC = cms.bool(True),
+    isSynchronization = cms.bool(False)
+)
+
+process.RandomNumberGeneratorService = cms.Service("RandomNumberGeneratorService",
+    calibratedElectrons = cms.PSet(
+        initialSeed = cms.untracked.uint32(DUMMYRANDOM),
+        engineName = cms.untracked.string('TRandom3')
+    )
+)
+
+
+# Electron MVA ID producer
 from PhysicsTools.SelectorUtils.tools.vid_id_tools import *
 dataFormat = DataFormat.MiniAOD
 switchOnVIDElectronIdProducer(process, dataFormat)
@@ -65,15 +63,16 @@ my_id_modules = ['RecoEgamma.ElectronIdentification.Identification.mvaElectronID
 # add them to the VID producer
 for idmod in my_id_modules:
     setupAllVIDIdsInModule(process,idmod,setupVIDElectronSelection)
-#process.electronMVAValueMapProducer.srcMiniAOD = cms.InputTag("calibratedElectrons")
+process.electronMVAValueMapProducer.srcMiniAOD = cms.InputTag("calibratedElectrons")
 
 process.mvaSpring15NonTrig25nsV1 = cms.EDProducer("SlimmedElectronMvaIDProducer",
                                      mvaValuesMap = cms.InputTag("electronMVAValueMapProducer:ElectronMVAEstimatorRun2Spring15NonTrig25nsV1Values"),
-#                                     electronsCollection = cms.InputTag("calibratedElectrons"),
-                                     electronsCollection = cms.InputTag("slimmedElectrons","","PAT"),
+                                     electronsCollection = cms.InputTag("calibratedElectrons"),
+#                                     electronsCollection = cms.InputTag("slimmedElectrons","","PAT"),
+
                                      Trig = cms.bool(False),
                                      )
-
+     
 # FSR Photons
 process.load('UFHZZAnalysisRun2.FSRPhotons.fsrPhotons_cff')
 
@@ -105,13 +104,14 @@ process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
                               isMC         = cms.untracked.bool(True),
                               isSignal     = cms.untracked.bool(True),
                               mH           = cms.untracked.double(125.0),
-                              CrossSection = cms.untracked.double(1.0),
+                              CrossSection = cms.untracked.double(DUMMYCROSSSECTION),
                               FilterEff    = cms.untracked.double(1),
                               weightEvents = cms.untracked.bool(True),
                               elRhoSrc     = cms.untracked.InputTag("fixedGridRhoFastjetAll"),
                               muRhoSrc     = cms.untracked.InputTag("fixedGridRhoFastjetAll"),
                               rhoSrcSUS    = cms.untracked.InputTag("fixedGridRhoFastjetCentralNeutral"),
                               pileupSrc    = cms.untracked.InputTag("slimmedAddPileupInfo"),
+                              PUVersion    = cms.untracked.string('Fall15_74X'),
                               pfCandsSrc   = cms.untracked.InputTag("packedPFCandidates"),
                               fsrPhotonsSrc = cms.untracked.InputTag("boostedFsrPhotons"),
                               prunedgenParticlesSrc = cms.untracked.InputTag("prunedGenParticles"),
@@ -132,7 +132,7 @@ process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
                                             'HLT_Mu17_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_v',
                                             'HLT_Mu8_DiEle12_CaloIdL_TrackIdL_v',
                                             'HLT_DiMu9_Ele9_CaloIdL_TrackIdL_v',
-                                            'HLT_Ele23_WPLoose_Gsf_v',
+                                            'HLT_Ele27_WP85_Gsf_v',
                               ),
                               verbose = cms.untracked.bool(False)              
 #                              verbose = cms.untracked.bool(True)              
@@ -141,7 +141,7 @@ process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
 
 process.p = cms.Path(process.fsrPhotonSequence*
                      process.boostedMuons*
-#                     process.calibratedElectrons*
+                     process.calibratedElectrons*
                      process.electronMVAValueMapProducer*
                      process.mvaSpring15NonTrig25nsV1*
 #                     process.jetCorrFactors*
