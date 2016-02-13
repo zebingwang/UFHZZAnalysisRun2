@@ -116,6 +116,13 @@ public:
     bool passTight_Id_SUS(pat::Electron electron, std::string elecID, const reco::Vertex *&vertex, const reco::BeamSpot BS, edm::Handle< std::vector<reco::Conversion> > theConversions);
     
     float kfactor_qqZZ_qcd_dPhi(float GENdPhiZZ, int finalState);
+    float kfactor_qqZZ_qcd_Pt(float GENpTZZ, int finalState);
+    float kfactor_qqZZ_qcd_M(float GENmassZZ, int finalState);
+
+    float dataMC(pat::Electron electron, TH2F* hElecScaleFac, TH2F* hElecScalFac_Cracks);
+    float dataMCErr(pat::Electron electron, TH2F* hElecScaleFac, TH2F* hElecScalFac_Cracks);
+    float dataMC(pat::Muon muon, TH2F* hElecScaleFac, TH2F* hElecScalFac_Cracks);
+    float dataMCErr(pat::Muon muon, TH2F* hElecScaleFac, TH2F* hElecScalFac_Cracks);
     
     enum MuonEffectiveAreaType {
         kMuTrkIso03, 
@@ -1257,7 +1264,7 @@ double HZZ4LHelper::ElecEffArea(ElecEffectiveAreaType type, double SCEta, ElecEf
 
 }
 
-
+ 
 float HZZ4LHelper::kfactor_qqZZ_qcd_dPhi(float GENdPhiZZ, int finalState)
 {
 
@@ -1334,6 +1341,40 @@ float HZZ4LHelper::kfactor_qqZZ_qcd_dPhi(float GENdPhiZZ, int finalState)
     if (k==0.0) return 1.1; // if something goes wrong return inclusive k-factor
     else return k;
 
+}
+
+float HZZ4LHelper::dataMC(pat::Electron electron, TH2F* hElecScaleFac, TH2F* hElecScaleFac_Cracks)
+{
+    float pt = std::min(electron.pt(),199.0);
+    float eta = electron.superCluster()->eta();
+    if (electron.isGap()) {
+        return hElecScaleFac_Cracks->GetBinContent(hElecScaleFac_Cracks->FindBin(pt,eta));        
+    } else {
+        return hElecScaleFac->GetBinContent(hElecScaleFac->FindBin(pt,eta));        
+    }
+    return 1.0;
+}
+
+float HZZ4LHelper::dataMCErr(pat::Electron electron, TH2F* hElecScaleFac, TH2F* hElecScaleFac_Cracks)
+{
+    float pt = std::min(electron.pt(),199.0);
+    float eta = electron.superCluster()->eta();
+    if (electron.isGap()) {
+        return hElecScaleFac_Cracks->GetBinError(hElecScaleFac_Cracks->FindBin(pt,eta));        
+    } else {
+        return hElecScaleFac->GetBinError(hElecScaleFac->FindBin(pt,eta));        
+    }
+    return 1.0;
+}
+
+float HZZ4LHelper::dataMC(pat::Muon muon, TH2F* hElecScaleFac, TH2F* hElecScaleFac_Cracks)
+{
+    return 1.0;
+}
+
+float HZZ4LHelper::dataMCErr(pat::Muon muon, TH2F* hElecScaleFac, TH2F* hElecScaleFac_Cracks)
+{
+    return 0.0;
 }
 
 #endif

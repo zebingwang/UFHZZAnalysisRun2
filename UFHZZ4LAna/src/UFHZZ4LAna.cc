@@ -33,6 +33,7 @@
 #include "TLorentzVector.h"
 #include "Math/VectorUtil.h"
 #include "TClonesArray.h"
+#include "TCanvas.h"
 
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/EDAnalyzer.h"
@@ -201,11 +202,13 @@ private:
     edm::LumiReWeighting *lumiWeight;
     HZZ4LPileUp pileUp;
     //JES Uncertainties
-    JetCorrectionUncertainty *jecunc;
-
+    JetCorrectionUncertainty *jecunc;   
     // kfactors
     TSpline3 *kFactor_ggzz;
     std::vector<std::vector<float> > tableEwk;
+    // data/MC scale factors
+    TH2F *hElecScaleFac;
+    TH2F *hElecScaleFac_Cracks;
 
     //Saved Events Trees
     TTree *passedEventsTree_All;
@@ -251,6 +254,8 @@ private:
     float etaL1, etaL2, etaL3, etaL4;
     int idL1, idL2, idL3, idL4;
     float pTL1FSR, pTL2FSR, pTL3FSR, pTL4FSR;
+    vector<float> lep_dataMC;
+    vector<float> lep_dataMCErr;
     vector<int> lep_genindex; //position of lepton in GENlep_p4 (if gen matched, -1 if not gen matched)
     vector<int> lep_id;
     vector<float> lep_mva;
@@ -576,7 +581,7 @@ private:
     std::string elecID;
     bool isMC, isSignal;
     float mH;
-    float crossSection, filterEff, Lumi;
+    float crossSection;
     bool weightEvents;
     float isoCutEl, isoCutMu; 
     double isoConeSizeEl, isoConeSizeMu;
@@ -647,8 +652,6 @@ UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
     isSignal(iConfig.getUntrackedParameter<bool>("isSignal",false)),
     mH(iConfig.getUntrackedParameter<double>("mH",0.0)),
     crossSection(iConfig.getUntrackedParameter<double>("CrossSection",1.0)),
-    filterEff(iConfig.getUntrackedParameter<double>("FilterEff",1.0)),
-    Lumi(iConfig.getUntrackedParameter<double>("Lumi",1.0)),
     weightEvents(iConfig.getUntrackedParameter<bool>("weightEvents",false)),
     isoCutEl(iConfig.getUntrackedParameter<double>("isoCutEl",0.35)),
     isoCutMu(iConfig.getUntrackedParameter<double>("isoCutMu",0.35)),
@@ -657,10 +660,10 @@ UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
     sip3dCut(iConfig.getUntrackedParameter<double>("sip3dCut",4)),
     leadingPtCut(iConfig.getUntrackedParameter<double>("leadingPtCut",20.0)),
     subleadingPtCut(iConfig.getUntrackedParameter<double>("subleadingPtCut",10.0)),
-    genIsoCutEl(iConfig.getUntrackedParameter<double>("genIsoCutEl",0.35)), 
-    genIsoCutMu(iConfig.getUntrackedParameter<double>("genIsoCutMu",0.35)), 
-    genIsoConeSizeEl(iConfig.getUntrackedParameter<double>("genIsoConeSizeEl",0.3)), 
-    genIsoConeSizeMu(iConfig.getUntrackedParameter<double>("genIsoConeSizeMu",0.3)), 
+    genIsoCutEl(iConfig.getUntrackedParameter<double>("genIsoCutEl",0.4)), 
+    genIsoCutMu(iConfig.getUntrackedParameter<double>("genIsoCutMu",0.4)), 
+    genIsoConeSizeEl(iConfig.getUntrackedParameter<double>("genIsoConeSizeEl",0.4)), 
+    genIsoConeSizeMu(iConfig.getUntrackedParameter<double>("genIsoConeSizeMu",0.4)), 
     _elecPtCut(iConfig.getUntrackedParameter<double>("_elecPtCut",7)),
     _muPtCut(iConfig.getUntrackedParameter<double>("_muPtCut",5)),
     BTagCut(iConfig.getUntrackedParameter<double>("BTagCut",0.89)),
@@ -711,8 +714,19 @@ UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
     tableEwk = readFile_and_loadEwkTable("ZZBG");   
    
     kinZfitter = new KinZfitter(!isMC);
+    
     combinedMEM = new MEMs(13.0,125,"CTEQ6L",false);
  
+    edm::FileInPath elec_scalefacFileInPath("UFHZZAnalysisRun2/UFHZZ4LAna/data/IdIsoSip.root");
+    TFile *fElecScalFac = TFile::Open(elec_scalefacFileInPath.fullPath().c_str());
+    TCanvas *canvas1 = (TCanvas*)fElecScalFac->Get("canvas");
+    hElecScaleFac = (TH2F*)canvas1->GetPrimitive("hScaleFactors_ID");    
+
+    edm::FileInPath elec_scalefacCracksFileInPath("UFHZZAnalysisRun2/UFHZZ4LAna/data/IdIsoSip_Cracks.root");
+    TFile *fElecScalFacCracks = TFile::Open(elec_scalefacCracksFileInPath.fullPath().c_str());
+    TCanvas *canvas2 = (TCanvas*)fElecScalFacCracks->Get("canvas");
+    hElecScaleFac_Cracks = (TH2F*)canvas2->GetPrimitive("hScaleFactors_ID");    
+
     
 }
 
@@ -858,7 +872,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     etaL1=9999.0; etaL2=9999.0; etaL3=9999.0; etaL4=9999.0;
     idL1=9999; idL2=9999; idL3=9999; idL4=9999;
     pTL1FSR=-1.0; pTL2FSR=-1.0; pTL3FSR=-1.0; pTL4FSR=-1.0;
-    lep_genindex.clear(); lep_id.clear(); 
+    lep_genindex.clear(); lep_id.clear(); lep_dataMC.clear(); lep_dataMCErr.clear();
     lep_mva.clear(); lep_ecalDriven.clear(); lep_tightId.clear(); lep_tightIdSUS.clear();
     lep_Sip.clear(); lep_IP.clear(); 
     lep_isoNH.clear(); lep_isoCH.clear(); lep_isoPhot.clear(); lep_isoPU.clear(); lep_isoPUcorr.clear(); 
@@ -1236,6 +1250,8 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 lep_tightIdSUS.push_back(helper.passTight_Id_SUS(recoElectrons[lep_ptindex[i]],elecID,PV,BS,theConversions));           
                 lep_ptRatio.push_back(helper.ptRatio(recoElectrons[lep_ptindex[i]],jets,isMC));           
                 lep_ptRel.push_back(helper.ptRel(recoElectrons[lep_ptindex[i]],jets,isMC));           
+                lep_dataMC.push_back(helper.dataMC(recoElectrons[lep_ptindex[i]],hElecScaleFac,hElecScaleFac_Cracks));
+                lep_dataMCErr.push_back(helper.dataMCErr(recoElectrons[lep_ptindex[i]],hElecScaleFac,hElecScaleFac_Cracks));
                 lep_genindex.push_back(-1.0);
             }
             if (abs(lep_ptid[i])==13) {            
@@ -1274,6 +1290,8 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 lep_tightIdSUS.push_back(helper.passTight_Id_SUS(recoMuons[lep_ptindex[i]],PV));
                 lep_ptRatio.push_back(helper.ptRatio(recoMuons[lep_ptindex[i]],jets,isMC));           
                 lep_ptRel.push_back(helper.ptRel(recoMuons[lep_ptindex[i]],jets,isMC));                      
+                lep_dataMC.push_back(helper.dataMC(recoMuons[lep_ptindex[i]],hElecScaleFac,hElecScaleFac_Cracks));
+                lep_dataMCErr.push_back(helper.dataMCErr(recoMuons[lep_ptindex[i]],hElecScaleFac,hElecScaleFac_Cracks));
                 lep_genindex.push_back(-1.0);
             }
             if (verbose) {cout<<" RelIso: "<<lep_RelIso[i]<<" isoCH: "<<lep_isoCH[i]<<" isoNH: "<<lep_isoNH[i]
@@ -1643,8 +1661,11 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
             if (verbose) cout<<"finshed setting tree variables"<<endl;
 
 
-            // Comput Matrix Elelements (after filling jets)
+            // Comput Matrix Elelements After filling jets, Do Kinematic fit, add scale factors
             if (foundHiggsCandidate) {
+
+                dataMCWeight = lep_dataMC[lep_Hindex[0]]*lep_dataMC[lep_Hindex[1]]*lep_dataMC[lep_Hindex[2]]*lep_dataMC[lep_Hindex[3]];
+                eventWeight = genWeight*crossSection*pileupWeight*dataMCWeight;
 
                 if (verbose) cout<<"Kin fitter begin with lep size "<<selectedLeptons.size()<<" fsr size "<<selectedFsrMap.size()<<endl;
 
@@ -2236,7 +2257,6 @@ void UFHZZ4LAna::bookPassedEventTree(TString treeName, TTree *tree)
     tree->Branch("dataMCWeight",&dataMCWeight,"dataMCWeight/F");
     tree->Branch("eventWeight",&eventWeight,"eventWeight/F");
     tree->Branch("crossSection",&crossSection,"crossSection/F");
-    tree->Branch("filterEff",&filterEff,"filterEff/F");
 
     // Lepton variables
     tree->Branch("lep_id",&lep_id);
@@ -2269,6 +2289,8 @@ void UFHZZ4LAna::bookPassedEventTree(TString treeName, TTree *tree)
     tree->Branch("lep_ptRatio",&lep_ptRatio);
     tree->Branch("lep_ptRel",&lep_ptRel);
     tree->Branch("lep_filtersMatched",&lep_filtersMatched);
+    tree->Branch("lep_dataMC",&lep_dataMC);
+    tree->Branch("lep_dataMCErr",&lep_dataMCErr);
     tree->Branch("nisoleptons",&nisoleptons,"nisoleptons/I");
     tree->Branch("muRho",&muRho,"muRho/F");
     tree->Branch("elRho",&elRho,"elRho/F");
