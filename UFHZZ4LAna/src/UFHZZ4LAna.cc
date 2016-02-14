@@ -193,7 +193,7 @@ private:
     //Sip Class
     HZZ4LSipAna sipAna;
     //Mass Err
-    HZZ4LMassErr massErr;
+    //HZZ4LMassErr massErr;
     //GEN
     HZZ4LGENAna genAna;
     //VBF
@@ -379,7 +379,7 @@ private:
     float thetaPhoton, thetaPhotonZ;
 
     //Resolution
-    float massErrorUCSD, massErrorUCSDCorr, massErrorUF, massErrorUFCorr, massErrorUFADCorr;
+    //float massErrorUCSD, massErrorUCSDCorr, massErrorUF, massErrorUFCorr, massErrorUFADCorr;
     HZZ4LPerLepResolution * PerLepReso;
     HZZ4LDiLepResolution * DiLepReso;
     HZZ4LResolution * FourLepReso;
@@ -992,7 +992,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
     if (verbose) {cout<<"clear other variables"<<endl; }
     // Resolution
-    massErrorUCSD=-1.0; massErrorUCSDCorr=-1.0; massErrorUF=-1.0; massErrorUFCorr=-1.0; massErrorUFADCorr=-1.0;
+    //massErrorUCSD=-1.0; massErrorUCSDCorr=-1.0; massErrorUF=-1.0; massErrorUFCorr=-1.0; massErrorUFADCorr=-1.0;
 
     // Event Category
     EventCat=-1;
@@ -1089,8 +1089,6 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         if (int(GENZ_pt.size()) == 2) {        
             GENZ1Vec.SetPtEtaPhiM(GENZ_pt[0], GENZ_eta[0], GENZ_phi[0], GENZ_mass[0]);
             GENZ2Vec.SetPtEtaPhiM(GENZ_pt[1], GENZ_eta[1], GENZ_phi[1], GENZ_mass[1]);
-            vector<vector<float> > tableEwk;
-            tableEwk = readFile_and_loadEwkTable("ZZBG");   
             k_qqZZ_ewk = getEwkCorrections(prunedgenParticles, tableEwk, genEventInfo, GENZ1Vec, GENZ2Vec);
             k_ggZZ = kFactor_ggzz->Eval((GENZ1Vec+GENZ2Vec).M());
             if (verbose) cout<<"ZZmass: "<< (GENZ1Vec+GENZ2Vec).M() <<"k factor qqZZ ewk: "<<k_qqZZ_ewk<<" ggZZ qcd"<<k_ggZZ << endl;
@@ -1257,7 +1255,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
             if (abs(lep_ptid[i])==13) {            
                 lep_id.push_back(recoMuons[lep_ptindex[i]].pdgId());
                 lep_pt.push_back(recoMuons[lep_ptindex[i]].pt());
-                lep_pterr.push_back(recoMuons[lep_ptindex[i]].muonBestTrack()->ptError());
+                lep_pterr.push_back(recoMuons[lep_ptindex[i]].userFloat("correctedPtError"));
                 lep_eta.push_back(recoMuons[lep_ptindex[i]].eta());
                 lep_phi.push_back(recoMuons[lep_ptindex[i]].phi());
                 lep_mass.push_back(recoMuons[lep_ptindex[i]].mass());
@@ -1865,7 +1863,7 @@ UFHZZ4LAna::endJob()
 void
 UFHZZ4LAna::beginRun(const edm::Run& iRun, const edm::EventSetup& iSetup)
 {
-    massErr.init(iSetup);
+    //massErr.init(iSetup);
     if (isMC) {
         pdfWeightIDs.clear();
         edm::Handle<LHERunInfoProduct> run;
@@ -2436,10 +2434,10 @@ void UFHZZ4LAna::bookPassedEventTree(TString treeName, TTree *tree)
     tree->Branch("thetaPhotonZ",&thetaPhotonZ,"thetaPhotonZ/F");
 
     // Resolution
-    tree->Branch("massErrorUF",&massErrorUF,"massErrorUF/F");
-    tree->Branch("massErrorUFCorr",&massErrorUFCorr,"massErrorUFCorr/F");
-    tree->Branch("massErrorUCSD",&massErrorUCSD,"massErrorUCSD/F");
-    tree->Branch("massErrorUCSDCorr",&massErrorUCSDCorr,"massErrorUCSDCorr/F");
+    //tree->Branch("massErrorUF",&massErrorUF,"massErrorUF/F");
+    //tree->Branch("massErrorUFCorr",&massErrorUFCorr,"massErrorUFCorr/F");
+    //tree->Branch("massErrorUCSD",&massErrorUCSD,"massErrorUCSD/F");
+    //tree->Branch("massErrorUCSDCorr",&massErrorUCSDCorr,"massErrorUCSDCorr/F");
 
     // Event Category
     tree->Branch("EventCat",&EventCat,"EventCat/I");

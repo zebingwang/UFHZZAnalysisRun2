@@ -67,7 +67,7 @@ class SlimmedElectronMvaIDProducer : public edm::EDProducer {
 
      edm::EDGetTokenT<edm::ValueMap<float> > mvaValuesMapToken_;
      edm::EDGetToken electronsToken_;
-     edm::InputTag electronsCollection_;
+     edm::EDGetToken electronsCollection_;
 
      bool Trig_;
      std::string idname; 
@@ -90,7 +90,7 @@ SlimmedElectronMvaIDProducer::SlimmedElectronMvaIDProducer(const edm::ParameterS
    mvaValuesMapToken_(consumes<edm::ValueMap<float> >(iConfig.getParameter<edm::InputTag>("mvaValuesMap")))
 {
 
-   electronsCollection_ = iConfig.getParameter<edm::InputTag>("electronsCollection");
+   electronsCollection_ = consumes<std::vector<pat::Electron> >(iConfig.getParameter<edm::InputTag>("electronsCollection"));
    electronsToken_ = mayConsume<edm::View<reco::GsfElectron> >(iConfig.getParameter<edm::InputTag>("electronsCollection"));
    Trig_ = iConfig.getParameter<bool>("Trig");
 
@@ -126,7 +126,7 @@ SlimmedElectronMvaIDProducer::produce(edm::Event& iEvent, const edm::EventSetup&
    using namespace std;
 
    edm::Handle<vector<pat::Electron>> electronsCollection;
-   iEvent.getByLabel(electronsCollection_ , electronsCollection);
+   iEvent.getByToken(electronsCollection_ , electronsCollection);
 
    edm::Handle<edm::View<reco::GsfElectron> > gsfelectrons;
    iEvent.getByToken(electronsToken_,gsfelectrons);
