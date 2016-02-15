@@ -7,11 +7,13 @@ To install:
 
 setenv SCRAM_ARCH slc6_amd64_gcc493
 
-cmsrel CMSSW_7_6_3
+cmsrel CMSSW_7_6_3_patch2
 
-cd CMSSW_7_6_3/src
+cd CMSSW_7_6_3_patch2/src
 
 cmsenv
+
+git cms-merge-topic -u matteosan1:smearer_76X
 
 git clone https://github.com/VBF-HZZ/UFHZZAnalysisRun2.git
 
@@ -26,6 +28,8 @@ git checkout -b from-V00-02-01-patch1 V00-02-01-patch1
 cd ..
 
 git clone https://github.com/tocheng/KinZfitter.git
+
+git clone https://github.com/bachtis/Analysis.git -b KaMuCa_V2 KaMuCa
 
 scram b -j 8
 
