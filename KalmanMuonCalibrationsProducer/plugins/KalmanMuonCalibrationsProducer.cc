@@ -49,6 +49,7 @@ class KalmanMuonCalibrationsProducer : public edm::EDProducer {
       edm::EDGetToken muonsCollection_;
       bool isMC;
       bool isSync;
+      //bool verbose;
 
 };
 
@@ -69,7 +70,8 @@ KalmanMuonCalibrationsProducer::KalmanMuonCalibrationsProducer(const edm::Parame
 
    muonsCollection_ = consumes<std::vector<pat::Muon> >(iConfig.getParameter<edm::InputTag>("muonsCollection"));
    isMC = iConfig.getParameter<bool>("isMC");
-   isMC = iConfig.getParameter<bool>("isSync");
+   isSync = iConfig.getParameter<bool>("isSync");
+   //verbose = iConfig.getParameter<bool>("verbose");
 
    if (isMC) {
        kalmanMuonCalibrator = new KalmanMuonCalibrator("MC_76X_13TeV");
@@ -123,21 +125,26 @@ KalmanMuonCalibrationsProducer::produce(edm::Event& iEvent, const edm::EventSetu
        double newpterr=oldpterr;
 
        if (!isMC) {
-           newpt = kalmanMuonCalibrator->getCorrectedPt(oldpt,mu.eta(),mu.phi(),mu.charge());
-           newpterr = kalmanMuonCalibrator->getCorrectedError(oldpt,mu.eta(),oldpterr/oldpt);
+           if (mu.pt()>2.0 && abs(mu.eta())<2.4) {
+               newpt = kalmanMuonCalibrator->getCorrectedPt(oldpt,mu.eta(),mu.phi(),mu.charge());
+               newpterr = newpt*kalmanMuonCalibrator->getCorrectedError(newpt,mu.eta(),oldpterr/newpt);
+           }
        } else {
-           double unsmearednewpt = kalmanMuonCalibrator->getCorrectedPt(oldpt,mu.eta(),mu.phi(),mu.charge());
-           newpt = kalmanMuonCalibrator->smear(unsmearednewpt,mu.eta());
-           newpterr = kalmanMuonCalibrator->getCorrectedErrorAfterSmearing(oldpt,mu.eta(),oldpterr/oldpt);
+           double unsmearednewpt = kalmanMuonCalibrator->getCorrectedPt(oldpt, mu.eta(), mu.phi(), mu.charge());
+           double unsmearednewpterr = unsmearednewpt*kalmanMuonCalibrator->getCorrectedError(unsmearednewpt, mu.eta(), oldpterr/unsmearednewpt );
+           if (!isSync) newpt = kalmanMuonCalibrator->smear(unsmearednewpt, mu.eta());
+           else newpt = kalmanMuonCalibrator->smearForSync(unsmearednewpt, mu.eta());
+           newpterr = newpt*kalmanMuonCalibrator->getCorrectedErrorAfterSmearing(newpt, mu.eta(), unsmearednewpterr/newpterr );
        }
        
        mu.addUserFloat("correctedPtError",newpterr);
        patMuons->push_back(mu);    
        
+       //std::cout<<"muon old pt: "<<mu.pt()<<" +/- "<<oldpterr<<", eta: "<< mu.eta()<<" new pt: "<<newpt<<" +/- "<<newpterr<<std::endl;
+       
        p4.SetPtEtaPhiM(newpt, mu.eta(), mu.phi(), mu.mass());
        patMuons->back().setP4(reco::Particle::PolarLorentzVector(p4.Pt(), p4.Eta(), p4.Phi(), mu.mass()));
 
-       //std::cout<<"muon old pt: "<<mu.pt()<<" +/- "<<oldpterr<<" new pt: "<<newpt<<" +/- "<<newpterr<<std::endl;
 
    }
    

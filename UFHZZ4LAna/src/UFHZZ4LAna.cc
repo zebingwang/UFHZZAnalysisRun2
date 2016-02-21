@@ -209,6 +209,7 @@ private:
     // data/MC scale factors
     TH2F *hElecScaleFac;
     TH2F *hElecScaleFac_Cracks;
+    TH2F *hMuScaleFac;
 
     //Saved Events Trees
     TTree *passedEventsTree_All;
@@ -234,7 +235,7 @@ private:
 
     // Event Weights
     float genWeight, pileupWeight, dataMCWeight, eventWeight;
-    float k_ggZZ, k_qqZZ_qcd, k_qqZZ_ewk;
+    float k_ggZZ, k_qqZZ_qcd_dPhi, k_qqZZ_qcd_M, k_qqZZ_qcd_Pt, k_qqZZ_ewk;
     // pdf weights                                                                   
     vector<float> pdfWeights;
     vector<int> pdfWeightIDs;
@@ -242,6 +243,7 @@ private:
     // lepton variables
     vector<double> lep_pt;
     vector<double> lep_pterr;
+    vector<double> lep_pterrold;
     vector<double> lep_eta;
     vector<double> lep_phi;
     vector<double> lep_mass;
@@ -465,6 +467,7 @@ private:
     // a vector<float> for each vector<double>
     vector<float>  lep_pt_float;
     vector<float>  lep_pterr_float;
+    vector<float>  lep_pterrold_float;
     vector<float>  lep_eta_float;
     vector<float>  lep_phi_float;
     vector<float>  lep_mass_float;
@@ -727,7 +730,10 @@ UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
     TCanvas *canvas2 = (TCanvas*)fElecScalFacCracks->Get("canvas");
     hElecScaleFac_Cracks = (TH2F*)canvas2->GetPrimitive("hScaleFactors_ID");    
 
-    
+    edm::FileInPath mu_scalefacFileInPath("UFHZZAnalysisRun2/UFHZZ4LAna/data/muSF_Moriond2015_HZZ.root");
+    TFile *fMuScalFac = TFile::Open(mu_scalefacFileInPath.fullPath().c_str());
+    hMuScaleFac = (TH2F*)fMuScalFac->Get("FINAL");
+
 }
 
 
@@ -859,13 +865,13 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
     // Event Weights
     genWeight=1.0; pileupWeight=1.0; dataMCWeight=1.0; eventWeight=1.0;
-    k_ggZZ=1.0; k_qqZZ_qcd = 1.1; /*initialized to inclusive k-factor*/ k_qqZZ_ewk = 1.0;
+    k_ggZZ=1.0; k_qqZZ_qcd_dPhi = 1.0; k_qqZZ_qcd_M = 1.0; k_qqZZ_qcd_Pt = 1.0; k_qqZZ_ewk = 1.0;
 
     pdfWeights.clear();
     pdfRMSup=1.0; pdfRMSdown=1.0; pdfENVup=1.0; pdfENVdown=1.0;
 
     //lepton variables
-    lep_pt.clear(); lep_pterr.clear(); lep_eta.clear(); lep_phi.clear(); lep_mass.clear(); 
+    lep_pt.clear(); lep_pterr.clear(); lep_pterrold.clear(); lep_eta.clear(); lep_phi.clear(); lep_mass.clear(); 
     lepFSR_pt.clear(); lepFSR_eta.clear(); lepFSR_phi.clear(); lepFSR_mass.clear(); 
     for (int i=0; i<4; ++i) {lep_Hindex[i]=-1;}
     pTL1=-1.0; pTL2=-1.0; pTL3=-1.0; pTL4=-1.0;
@@ -1011,7 +1017,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     foundHiggsCandidate = false;
 
     // Float vectors
-    lep_pt_float.clear(); lep_pterr_float.clear(); lep_eta_float.clear(); lep_phi_float.clear(); lep_mass_float.clear();
+    lep_pt_float.clear(); lep_pterr_float.clear(); lep_pterrold_float.clear(); lep_eta_float.clear(); lep_phi_float.clear(); lep_mass_float.clear();
     lepFSR_pt_float.clear(); lepFSR_eta_float.clear(); lepFSR_phi_float.clear(); lepFSR_mass_float.clear();
     H_pt_float.clear(); H_eta_float.clear(); H_phi_float.clear(); H_mass_float.clear();
     H_noFSR_pt_float.clear(); H_noFSR_eta_float.clear(); H_noFSR_phi_float.clear(); H_noFSR_mass_float.clear();
@@ -1138,6 +1144,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         if (!mets->empty()) {
             met = (*mets)[0].et();
             met_phi = (*mets)[0].phi();
+            //cout<<"MET: "<<met<<endl;
         }
 
         if (verbose) cout<<"start lepton analysis"<<endl;           
@@ -1196,6 +1203,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
             if (abs(lep_ptid[i])==11) {
                 lep_id.push_back(recoElectrons[lep_ptindex[i]].pdgId());
                 lep_pt.push_back(recoElectrons[lep_ptindex[i]].pt());
+                lep_pterrold.push_back(recoElectrons[lep_ptindex[i]].p4Error(reco::GsfElectron::P4_COMBINATION));
                 double perr = 0.0;
                 if (recoElectrons[lep_ptindex[i]].ecalDriven()) {
                     perr = recoElectrons[lep_ptindex[i]].p4Error(reco::GsfElectron::P4_COMBINATION);
@@ -1255,6 +1263,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
             if (abs(lep_ptid[i])==13) {            
                 lep_id.push_back(recoMuons[lep_ptindex[i]].pdgId());
                 lep_pt.push_back(recoMuons[lep_ptindex[i]].pt());
+                lep_pterrold.push_back(recoMuons[lep_ptindex[i]].muonBestTrack()->ptError());
                 lep_pterr.push_back(recoMuons[lep_ptindex[i]].userFloat("correctedPtError"));
                 lep_eta.push_back(recoMuons[lep_ptindex[i]].eta());
                 lep_phi.push_back(recoMuons[lep_ptindex[i]].phi());
@@ -1288,8 +1297,8 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 lep_tightIdSUS.push_back(helper.passTight_Id_SUS(recoMuons[lep_ptindex[i]],PV));
                 lep_ptRatio.push_back(helper.ptRatio(recoMuons[lep_ptindex[i]],jets,isMC));           
                 lep_ptRel.push_back(helper.ptRel(recoMuons[lep_ptindex[i]],jets,isMC));                      
-                lep_dataMC.push_back(helper.dataMC(recoMuons[lep_ptindex[i]],hElecScaleFac,hElecScaleFac_Cracks));
-                lep_dataMCErr.push_back(helper.dataMCErr(recoMuons[lep_ptindex[i]],hElecScaleFac,hElecScaleFac_Cracks));
+                lep_dataMC.push_back(helper.dataMC(recoMuons[lep_ptindex[i]],hMuScaleFac));
+                lep_dataMCErr.push_back(helper.dataMCErr(recoMuons[lep_ptindex[i]],hMuScaleFac));
                 lep_genindex.push_back(-1.0);
             }
             if (verbose) {cout<<" RelIso: "<<lep_RelIso[i]<<" isoCH: "<<lep_isoCH[i]<<" isoNH: "<<lep_isoNH[i]
@@ -1749,6 +1758,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
             // fill the vector<float>
             lep_pt_float.assign(lep_pt.begin(),lep_pt.end());
             lep_pterr_float.assign(lep_pterr.begin(),lep_pterr.end());
+            lep_pterrold_float.assign(lep_pterrold.begin(),lep_pterrold.end());
             lep_eta_float.assign(lep_eta.begin(),lep_eta.end());
             lep_phi_float.assign(lep_phi.begin(),lep_phi.end());
             lep_mass_float.assign(lep_mass.begin(),lep_mass.end());
@@ -2243,7 +2253,9 @@ void UFHZZ4LAna::bookPassedEventTree(TString treeName, TTree *tree)
     tree->Branch("passedQCDcut",&passedQCDcut,"passedQCDcut/O");
     tree->Branch("genWeight",&genWeight,"genWeight/F");
     tree->Branch("k_ggZZ",&k_ggZZ,"k_ggZZ/F");
-    tree->Branch("k_qqZZ_qcd",&k_qqZZ_qcd,"k_qqZZ_qcd/F");
+    tree->Branch("k_qqZZ_qcd_dPhi",&k_qqZZ_qcd_dPhi,"k_qqZZ_qcd_dPhi/F");
+    tree->Branch("k_qqZZ_qcd_M",&k_qqZZ_qcd_M,"k_qqZZ_qcd_M/F");
+    tree->Branch("k_qqZZ_qcd_Pt",&k_qqZZ_qcd_Pt,"k_qqZZ_qcd_Pt/F");
     tree->Branch("k_qqZZ_ewk",&k_qqZZ_ewk,"k_qqZZ_ewk/F");
     tree->Branch("pdfWeights",&pdfWeights);
     tree->Branch("pdfWeightIDs",&pdfWeightIDs);
@@ -2260,6 +2272,7 @@ void UFHZZ4LAna::bookPassedEventTree(TString treeName, TTree *tree)
     tree->Branch("lep_id",&lep_id);
     tree->Branch("lep_pt",&lep_pt_float);
     tree->Branch("lep_pterr",&lep_pterr_float);
+    tree->Branch("lep_pterrold",&lep_pterrold_float);
     tree->Branch("lep_eta",&lep_eta_float);
     tree->Branch("lep_phi",&lep_phi_float);
     tree->Branch("lep_mass",&lep_mass_float);
@@ -3005,8 +3018,10 @@ void UFHZZ4LAna::setGENVariables(edm::Handle<reco::GenParticleCollection> pruned
             int genfs;
             if (abs(GENlep_id[L1_nocuts])==abs(GENlep_id[L3_nocuts])) genfs=1;
             else genfs=2;
-            k_qqZZ_qcd = helper.kfactor_qqZZ_qcd_dPhi(GENdPhiZZ,genfs);
-            if (verbose) cout<<"qcd kfactor qqZZ: "<<k_qqZZ_qcd<<endl;
+            k_qqZZ_qcd_dPhi = helper.kfactor_qqZZ_qcd_dPhi(GENdPhiZZ,genfs);
+            k_qqZZ_qcd_M = helper.kfactor_qqZZ_qcd_M(GENmassZZ,genfs);
+            k_qqZZ_qcd_Pt = helper.kfactor_qqZZ_qcd_Pt(GENpTZZ,genfs);
+            if (verbose) cout<<"qcd kfactor qqZZ: "<<k_qqZZ_qcd_M<<endl;
         }
     }    
     

@@ -39,29 +39,44 @@ process.boostedMuons = cms.EDProducer("PATMuonCleanerBySegments",
 				     fractionOfSharedSegments = cms.double(0.499),
 				     )
 
-# Electron Calibrations
-#process.calibratedElectrons = cms.EDProducer("CalibratedPatElectronProducerRun2",
-#    electrons = cms.InputTag("slimmedElectrons","","PAT"),
-#    grbForestName = cms.string("gedelectron_p4combination_25ns"),
-#    isMC = cms.bool(False),
-#    isSynchronization = cms.bool(False)
-#)
+# Kalman Muon Calibrations
+process.calibratedMuons = cms.EDProducer("KalmanMuonCalibrationsProducer",
+                                         muonsCollection = cms.InputTag("boostedMuons"),
+                                         isMC = cms.bool(False),
+                                         isSync = cms.bool(False)
+                                         )
 
-# Electron MVA ID producer
-from PhysicsTools.SelectorUtils.tools.vid_id_tools import *
-dataFormat = DataFormat.MiniAOD
-switchOnVIDElectronIdProducer(process, dataFormat)
-# define which IDs we want to produce
-my_id_modules = ['RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Spring15_25ns_nonTrig_V1_cff']
-# add them to the VID producer
-for idmod in my_id_modules:
-    setupAllVIDIdsInModule(process,idmod,setupVIDElectronSelection)
-#process.electronMVAValueMapProducer.srcMiniAOD = cms.InputTag("calibratedElectrons")
+process.selectedElectrons = cms.EDFilter("PATElectronSelector",
+                                         src = cms.InputTag("slimmedElectrons"),
+                                         cut = cms.string("pt > 5 && abs(eta)<2.5")
+                                         )
+
+process.load('EgammaAnalysis.ElectronTools.calibratedElectronsRun2_cfi')
+process.calibratedPatElectrons = cms.EDProducer("CalibratedPatElectronProducerRun2",
+                                        # input collections
+                                        electrons = cms.InputTag('selectedElectrons'),
+                                        gbrForestName = cms.string("gedelectron_p4combination_25ns"),
+                                        isMC = cms.bool(False),
+                                        isSynchronization = cms.bool(False),
+                                        correctionFile = cms.string("EgammaAnalysis/ElectronTools/data/76X_16DecRereco_2015")
+                                        )
+
+
+# Electron MVA ID producers
+#from PhysicsTools.SelectorUtils.tools.vid_id_tools import *
+#dataFormat = DataFormat.MiniAOD
+#switchOnVIDElectronIdProducer(process, dataFormat)
+## define which IDs we want to produce
+#my_id_modules = ['RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Spring15_25ns_nonTrig_V1_cff']
+## add them to the VID producer
+#for idmod in my_id_modules:
+#    setupAllVIDIdsInModule(process,idmod,setupVIDElectronSelection)
+#process.electronMVAValueMapProducer.srcMiniAOD = cms.InputTag("calibratedPatElectrons")
 
 process.mvaSpring15NonTrig25nsV1 = cms.EDProducer("SlimmedElectronMvaIDProducer",
                                      mvaValuesMap = cms.InputTag("electronMVAValueMapProducer:ElectronMVAEstimatorRun2Spring15NonTrig25nsV1Values"),
-#                                     electronsCollection = cms.InputTag("calibratedElectrons"),
-                                     electronsCollection = cms.InputTag("slimmedElectrons","","PAT"),
+                                     electronsCollection = cms.InputTag("calibratedPatElectrons"),
+#                                     electronsCollection = cms.InputTag("slimmedElectrons","","PAT"),
                                      Trig = cms.bool(False),
                                      )
      
@@ -69,6 +84,30 @@ process.mvaSpring15NonTrig25nsV1 = cms.EDProducer("SlimmedElectronMvaIDProducer"
 process.load('UFHZZAnalysisRun2.FSRPhotons.fsrPhotons_cff')
 
 # Jet Energy Corrections
+from CondCore.DBCommon.CondDBSetup_cfi import *
+import os
+era = "Fall15_25nsV1_DATA"
+#dBFile = os.environ.get('CMSSW_BASE')+"/src/UFHZZAnalysisRun2/UFHZZ4LAna/data/"+era+".db"
+dBFile = "src/UFHZZAnalysisRun2/UFHZZ4LAna/data/"+era+".db"
+process.jec = cms.ESSource("PoolDBESSource",
+                           CondDBSetup,
+                           connect = cms.string("sqlite_file:"+dBFile),
+                           toGet =  cms.VPSet(
+        cms.PSet(
+            record = cms.string("JetCorrectionsRecord"),
+            tag = cms.string("JetCorrectorParametersCollection_"+era+"_AK4PF"),
+            label= cms.untracked.string("AK4PF")
+            ),
+        cms.PSet(
+            record = cms.string("JetCorrectionsRecord"),
+            tag = cms.string("JetCorrectorParametersCollection_"+era+"_AK4PFchs"),
+            label= cms.untracked.string("AK4PFchs")
+            ),
+        )
+)
+
+process.es_prefer_jec = cms.ESPrefer("PoolDBESSource",'jec')
+
 process.load("PhysicsTools.PatAlgos.producersLayer1.jetUpdater_cff")
 
 process.jetCorrFactors = process.patJetCorrFactorsUpdated.clone(
@@ -85,15 +124,15 @@ process.slimmedJetsJEC = process.patJetsUpdated.clone(
     jetCorrFactorsSource = cms.VInputTag(cms.InputTag("jetCorrFactors"))
     )
 
-# UF Ntuplizer
+# Analyzer
 process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
                               photonSrc    = cms.untracked.InputTag("slimmedPhotons"),
                               electronSrc  = cms.untracked.InputTag("mvaSpring15NonTrig25nsV1","NonTrig"),
-                              muonSrc      = cms.untracked.InputTag("boostedMuons"),
-                              jetSrc       = cms.untracked.InputTag("slimmedJets"),
-#                              jetSrc       = cms.untracked.InputTag("slimmedJetsJEC"),
+                              muonSrc      = cms.untracked.InputTag("calibratedMuons"),
+#                              jetSrc       = cms.untracked.InputTag("slimmedJets"),
+                              jetSrc       = cms.untracked.InputTag("slimmedJetsJEC"),
                               metSrc       = cms.untracked.InputTag("slimmedMETs"),
-                              vertexSrc    = cms.untracked.InputTag("offlineSlimmedPrimaryVertices"), #or selectedVertices 
+                              vertexSrc    = cms.untracked.InputTag("offlineSlimmedPrimaryVertices"),
                               beamSpotSrc  = cms.untracked.InputTag("offlineBeamSpot"),
                               conversionSrc  = cms.untracked.InputTag("reducedEgamma","reducedConversions"),
                               isMC         = cms.untracked.bool(False),
@@ -135,10 +174,12 @@ process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
 
 process.p = cms.Path(process.fsrPhotonSequence*
                      process.boostedMuons*
-#                     process.calibratedElectrons*
-                     process.electronMVAValueMapProducer*
+                     process.calibratedMuons*
+                     process.selectedElectrons*
+                     process.calibratedPatElectrons*
+#                     process.electronMVAValueMapProducer*
                      process.mvaSpring15NonTrig25nsV1*
-#                     process.jetCorrFactors*
-#                     process.slimmedJetsJEC*
+                     process.jetCorrFactors*
+                     process.slimmedJetsJEC*
                      process.Ana
                      )
