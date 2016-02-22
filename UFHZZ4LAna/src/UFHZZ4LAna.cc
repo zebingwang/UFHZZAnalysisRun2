@@ -457,7 +457,7 @@ private:
     double phjj_VAJHU, pvbf_VAJHU;
 
     double D_g4;
-    double Djet_VAJHU;
+    double Djet_VAJHU, Djet_VAJHU_jesup, Djet_VAJHU_jesdn;
 
     // mass err
     std::map<TString,TH1F*> hContainer_;
@@ -705,7 +705,7 @@ UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
         if(bStudyFourLeptonResolution)  { FourLepReso = new HZZ4LResolution(); }
     }
 
-    edm::FileInPath jecfileInPath("UFHZZAnalysisRun2/UFHZZ4LAna/data/Summer15_25nsV3M3_DATA_UncertaintySources_AK4PFchs.txt");
+    edm::FileInPath jecfileInPath("UFHZZAnalysisRun2/UFHZZ4LAna/data/Fall15_25nsV2_MC_UncertaintySources_AK4PFchs.txt");
     jecunc = new JetCorrectionUncertainty(*(new JetCorrectorParameters(jecfileInPath.fullPath().c_str(),"Total")));
 
     edm::FileInPath kfacfileInPath("UFHZZAnalysisRun2/UFHZZ4LAna/data/Kfactor_ggHZZ_2l2l_NNLO_NNPDF_NarrowWidth_13TeV.root");
@@ -995,6 +995,14 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     GENpt_leadingjet_pt30_eta4p7=-1.0;
     GENabsrapidity_leadingjet_pt30_eta4p7=-1.0;
     GENabsdeltarapidity_hleadingjet_pt30_eta4p7=-1.0;
+
+    // ME
+    me_0plus_JHU=999.0; me_qqZZ_MCFM=999.0; p0plus_m4l=999.0; bkg_m4l=999.0;
+    D_bkg_kin=999.0; D_bkg=999.0;   
+
+    bkg_VAMCFM=999.0; p0minus_VAJHU=999.0; Dgg10_VAMCFM=999.0;
+    phjj_VAJHU=999.0; pvbf_VAJHU=999.0; D_g4=999.0;
+    Djet_VAJHU=999.0; Djet_VAJHU_jesup=999.0; Djet_VAJHU_jesdn=999.0;
 
     if (verbose) {cout<<"clear other variables"<<endl; }
     // Resolution
@@ -1742,6 +1750,40 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                     Djet_VAJHU = pvbf_VAJHU / ( pvbf_VAJHU + phjj_VAJHU ); // D^VBF_HJJ
                 } else {
                     Djet_VAJHU = -1;
+                }
+
+                if (njets_pt30_eta4p7_jesup>=2) {
+                    partPprod.clear();
+                    partPprod.push_back(L21P4); partPprod.push_back(L22P4);                   
+                    J1P4.SetPtEtaPhiM(jet_jesup_pt[0],jet_jesup_eta[0],jet_jesup_phi[0],jet_jesup_mass[0]);
+                    J2P4.SetPtEtaPhiM(jet_jesup_pt[1],jet_jesup_eta[1],jet_jesup_phi[1],jet_jesup_mass[1]);
+                    partPprod.push_back(njets_pt30_eta4p7_jesup > 0 ? J1P4 : nullFourVector);
+                    partPprod.push_back(njets_pt30_eta4p7_jesup > 1 ? J2P4 : nullFourVector);
+                    partIdprod.push_back(tmpIdL1); partIdprod.push_back(tmpIdL2);
+                    partIdprod.push_back(tmpIdL3); partIdprod.push_back(tmpIdL4);
+                    partIdprod.push_back(0); partIdprod.push_back(0);
+                    combinedMEM->computeME (MEMNames::kJJ_SMHiggs_GG, MEMNames::kJHUGen, partPprod, partIdprod, phjj_VAJHU); // SM gg->H+2j
+                    combinedMEM->computeME (MEMNames::kJJ_SMHiggs_VBF, MEMNames::kJHUGen, partPprod, partIdprod, pvbf_VAJHU); // SM VBF->H
+                    Djet_VAJHU_jesup = pvbf_VAJHU / ( pvbf_VAJHU + phjj_VAJHU ); // D^VBF_HJJ
+                } else {
+                    Djet_VAJHU_jesup = -1;
+                }
+
+                if (njets_pt30_eta4p7_jesdn>=2) {
+                    partPprod.clear();
+                    partPprod.push_back(L21P4); partPprod.push_back(L22P4);                   
+                    J1P4.SetPtEtaPhiM(jet_jesdn_pt[0],jet_jesdn_eta[0],jet_jesdn_phi[0],jet_jesdn_mass[0]);
+                    J2P4.SetPtEtaPhiM(jet_jesdn_pt[1],jet_jesdn_eta[1],jet_jesdn_phi[1],jet_jesdn_mass[1]);
+                    partPprod.push_back(njets_pt30_eta4p7_jesdn > 0 ? J1P4 : nullFourVector);
+                    partPprod.push_back(njets_pt30_eta4p7_jesdn > 1 ? J2P4 : nullFourVector);
+                    partIdprod.push_back(tmpIdL1); partIdprod.push_back(tmpIdL2);
+                    partIdprod.push_back(tmpIdL3); partIdprod.push_back(tmpIdL4);
+                    partIdprod.push_back(0); partIdprod.push_back(0);
+                    combinedMEM->computeME (MEMNames::kJJ_SMHiggs_GG, MEMNames::kJHUGen, partPprod, partIdprod, phjj_VAJHU); // SM gg->H+2j
+                    combinedMEM->computeME (MEMNames::kJJ_SMHiggs_VBF, MEMNames::kJHUGen, partPprod, partIdprod, pvbf_VAJHU); // SM VBF->H
+                    Djet_VAJHU_jesdn = pvbf_VAJHU / ( pvbf_VAJHU + phjj_VAJHU ); // D^VBF_HJJ
+                } else {
+                    Djet_VAJHU_jesdn = -1;
                 }
                 
                 D_bkg_kin = me_0plus_JHU / (me_0plus_JHU + me_qqZZ_MCFM);
@@ -2533,6 +2575,8 @@ void UFHZZ4LAna::bookPassedEventTree(TString treeName, TTree *tree)
     tree->Branch("D_bkg", &D_bkg, "D_bkg/D");
     tree->Branch("Dgg10_VAMCFM", &Dgg10_VAMCFM, "Dgg10_VAMCFM/D");
     tree->Branch("Djet_VAJHU", &Djet_VAJHU, "Djet_VAJHU/D");
+    tree->Branch("Djet_VAJHU_jesup", &Djet_VAJHU_jesup, "Djet_VAJHU_jesup/D");
+    tree->Branch("Djet_VAJHU_jesdn", &Djet_VAJHU_jesdn, "Djet_VAJHU_jesdn/D");
     tree->Branch("D_g4", &D_g4, "D_g4/D");
 
 }

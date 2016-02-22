@@ -134,7 +134,7 @@ KalmanMuonCalibrationsProducer::produce(edm::Event& iEvent, const edm::EventSetu
            double unsmearednewpterr = unsmearednewpt*kalmanMuonCalibrator->getCorrectedError(unsmearednewpt, mu.eta(), oldpterr/unsmearednewpt );
            if (!isSync) newpt = kalmanMuonCalibrator->smear(unsmearednewpt, mu.eta());
            else newpt = kalmanMuonCalibrator->smearForSync(unsmearednewpt, mu.eta());
-           newpterr = newpt*kalmanMuonCalibrator->getCorrectedErrorAfterSmearing(newpt, mu.eta(), unsmearednewpterr/newpterr );
+           newpterr = newpt*kalmanMuonCalibrator->getCorrectedErrorAfterSmearing(newpt, mu.eta(), unsmearednewpterr/newpt );
        }
        
        mu.addUserFloat("correctedPtError",newpterr);
