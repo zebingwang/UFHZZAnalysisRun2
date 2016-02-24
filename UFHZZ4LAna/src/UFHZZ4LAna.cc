@@ -1754,6 +1754,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
                 if (njets_pt30_eta4p7_jesup>=2) {
                     partPprod.clear();
+                    partPprod.push_back(L11P4); partPprod.push_back(L12P4);
                     partPprod.push_back(L21P4); partPprod.push_back(L22P4);                   
                     J1P4.SetPtEtaPhiM(jet_jesup_pt[0],jet_jesup_eta[0],jet_jesup_phi[0],jet_jesup_mass[0]);
                     J2P4.SetPtEtaPhiM(jet_jesup_pt[1],jet_jesup_eta[1],jet_jesup_phi[1],jet_jesup_mass[1]);
@@ -1771,6 +1772,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
                 if (njets_pt30_eta4p7_jesdn>=2) {
                     partPprod.clear();
+                    partPprod.push_back(L11P4); partPprod.push_back(L12P4);
                     partPprod.push_back(L21P4); partPprod.push_back(L22P4);                   
                     J1P4.SetPtEtaPhiM(jet_jesdn_pt[0],jet_jesdn_eta[0],jet_jesdn_phi[0],jet_jesdn_mass[0]);
                     J2P4.SetPtEtaPhiM(jet_jesdn_pt[1],jet_jesdn_eta[1],jet_jesdn_phi[1],jet_jesdn_mass[1]);
