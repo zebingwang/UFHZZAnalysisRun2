@@ -502,7 +502,6 @@ bool HZZ4LHelper::passTight_Id_SUS(pat::Electron electron, std::string elecID, c
     
     //std::cout<<"check id emulation"<<std::endl;
     // Trigger ID Emulation
-    //if (fabs(electron.eta())<1.479) {
     //std::cout<<"isEB: "<<electron.isEB()<<" iEtaieta: "<<electron.full5x5_sigmaIetaIeta()<<" hOe: "<<electron.hcalOverEcal()<<" dEta: "<<electron.deltaEtaSuperClusterTrackAtVtx()<<" dPhi: "<<electron.deltaPhiSuperClusterTrackAtVtx()<<" |1/e - 1/p| "<<fabs(1.0/electron.correctedEcalEnergy() - electron.eSuperClusterOverP()/electron.correctedEcalEnergy())<<std::endl;
 
     if (electron.isEB()) {
@@ -1492,7 +1491,6 @@ float HZZ4LHelper::dataMC(pat::Muon muon, TH2F* hMuScaleFac)
     float pt = std::min(muon.pt(),79.0);
     float eta = muon.eta();
     return hMuScaleFac->GetBinContent(hMuScaleFac->FindBin(eta,pt)); //opposite axes as electrons
-    return 1.0;
 }
 
 float HZZ4LHelper::dataMCErr(pat::Muon muon, TH2F* hMuScaleFac)

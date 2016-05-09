@@ -182,6 +182,7 @@ private:
     virtual void endLuminosityBlock(edm::LuminosityBlock const& lumiSeg,edm::EventSetup const& eSetup);
   
     void findHiggsCandidate(std::vector< pat::Muon > &selectedMuons, std::vector< pat::Electron > &selectedElectrons, const edm::Event& iEvent);
+    void findZ1LCandidate(const edm::Event& iEvent);
 
     void bookResolutionHistograms();
     void fillResolutionHistograms(edm::Handle<edm::View<pat::Muon> > muons);
@@ -232,6 +233,9 @@ private:
     int finalState;
     std::string triggersPassed;
     bool passedTrig, passedFullSelection, passedZ4lSelection, passedQCDcut;
+    bool passedZ1LSelection, passedZ4lZXCRSelection, passedZXCRSelection;
+    int nZXCRFailedLeptons;   
+
 
     // Event Weights
     float genWeight, pileupWeight, dataMCWeight, eventWeight;
@@ -292,6 +296,7 @@ private:
     vector<double> H_noFSR_mass;
     float mass4l, mass4l_noFSR, mass4e, mass4mu, mass2e2mu, pT4l, eta4l, phi4l, rapidity4l;
     float cosTheta1, cosTheta2, cosThetaStar, Phi, Phi1;
+    float mass3l;
 
     // kin fit
     float mass4lREFIT, massZ1REFIT, massZ1Err, mass4lErr, mass4lErrREFIT;
@@ -313,24 +318,29 @@ private:
     float met_phi;
 
     // Jets
+    vector<int>    jet_iscleanH4l;
     vector<double> jet_pt;
     vector<double> jet_eta;
     vector<double> jet_phi;
     vector<double> jet_mass;
-    vector<float> jet_pumva, jet_csvv2;
-    vector<int>   jet_isbtag;
+    vector<float>  jet_pumva, jet_csvv2;
+    vector<int>    jet_isbtag;
+    vector<int>    jet_jesup_iscleanH4l;
     vector<double> jet_jesup_pt;
     vector<double> jet_jesup_eta;
     vector<double> jet_jesup_phi;
     vector<double> jet_jesup_mass;
+    vector<int>    jet_jesdn_iscleanH4l;
     vector<double> jet_jesdn_pt;
     vector<double> jet_jesdn_eta;
     vector<double> jet_jesdn_phi;
     vector<double> jet_jesdn_mass;
+    vector<int>    jet_jerup_iscleanH4l;
     vector<double> jet_jerup_pt;
     vector<double> jet_jerup_eta;
     vector<double> jet_jerup_phi;
     vector<double> jet_jerup_mass;
+    vector<int>    jet_jerdn_iscleanH4l;
     vector<double> jet_jerdn_pt;
     vector<double> jet_jerdn_eta;
     vector<double> jet_jerdn_phi;
@@ -544,6 +554,7 @@ private:
     TLorentzVector GENZ1Vec, GENZ2Vec;
     bool RecoFourMuEvent, RecoFourEEvent, RecoTwoETwoMuEvent, RecoTwoMuTwoEEvent;
     bool foundHiggsCandidate;
+    bool foundZ1LCandidate;
     bool firstEntry;
 
     // hist container
@@ -599,7 +610,7 @@ private:
     std::string PUVersion;
     bool doFsrRecovery, doPUJetID;
     int jetIDLevel;
-    bool doSUSYSelection;
+    bool doTriggerMatching;
     bool bStudyResolution;
     bool bStudyDiLeptonResolution;
     bool bStudyFourLeptonResolution;
@@ -669,14 +680,14 @@ UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
     genIsoConeSizeMu(iConfig.getUntrackedParameter<double>("genIsoConeSizeMu",0.4)), 
     _elecPtCut(iConfig.getUntrackedParameter<double>("_elecPtCut",7)),
     _muPtCut(iConfig.getUntrackedParameter<double>("_muPtCut",5)),
-    BTagCut(iConfig.getUntrackedParameter<double>("BTagCut",0.89)),
+    BTagCut(iConfig.getUntrackedParameter<double>("BTagCut",0.80)),
     reweightForPU(iConfig.getUntrackedParameter<bool>("reweightForPU",true)),
     interactiveRun(iConfig.getUntrackedParameter<bool>("interactiveRun",false)),
     PUVersion(iConfig.getUntrackedParameter<std::string>("PUVersion","Fall15_76X")),
     doFsrRecovery(iConfig.getUntrackedParameter<bool>("doFsrRecovery",true)),
     doPUJetID(iConfig.getUntrackedParameter<bool>("doPUJetID",false)),
     jetIDLevel(iConfig.getUntrackedParameter<int>("jetIDLevel",1)),
-    doSUSYSelection(iConfig.getUntrackedParameter<bool>("doSUSYSelection",false)),
+    doTriggerMatching(iConfig.getUntrackedParameter<bool>("doTriggerMatching",!isMC)),
     bStudyResolution(iConfig.getUntrackedParameter<bool>("bStudyResolution",false)),
     bStudyDiLeptonResolution(iConfig.getUntrackedParameter<bool>("bStudyDiLeptonResolution",false)),
     bStudyFourLeptonResolution(iConfig.getUntrackedParameter<bool>("bStudyFourLeptonResolution",false)),
@@ -861,7 +872,10 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     nVtx = -1.0;
     finalState = -1;
     triggersPassed="";
-    passedTrig=false; passedFullSelection=false; passedZ4lSelection=false; passedQCDcut=false;
+    passedTrig=false; passedFullSelection=false; passedZ4lSelection=false; passedQCDcut=false; 
+    passedZ1LSelection=false; passedZ4lZXCRSelection=false; passedZXCRSelection=false;
+    nZXCRFailedLeptons=0;
+
 
     // Event Weights
     genWeight=1.0; pileupWeight=1.0; dataMCWeight=1.0; eventWeight=1.0;
@@ -893,6 +907,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     H_noFSR_pt.clear(); H_noFSR_eta.clear(); H_noFSR_phi.clear(); H_noFSR_mass.clear(); 
     mass4l=-1.0; mass4l_noFSR=-1.0; mass4e=-1.0; mass4mu=-1.0; mass2e2mu=-1.0; pT4l=-1.0; eta4l=9999.0; phi4l=9999.0; rapidity4l=9999.0;
     cosTheta1=9999.0; cosTheta2=9999.0; cosThetaStar=9999.0; Phi=9999.0; Phi1=9999.0;
+    mass3l=-1.0;
 
     // kin fitter
     mass4lREFIT = -999.0; massZ1REFIT = -999.0; massZ1Err = -999.0; mass4lErr = -999.0; mass4lErrREFIT = -999.0;
@@ -914,6 +929,10 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     jet_jerup_pt.clear(); jet_jerup_eta.clear(); jet_jerup_phi.clear(); jet_jerup_mass.clear(); 
     jet_jerdn_pt.clear(); jet_jerdn_eta.clear(); jet_jerdn_phi.clear(); jet_jerdn_mass.clear(); 
     jet_pumva.clear(); jet_csvv2.clear(); jet_isbtag.clear();
+
+    jet_iscleanH4l.clear(); 
+    jet_jesup_iscleanH4l.clear(); jet_jesdn_iscleanH4l.clear();
+    jet_jerup_iscleanH4l.clear(); jet_jerdn_iscleanH4l.clear();
 
     njets_pt30_eta4p7=0;
     njets_pt30_eta4p7_jesup=0;
@@ -1023,6 +1042,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     RecoFourMuEvent = false; RecoFourEEvent = false;
     RecoTwoETwoMuEvent = false; RecoTwoMuTwoEEvent = false;
     foundHiggsCandidate = false;
+    foundZ1LCandidate = false;
 
     // Float vectors
     lep_pt_float.clear(); lep_pterr_float.clear(); lep_pterrold_float.clear(); lep_eta_float.clear(); lep_phi_float.clear(); lep_mass_float.clear();
@@ -1275,6 +1295,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 lep_pterr.push_back(recoMuons[lep_ptindex[i]].userFloat("correctedPtError"));
                 lep_eta.push_back(recoMuons[lep_ptindex[i]].eta());
                 lep_phi.push_back(recoMuons[lep_ptindex[i]].phi());
+                if (recoMuons[lep_ptindex[i]].mass()<0.105) cout<<"muon mass: "<<recoMuons[lep_ptindex[i]].mass()<<endl;
                 lep_mass.push_back(recoMuons[lep_ptindex[i]].mass());
                 lepFSR_pt.push_back(recoMuons[lep_ptindex[i]].pt());
                 lepFSR_eta.push_back(recoMuons[lep_ptindex[i]].eta());
@@ -1315,30 +1336,32 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         }
 
 
-        if (verbose) cout<<"start trigger matching"<<endl;
-        // trigger Matching
-        for(unsigned int i = 0; i < lep_pt.size(); i++) {
+        if (doTriggerMatching) {
+            if (verbose) cout<<"start trigger matching"<<endl;        
+            // trigger Matching
+            for(unsigned int i = 0; i < lep_pt.size(); i++) {
 
-            TLorentzVector reco;
-            reco.SetPtEtaPhiM(lep_pt[i],lep_eta[i],lep_phi[i],lep_mass[i]);
-
-            double reco_eta = reco.Eta();
-            double reco_phi = reco.Phi();
-
-            std::string filtersMatched = "";
-
-            for (pat::TriggerObjectStandAlone obj : *triggerObjects) {
+                TLorentzVector reco;
+                reco.SetPtEtaPhiM(lep_pt[i],lep_eta[i],lep_phi[i],lep_mass[i]);
+                
+                double reco_eta = reco.Eta();
+                double reco_phi = reco.Phi();
+                
+                std::string filtersMatched = "";
+                
+                for (pat::TriggerObjectStandAlone obj : *triggerObjects) {
                     double hlt_eta = obj.eta();
                     double hlt_phi = obj.phi();
                     double dR =  deltaR(reco_eta,reco_phi,hlt_eta,hlt_phi); 
                     if (dR<0.5) {
                         for (unsigned h = 0; h < obj.filterLabels().size(); ++h) filtersMatched += obj.filterLabels()[h];
                     }
+                }
+                
+                //if (verbose) cout<<"Trigger matching lep id: "<<lep_id[i]<<" pt: "<<reco.Pt()<<" filters: "<<filtersMatched<<endl;
+                lep_filtersMatched.push_back(filtersMatched);
+                
             }
-
-            //if (verbose) cout<<"Trigger matching lep id: "<<lep_id[i]<<" pt: "<<reco.Pt()<<" filters: "<<filtersMatched<<endl;
-            lep_filtersMatched.push_back(filtersMatched);
-
         }
             
         // GEN matching
@@ -1510,6 +1533,16 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 if (verbose) {cout<<"finished filling fsr photon candidates"<<endl;}
             } // doFsrRecovery
 
+
+            // Fake Rate Study (Z+1L Control Region)
+            if (verbose) cout<<"begin Z+1L fake rate study"<<endl;
+            // Z+1L selection
+            findZ1LCandidate(iEvent);
+            if (foundZ1LCandidate && passedTrig) { 
+                    passedZ1LSelection = true;
+            }
+            if (verbose) {cout<<"finished Z+1L fake rate study"<<endl;}
+
             // creat vectors for selected objects
             vector<pat::Muon> selectedMuons;
             vector<pat::Electron> selectedElectrons;
@@ -1652,20 +1685,28 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                         reco::Candidate *c4 = dynamic_cast<reco::Candidate* >(&selectedElectrons[1]);
                         selectedLeptons.push_back(c4);
                     }
-                    
-                    
+                                        
                 }
+
                 H_noFSR_pt.push_back(HVecNoFSR.Pt());
                 H_noFSR_eta.push_back(HVecNoFSR.Eta());
                 H_noFSR_phi.push_back(HVecNoFSR.Phi());
                 H_noFSR_mass.push_back(HVecNoFSR.M());
-                
-                if(Z2Vec.M() > 0) {
+
+                // check number of failing leptons
+                for(unsigned int i = 0; i <= 3; i++) {
+                    if (!(abs(lep_id[lep_Hindex[i]])==11 && (lep_tightId[lep_Hindex[i]] && lep_RelIsoNoFSR[lep_Hindex[i]]<isoCutEl)) &&
+                        !(abs(lep_id[lep_Hindex[i]])==13 && (lep_tightId[lep_Hindex[i]] && lep_RelIsoNoFSR[lep_Hindex[i]]<isoCutMu))){ nZXCRFailedLeptons++; }
+                }
+                if (verbose) cout << nZXCRFailedLeptons<<" failing leptons in higgs candidate"<<endl;
+                if (nZXCRFailedLeptons>0) { // at least one lepton has failed 
+                    passedZ4lZXCRSelection = true;
+                    if (Z2Vec.M() > mZ2Low && passedTrig) passedZXCRSelection = true;
+                } else { //  signal region candidate                    
                     passedZ4lSelection = true;
                     if(Z2Vec.M() > mZ2Low && passedTrig) passedFullSelection = true;
                 }
-                
-                
+
             } // found higgs candidate 
             else { if (verbose) cout<<Run<<":"<<LumiSect<<":"<<Event<<" failed higgs candidate"<<endl;}
 
@@ -1677,34 +1718,52 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
 
             // Comput Matrix Elelements After filling jets, Do Kinematic fit, add scale factors
-            if (foundHiggsCandidate) {
+            if (foundHiggsCandidate || lep_pt.size()>=4) {
 
-                dataMCWeight = lep_dataMC[lep_Hindex[0]]*lep_dataMC[lep_Hindex[1]]*lep_dataMC[lep_Hindex[2]]*lep_dataMC[lep_Hindex[3]];
-                eventWeight = genWeight*crossSection*pileupWeight*dataMCWeight;
+                if (foundHiggsCandidate) {
+                    dataMCWeight = lep_dataMC[lep_Hindex[0]]*lep_dataMC[lep_Hindex[1]]*lep_dataMC[lep_Hindex[2]]*lep_dataMC[lep_Hindex[3]];
+                } else {
+                    dataMCWeight = 1.0;
+                }
+                eventWeight = crossSection*pileupWeight*dataMCWeight;
 
-                if (verbose) cout<<"Kin fitter begin with lep size "<<selectedLeptons.size()<<" fsr size "<<selectedFsrMap.size()<<endl;
 
-                kinZfitter->Setup(selectedLeptons, selectedFsrMap);
-                kinZfitter->KinRefitZ1();
+                if (foundHiggsCandidate) {
+                    
+                    dataMCWeight = lep_dataMC[lep_Hindex[0]]*lep_dataMC[lep_Hindex[1]]*lep_dataMC[lep_Hindex[2]]*lep_dataMC[lep_Hindex[3]];
+                    eventWeight = genWeight*crossSection*pileupWeight*dataMCWeight;
+
+                    if (verbose) cout<<"Kin fitter begin with lep size "<<selectedLeptons.size()<<" fsr size "<<selectedFsrMap.size()<<endl;
+                    
+                    kinZfitter->Setup(selectedLeptons, selectedFsrMap);
+                    kinZfitter->KinRefitZ1();
+                    
+                    mass4lREFIT = (float)kinZfitter->GetRefitM4l();
+                    mass4lErrREFIT = (float)kinZfitter->GetRefitM4lErrFullCov();
+                    mass4lErr = (float)kinZfitter->GetM4lErr();
+                    massZ1REFIT = (float)kinZfitter->GetRefitMZ1();
+                    massZ1Err = (float)kinZfitter->GetMZ1Err();
                 
-                mass4lREFIT = (float)kinZfitter->GetRefitM4l();
-                mass4lErrREFIT = (float)kinZfitter->GetRefitM4lErrFullCov();
-                mass4lErr = (float)kinZfitter->GetM4lErr();
-                massZ1REFIT = (float)kinZfitter->GetRefitMZ1();
-                massZ1Err = (float)kinZfitter->GetMZ1Err();
-                
-                if (verbose) cout<<"mass4l "<<mass4l<<" mass4lREFIT "<<mass4lREFIT<<" massErr "<<mass4lErr<<" massErrREFIT "<<mass4lErrREFIT<<" massZ1REFIT "<<massZ1REFIT<<endl;
+                    if (verbose) cout<<"mass4l "<<mass4l<<" mass4lREFIT "<<mass4lREFIT<<" massErr "<<mass4lErr<<" massErrREFIT "<<mass4lErrREFIT<<" massZ1REFIT "<<massZ1REFIT<<endl;
+                }
 
                 int tmpIdL1,tmpIdL2,tmpIdL3,tmpIdL4;
 
                 TLorentzVector  L11P4, L12P4, L21P4, L22P4, J1P4,  J2P4;
                 TLorentzVector Lep1, Lep2, Lep3, Lep4,  Jet1, Jet2;
 
-                TLorentzVector nullFourVector(0, 0, 0, 0);//hualin                                                                                                                                                                                   
-                Lep1.SetPtEtaPhiM(lepFSR_pt[lep_Hindex[0]],lepFSR_eta[lep_Hindex[0]],lepFSR_phi[lep_Hindex[0]],lepFSR_mass[lep_Hindex[0]]);
-                Lep2.SetPtEtaPhiM(lepFSR_pt[lep_Hindex[1]],lepFSR_eta[lep_Hindex[1]],lepFSR_phi[lep_Hindex[1]],lepFSR_mass[lep_Hindex[1]]);
-                Lep3.SetPtEtaPhiM(lepFSR_pt[lep_Hindex[2]],lepFSR_eta[lep_Hindex[2]],lepFSR_phi[lep_Hindex[2]],lepFSR_mass[lep_Hindex[2]]);
-                Lep4.SetPtEtaPhiM(lepFSR_pt[lep_Hindex[3]],lepFSR_eta[lep_Hindex[3]],lepFSR_phi[lep_Hindex[3]],lepFSR_mass[lep_Hindex[3]]);
+                TLorentzVector nullFourVector(0, 0, 0, 0);                 
+                if (foundHiggsCandidate) {
+                    Lep1.SetPtEtaPhiM(lepFSR_pt[lep_Hindex[0]],lepFSR_eta[lep_Hindex[0]],lepFSR_phi[lep_Hindex[0]],lepFSR_mass[lep_Hindex[0]]);
+                    Lep2.SetPtEtaPhiM(lepFSR_pt[lep_Hindex[1]],lepFSR_eta[lep_Hindex[1]],lepFSR_phi[lep_Hindex[1]],lepFSR_mass[lep_Hindex[1]]);
+                    Lep3.SetPtEtaPhiM(lepFSR_pt[lep_Hindex[2]],lepFSR_eta[lep_Hindex[2]],lepFSR_phi[lep_Hindex[2]],lepFSR_mass[lep_Hindex[2]]);
+                    Lep4.SetPtEtaPhiM(lepFSR_pt[lep_Hindex[3]],lepFSR_eta[lep_Hindex[3]],lepFSR_phi[lep_Hindex[3]],lepFSR_mass[lep_Hindex[3]]);
+                } else {
+                    Lep1.SetPtEtaPhiM(lepFSR_pt[0],lepFSR_eta[0],lepFSR_phi[0],lepFSR_mass[0]);
+                    Lep2.SetPtEtaPhiM(lepFSR_pt[1],lepFSR_eta[1],lepFSR_phi[1],lepFSR_mass[1]);
+                    Lep3.SetPtEtaPhiM(lepFSR_pt[2],lepFSR_eta[2],lepFSR_phi[2],lepFSR_mass[2]);
+                    Lep4.SetPtEtaPhiM(lepFSR_pt[3],lepFSR_eta[3],lepFSR_phi[3],lepFSR_mass[3]);
+                }
                 
                 if (njets_pt30_eta4p7 > 0) {
                     J1P4.SetPtEtaPhiM(jet_pt[0],jet_eta[0],jet_phi[0],jet_mass[0]);
@@ -1717,6 +1776,9 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 L12P4.SetPxPyPzE(Lep2.Px(),Lep2.Py(),Lep2.Pz(),Lep2.E()); tmpIdL2 = idL2;
                 L21P4.SetPxPyPzE(Lep3.Px(),Lep3.Py(),Lep3.Pz(),Lep3.E()); tmpIdL3 = idL3;
                 L22P4.SetPxPyPzE(Lep4.Px(),Lep4.Py(),Lep4.Pz(),Lep4.E()); tmpIdL4 = idL4;
+                if (!foundHiggsCandidate) {
+                    tmpIdL1=lep_id[0]; tmpIdL2=lep_id[1]; tmpIdL3=lep_id[2]; tmpIdL4=lep_id[3];
+                }
                 
                 vector<TLorentzVector> P4s;
                 vector<int> tmpIDs;
@@ -2001,11 +2063,11 @@ UFHZZ4LAna::findHiggsCandidate(std::vector< pat::Muon > &selectedMuons, std::vec
     vector<int> Z_lepindex2;
 
     for(unsigned int i=0; i<Nlep; i++){
-        if (!(lep_tightId[i])) continue; // checking tight lepton ID
-        if (lep_RelIsoNoFSR[i]>((abs(lep_id[i])==11) ? isoCutEl : isoCutMu)) continue; // checking iso with FSR removed
+        //if (!(lep_tightId[i])) continue; // checking tight lepton ID
+        //if (lep_RelIsoNoFSR[i]>((abs(lep_id[i])==11) ? isoCutEl : isoCutMu)) continue; // checking iso with FSR removed
         for(unsigned int j=i+1; j<Nlep; j++){
-            if (!(lep_tightId[j])) continue; // checking tight lepton ID
-            if (lep_RelIsoNoFSR[j]>((abs(lep_id[j])==11) ? isoCutEl : isoCutMu)) continue; // checking iso with FSR removed
+            //if (!(lep_tightId[j])) continue; // checking tight lepton ID
+            //if (lep_RelIsoNoFSR[j]>((abs(lep_id[j])==11) ? isoCutEl : isoCutMu)) continue; // checking iso with FSR removed
 
             // same flavor opposite charge
             if((lep_id[i]+lep_id[j])!=0) continue;
@@ -2070,8 +2132,10 @@ UFHZZ4LAna::findHiggsCandidate(std::vector< pat::Muon > &selectedMuons, std::vec
     if(!properLep_ID) return;
 
     // Consider all ZZ candidates
-    double minZ1DeltaM=9999.9;
-    double maxZ2SumPt=0.0;
+    double minZ1DeltaM_SR=9999.9; double minZ1DeltaM_CR=99999.9;
+    double maxZ2SumPt_SR=0.0; double maxZ2SumPt_CR=0.0;
+    bool foundSRCandidate=false;
+
     for (int i=0; i<n_Zs; i++) {
         for (int j=i+1; j<n_Zs; j++) {
  
@@ -2124,6 +2188,13 @@ UFHZZ4LAna::findHiggsCandidate(std::vector< pat::Muon > &selectedMuons, std::vec
                 Z1DeltaM = abs(Zj.M()-Zmass);
                 Z2SumPt = lep_i1_nofsr.Pt()+lep_i2_nofsr.Pt();
             }
+
+            // Check isolation cut (without FSR ) for Z1 leptons
+            if (lep_RelIsoNoFSR[Z1_lepindex[0]]>((abs(lep_id[Z1_lepindex[0]])==11) ? isoCutEl : isoCutMu)) continue; // checking iso with FSR removed
+            if (lep_RelIsoNoFSR[Z1_lepindex[1]]>((abs(lep_id[Z1_lepindex[1]])==11) ? isoCutEl : isoCutMu)) continue; // checking iso with FSR removed
+            // Check tight ID cut for Z1 leptons
+            if (!(lep_tightId[Z1_lepindex[0]])) continue; // checking tight lepton ID
+            if (!(lep_tightId[Z1_lepindex[1]])) continue; // checking tight lepton ID 
            
             // Check Leading and Subleading pt Cut
             vector<double> allPt;
@@ -2193,36 +2264,71 @@ UFHZZ4LAna::findHiggsCandidate(std::vector< pat::Muon > &selectedMuons, std::vec
             if (verbose) cout<<" massZ1: "<<Z1.M()<<" massZ2: "<<Z2.M()<<endl;
             if ( (Z1.M() < mZ1Low) || (Z1.M() > mZ1High) || (Z2.M() < mZ2Low) || (Z2.M() > mZ2High) ) continue;
 
-            if (verbose) cout<<"good ZZ candidate, Z1DeltaM: "<<Z1DeltaM<<" minZ1DeltaM: "<<minZ1DeltaM<<" Z2SumPt: "<<Z2SumPt<<" maxZ2SumPt: "<<maxZ2SumPt<<endl;
+            if (verbose) cout<<"good ZZ candidate, Z1DeltaM: "<<Z1DeltaM<<" minZ1DeltaM: "<<minZ1DeltaM_SR<<" Z2SumPt: "<<Z2SumPt<<" maxZ2SumPt: "<<maxZ2SumPt_SR<<endl;
 
-            // Check if this candidate has the best Z1 and highest scalar sum of Z2 lepton pt            
+            // Signal region if Z2 leptons are both tight ID Iso
+            bool signalRegion=true;
+            if (lep_RelIsoNoFSR[Z2_lepindex[0]]>((abs(lep_id[Z2_lepindex[0]])==11) ? isoCutEl : isoCutMu)) signalRegion=false; // checking iso with FSR removed
+            if (lep_RelIsoNoFSR[Z2_lepindex[1]]>((abs(lep_id[Z2_lepindex[1]])==11) ? isoCutEl : isoCutMu)) signalRegion=false; // checking iso with FSR removed
+            if (!(lep_tightId[Z2_lepindex[0]])) signalRegion=false; // checking tight lepton ID
+            if (!(lep_tightId[Z2_lepindex[1]])) signalRegion=false; // checking tight lepton ID          
+            
+            // Check if this candidate has the best Z1 and highest scalar sum of Z2 lepton pt
+            if (signalRegion) { // Signal Region has priority
+                if ( Z1DeltaM<=minZ1DeltaM_SR ) {
 
-            if ( Z1DeltaM<=minZ1DeltaM ) {
+                    minZ1DeltaM_SR = Z1DeltaM;
+                    if (Z_Hindex[0]==Z1index && Z2SumPt<maxZ2SumPt_SR) continue;
 
-                minZ1DeltaM = Z1DeltaM;
+                    Z_Hindex[0] = Z1index;
+                    lep_Hindex[0] = Z1_lepindex[0];
+                    lep_Hindex[1] = Z1_lepindex[1];
+                    
+                    maxZ2SumPt_SR = Z2SumPt;
+                    Z_Hindex[1] = Z2index;
+                    lep_Hindex[2] = Z2_lepindex[0];
+                    lep_Hindex[3] = Z2_lepindex[1];
 
-                if (Z_Hindex[0]==Z1index && Z2SumPt<maxZ2SumPt) continue;
+                    Z1Vec = Z1;
+                    Z2Vec = Z2;
+                    HVec = Z1+Z2;
+                    
+                    massZ1 = Z1Vec.M();
+                    massZ2 = Z2Vec.M();
+                    mass4l = HVec.M();
 
-                Z_Hindex[0] = Z1index;
-                lep_Hindex[0] = Z1_lepindex[0];
-                lep_Hindex[1] = Z1_lepindex[1];
+                    if (verbose) cout<<" new best candidate SR: mass4l: "<<HVec.M()<<endl;
+                    if (HVec.M()>m4lLowCut)  {
+                        foundHiggsCandidate=true;                    
+                        foundSRCandidate=true;
+                    }
+                }
+            } else if (!foundSRCandidate) { // Control regions get second priority
+                if ( Z1DeltaM<=minZ1DeltaM_CR ) {
 
-                maxZ2SumPt = Z2SumPt;
-                Z_Hindex[1] = Z2index;
-                lep_Hindex[2] = Z2_lepindex[0];
-                lep_Hindex[3] = Z2_lepindex[1];
+                    minZ1DeltaM_CR = Z1DeltaM;
+                    if (Z_Hindex[0]==Z1index && Z2SumPt<maxZ2SumPt_CR) continue;
 
-                Z1Vec = Z1;
-                Z2Vec = Z2;
-                HVec = Z1+Z2;
+                    Z_Hindex[0] = Z1index;
+                    lep_Hindex[0] = Z1_lepindex[0];
+                    lep_Hindex[1] = Z1_lepindex[1];
+                    
+                    maxZ2SumPt_CR = Z2SumPt;
+                    Z_Hindex[1] = Z2index;
+                    lep_Hindex[2] = Z2_lepindex[0];
+                    lep_Hindex[3] = Z2_lepindex[1];
 
-                massZ1 = Z1Vec.M();
-                massZ2 = Z2Vec.M();
-                mass4l = HVec.M();
+                    Z1Vec = Z1;
+                    Z2Vec = Z2;
+                    HVec = Z1+Z2;
+                    
+                    massZ1 = Z1Vec.M();
+                    massZ2 = Z2Vec.M();
+                    mass4l = HVec.M();
 
-                if (verbose) cout<<" new best candidate: mass4l: "<<HVec.M()<<endl;
-                if (HVec.M()>m4lLowCut) foundHiggsCandidate=true;
-
+                    if (verbose) cout<<" new best candidate CR: mass4l: "<<HVec.M()<<endl;
+                    if (HVec.M()>m4lLowCut) foundHiggsCandidate=true;                    
+                }
             }
 
             if (verbose) cout<<"Z_Hindex[0]: "<<Z_Hindex[0]<<" lep_Hindex[0]: "<<lep_Hindex[0]<<" lep_Hindex[1]: "<<lep_Hindex[1]
@@ -2273,6 +2379,174 @@ UFHZZ4LAna::findHiggsCandidate(std::vector< pat::Muon > &selectedMuons, std::vec
 
 }
 
+//Find Z + 1L candidate for fake rate study
+void
+UFHZZ4LAna::findZ1LCandidate(const edm::Event& iEvent )
+{
+
+    using namespace edm;
+    using namespace pat;
+    using namespace std;
+
+    const double Zmass = 91.1876;
+
+    unsigned int Nlep = lepFSR_pt.size();
+    if (verbose) cout<<Nlep<<" leptons in total"<<endl;
+    if( Nlep != 3 ) return;
+
+    // First, make all Z candidates including any FSR photons
+    int n_Zs=0;
+    vector<int> Z_Z1L_lepindex1;
+    vector<int> Z_Z1L_lepindex2;
+
+    for(unsigned int i=0; i<Nlep; i++){
+        for(unsigned int j=i+1; j<Nlep; j++){
+
+            // same flavor opposite charge
+            if((lep_id[i]+lep_id[j])!=0) continue;
+
+            TLorentzVector li, lj;
+            li.SetPtEtaPhiM(lep_pt[i],lep_eta[i],lep_phi[i],lep_mass[i]);
+            lj.SetPtEtaPhiM(lep_pt[j],lep_eta[j],lep_phi[j],lep_mass[j]);
+
+            TLorentzVector lifsr, ljfsr;
+            lifsr.SetPtEtaPhiM(lepFSR_pt[i],lepFSR_eta[i],lepFSR_phi[i],lepFSR_mass[i]);
+            ljfsr.SetPtEtaPhiM(lepFSR_pt[j],lepFSR_eta[j],lepFSR_phi[j],lepFSR_mass[j]);
+
+            TLorentzVector liljfsr = lifsr+ljfsr;
+
+            if (verbose) {
+                cout<<"OSSF pair: i="<<i<<" id1="<<lep_id[i]<<" j="<<j<<" id2="<<lep_id[j]<<" pt1: "<<lifsr.Pt()<<" pt2: "<<ljfsr.Pt()<<" M: "<<liljfsr.M()<<endl;
+            }
+
+            TLorentzVector Z, Z_noFSR;
+            Z = lifsr+ljfsr;
+            Z_noFSR = li+lj;
+
+            if (verbose) cout<<"this Z mass: "<<Z.M()<<" mZ2Low: "<<mZ2Low<<endl;
+
+            if (Z.M()>0.0) {
+                n_Zs++;
+                Z_Z1L_lepindex1.push_back(i);
+                Z_Z1L_lepindex2.push_back(j);
+                if (verbose) cout<<" add Z_lepindex1: "<<i<<" Z_lepindex2: "<<j<<endl;
+            }
+
+        } // lep i
+    } // lep j
+
+    bool properLep_ID = false; int Nmm = 0; int Nmp = 0; int Nem = 0; int Nep = 0;
+    for(unsigned int i =0; i<recoMuons.size(); i++) {
+        if(recoMuons[i].pdgId()<0) Nmm = Nmm+1;
+        if(recoMuons[i].pdgId()>0) Nmp = Nmp+1;
+    }
+    for(unsigned int i =0; i<recoElectrons.size(); i++) {
+        if(recoElectrons[i].pdgId()<0) Nem = Nem+1;
+        if(recoElectrons[i].pdgId()>0) Nep = Nep+1;
+    }
+
+    if(Nmm>=1 && Nmp>=1) properLep_ID = true; //2mu + x
+    if(Nem>=1 && Nep>=1) properLep_ID = true; //2e + x
+
+    // proper charge flavor combination for Z + 1L
+    if(!properLep_ID) return;
+
+    if (verbose) cout<<"found three leptons"<<endl;
+
+    // Consider all Z candidates
+    double minZ1DeltaM=9999.9;
+    for (int i=0; i<n_Zs; i++) {
+
+        int i1 = Z_Z1L_lepindex1[i]; int i2 = Z_Z1L_lepindex2[i];
+        int j1 = 3 - i1 - i2; // index of the third lepton (check if this works)
+
+        TLorentzVector lep_i1, lep_i2, lep_j1;
+        lep_i1.SetPtEtaPhiM(lepFSR_pt[i1],lepFSR_eta[i1],lepFSR_phi[i1],lepFSR_mass[i1]);
+        lep_i2.SetPtEtaPhiM(lepFSR_pt[i2],lepFSR_eta[i2],lepFSR_phi[i2],lepFSR_mass[i2]);
+        lep_j1.SetPtEtaPhiM(lepFSR_pt[j1],lepFSR_eta[j1],lepFSR_phi[j1],lepFSR_mass[j1]);
+
+        TLorentzVector lep_i1_nofsr, lep_i2_nofsr, lep_j1_nofsr;
+        lep_i1_nofsr.SetPtEtaPhiM(lep_pt[i1],lep_eta[i1],lep_phi[i1],lep_mass[i1]);
+        lep_i2_nofsr.SetPtEtaPhiM(lep_pt[i2],lep_eta[i2],lep_phi[i2],lep_mass[i2]);
+        lep_j1_nofsr.SetPtEtaPhiM(lep_pt[j1],lep_eta[j1],lep_phi[j1],lep_mass[j1]);
+
+        TLorentzVector Zi;
+        Zi = lep_i1+lep_i2;
+        //Zi.SetPtEtaPhiM(Z_Z1L_pt[i],Z_Z1L_eta[i],Z_Z1L_phi[i],Z_Z1L_mass[i]);
+
+        if (verbose) {cout<<"Z candidate Zi->M() "<<Zi.M()<<endl;}
+
+        TLorentzVector Z1 = Zi;
+        double Z1DeltaM = abs(Zi.M()-Zmass);
+        int Z1_lepindex[2] = {0,0};
+        if (lep_i1.Pt()>lep_i2.Pt()) { Z1_lepindex[0] = i1;  Z1_lepindex[1] = i2; }
+        else { Z1_lepindex[0] = i2;  Z1_lepindex[1] = i1; }
+
+        // Check Leading and Subleading pt Cut
+        vector<double> allPt;
+        allPt.push_back(lep_i1.Pt()); allPt.push_back(lep_i2.Pt());
+        std::sort(allPt.begin(), allPt.end());
+        if (verbose) cout<<" leading pt: "<<allPt[1]<<" cut: "<<leadingPtCut<<" subleadingPt: "<<allPt[0]<<" cut: "<<subleadingPtCut<<endl;
+        if (allPt[1]<leadingPtCut || allPt[0]<subleadingPtCut ) continue;
+
+        // Check dR(li,lj)>0.02 for any i,j
+        vector<double> alldR;
+        alldR.push_back(deltaR(lep_i1.Eta(),lep_i1.Phi(),lep_i2.Eta(),lep_i2.Phi()));
+        alldR.push_back(deltaR(lep_i1.Eta(),lep_i1.Phi(),lep_j1.Eta(),lep_j1.Phi()));
+        alldR.push_back(deltaR(lep_i2.Eta(),lep_i2.Phi(),lep_j1.Eta(),lep_j1.Phi()));
+        if (verbose) cout<<" minDr: "<<*min_element(alldR.begin(),alldR.end())<<endl;
+        if (*min_element(alldR.begin(),alldR.end())<0.02) continue;
+
+        // Check M(l+,l-)>4.0 GeV for any OS pair
+        // Do not include FSR photons
+        vector<double> allM;
+        TLorentzVector i1i2;
+        i1i2 = (lep_i1_nofsr)+(lep_i2_nofsr); allM.push_back(i1i2.M());
+        if (lep_id[i1]*lep_id[j1]<0) {
+            TLorentzVector i1j1;
+            i1j1 = (lep_i1_nofsr)+(lep_j1_nofsr); allM.push_back(i1j1.M());
+        } else {
+            TLorentzVector i2j1;
+            i2j1 = (lep_i2_nofsr)+(lep_j1_nofsr); allM.push_back(i2j1.M());
+        }
+        if (verbose) cout<<" min m(l+l-): "<<*min_element(allM.begin(),allM.end())<<endl;
+        if (*min_element(allM.begin(),allM.end())<4.0) {passedQCDcut=false; continue;}
+
+        // Check isolation cut (without FSR ) for Z1 leptons
+        if (lep_RelIsoNoFSR[Z1_lepindex[0]]>((abs(lep_id[Z1_lepindex[0]])==11) ? isoCutEl : isoCutMu)) continue; // checking iso with FSR removed
+        if (lep_RelIsoNoFSR[Z1_lepindex[1]]>((abs(lep_id[Z1_lepindex[1]])==11) ? isoCutEl : isoCutMu)) continue; // checking iso with FSR removed
+        // Check tight ID cut for Z1 leptons
+        if (!(lep_tightId[Z1_lepindex[0]])) continue; // checking tight lepton ID
+        if (!(lep_tightId[Z1_lepindex[1]])) continue; // checking tight lepton ID
+
+        if ( (Z1.M() < mZ1Low) || (Z1.M() > mZ1High) ) continue;
+
+        if (verbose) cout<<"good Z1L candidate, Z1DeltaM: "<<Z1DeltaM<<" minZ1DeltaM: "<<minZ1DeltaM<<endl;
+
+        // Check if this candidate has the best Z1 and highest scalar sum of Z2 lepton pt
+
+        if ( Z1DeltaM<=minZ1DeltaM ) {
+
+            minZ1DeltaM = Z1DeltaM;
+
+            //lep_Hindex[0] = Z1_lepindex[0];
+            //lep_Hindex[1] = Z1_lepindex[1];
+            //lep_Hindex[2] = j1;
+
+            TLorentzVector Z1L;
+            Z1L = Z1+lep_j1;
+
+            massZ1 = Z1.M();
+            mass3l = Z1L.M();
+
+            if (verbose) cout<<" new best Z1L candidate: massZ1: "<<massZ1<<" (mass3l: "<<mass3l<<")"<<endl;
+            foundZ1LCandidate=true;
+
+        }
+    }   
+}
+
+
 void UFHZZ4LAna::bookPassedEventTree(TString treeName, TTree *tree)
 {     
 
@@ -2295,6 +2569,10 @@ void UFHZZ4LAna::bookPassedEventTree(TString treeName, TTree *tree)
     tree->Branch("passedFullSelection",&passedFullSelection,"passedFullSelection/O");
     tree->Branch("passedZ4lSelection",&passedZ4lSelection,"passedZ4lSelection/O");
     tree->Branch("passedQCDcut",&passedQCDcut,"passedQCDcut/O");
+    tree->Branch("passedZ1LSelection",&passedZ1LSelection,"passedZ1LSelection/O");
+    tree->Branch("passedZ4lZXCRSelection",&passedZ4lZXCRSelection,"passedZ4lZXCRSelection/O");
+    tree->Branch("passedZXCRSelection",&passedZXCRSelection,"passedZXCRSelection/O");
+    tree->Branch("nZXCRFailedLeptons",&nZXCRFailedLeptons,"nZXCRFailedLeptons/I");
     tree->Branch("genWeight",&genWeight,"genWeight/F");
     tree->Branch("k_ggZZ",&k_ggZZ,"k_ggZZ/F");
     tree->Branch("k_qqZZ_qcd_dPhi",&k_qqZZ_qcd_dPhi,"k_qqZZ_qcd_dPhi/F");
@@ -2394,6 +2672,7 @@ void UFHZZ4LAna::bookPassedEventTree(TString treeName, TTree *tree)
     tree->Branch("cosThetaStar",&cosThetaStar,"cosThetaStar/F");
     tree->Branch("Phi",&Phi,"Phi/F");
     tree->Branch("Phi1",&Phi1,"Phi1/F");
+    tree->Branch("mass3l",&mass3l,"mass3l/F");
 
     // Z candidate variables
     tree->Branch("Z_pt",&Z_pt_float);
@@ -2415,22 +2694,27 @@ void UFHZZ4LAna::bookPassedEventTree(TString treeName, TTree *tree)
     tree->Branch("met_phi",&met_phi,"met_phi/F");
 
     // Jets
+    tree->Branch("jet_iscleanH4l",&jet_iscleanH4l);
     tree->Branch("jet_pt",&jet_pt_float);
     tree->Branch("jet_eta",&jet_eta_float);
     tree->Branch("jet_phi",&jet_phi_float);
     tree->Branch("jet_mass",&jet_mass_float);
+    tree->Branch("jet_jesup_iscleanH4l",&jet_jesup_iscleanH4l);
     tree->Branch("jet_jesup_pt",&jet_jesup_pt_float);
     tree->Branch("jet_jesup_eta",&jet_jesup_eta_float);
     tree->Branch("jet_jesup_phi",&jet_jesup_phi_float);
     tree->Branch("jet_jesup_mass",&jet_jesup_mass_float);
+    tree->Branch("jet_jesdn_iscleanH4l",&jet_jesdn_iscleanH4l);
     tree->Branch("jet_jesdn_pt",&jet_jesdn_pt_float);
     tree->Branch("jet_jesdn_eta",&jet_jesdn_eta_float);
     tree->Branch("jet_jesdn_phi",&jet_jesdn_phi_float);
     tree->Branch("jet_jesdn_mass",&jet_jesdn_mass_float);
+    tree->Branch("jet_jerup_iscleanH4l",&jet_jerup_iscleanH4l);
     tree->Branch("jet_jerup_pt",&jet_jerup_pt_float);
     tree->Branch("jet_jerup_eta",&jet_jerup_eta_float);
     tree->Branch("jet_jerup_phi",&jet_jerup_phi_float);
     tree->Branch("jet_jerup_mass",&jet_jerup_mass_float);
+    tree->Branch("jet_jerdn_iscleanH4l",&jet_jerdn_iscleanH4l);
     tree->Branch("jet_jerdn_pt",&jet_jerdn_pt_float);
     tree->Branch("jet_jerdn_eta",&jet_jerdn_eta_float);
     tree->Branch("jet_jerdn_phi",&jet_jerdn_phi_float);
@@ -2598,9 +2882,9 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
 
         if (verbose) cout<<"jet pt: "<<goodJets[k].pt()<<" eta: "<<goodJets[k].eta()<<" phi: "<<goodJets[k].phi()<<endl;
 
-        bool isDeltaR_eta4p7 = true;
+        bool isclean_H4l = true;
 
-        // check overlap with isolated leptons
+        // check overlap with tight ID isolated leptons
         unsigned int Nleptons = lep_pt.size();
         for (unsigned int i=0; i<Nleptons; i++) {
             if (abs(lep_id[i])==13 && lep_RelIsoNoFSR[i]>isoCutMu) continue;
@@ -2611,7 +2895,7 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
             tempDeltaR=999.0;
             tempDeltaR=deltaR(goodJets[k].eta(),goodJets[k].phi(),thisLep.Eta(),thisLep.Phi());
             if (tempDeltaR<0.4) {
-                isDeltaR_eta4p7 = false;
+                isclean_H4l = false;
             }
         }
 
@@ -2629,7 +2913,7 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
             tempDeltaR=999.0;
             tempDeltaR=deltaR(goodJets[k].eta(),goodJets[k].phi(),pho.Eta(),pho.Phi());
             if (tempDeltaR<0.4) {
-                isDeltaR_eta4p7 = false;
+                isclean_H4l = false;
             }
         }
 
@@ -2725,54 +3009,56 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
         double jecunc_dn = 1.0-jecunc->getUncertainty(false);
 
         if (jet_jer->Pt() > 30.0 && fabs(goodJets[k].eta())<4.7) {
-            if (isDeltaR_eta4p7) { 
+            if (isclean_H4l) { 
                 njets_pt30_eta4p7++;
                 if (jet_jer->Pt() > pt_leadingjet_pt30_eta4p7) {
                     pt_leadingjet_pt30_eta4p7 = jet_jer->Pt();
                     absrapidity_leadingjet_pt30_eta4p7 = jet_jer->Rapidity(); //take abs later
                 }
-                jet_pt.push_back(jet_jer->Pt());
-                jet_eta.push_back(jet_jer->Eta());
-                jet_phi.push_back(jet_jer->Phi());
-                jet_mass.push_back(jet_jer->M());
-                jet_pumva.push_back(goodJets[k].userFloat("pileupJetId:fullDiscriminant"));
-                jet_csvv2.push_back(goodJets[k].bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
-                jet_isbtag.push_back(1 ? goodJets[k].bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags")>BTagCut : 0);
-                if (goodJets[k].bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags")>BTagCut) nbjets_pt30_eta4p7++;
             }
+            jet_iscleanH4l.push_back(isclean_H4l?1:0);
+            jet_pt.push_back(jet_jer->Pt());
+            jet_eta.push_back(jet_jer->Eta());
+            jet_phi.push_back(jet_jer->Phi());
+            jet_mass.push_back(jet_jer->M());
+            jet_pumva.push_back(goodJets[k].userFloat("pileupJetId:fullDiscriminant"));
+            jet_csvv2.push_back(goodJets[k].bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
+            jet_isbtag.push_back(1 ? goodJets[k].bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags")>BTagCut : 0);
+            if (goodJets[k].bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags")>BTagCut && isclean_H4l) nbjets_pt30_eta4p7++;
         }
         
         // JER up
         if (jet_jerup->Pt() > 30.0 && fabs(jet_jerup->Eta())<4.7) {
-            if (isDeltaR_eta4p7) {
+            if (isclean_H4l) {
                 njets_pt30_eta4p7_jerup++;
                 if (jet_jerup->Pt() > pt_leadingjet_pt30_eta4p7_jerup) {
                     pt_leadingjet_pt30_eta4p7_jerup = jet_jerup->Pt();
                     absrapidity_leadingjet_pt30_eta4p7_jerup = jet_jerup->Rapidity(); //take abs later
                 }
-                TLorentzVector jet_jerup(jetPx_jerup,jetPy_jerup,jetPz_jerup,jetE_jerup);
-                jet_jerup_pt.push_back(jet_jerup.Pt());
-                jet_jerup_eta.push_back(jet_jerup.Eta());
-                jet_jerup_phi.push_back(jet_jerup.Phi());
-                jet_jerup_mass.push_back(jet_jerup.M());
-
             }
+            TLorentzVector jet_jerup(jetPx_jerup,jetPy_jerup,jetPz_jerup,jetE_jerup);
+            jet_jerup_iscleanH4l.push_back(isclean_H4l?1:0);
+            jet_jerup_pt.push_back(jet_jerup.Pt());
+            jet_jerup_eta.push_back(jet_jerup.Eta());
+            jet_jerup_phi.push_back(jet_jerup.Phi());
+            jet_jerup_mass.push_back(jet_jerup.M());            
         }
 
         // JER dn
         if (jet_jerdn->Pt() > 30.0 && fabs(jet_jerdn->Eta())<4.7) {
-            if (isDeltaR_eta4p7) {
+            if (isclean_H4l) {
                 njets_pt30_eta4p7_jerdn++;
                 if (jet_jerdn->Pt() > pt_leadingjet_pt30_eta4p7_jerdn) {
                     pt_leadingjet_pt30_eta4p7_jerdn = jet_jerdn->Pt();
                     absrapidity_leadingjet_pt30_eta4p7_jerdn = jet_jerdn->Rapidity(); //take abs later
                 }
-                TLorentzVector jet_jerdn(jetPx_jerdn,jetPy_jerdn,jetPz_jerdn,jetE_jerdn);
-                jet_jerdn_pt.push_back(jet_jerdn.Pt());
-                jet_jerdn_eta.push_back(jet_jerdn.Eta());
-                jet_jerdn_phi.push_back(jet_jerdn.Phi());
-                jet_jerdn_mass.push_back(jet_jerdn.M());
             }
+            TLorentzVector jet_jerdn(jetPx_jerdn,jetPy_jerdn,jetPz_jerdn,jetE_jerdn);
+            jet_jerdn_iscleanH4l.push_back(isclean_H4l?1:0);
+            jet_jerdn_pt.push_back(jet_jerdn.Pt());
+            jet_jerdn_eta.push_back(jet_jerdn.Eta());
+            jet_jerdn_phi.push_back(jet_jerdn.Phi());
+            jet_jerdn_mass.push_back(jet_jerdn.M());
         }
 
         double jetPx_jesup = jecunc_up * jet_jer->Px();
@@ -2782,18 +3068,19 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
         TLorentzVector *jet_jesup = new TLorentzVector(jetPx_jesup,jetPy_jesup,jetPz_jesup,jetE_jesup);
             
         if (jet_jesup->Pt() > 30.0 && fabs(jet_jesup->Eta())<4.7) {
-            if (isDeltaR_eta4p7) {
+            if (isclean_H4l) {
                 njets_pt30_eta4p7_jesup++;
                 if (jet_jesup->Pt() > pt_leadingjet_pt30_eta4p7_jesup) {
                     pt_leadingjet_pt30_eta4p7_jesup = jet_jesup->Pt();
                     absrapidity_leadingjet_pt30_eta4p7_jesup = jet_jesup->Rapidity(); //take abs later
                 }                             
-                TLorentzVector jet_jesup(jetPx_jesup,jetPy_jesup,jetPz_jesup,jetE_jesup);
-                jet_jesup_pt.push_back(jet_jesup.Pt());
-                jet_jesup_eta.push_back(jet_jesup.Eta());
-                jet_jesup_phi.push_back(jet_jesup.Phi());
-                jet_jesup_mass.push_back(jet_jesup.M());
             }
+            TLorentzVector jet_jesup(jetPx_jesup,jetPy_jesup,jetPz_jesup,jetE_jesup);
+            jet_jesup_iscleanH4l.push_back(isclean_H4l?1:0);
+            jet_jesup_pt.push_back(jet_jesup.Pt());
+            jet_jesup_eta.push_back(jet_jesup.Eta());
+            jet_jesup_phi.push_back(jet_jesup.Phi());
+            jet_jesup_mass.push_back(jet_jesup.M());
         }
 
         double jetPx_jesdn = jecunc_dn * jet_jer->Px();
@@ -2803,20 +3090,22 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
         TLorentzVector *jet_jesdn = new TLorentzVector(jetPx_jesdn,jetPy_jesdn,jetPz_jesdn,jetE_jesdn);
 
         if (jet_jesdn->Pt() > 30.0 && fabs(jet_jesdn->Eta())<4.7) {
-            if (isDeltaR_eta4p7) {
+            if (isclean_H4l) {
                 njets_pt30_eta4p7_jesdn++;
                 if (jet_jesdn->Pt() > pt_leadingjet_pt30_eta4p7_jesdn) {
                     pt_leadingjet_pt30_eta4p7_jesdn = jet_jesdn->Pt();
                     absrapidity_leadingjet_pt30_eta4p7_jesdn = jet_jesdn->Rapidity(); //take abs later
-                }                
-                TLorentzVector jet_jesdn(jetPx_jesdn,jetPy_jesdn,jetPz_jesdn,jetE_jesdn);
-                jet_jesdn_pt.push_back(jet_jesdn.Pt());
-                jet_jesdn_eta.push_back(jet_jesdn.Eta());
-                jet_jesdn_phi.push_back(jet_jesdn.Phi());
-                jet_jesdn_mass.push_back(jet_jesdn.M());
+                }        
             }
+            TLorentzVector jet_jesdn(jetPx_jesdn,jetPy_jesdn,jetPz_jesdn,jetE_jesdn);
+            jet_jesdn_iscleanH4l.push_back(isclean_H4l?1:0);
+            jet_jesdn_pt.push_back(jet_jesdn.Pt());
+            jet_jesdn_eta.push_back(jet_jesdn.Eta());
+            jet_jesdn_phi.push_back(jet_jesdn.Phi());
+            jet_jesdn_mass.push_back(jet_jesdn.M());
         }
-        
+
+       
     } // loop over jets
 
     if(njets_pt30_eta4p7>1){

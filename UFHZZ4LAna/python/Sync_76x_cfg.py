@@ -31,7 +31,7 @@ myfilelist.extend( [
 
 process.source = cms.Source("PoolSource",fileNames = myfilelist,
                             duplicateCheckMode = cms.untracked.string('noDuplicateCheck'),
-#                            eventsToProcess = cms.untracked.VEventRange('1:15924-1:15971'),
+#                            eventsToProcess = cms.untracked.VEventRange('1:54423-1:54423'),
                             inputCommands = cms.untracked.vstring('keep *',
                                                                   'drop LHEEventProduct_*_*_*',
                                                                   'drop LHERunInfoProduct_*_*_*')
@@ -145,8 +145,8 @@ process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
                               photonSrc    = cms.untracked.InputTag("slimmedPhotons"),
                               electronSrc  = cms.untracked.InputTag("mvaSpring15NonTrig25nsV1","NonTrig"),
                               muonSrc      = cms.untracked.InputTag("calibratedMuons"),
-                              jetSrc       = cms.untracked.InputTag("slimmedJets"),
-#                              jetSrc       = cms.untracked.InputTag("slimmedJetsJEC"),
+#                              jetSrc       = cms.untracked.InputTag("slimmedJets"),
+                              jetSrc       = cms.untracked.InputTag("slimmedJetsJEC"),
                               metSrc       = cms.untracked.InputTag("slimmedMETs"),   
                               vertexSrc    = cms.untracked.InputTag("offlineSlimmedPrimaryVertices"),
                               beamSpotSrc  = cms.untracked.InputTag("offlineBeamSpot"),
@@ -194,7 +194,7 @@ process.p = cms.Path(process.fsrPhotonSequence*
                      process.calibratedPatElectrons*
 #                     process.electronMVAValueMapProducer*
                      process.mvaSpring15NonTrig25nsV1*
-#                     process.jetCorrFactors*
-#                     process.slimmedJetsJEC*
+                     process.jetCorrFactors*
+                     process.slimmedJetsJEC*
                      process.Ana
                      )
