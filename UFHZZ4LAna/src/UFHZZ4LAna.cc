@@ -244,55 +244,30 @@ private:
     vector<int> pdfWeightIDs;
     float pdfRMSup, pdfRMSdown, pdfENVup, pdfENVdown;
     // lepton variables
-    vector<double> lep_pt;
-    vector<double> lep_pterr;
-    vector<double> lep_pterrold;
-    vector<double> lep_eta;
-    vector<double> lep_phi;
-    vector<double> lep_mass;
-    vector<double> lepFSR_pt;
-    vector<double> lepFSR_eta;
-    vector<double> lepFSR_phi;
-    vector<double> lepFSR_mass;
+    vector<double> lep_pt; vector<double> lep_pterr; vector<double> lep_pterrold;
+    vector<double> lep_eta; vector<double> lep_phi; vector<double> lep_mass;
+    vector<double> lepFSR_pt; vector<double> lepFSR_eta; vector<double> lepFSR_phi; vector<double> lepFSR_mass;
     int lep_Hindex[4];//position of Higgs candidate leptons in lep_p4: 0 = Z1 lead, 1 = Z1 sub, 2 = Z2 lead, 3 = Z2 sub
     float pTL1, pTL2, pTL3, pTL4;
     float etaL1, etaL2, etaL3, etaL4;
     int idL1, idL2, idL3, idL4;
     float pTL1FSR, pTL2FSR, pTL3FSR, pTL4FSR;
-    vector<float> lep_dataMC;
-    vector<float> lep_dataMCErr;
+    vector<float> lep_dataMC; vector<float> lep_dataMCErr;
     vector<int> lep_genindex; //position of lepton in GENlep_p4 (if gen matched, -1 if not gen matched)
     vector<int> lep_id;
-    vector<float> lep_mva;
-    vector<int> lep_ecalDriven;
-    vector<int> lep_tightId;
-    vector<int> lep_tightIdSUS;
-    vector<float> lep_Sip;
-    vector<float> lep_IP;
-    vector<float> lep_isoNH;
-    vector<float> lep_isoCH;
-    vector<float> lep_isoPhot;
-    vector<float> lep_isoPU;
-    vector<float> lep_isoPUcorr;
-    vector<float> lep_RelIso;
-    vector<float> lep_RelIsoNoFSR;
-    vector<float> lep_MiniIso;
-    vector<float> lep_ptRatio;
-    vector<float> lep_ptRel;
+    vector<float> lep_mva; vector<int> lep_ecalDriven; vector<int> lep_tightId; vector<int> lep_tightIdSUS;
+    vector<float> lep_Sip; vector<float> lep_IP; vector<float> lep_isoNH; vector<float> lep_isoCH; vector<float> lep_isoPhot;
+    vector<float> lep_isoPU; vector<float> lep_isoPUcorr; 
+    vector<float> lep_RelIso; vector<float> lep_RelIsoNoFSR; vector<float> lep_MiniIso; 
+    vector<float> lep_ptRatio; vector<float> lep_ptRel;
     vector<int> lep_missingHits;
     vector<string> lep_filtersMatched; // for each lepton, all filters it is matched to
     int nisoleptons;
     double muRho, elRho, rhoSUS;
 
     // Higgs candidate variables
-    vector<double> H_pt;
-    vector<double> H_eta;
-    vector<double> H_phi;
-    vector<double> H_mass;
-    vector<double> H_noFSR_pt;
-    vector<double> H_noFSR_eta;
-    vector<double> H_noFSR_phi;
-    vector<double> H_noFSR_mass;
+    vector<double> H_pt; vector<double> H_eta; vector<double> H_phi; vector<double> H_mass;
+    vector<double> H_noFSR_pt; vector<double> H_noFSR_eta; vector<double> H_noFSR_phi; vector<double> H_noFSR_mass;
     float mass4l, mass4l_noFSR, mass4e, mass4mu, mass2e2mu, pT4l, eta4l, phi4l, rapidity4l;
     float cosTheta1, cosTheta2, cosThetaStar, Phi, Phi1;
     float mass3l;
@@ -301,111 +276,67 @@ private:
     float mass4lREFIT, massZ1REFIT, massZ1Err, mass4lErr, mass4lErrREFIT;
 
     // Z candidate variables
-    vector<double> Z_pt;
-    vector<double> Z_eta;
-    vector<double> Z_phi;
-    vector<double> Z_mass;
-    vector<double> Z_noFSR_pt;
-    vector<double> Z_noFSR_eta;
-    vector<double> Z_noFSR_phi;
-    vector<double> Z_noFSR_mass;
+    vector<double> Z_pt; vector<double> Z_eta; vector<double> Z_phi; vector<double> Z_mass;
+    vector<double> Z_noFSR_pt; vector<double> Z_noFSR_eta; vector<double> Z_noFSR_phi; vector<double> Z_noFSR_mass;
     int Z_Hindex[2]; // position of Z1 and Z2 in Z_p4
     float massZ1, massZ2, pTZ1, pTZ2;
 
     // MET
-    float met;
-    float met_phi;
+    float met; float met_phi;
 
     // Jets
     vector<int>    jet_iscleanH4l;
-    vector<double> jet_pt;
-    vector<double> jet_eta;
-    vector<double> jet_phi;
-    vector<double> jet_mass;
-    vector<float>  jet_pumva, jet_csvv2;
-    vector<int>    jet_isbtag;
-    vector<float>  jet_QGTagger;
-    vector<float>  jet_relpterr;
-    vector<float>  jet_phierr;
+    vector<double> jet_pt; vector<double> jet_eta; vector<double> jet_phi; vector<double> jet_mass;
+    vector<float>  jet_pumva, jet_csvv2; vector<int> jet_isbtag;  vector<float> jet_QGTagger;
+    vector<float>  jet_relpterr; vector<float>  jet_phierr;
     vector<int>    jet_jesup_iscleanH4l;
-    vector<double> jet_jesup_pt;
-    vector<double> jet_jesup_eta;
-    vector<double> jet_jesup_phi;
-    vector<double> jet_jesup_mass;
+    vector<double> jet_jesup_pt; vector<double> jet_jesup_eta; 
+    vector<double> jet_jesup_phi; vector<double> jet_jesup_mass;
     vector<int>    jet_jesdn_iscleanH4l;
-    vector<double> jet_jesdn_pt;
-    vector<double> jet_jesdn_eta;
-    vector<double> jet_jesdn_phi;
-    vector<double> jet_jesdn_mass;
+    vector<double> jet_jesdn_pt; vector<double> jet_jesdn_eta; 
+    vector<double> jet_jesdn_phi; vector<double> jet_jesdn_mass;
     vector<int>    jet_jerup_iscleanH4l;
-    vector<double> jet_jerup_pt;
-    vector<double> jet_jerup_eta;
-    vector<double> jet_jerup_phi;
-    vector<double> jet_jerup_mass;
+    vector<double> jet_jerup_pt; vector<double> jet_jerup_eta; 
+    vector<double> jet_jerup_phi; vector<double> jet_jerup_mass;
     vector<int>    jet_jerdn_iscleanH4l;
-    vector<double> jet_jerdn_pt;
-    vector<double> jet_jerdn_eta;
-    vector<double> jet_jerdn_phi;
-    vector<double> jet_jerdn_mass;    
-    int njets_pt30_eta4p7;
-    int njets_pt30_eta4p7_jesup;
-    int njets_pt30_eta4p7_jesdn;
-    int njets_pt30_eta4p7_jerup;
-    int njets_pt30_eta4p7_jerdn;
-    int nbjets_pt30_eta4p7;
-    int nvjets_pt40_eta2p4;
+    vector<double> jet_jerdn_pt; vector<double> jet_jerdn_eta; 
+    vector<double> jet_jerdn_phi; vector<double> jet_jerdn_mass;    
+    int njets_pt30_eta4p7; int njets_pt30_eta4p7_jesup; int njets_pt30_eta4p7_jesdn; 
+    int njets_pt30_eta4p7_jerup; int njets_pt30_eta4p7_jerdn;
+    int nbjets_pt30_eta4p7; int nvjets_pt40_eta2p4;
     float pt_leadingjet_pt30_eta4p7;
-    float pt_leadingjet_pt30_eta4p7_jesup;
-    float pt_leadingjet_pt30_eta4p7_jesdn;
-    float pt_leadingjet_pt30_eta4p7_jerup;
-    float pt_leadingjet_pt30_eta4p7_jerdn;
+    float pt_leadingjet_pt30_eta4p7_jesup; float pt_leadingjet_pt30_eta4p7_jesdn;
+    float pt_leadingjet_pt30_eta4p7_jerup; float pt_leadingjet_pt30_eta4p7_jerdn;
     float absrapidity_leadingjet_pt30_eta4p7;
-    float absrapidity_leadingjet_pt30_eta4p7_jesup;
-    float absrapidity_leadingjet_pt30_eta4p7_jesdn;
-    float absrapidity_leadingjet_pt30_eta4p7_jerup;
-    float absrapidity_leadingjet_pt30_eta4p7_jerdn;
+    float absrapidity_leadingjet_pt30_eta4p7_jesup; float absrapidity_leadingjet_pt30_eta4p7_jesdn;
+    float absrapidity_leadingjet_pt30_eta4p7_jerup; float absrapidity_leadingjet_pt30_eta4p7_jerdn;
     float absdeltarapidity_hleadingjet_pt30_eta4p7;
-    float absdeltarapidity_hleadingjet_pt30_eta4p7_jesup;
-    float absdeltarapidity_hleadingjet_pt30_eta4p7_jesdn;
-    float absdeltarapidity_hleadingjet_pt30_eta4p7_jerup;
-    float absdeltarapidity_hleadingjet_pt30_eta4p7_jerdn;
-    float DijetMass, DijetDEta;
-    float DijetFisher;
+    float absdeltarapidity_hleadingjet_pt30_eta4p7_jesup; float absdeltarapidity_hleadingjet_pt30_eta4p7_jesdn;
+    float absdeltarapidity_hleadingjet_pt30_eta4p7_jerup; float absdeltarapidity_hleadingjet_pt30_eta4p7_jerdn;
+    float DijetMass, DijetDEta, DijetFisher;
 
     // merged jets
     vector<int>   mergedjet_iscleanH4l;
-    vector<float> mergedjet_pt;
-    vector<float> mergedjet_eta;
-    vector<float> mergedjet_phi;
-    vector<float> mergedjet_mass;
+    vector<float> mergedjet_pt; vector<float> mergedjet_eta; vector<float> mergedjet_phi; vector<float> mergedjet_mass;
     
-    vector<float> mergedjet_tau1;
-    vector<float> mergedjet_tau2;
+    vector<float> mergedjet_tau1; vector<float> mergedjet_tau2;
     
     vector<float> mergedjet_L1;
-    vector<float> mergedjet_prunedmass;
-    vector<float> mergedjet_softdropmass;
+    vector<float> mergedjet_prunedmass; vector<float> mergedjet_softdropmass;
     
     vector<int> mergedjet_nsubjet;
-    vector<vector<float> > mergedjet_subjet_pt;
-    vector<vector<float> > mergedjet_subjet_eta;
-    vector<vector<float> > mergedjet_subjet_phi;
-    vector<vector<float> > mergedjet_subjet_mass;
+    vector<vector<float> > mergedjet_subjet_pt; vector<vector<float> > mergedjet_subjet_eta;
+    vector<vector<float> > mergedjet_subjet_phi; vector<vector<float> > mergedjet_subjet_mass;
     vector<vector<float> > mergedjet_subjet_btag;
         
     // FSR Photons
     int nFSRPhotons;
     vector<int> fsrPhotons_lepindex; 
-    vector<double> fsrPhotons_pt;
-    vector<double> fsrPhotons_pterr;
-    vector<double> fsrPhotons_eta;
-    vector<double> fsrPhotons_phi;
+    vector<double> fsrPhotons_pt; vector<double> fsrPhotons_pterr;
+    vector<double> fsrPhotons_eta; vector<double> fsrPhotons_phi;
     vector<double> fsrPhotons_mass;
-    vector<float> fsrPhotons_dR;
-    vector<float> fsrPhotons_iso;
-    vector<float> allfsrPhotons_dR;
-    vector<float> allfsrPhotons_pt;
-    vector<float> allfsrPhotons_iso;
+    vector<float> fsrPhotons_dR; vector<float> fsrPhotons_iso;
+    vector<float> allfsrPhotons_dR; vector<float> allfsrPhotons_pt; vector<float> allfsrPhotons_iso;
 
     // Z4l? FIXME
     float theta12, theta13, theta14;  
@@ -425,35 +356,21 @@ private:
     bool passedFiducialSelection;
 
     // lepton variables
-    vector<double> GENlep_pt; 
-    vector<double> GENlep_eta; 
-    vector<double> GENlep_phi; 
-    vector<double> GENlep_mass; 
-    vector<int> GENlep_id; 
-    vector<int> GENlep_status; 
-    vector<int> GENlep_MomId; 
-    vector<int> GENlep_MomMomId;
+    vector<double> GENlep_pt; vector<double> GENlep_eta; vector<double> GENlep_phi; vector<double> GENlep_mass; 
+    vector<int> GENlep_id; vector<int> GENlep_status; 
+    vector<int> GENlep_MomId; vector<int> GENlep_MomMomId;
     int GENlep_Hindex[4];//position of Higgs candidate leptons in lep_p4: 0 = Z1 lead, 1 = Z1 sub, 2 = Z2 lead, 3 = Z3 sub
-    vector<float> GENlep_isoCH; 
-    vector<float> GENlep_isoNH; 
-    vector<float> GENlep_isoPhot;
-    vector<float> GENlep_RelIso; 
+    vector<float> GENlep_isoCH; vector<float> GENlep_isoNH; vector<float> GENlep_isoPhot; vector<float> GENlep_RelIso; 
 
 
     // Higgs candidate variables (calculated using selected gen leptons)
-    vector<double> GENH_pt; 
-    vector<double> GENH_eta; 
-    vector<double> GENH_phi; 
-    vector<double> GENH_mass; 
+    vector<double> GENH_pt; vector<double> GENH_eta; vector<double> GENH_phi; vector<double> GENH_mass; 
     float GENmass4l, GENmass4e, GENmass4mu, GENmass2e2mu, GENpT4l, GENeta4l, GENrapidity4l;
     float GENMH; //mass directly from gen particle with id==25
     float GENcosTheta1, GENcosTheta2, GENcosThetaStar, GENPhi, GENPhi1;
 
     // Z candidate variables
-    vector<double> GENZ_pt; 
-    vector<double> GENZ_eta; 
-    vector<double> GENZ_phi; 
-    vector<double> GENZ_mass; 
+    vector<double> GENZ_pt; vector<double> GENZ_eta; vector<double> GENZ_phi; vector<double> GENZ_mass; 
     vector<int> GENZ_DaughtersId; vector<int> GENZ_MomId;
     float  GENmassZ1, GENmassZ2, GENpTZ1, GENpTZ2, GENdPhiZZ, GENmassZZ, GENpTZZ;
 
@@ -461,14 +378,9 @@ private:
     float GENHmass;
 
     // Jets
-    vector<double> GENjet_pt; 
-    vector<double> GENjet_eta; 
-    vector<double> GENjet_phi; 
-    vector<double> GENjet_mass; 
-    int GENnjets_pt30_eta4p7;
-    float GENpt_leadingjet_pt30_eta4p7;
-    float GENabsrapidity_leadingjet_pt30_eta4p7;
-    float GENabsdeltarapidity_hleadingjet_pt30_eta4p7;
+    vector<double> GENjet_pt; vector<double> GENjet_eta; vector<double> GENjet_phi; vector<double> GENjet_mass; 
+    int GENnjets_pt30_eta4p7; float GENpt_leadingjet_pt30_eta4p7; 
+    float GENabsrapidity_leadingjet_pt30_eta4p7; float GENabsdeltarapidity_hleadingjet_pt30_eta4p7;
 
     //KinZfitter
     KinZfitter *kinZfitter;
@@ -483,101 +395,52 @@ private:
     double p0minus_VAJHU, Dgg10_VAMCFM;
     double phjj_VAJHU, pvbf_VAJHU;
 
-    double D_g4;
-    double Djet_VAJHU, Djet_VAJHU_jesup, Djet_VAJHU_jesdn;
-
-    // mass err
-    std::map<TString,TH1F*> hContainer_;
-    std::map<TString,TH2F*> hContainer2D_;
-    std::map<TString,TH3F*> hContainer3D_;
+    double D_g4, Djet_VAJHU, Djet_VAJHU_jesup, Djet_VAJHU_jesdn;
 
     // a vector<float> for each vector<double>
-    vector<float>  lep_pt_float;
-    vector<float>  lep_pterr_float;
-    vector<float>  lep_pterrold_float;
-    vector<float>  lep_eta_float;
-    vector<float>  lep_phi_float;
-    vector<float>  lep_mass_float;
-    vector<float>  lepFSR_pt_float;
-    vector<float>  lepFSR_eta_float;
-    vector<float>  lepFSR_phi_float;
-    vector<float>  lepFSR_mass_float;
-    vector<float>  H_pt_float;
-    vector<float>  H_eta_float;
-    vector<float>  H_phi_float;
-    vector<float>  H_mass_float;
-    vector<float>  H_noFSR_pt_float;
-    vector<float>  H_noFSR_eta_float;
-    vector<float>  H_noFSR_phi_float;
-    vector<float>  H_noFSR_mass_float;
-    vector<float>  Z_pt_float;
-    vector<float>  Z_eta_float;
-    vector<float>  Z_phi_float;
-    vector<float>  Z_mass_float;
-    vector<float>  Z_noFSR_pt_float;
-    vector<float>  Z_noFSR_eta_float;
-    vector<float>  Z_noFSR_phi_float;
-    vector<float>  Z_noFSR_mass_float;
-    vector<float>  jet_pt_float;
-    vector<float>  jet_eta_float;
-    vector<float>  jet_phi_float;
-    vector<float>  jet_mass_float;
-    vector<float>  jet_jesup_pt_float;
-    vector<float>  jet_jesup_eta_float;
-    vector<float>  jet_jesup_phi_float;
-    vector<float>  jet_jesup_mass_float;
-    vector<float>  jet_jesdn_pt_float;
-    vector<float>  jet_jesdn_eta_float;
-    vector<float>  jet_jesdn_phi_float;
-    vector<float>  jet_jesdn_mass_float;
-    vector<float>  jet_jerup_pt_float;
-    vector<float>  jet_jerup_eta_float;
-    vector<float>  jet_jerup_phi_float;
-    vector<float>  jet_jerup_mass_float;
-    vector<float>  jet_jerdn_pt_float;
-    vector<float>  jet_jerdn_eta_float;
-    vector<float>  jet_jerdn_phi_float;
-    vector<float>  jet_jerdn_mass_float;
-    vector<float>  fsrPhotons_pt_float;
-    vector<float>  fsrPhotons_pterr_float;
-    vector<float>  fsrPhotons_eta_float;
-    vector<float>  fsrPhotons_phi_float;
-    vector<float>  fsrPhotons_mass_float;
-    vector<float>  GENlep_pt_float;
-    vector<float>  GENlep_eta_float;
-    vector<float>  GENlep_phi_float;
-    vector<float>  GENlep_mass_float;
-    vector<float>  GENH_pt_float;
-    vector<float>  GENH_eta_float;
-    vector<float>  GENH_phi_float;
-    vector<float>  GENH_mass_float;
-    vector<float>  GENZ_pt_float;
-    vector<float>  GENZ_eta_float;
-    vector<float>  GENZ_phi_float;
-    vector<float>  GENZ_mass_float;
-    vector<float>  GENjet_pt_float;
-    vector<float>  GENjet_eta_float;
-    vector<float>  GENjet_phi_float;
-    vector<float>  GENjet_mass_float;
+    vector<float>  lep_pt_float; vector<float> lep_pterr_float; vector<float>  lep_pterrold_float;
+    vector<float>  lep_eta_float; vector<float> lep_phi_float; vector<float>  lep_mass_float;
+    vector<float>  lepFSR_pt_float; vector<float> lepFSR_eta_float;
+    vector<float>  lepFSR_phi_float; vector<float> lepFSR_mass_float;
+    vector<float>  H_pt_float; vector<float> H_eta_float; vector<float>  H_phi_float; vector<float>  H_mass_float;
+    vector<float>  H_noFSR_pt_float; vector<float>  H_noFSR_eta_float; 
+    vector<float>  H_noFSR_phi_float; vector<float>  H_noFSR_mass_float;
+    vector<float>  Z_pt_float; vector<float>  Z_eta_float; vector<float>  Z_phi_float; vector<float>  Z_mass_float;
+    vector<float>  Z_noFSR_pt_float; vector<float>  Z_noFSR_eta_float;
+    vector<float>  Z_noFSR_phi_float; vector<float>  Z_noFSR_mass_float;
+    vector<float>  jet_pt_float; vector<float> jet_eta_float; vector<float> jet_phi_float; vector<float> jet_mass_float;
+    vector<float>  jet_jesup_pt_float; vector<float>  jet_jesup_eta_float; 
+    vector<float>  jet_jesup_phi_float; vector<float>  jet_jesup_mass_float;
+    vector<float>  jet_jesdn_pt_float; vector<float>  jet_jesdn_eta_float;
+    vector<float>  jet_jesdn_phi_float; vector<float>  jet_jesdn_mass_float;
+    vector<float>  jet_jerup_pt_float; vector<float>  jet_jerup_eta_float;
+    vector<float>  jet_jerup_phi_float; vector<float>  jet_jerup_mass_float;
+    vector<float>  jet_jerdn_pt_float; vector<float>  jet_jerdn_eta_float;
+    vector<float>  jet_jerdn_phi_float; vector<float>  jet_jerdn_mass_float;
+    vector<float>  fsrPhotons_pt_float; vector<float>  fsrPhotons_pterr_float;
+    vector<float>  fsrPhotons_eta_float; vector<float>  fsrPhotons_phi_float; vector<float>  fsrPhotons_mass_float;
+    vector<float>  GENlep_pt_float; vector<float>  GENlep_eta_float;
+    vector<float>  GENlep_phi_float; vector<float>  GENlep_mass_float;
+    vector<float>  GENH_pt_float; vector<float>  GENH_eta_float;
+    vector<float>  GENH_phi_float; vector<float>  GENH_mass_float;
+    vector<float>  GENZ_pt_float; vector<float>  GENZ_eta_float;
+    vector<float>  GENZ_phi_float; vector<float>  GENZ_mass_float;
+    vector<float>  GENjet_pt_float; vector<float>  GENjet_eta_float;
+    vector<float>  GENjet_phi_float; vector<float>  GENjet_mass_float;
 
     // Global Variables but not stored in the tree
     vector<double> lep_ptreco;
-    vector<int> lep_ptid;
-    vector<int> lep_ptindex;
-    vector<pat::Muon> recoMuons;
-    vector<pat::Electron> recoElectrons;
+    vector<int> lep_ptid; vector<int> lep_ptindex;
+    vector<pat::Muon> recoMuons; vector<pat::Electron> recoElectrons;
     vector<pat::PFParticle> fsrPhotons; 
     TLorentzVector HVec, HVecNoFSR, Z1Vec, Z2Vec;
     TLorentzVector GENZ1Vec, GENZ2Vec;
     bool RecoFourMuEvent, RecoFourEEvent, RecoTwoETwoMuEvent, RecoTwoMuTwoEEvent;
-    bool foundHiggsCandidate;
-    bool foundZ1LCandidate;
-    bool firstEntry;
+    bool foundHiggsCandidate; bool foundZ1LCandidate; bool firstEntry;
 
     // hist container
     std::map<std::string,TH1F*> histContainer_;
-    std::map<std::string,TH2F*> histContainer2D_;
- 
+
     //Input edm
     edm::EDGetTokenT<edm::View<pat::Photon> > photonSrc_;
     edm::EDGetTokenT<edm::View<pat::Electron> > elecSrc_;
@@ -607,9 +470,7 @@ private:
 
     // Configuration
     const float Zmass;
-    float mZ1Low, mZ2Low;
-    float mZ1High, mZ2High;
-    float m4lLowCut;
+    float mZ1Low, mZ2Low, mZ1High, mZ2High, m4lLowCut;
     float jetpt_cut, jeteta_cut;
     std::string elecID;
     bool isMC, isSignal;
@@ -618,14 +479,11 @@ private:
     bool weightEvents;
     float isoCutEl, isoCutMu; 
     double isoConeSizeEl, isoConeSizeMu;
-    float sip3dCut;
-    float leadingPtCut, subleadingPtCut;
+    float sip3dCut, leadingPtCut, subleadingPtCut;
     float genIsoCutEl, genIsoCutMu;
     double genIsoConeSizeEl, genIsoConeSizeMu;
-    float _elecPtCut, _muPtCut;
-    float BTagCut;
+    float _elecPtCut, _muPtCut, BTagCut;
     bool reweightForPU;
-    bool interactiveRun;
     std::string PUVersion;
     bool doFsrRecovery, doPUJetID;
     int jetIDLevel;
@@ -957,39 +815,29 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     jet_jerup_iscleanH4l.clear(); jet_jerdn_iscleanH4l.clear();
 
     njets_pt30_eta4p7=0;
-    njets_pt30_eta4p7_jesup=0;
-    njets_pt30_eta4p7_jesdn=0;
-    njets_pt30_eta4p7_jerup=0;
-    njets_pt30_eta4p7_jerdn=0;
+    njets_pt30_eta4p7_jesup=0; njets_pt30_eta4p7_jesdn=0;
+    njets_pt30_eta4p7_jerup=0; njets_pt30_eta4p7_jerdn=0;
 
     nbjets_pt30_eta4p7=0; nvjets_pt40_eta2p4=0;
 
     pt_leadingjet_pt30_eta4p7=-1.0;
-    pt_leadingjet_pt30_eta4p7_jesup=-1.0;
-    pt_leadingjet_pt30_eta4p7_jesdn=-1.0;
-    pt_leadingjet_pt30_eta4p7_jerup=-1.0;
-    pt_leadingjet_pt30_eta4p7_jerdn=-1.0;
+    pt_leadingjet_pt30_eta4p7_jesup=-1.0; pt_leadingjet_pt30_eta4p7_jesdn=-1.0;
+    pt_leadingjet_pt30_eta4p7_jerup=-1.0; pt_leadingjet_pt30_eta4p7_jerdn=-1.0;
 
     absrapidity_leadingjet_pt30_eta4p7=-1.0;
-    absrapidity_leadingjet_pt30_eta4p7_jesup=-1.0;
-    absrapidity_leadingjet_pt30_eta4p7_jesdn=-1.0;
-    absrapidity_leadingjet_pt30_eta4p7_jerup=-1.0;
-    absrapidity_leadingjet_pt30_eta4p7_jerdn=-1.0;
+    absrapidity_leadingjet_pt30_eta4p7_jesup=-1.0; absrapidity_leadingjet_pt30_eta4p7_jesdn=-1.0;
+    absrapidity_leadingjet_pt30_eta4p7_jerup=-1.0; absrapidity_leadingjet_pt30_eta4p7_jerdn=-1.0;
 
     absdeltarapidity_hleadingjet_pt30_eta4p7=-1.0;
-    absdeltarapidity_hleadingjet_pt30_eta4p7_jesup=-1.0;
-    absdeltarapidity_hleadingjet_pt30_eta4p7_jesdn=-1.0;
-    absdeltarapidity_hleadingjet_pt30_eta4p7_jerup=-1.0;
-    absdeltarapidity_hleadingjet_pt30_eta4p7_jerdn=-1.0;
+    absdeltarapidity_hleadingjet_pt30_eta4p7_jesup=-1.0; absdeltarapidity_hleadingjet_pt30_eta4p7_jesdn=-1.0;
+    absdeltarapidity_hleadingjet_pt30_eta4p7_jerup=-1.0; absdeltarapidity_hleadingjet_pt30_eta4p7_jerdn=-1.0;
 
-    DijetMass=-1.0; DijetDEta=9999.0;
-    DijetFisher=9999.0;
+    DijetMass=-1.0; DijetDEta=9999.0; DijetFisher=9999.0;
     
     mergedjet_iscleanH4l.clear();
     mergedjet_pt.clear(); mergedjet_eta.clear(); mergedjet_phi.clear(); mergedjet_mass.clear();
     mergedjet_L1.clear();
-    mergedjet_softdropmass.clear();
-    mergedjet_prunedmass.clear();
+    mergedjet_softdropmass.clear(); mergedjet_prunedmass.clear();
     mergedjet_tau1.clear(); mergedjet_tau2.clear();
     
     mergedjet_nsubjet.clear();
@@ -1019,15 +867,9 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
     // lepton variables
     GENlep_pt.clear(); GENlep_eta.clear(); GENlep_phi.clear(); GENlep_mass.clear();
-    GENlep_id.clear();
-    GENlep_status.clear();
-    GENlep_MomId.clear();
-    GENlep_MomMomId.clear();
+    GENlep_id.clear(); GENlep_status.clear(); GENlep_MomId.clear(); GENlep_MomMomId.clear();
     for (int i=0; i<4; ++i) {GENlep_Hindex[i]=-1;};//position of Higgs candidate leptons in lep_p4: 0 = Z1 lead, 1 = Z1 sub, 2 = Z2 lead, 3 = Z3 sub
-    GENlep_isoCH.clear();
-    GENlep_isoNH.clear();
-    GENlep_isoPhot.clear();
-    GENlep_RelIso.clear();
+    GENlep_isoCH.clear(); GENlep_isoNH.clear(); GENlep_isoPhot.clear(); GENlep_RelIso.clear();
 
     // Higgs candidate variables (calculated using selected gen leptons)
     GENH_pt.clear(); GENH_eta.clear(); GENH_phi.clear(); GENH_mass.clear();
@@ -1045,13 +887,10 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     // Jets
     GENjet_pt.clear(); GENjet_eta.clear(); GENjet_phi.clear(); GENjet_mass.clear(); 
     GENnjets_pt30_eta4p7=0;
-    GENpt_leadingjet_pt30_eta4p7=-1.0;
-    GENabsrapidity_leadingjet_pt30_eta4p7=-1.0;
-    GENabsdeltarapidity_hleadingjet_pt30_eta4p7=-1.0;
+    GENpt_leadingjet_pt30_eta4p7=-1.0; GENabsrapidity_leadingjet_pt30_eta4p7=-1.0; GENabsdeltarapidity_hleadingjet_pt30_eta4p7=-1.0;
 
     // ME
-    me_0plus_JHU=999.0; me_qqZZ_MCFM=999.0; p0plus_m4l=999.0; bkg_m4l=999.0;
-    D_bkg_kin=999.0; D_bkg=999.0;   
+    me_0plus_JHU=999.0; me_qqZZ_MCFM=999.0; p0plus_m4l=999.0; bkg_m4l=999.0; D_bkg_kin=999.0; D_bkg=999.0;   
 
     bkg_VAMCFM=999.0; p0minus_VAJHU=999.0; Dgg10_VAMCFM=999.0;
     phjj_VAJHU=999.0; pvbf_VAJHU=999.0; D_g4=999.0;
@@ -1075,8 +914,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     GENZ2Vec.SetPtEtaPhiM(0.0,0.0,0.0,0.0);
     RecoFourMuEvent = false; RecoFourEEvent = false;
     RecoTwoETwoMuEvent = false; RecoTwoMuTwoEEvent = false;
-    foundHiggsCandidate = false;
-    foundZ1LCandidate = false;
+    foundHiggsCandidate = false; foundZ1LCandidate = false;
 
     // Float vectors
     lep_pt_float.clear(); lep_pterr_float.clear(); lep_pterrold_float.clear(); lep_eta_float.clear(); lep_phi_float.clear(); lep_mass_float.clear();
@@ -1098,9 +936,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     vector<reco::Candidate*> selectedLeptons;
     std::map<unsigned int, TLorentzVector> selectedFsrMap;
 
-    fsrmap.clear();
-    selectedFsrMap.clear();
-    selectedLeptons.clear();
+    fsrmap.clear(); selectedFsrMap.clear(); selectedLeptons.clear();
 
     if (verbose) cout<<"start pileup reweighting"<<endl;
     // PU information
@@ -2322,13 +2158,8 @@ UFHZZ4LAna::findHiggsCandidate(std::vector< pat::Muon > &selectedMuons, std::vec
                     lep_Hindex[2] = Z2_lepindex[0];
                     lep_Hindex[3] = Z2_lepindex[1];
 
-                    Z1Vec = Z1;
-                    Z2Vec = Z2;
-                    HVec = Z1+Z2;
-                    
-                    massZ1 = Z1Vec.M();
-                    massZ2 = Z2Vec.M();
-                    mass4l = HVec.M();
+                    Z1Vec = Z1; Z2Vec = Z2; HVec = Z1+Z2;                   
+                    massZ1 = Z1Vec.M(); massZ2 = Z2Vec.M(); mass4l = HVec.M();
 
                     if (verbose) cout<<" new best candidate SR: mass4l: "<<HVec.M()<<endl;
                     if (HVec.M()>m4lLowCut)  {
@@ -2351,13 +2182,8 @@ UFHZZ4LAna::findHiggsCandidate(std::vector< pat::Muon > &selectedMuons, std::vec
                     lep_Hindex[2] = Z2_lepindex[0];
                     lep_Hindex[3] = Z2_lepindex[1];
 
-                    Z1Vec = Z1;
-                    Z2Vec = Z2;
-                    HVec = Z1+Z2;
-                    
-                    massZ1 = Z1Vec.M();
-                    massZ2 = Z2Vec.M();
-                    mass4l = HVec.M();
+                    Z1Vec = Z1; Z2Vec = Z2; HVec = Z1+Z2;                   
+                    massZ1 = Z1Vec.M(); massZ2 = Z2Vec.M(); mass4l = HVec.M();
 
                     if (verbose) cout<<" new best candidate CR: mass4l: "<<HVec.M()<<endl;
                     if (HVec.M()>m4lLowCut) foundHiggsCandidate=true;                    
@@ -2561,10 +2387,6 @@ UFHZZ4LAna::findZ1LCandidate(const edm::Event& iEvent )
         if ( Z1DeltaM<=minZ1DeltaM ) {
 
             minZ1DeltaM = Z1DeltaM;
-
-            //lep_Hindex[0] = Z1_lepindex[0];
-            //lep_Hindex[1] = Z1_lepindex[1];
-            //lep_Hindex[2] = j1;
 
             TLorentzVector Z1L;
             Z1L = Z1+lep_j1;
@@ -3036,9 +2858,7 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
         */
 
         // FIXME: For now, no smearing
-        double jercorrection = 1.0;
-        double jercorrectionup = 1.0;
-        double jercorrectiondn = 1.0;
+        double jercorrection = 1.0; double jercorrectionup = 1.0; double jercorrectiondn = 1.0;
 
         double jetPx_jer = jercorrection * goodJets[k].px();
         double jetPy_jer = jercorrection * goodJets[k].py();
@@ -3274,11 +3094,9 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
     if(RecoTwoETwoMuEvent || RecoTwoMuTwoEEvent){ mass2e2mu = HVec.M(); }
     else{ mass2e2mu = -1;}
 
-    pT4l = HVec.Pt(); eta4l = HVec.Eta();
-    rapidity4l = HVec.Rapidity(); phi4l = HVec.Phi();
+    pT4l = HVec.Pt(); eta4l = HVec.Eta(); rapidity4l = HVec.Rapidity(); phi4l = HVec.Phi();
 
-    pTZ1 = Z1Vec.Pt(); pTZ2 = Z2Vec.Pt();
-    massZ1 = Z1Vec.M(); massZ2 = Z2Vec.M();
+    pTZ1 = Z1Vec.Pt(); pTZ2 = Z2Vec.Pt(); massZ1 = Z1Vec.M(); massZ2 = Z2Vec.M();
 
     if (njets_pt30_eta4p7>0) absdeltarapidity_hleadingjet_pt30_eta4p7 = fabs(rapidity4l-absrapidity_leadingjet_pt30_eta4p7);
     if (njets_pt30_eta4p7_jesup>0) absdeltarapidity_hleadingjet_pt30_eta4p7_jesup = fabs(rapidity4l-absrapidity_leadingjet_pt30_eta4p7_jesup);
@@ -3299,10 +3117,7 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
         Lep2FSR.SetPtEtaPhiM(lepFSR_pt[lep_Hindex[1]],lepFSR_eta[lep_Hindex[1]],lepFSR_phi[lep_Hindex[1]],lepFSR_mass[lep_Hindex[1]]);
         Lep3FSR.SetPtEtaPhiM(lepFSR_pt[lep_Hindex[2]],lepFSR_eta[lep_Hindex[2]],lepFSR_phi[lep_Hindex[2]],lepFSR_mass[lep_Hindex[2]]);
         Lep4FSR.SetPtEtaPhiM(lepFSR_pt[lep_Hindex[3]],lepFSR_eta[lep_Hindex[3]],lepFSR_phi[lep_Hindex[3]],lepFSR_mass[lep_Hindex[3]]);
-        pTL1FSR = Lep1FSR.Pt();
-        pTL2FSR = Lep2FSR.Pt();
-        pTL3FSR = Lep3FSR.Pt();
-        pTL4FSR = Lep4FSR.Pt();
+        pTL1FSR = Lep1FSR.Pt(); pTL2FSR = Lep2FSR.Pt(); pTL3FSR = Lep3FSR.Pt(); pTL4FSR = Lep4FSR.Pt();
 
         TLorentzVector Lep1, Lep2, Lep3, Lep4;
         Lep1.SetPtEtaPhiM(lep_pt[lep_Hindex[0]],lep_eta[lep_Hindex[0]],lep_phi[lep_Hindex[0]],lep_mass[lep_Hindex[0]]);
@@ -3558,8 +3373,6 @@ void UFHZZ4LAna::setGENVariables(edm::Handle<reco::GenParticleCollection> pruned
             
         }
         
-        //cout<<"passedFiducialTopology? "<<passedFiducialTopology<<" GENmZ1Z2 = "<<GENmZ1Z2<<endl;
-                
         bool passedMassOS = true; bool passedElMuDeltaR = true; bool passedDeltaR = true;            
         unsigned int N=GENlep_pt.size();
         for(unsigned int i = 0; i<N; i++) {
