@@ -134,11 +134,6 @@
 #include "PhysicsTools/Utilities/interface/LumiReWeighting.h"
 #include "SimDataFormats/PileupSummaryInfo/interface/PileupSummaryInfo.h"
 
-//Mass Error
-#include "UFHZZAnalysisRun2/UFHZZ4LAna/interface/HZZ4LMassErr.h"
-#include "UFHZZAnalysisRun2/UFHZZ4LAna/interface/HZZ4LPerLepResolution.h"
-#include "UFHZZAnalysisRun2/UFHZZ4LAna/interface/HZZ4LDiLepResolution.h"
-#include "UFHZZAnalysisRun2/UFHZZ4LAna/interface/HZZ4LResolution.h"
 //GEN
 #include "UFHZZAnalysisRun2/UFHZZ4LAna/interface/HZZ4LGENAna.h"
 //VBF Jets
@@ -191,9 +186,6 @@ private:
     void findHiggsCandidate(std::vector< pat::Muon > &selectedMuons, std::vector< pat::Electron > &selectedElectrons, const edm::Event& iEvent);
     void findZ1LCandidate(const edm::Event& iEvent);
 
-    void bookResolutionHistograms();
-    void fillResolutionHistograms(edm::Handle<edm::View<pat::Muon> > muons);
-  
     //MELA
     HZZ4LAngles angles;
     //Helper Class
@@ -421,12 +413,6 @@ private:
     float minMass2Lep, maxMass2Lep;
     float thetaPhoton, thetaPhotonZ;
 
-    //Resolution
-    //float massErrorUCSD, massErrorUCSDCorr, massErrorUF, massErrorUFCorr, massErrorUFADCorr;
-    HZZ4LPerLepResolution * PerLepReso;
-    HZZ4LDiLepResolution * DiLepReso;
-    HZZ4LResolution * FourLepReso;
-    
     // Event Category
     int EventCat;
 
@@ -2844,12 +2830,6 @@ void UFHZZ4LAna::bookPassedEventTree(TString treeName, TTree *tree)
     tree->Branch("thetaPhoton",&thetaPhoton,"thetaPhoton/F"); 
     tree->Branch("thetaPhotonZ",&thetaPhotonZ,"thetaPhotonZ/F");
 
-    // Resolution
-    //tree->Branch("massErrorUF",&massErrorUF,"massErrorUF/F");
-    //tree->Branch("massErrorUFCorr",&massErrorUFCorr,"massErrorUFCorr/F");
-    //tree->Branch("massErrorUCSD",&massErrorUCSD,"massErrorUCSD/F");
-    //tree->Branch("massErrorUCSDCorr",&massErrorUCSDCorr,"massErrorUCSDCorr/F");
-
     // Event Category
     tree->Branch("EventCat",&EventCat,"EventCat/I");
 
@@ -3747,76 +3727,6 @@ bool UFHZZ4LAna::mZ1_mZ2(unsigned int& L1, unsigned int& L2, unsigned int& L3, u
     else return false;
     
 }
-
-
-
-void UFHZZ4LAna::bookResolutionHistograms()
-{
-
-    using namespace edm;
-    using namespace pat;
-    using namespace std;
-
-    //Resolution
-    histContainer_["ptrelerrorForZ_mu_barrel"]=fs->make<TH1F>("ptrelerrorForZ_mu_barrel","muon pt relative error; #sigma_{p_{T}}^{RECO}/p_{T}; N Events", 
-                                                              1000, -1, 1);
-    histContainer_["ptrelerrorForZ_mu_endcap"]=fs->make<TH1F>("ptrelerrorForZ_mu_endcap","muon pt relative error; #sigma_{p_{T}}^{RECO}/p_{T}; N Events", 
-                                                              1000, -1, 1);
-    histContainer_["ptrelerrorForZ_mu"]=fs->make<TH1F>("ptrelerrorForZ_mu","muon pt relative error; #sigma_{p_{T}}^{RECO}/p_{T}; N Events", 1000, -1, 1);
-    histContainer2D_["ptrelerrorForZ_mu_vs_eta"]=fs->make<TH2F>("ptrelerrorForZ_mu_vs_eta","muon pt relative error; #sigma_{p_{T}}^{RECO}/p_{T}; N Events", 
-                                                                1000, -1, 1, 24, 0, 2.4);
-}
-
-void UFHZZ4LAna::fillResolutionHistograms(edm::Handle<edm::View<pat::Muon> > muons)
-{
-
-    using namespace edm;
-    using namespace pat;
-    using namespace std;
-
-    //  For Muon Pt Resolution  start
-    /********** M U O N  C U T S **********/
-    double muPtCut = 5;
-    double muEtaCut = 2.4;
-    double muChi2Cut = 10.0;
-    int muMuonHits = 0;
-    int muNumMatches = 0;
-    for(edm::View<pat::Muon>::const_iterator mu=muons->begin(); mu!=muons->end(); ++mu)
-    {
-        if( mu->isGlobalMuon() != 1 || mu->isTrackerMuon() != 1) continue;
-        if(mu->normChi2() >= muChi2Cut ||  mu->globalTrack()->hitPattern().numberOfValidMuonHits() <= muMuonHits)  continue;
-        if( mu->numberOfMatches() <= muNumMatches ) continue;
-        double iso =  (mu->trackIso() + mu->ecalIso() + mu->hcalIso() )/mu->pt() ;
-        if ( iso > 0.15 ) continue;
-        if( mu->pt() < muPtCut || abs(mu->eta()) > muEtaCut ) continue;
-        for(edm::View<pat::Muon>::const_iterator mu2=mu+1; mu2!=muons->end(); ++mu2)
-        {
-            if( mu2->isGlobalMuon() != 1 || mu2->isTrackerMuon() != 1) continue;
-            if(mu2->normChi2() >= muChi2Cut ||  mu2->globalTrack()->hitPattern().numberOfValidMuonHits() <= muMuonHits)  continue;
-            if( mu2->numberOfMatches() <= muNumMatches ) continue;
-            double iso2 =  (mu2->trackIso() + mu2->ecalIso() + mu2->hcalIso() )/mu2->pt() ;
-            if ( iso2 > 0.15 ) continue;
-            if( mu2->pt() < muPtCut || abs(mu2->eta()) > muEtaCut ) continue;
-      
-            double mass = (mu->p4()+mu2->p4()).M();
-            if(mass<95 and mass>85) {
-	    
-                double pterr = mu->innerTrack()->ptError();
-                double recpt = mu->pt();
-                double eta = mu->eta();
-                histContainer_["ptrelerrorForZ_mu"]->Fill(pterr/recpt,eventWeight);
-                histContainer2D_["ptrelerrorForZ_mu_vs_eta"]->Fill(pterr/recpt, fabs(eta));
-                if(abs(eta)>1.2){
-                    histContainer_["ptrelerrorForZ_mu_endcap"]->Fill(pterr/recpt,eventWeight);
-                }else{
-                    histContainer_["ptrelerrorForZ_mu_barrel"]->Fill(pterr/recpt,eventWeight);
-                }
-            }
-        }
-    }
-    //  For Muon Pt Resolution  end
-}
-
 
 // ------------ method fills 'descriptions' with the allowed parameters for the module  ------------
 void
