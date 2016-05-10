@@ -454,7 +454,7 @@ bool HZZ4LHelper::passTight_BDT_Id(pat::Electron electron, std::string elecID) {
         if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = -0.286;
         if(fSCeta >= 1.479) cutVal = -0.267;
     }
-    if (electron.electronID(elecID) > cutVal ) { return true;}
+    if (electron.userFloat("ElectronMVAEstimatorRun2Spring15NonTrig25nsV1Values") > cutVal ) { return true;}
     return false;
 }
 
@@ -488,8 +488,7 @@ bool HZZ4LHelper::passTight_Id_SUS(pat::Electron electron, std::string elecID, c
         if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = 0.60;
         if(fSCeta >= 1.479) cutVal = 0.17;
     }
-    //std::cout<<"el |eta|: "<<fabs(electron.eta())<<" el |SCEta|: "<< fabs(electron.superCluster()->eta())<<" el mva: "<<electron.electronID(elecID)<<std::endl;
-    if (electron.electronID(elecID) <= cutVal ) return false;
+    if (electron.userFloat("ElectronMVAEstimatorRun2Spring15NonTrig25nsV1Values") <= cutVal ) return false;
 
     bool vtxFitConversion = ConversionTools::hasMatchedConversion(reco::GsfElectron(electron), theConversions, BS.position());
     //std::cout<<"vtxFitConverstion: "<<vtxFitConversion<<std::endl;

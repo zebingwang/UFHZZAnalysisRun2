@@ -76,27 +76,8 @@ process.calibratedPatElectrons = cms.EDProducer("CalibratedPatElectronProducerRu
                                         correctionFile = cms.string("EgammaAnalysis/ElectronTools/data/76X_16DecRereco_2015")
                                         )
 
-# Electron MVA ID producers
-#from PhysicsTools.SelectorUtils.tools.vid_id_tools import *
-#dataFormat = DataFormat.MiniAOD
-#switchOnVIDElectronIdProducer(process, dataFormat)
-## define which IDs we want to produce
-#my_id_modules = ['RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Spring15_25ns_nonTrig_V1_cff']
-## add them to the VID producer
-#for idmod in my_id_modules:
-#    setupAllVIDIdsInModule(process,idmod,setupVIDElectronSelection)
-#process.electronMVAValueMapProducer.srcMiniAOD = cms.InputTag("calibratedPatElectrons")
-
-process.mvaSpring15NonTrig25nsV1 = cms.EDProducer("SlimmedElectronMvaIDProducer",
-                                     mvaValuesMap = cms.InputTag("electronMVAValueMapProducer:ElectronMVAEstimatorRun2Spring15NonTrig25nsV1Values"),
-                                     electronsCollection = cms.InputTag("calibratedPatElectrons"),
-#                                     electronsCollection = cms.InputTag("slimmedElectrons","","PAT"),
-                                     Trig = cms.bool(False),
-                                     )
-     
 # FSR Photons
 process.load('UFHZZAnalysisRun2.FSRPhotons.fsrPhotons_cff')
-
 
 # Jet Energy Corrections
 import os
@@ -208,7 +189,7 @@ process.QGTagger.srcVertexCollection=cms.InputTag("offlinePrimaryVertices")
 # Analyzer
 process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
                               photonSrc    = cms.untracked.InputTag("slimmedPhotons"),
-                              electronSrc  = cms.untracked.InputTag("mvaSpring15NonTrig25nsV1","NonTrig"),
+                              electronSrc  = cms.untracked.InputTag("calibratedPatElectrons"),
                               muonSrc      = cms.untracked.InputTag("calibratedMuons"),
                               jetSrc       = cms.untracked.InputTag("slimmedJetsJEC"),
                               mergedjetSrc = cms.untracked.InputTag("slimmedJetsAK8JEC"),
@@ -258,8 +239,6 @@ process.p = cms.Path(process.fsrPhotonSequence*
                      process.calibratedMuons*
                      process.selectedElectrons*
                      process.calibratedPatElectrons*
-#                     process.electronMVAValueMapProducer*
-                     process.mvaSpring15NonTrig25nsV1*
                      process.jetCorrFactors*
                      process.slimmedJetsJEC*
                      process.QGTagger*

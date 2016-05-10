@@ -255,7 +255,8 @@ private:
     vector<float> lep_dataMC; vector<float> lep_dataMCErr;
     vector<int> lep_genindex; //position of lepton in GENlep_p4 (if gen matched, -1 if not gen matched)
     vector<int> lep_id;
-    vector<float> lep_mva; vector<int> lep_ecalDriven; vector<int> lep_tightId; vector<int> lep_tightIdSUS;
+    vector<float> lep_mva; vector<int> lep_ecalDriven; 
+    vector<int> lep_tightId; vector<int> lep_tightIdSUS; vector<int> lep_tightIdHiPt;
     vector<float> lep_Sip; vector<float> lep_IP; vector<float> lep_isoNH; vector<float> lep_isoCH; vector<float> lep_isoPhot;
     vector<float> lep_isoPU; vector<float> lep_isoPUcorr; 
     vector<float> lep_RelIso; vector<float> lep_RelIsoNoFSR; vector<float> lep_MiniIso; 
@@ -507,7 +508,6 @@ private:
 
 UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
     histContainer_(),
-    histContainer2D_(),
     photonSrc_(consumes<edm::View<pat::Photon> >(iConfig.getUntrackedParameter<edm::InputTag>("photonSrc"))),
     elecSrc_(consumes<edm::View<pat::Electron> >(iConfig.getUntrackedParameter<edm::InputTag>("electronSrc"))),
     muonSrc_(consumes<edm::View<pat::Muon> >(iConfig.getUntrackedParameter<edm::InputTag>("muonSrc"))),
@@ -561,7 +561,6 @@ UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
     _muPtCut(iConfig.getUntrackedParameter<double>("_muPtCut",5)),
     BTagCut(iConfig.getUntrackedParameter<double>("BTagCut",0.80)),
     reweightForPU(iConfig.getUntrackedParameter<bool>("reweightForPU",true)),
-    interactiveRun(iConfig.getUntrackedParameter<bool>("interactiveRun",false)),
     PUVersion(iConfig.getUntrackedParameter<std::string>("PUVersion","Fall15_76X")),
     doFsrRecovery(iConfig.getUntrackedParameter<bool>("doFsrRecovery",true)),
     doPUJetID(iConfig.getUntrackedParameter<bool>("doPUJetID",false)),
@@ -772,7 +771,8 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     idL1=9999; idL2=9999; idL3=9999; idL4=9999;
     pTL1FSR=-1.0; pTL2FSR=-1.0; pTL3FSR=-1.0; pTL4FSR=-1.0;
     lep_genindex.clear(); lep_id.clear(); lep_dataMC.clear(); lep_dataMCErr.clear();
-    lep_mva.clear(); lep_ecalDriven.clear(); lep_tightId.clear(); lep_tightIdSUS.clear();
+    lep_mva.clear(); lep_ecalDriven.clear(); 
+    lep_tightId.clear(); lep_tightIdSUS.clear(); lep_tightIdHiPt.clear();
     lep_Sip.clear(); lep_IP.clear(); 
     lep_isoNH.clear(); lep_isoCH.clear(); lep_isoPhot.clear(); lep_isoPU.clear(); lep_isoPUcorr.clear(); 
     lep_RelIso.clear(); lep_RelIsoNoFSR.clear(); lep_MiniIso.clear();
@@ -974,7 +974,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 tmpWeight = genEventInfo->weight();
                 //tmpWeight *= lheInfo->weights()[pdfWeightIDs[i]].wgt/lheInfo->originalXWGTUP();
                 tmpWeight *= lheInfo->weights()[i].wgt/lheInfo->originalXWGTUP();
-                pdfWeights.push_back(tmpWeight);
+                if (i<9) {pdfWeights.push_back(tmpWeight);}
                 // NNPDF30 variations
                 if (i>=9 && i<=109) {
                     rms += tmpWeight*tmpWeight;
@@ -1008,6 +1008,16 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     // create a string with all passing trigger names
     for (unsigned int i=0; i<_tSize; ++i) {
         std::string triggerName = trigNames.triggerName(i);
+        if (strstr(triggerName.c_str(),"MC_")) continue;
+        if (strstr(triggerName.c_str(),"AlCa_")) continue;
+        if (strstr(triggerName.c_str(),"DST_")) continue;
+        if (strstr(triggerName.c_str(),"HLT_HI")) continue;
+        if (strstr(triggerName.c_str(),"HLT_Physics")) continue;
+        if (strstr(triggerName.c_str(),"HLT_Random")) continue;
+        if (strstr(triggerName.c_str(),"HLT_ZeroBias")) continue;
+        if (strstr(triggerName.c_str(),"HLT_IsoTrack")) continue;
+        if (strstr(triggerName.c_str(),"Hcal")) continue;
+        if (strstr(triggerName.c_str(),"Ecal")) continue;
         if (trigger->accept(i)) triggersPassed += triggerName; 
     }
     if (firstEntry) cout<<"triggersPassed: "<<triggersPassed<<endl;
@@ -1148,10 +1158,11 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 }
                 lep_MiniIso.push_back(helper.miniIsolation(pfCands, dynamic_cast<const reco::Candidate *>(&recoElectrons[lep_ptindex[i]]), 0.05, 0.2, 10., rhoSUS, false));
                 lep_Sip.push_back(helper.getSIP3D(recoElectrons[lep_ptindex[i]]));           
-                lep_mva.push_back(recoElectrons[lep_ptindex[i]].electronID(elecID)); 
+                lep_mva.push_back(recoElectrons[lep_ptindex[i]].userFloat("ElectronMVAEstimatorRun2Spring15NonTrig25nsV1Values")); 
                 lep_ecalDriven.push_back(recoElectrons[lep_ptindex[i]].ecalDriven()); 
                 lep_tightId.push_back(helper.passTight_BDT_Id(recoElectrons[lep_ptindex[i]],elecID));           
                 lep_tightIdSUS.push_back(helper.passTight_Id_SUS(recoElectrons[lep_ptindex[i]],elecID,PV,BS,theConversions));           
+                lep_tightIdHiPt.push_back(recoElectrons[lep_ptindex[i]].electronID("heepElectronID-HEEPV60"));
                 lep_ptRatio.push_back(helper.ptRatio(recoElectrons[lep_ptindex[i]],jets,isMC));           
                 lep_ptRel.push_back(helper.ptRel(recoElectrons[lep_ptindex[i]],jets,isMC));           
                 lep_dataMC.push_back(helper.dataMC(recoElectrons[lep_ptindex[i]],hElecScaleFac,hElecScaleFac_Cracks));
@@ -1194,6 +1205,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 lep_ecalDriven.push_back(0);  
                 lep_tightId.push_back(recoMuons[lep_ptindex[i]].isPFMuon());         
                 lep_tightIdSUS.push_back(helper.passTight_Id_SUS(recoMuons[lep_ptindex[i]],PV));
+                lep_tightIdHiPt.push_back(recoMuons[lep_ptindex[i]].isHighPtMuon(*PV));
                 lep_ptRatio.push_back(helper.ptRatio(recoMuons[lep_ptindex[i]],jets,isMC));           
                 lep_ptRel.push_back(helper.ptRel(recoMuons[lep_ptindex[i]],jets,isMC));                      
                 lep_dataMC.push_back(helper.dataMC(recoMuons[lep_ptindex[i]],hMuScaleFac));
@@ -2464,6 +2476,7 @@ void UFHZZ4LAna::bookPassedEventTree(TString treeName, TTree *tree)
     tree->Branch("lep_ecalDriven",&lep_ecalDriven);
     tree->Branch("lep_tightId",&lep_tightId);
     tree->Branch("lep_tightIdSUS",&lep_tightIdSUS);
+    tree->Branch("lep_tightIdHiPt",&lep_tightIdHiPt);
     tree->Branch("lep_Sip",&lep_Sip);
     tree->Branch("lep_IP",&lep_IP);
     tree->Branch("lep_isoNH",&lep_isoNH);
@@ -3040,7 +3053,26 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
                 isclean_H4l = false;
             }
         }
-                    
+             
+        // check overlap with fsr photons                                                                                                                                                                                               
+        unsigned int N = fsrPhotons_pt.size();
+        for(unsigned int i=0; i<N; i++) {
+
+            // don't clean jet from fsr if the photon wasn't matched to tight Id and Isolated lepton                                                                                                                                    
+            if (!lep_tightId[fsrPhotons_lepindex[i]]) continue;
+            double RelIsoNoFSR=lep_RelIsoNoFSR[fsrPhotons_lepindex[i]];
+            if (RelIsoNoFSR>((abs(lep_id[fsrPhotons_lepindex[i]])==11) ? isoCutEl : isoCutMu)) continue;
+
+            TLorentzVector pho;
+            pho.SetPtEtaPhiM(fsrPhotons_pt[i],fsrPhotons_eta[i],fsrPhotons_phi[i],0.0);
+            tempDeltaR=999.0;
+            tempDeltaR=deltaR(goodJets[k].eta(),goodJets[k].phi(),pho.Eta(),pho.Phi());
+            if (tempDeltaR<0.8) {
+                isclean_H4l = false;
+            }
+       } 
+
+
         mergedjet_iscleanH4l.push_back(isclean_H4l?1:0);
         mergedjet_pt.push_back((float)selectedMergedJets[k].pt());
         mergedjet_eta.push_back((float)selectedMergedJets[k].eta());             
@@ -3553,3 +3585,5 @@ UFHZZ4LAna::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
 
 //define this as a plug-in
 DEFINE_FWK_MODULE(UFHZZ4LAna);
+
+//  LocalWords:  ecalDriven
