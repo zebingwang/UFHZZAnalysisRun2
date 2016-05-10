@@ -44,5 +44,12 @@
 <use   name="KinZfitter/KinZfitter"/>
 <use   name="CondFormats/JetMETObjects"/>
 <use   name="JetMETCorrections/Objects"/>
+<use   name="CondCore/PluginSystem"/>
+<use   name="CondFormats/DataRecord"/>
+<use   name="CondCore/DBCommon"/>
+<use   name="CondCore/DBOutputService"/>
+<use   name="JetMETCorrections/Algorithms"/>
+<use   name="JetMETCorrections/JetCorrector"/>
+<use   name="JetMETCorrections/Modules"/>
 <flags EDM_PLUGIN="1"/>
 <Flags CXXFLAGS="-g"/>

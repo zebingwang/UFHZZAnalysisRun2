@@ -1,6 +1,15 @@
 import FWCore.ParameterSet.Config as cms
 
+from FWCore.ParameterSet.VarParsing import VarParsing
+
+
 process = cms.Process("UFHZZ4LAnalysis")
+
+
+## Options and Output Report
+process.options   = cms.untracked.PSet(
+    allowUnscheduled = cms.untracked.bool(True)
+)
 
 process.load("FWCore.MessageService.MessageLogger_cfi")
 process.MessageLogger.cerr.FwkReport.reportEvery = 1000
@@ -9,6 +18,7 @@ process.MessageLogger.categories.append('UFHZZ4LAna')
 process.load("Configuration.StandardSequences.MagneticField_cff")
 process.load("Configuration.Geometry.GeometryRecoDB_cff")
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_condDBv2_cff')
+process.load('Configuration.StandardSequences.Services_cff')
 process.GlobalTag.globaltag='76X_mcRun2_asymptotic_v12'
 
 process.Timing = cms.Service("Timing",
@@ -87,9 +97,10 @@ process.mvaSpring15NonTrig25nsV1 = cms.EDProducer("SlimmedElectronMvaIDProducer"
 # FSR Photons
 process.load('UFHZZAnalysisRun2.FSRPhotons.fsrPhotons_cff')
 
+
 # Jet Energy Corrections
-from CondCore.DBCommon.CondDBSetup_cfi import *
 import os
+from CondCore.DBCommon.CondDBSetup_cfi import *
 era = "Fall15_25nsV1_MC"
 dBFile = os.environ.get('CMSSW_BASE')+"/src/UFHZZAnalysisRun2/UFHZZ4LAna/data/"+era+".db"
 process.jec = cms.ESSource("PoolDBESSource",
@@ -106,6 +117,12 @@ process.jec = cms.ESSource("PoolDBESSource",
             tag = cms.string("JetCorrectorParametersCollection_"+era+"_AK4PFchs"),
             label= cms.untracked.string("AK4PFchs")
             ),
+
+        cms.PSet(
+            record = cms.string("JetCorrectionsRecord"),
+            tag = cms.string("JetCorrectorParametersCollection_"+era+"_AK8PFchs"),
+            label= cms.untracked.string("AK8PFchs")
+            ),
         )
 )
 
@@ -120,18 +137,81 @@ process.jetCorrFactors = process.patJetCorrFactorsUpdated.clone(
               'L3Absolute'],
     payload = 'AK4PFchs' ) 
 
+process.AK8PFJetCorrFactors = process.patJetCorrFactorsUpdated.clone(
+    src = cms.InputTag("packedPatJetsAK8PFCHS"),#slimmedJetsAK8"),
+    levels = ['L1FastJet',
+              'L2Relative',
+              'L3Absolute'],
+    payload = 'AK8PFchs' )
+
 process.slimmedJetsJEC = process.patJetsUpdated.clone(
     jetSource = cms.InputTag("slimmedJets"),
     jetCorrFactorsSource = cms.VInputTag(cms.InputTag("jetCorrFactors"))
     )
+process.slimmedJetsAK8JEC = process.patJetsUpdated.clone(
+    jetSource = cms.InputTag("packedPatJetsAK8PFCHS"),#slimmedJetsAK8"),
+    jetCorrFactorsSource = cms.VInputTag(cms.InputTag("AK8PFJetCorrFactors"))
+    )
+
+# JER
+process.load("JetMETCorrections.Modules.JetResolutionESProducer_cfi")
+dBJERFile = os.environ.get('CMSSW_BASE')+"/src/UFHZZAnalysisRun2/UFHZZ4LAna/data/Summer15_25nsV6.db"
+process.jer = cms.ESSource("PoolDBESSource",
+        CondDBSetup,
+        connect = cms.string("sqlite_file:"+dBJERFile),
+        toGet = cms.VPSet(
+            cms.PSet(
+                record = cms.string('JetResolutionRcd'),
+                tag    = cms.string('JR_Summer15_25nsV6_MC_PtResolution_AK4PFchs'),
+                label  = cms.untracked.string('AK4PFchs_pt')
+                ),
+            cms.PSet(
+                record = cms.string('JetResolutionRcd'),
+                tag    = cms.string('JR_Summer15_25nsV6_MC_PhiResolution_AK4PFchs'),
+                label  = cms.untracked.string('AK4PFchs_phi')
+                )
+            )
+        )
+
+process.es_prefer_jer = cms.ESPrefer('PoolDBESSource', 'jer')
+
+
+#QGTag
+qgDatabaseVersion = 'v2b'
+QGPoolDBESSource = cms.ESSource("PoolDBESSource",
+      CondDBSetup,
+      toGet = cms.VPSet(),
+      connect = cms.string('frontier://FrontierProd/CMS_COND_PAT_000'),
+)
+
+for type in ['AK4PFchs']:
+  QGPoolDBESSource.toGet.extend(cms.VPSet(cms.PSet(
+    record = cms.string('QGLikelihoodRcd'),
+    tag    = cms.string('QGLikelihoodObject_'+qgDatabaseVersion+'_'+type),
+    label  = cms.untracked.string('QGL_'+type)
+  )))
+
+process.load('RecoJets.JetProducers.QGTagger_cfi')
+process.QGTagger.srcJets=cms.InputTag("slimmedJetsJEC")    
+# Could be reco::PFJetCollection or pat::JetCollection (both AOD and miniAOD)
+process.QGTagger.jetsLabel=cms.string('QGL_AK4PFchs')        
+# Other options: see https://twiki.cern.ch/twiki/bin/viewauth/CMS/QGDataBaseVersion
+process.QGTagger.srcVertexCollection=cms.InputTag("offlinePrimaryVertices")
+#Additional parameters:
+#process.QGTagger.jec=cms.string("")
+# Provide the jet correction service if your jets are uncorrected, otherwise keep empty
+#process.QGTagger.systematicsLabel = cms.string('')     
+# Produce systematic smearings (not yet available, keep empty)
+
+
 
 # Analyzer
 process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
                               photonSrc    = cms.untracked.InputTag("slimmedPhotons"),
                               electronSrc  = cms.untracked.InputTag("mvaSpring15NonTrig25nsV1","NonTrig"),
                               muonSrc      = cms.untracked.InputTag("calibratedMuons"),
-#                              jetSrc       = cms.untracked.InputTag("slimmedJets"),
                               jetSrc       = cms.untracked.InputTag("slimmedJetsJEC"),
+                              mergedjetSrc = cms.untracked.InputTag("slimmedJetsAK8JEC"),
                               metSrc       = cms.untracked.InputTag("slimmedMETs"),
                               vertexSrc    = cms.untracked.InputTag("offlineSlimmedPrimaryVertices"),
                               beamSpotSrc  = cms.untracked.InputTag("offlineBeamSpot"),
@@ -182,5 +262,8 @@ process.p = cms.Path(process.fsrPhotonSequence*
                      process.mvaSpring15NonTrig25nsV1*
                      process.jetCorrFactors*
                      process.slimmedJetsJEC*
+                     process.QGTagger*
+                     process.AK8PFJetCorrFactors*
+                     process.slimmedJetsAK8JEC*
                      process.Ana
                      )

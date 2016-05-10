@@ -100,7 +100,6 @@
 #include "DataFormats/CaloTowers/interface/CaloTowerCollection.h"
 #include "RecoVertex/VertexTools/interface/VertexDistance3D.h"
 
-
 //Angles
 #include "UFHZZAnalysisRun2/UFHZZ4LAna/interface/HZZ4LAngles.h"
 //#include "ZZMatrixElement/MELA/interface/Mela.h"  // removed for miniAOD
@@ -156,6 +155,14 @@
 
 // EWK corrections
 #include "UFHZZAnalysisRun2/UFHZZ4LAna/interface/EwkCorrections.h"
+
+// JEC related
+#include "PhysicsTools/PatAlgos/plugins/PATJetUpdater.h"
+#include "JetMETCorrections/JetCorrector/interface/JetCorrector.h"
+ 
+//JER related
+#include "JetMETCorrections/Modules/interface/JetResolution.h"
+#include "DataFormats/PatCandidates/interface/Jet.h"
 
 //
 // class declaration
@@ -217,7 +224,7 @@ private:
 
     void bookPassedEventTree(TString treeName, TTree *tree);
     void setTreeVariables( const edm::Event&, const edm::EventSetup&, 
-                           std::vector<pat::Muon> selectedMuons, std::vector<pat::Electron> selectedElectrons, std::vector<pat::Muon> recoMuons, std::vector<pat::Electron> recoElectrons, std::vector<pat::Jet> goodJets);
+                           std::vector<pat::Muon> selectedMuons, std::vector<pat::Electron> selectedElectrons, std::vector<pat::Muon> recoMuons, std::vector<pat::Electron> recoElectrons, std::vector<pat::Jet> goodJets, std::vector<float> goodJetQGTagger, std::vector<pat::Jet> selectedMergedJets);
     void setGENVariables(edm::Handle<reco::GenParticleCollection> prunedgenParticles,
                          edm::Handle<edm::View<pat::PackedGenParticle> > packedgenParticles,
                          edm::Handle<edm::View<reco::GenJet> > genJets);
@@ -325,6 +332,9 @@ private:
     vector<double> jet_mass;
     vector<float>  jet_pumva, jet_csvv2;
     vector<int>    jet_isbtag;
+    vector<float>  jet_QGTagger;
+    vector<float>  jet_relpterr;
+    vector<float>  jet_phierr;
     vector<int>    jet_jesup_iscleanH4l;
     vector<double> jet_jesup_pt;
     vector<double> jet_jesup_eta;
@@ -370,6 +380,27 @@ private:
     float DijetMass, DijetDEta;
     float DijetFisher;
 
+    // merged jets
+    vector<int>   mergedjet_iscleanH4l;
+    vector<float> mergedjet_pt;
+    vector<float> mergedjet_eta;
+    vector<float> mergedjet_phi;
+    vector<float> mergedjet_mass;
+    
+    vector<float> mergedjet_tau1;
+    vector<float> mergedjet_tau2;
+    
+    vector<float> mergedjet_L1;
+    vector<float> mergedjet_prunedmass;
+    vector<float> mergedjet_softdropmass;
+    
+    vector<int> mergedjet_nsubjet;
+    vector<vector<float> > mergedjet_subjet_pt;
+    vector<vector<float> > mergedjet_subjet_eta;
+    vector<vector<float> > mergedjet_subjet_phi;
+    vector<vector<float> > mergedjet_subjet_mass;
+    vector<vector<float> > mergedjet_subjet_btag;
+        
     // FSR Photons
     int nFSRPhotons;
     vector<int> fsrPhotons_lepindex; 
@@ -566,6 +597,8 @@ private:
     edm::EDGetTokenT<edm::View<pat::Electron> > elecSrc_;
     edm::EDGetTokenT<edm::View<pat::Muon> > muonSrc_;
     edm::EDGetTokenT<edm::View<pat::Jet> > jetSrc_;
+    edm::EDGetTokenT<edm::ValueMap<float> > qgTagSrc_;
+    edm::EDGetTokenT<edm::View<pat::Jet> > mergedjetSrc_;
     edm::EDGetTokenT<edm::View<pat::MET> > metSrc_;
     //edm::InputTag triggerSrc_;
     edm::EDGetTokenT<edm::TriggerResults> triggerSrc_;
@@ -611,9 +644,6 @@ private:
     bool doFsrRecovery, doPUJetID;
     int jetIDLevel;
     bool doTriggerMatching;
-    bool bStudyResolution;
-    bool bStudyDiLeptonResolution;
-    bool bStudyFourLeptonResolution;
     std::vector<std::string> triggerList;
     int skimLooseLeptons;
     bool verbose;
@@ -624,6 +654,9 @@ private:
     float nEventsTotal;
     float sumWeightsTotal;
 
+    // JER
+    JME::JetResolution resolution_pt, resolution_phi;
+    JME::JetResolutionScaleFactor res_sf;
 
 };
 
@@ -635,6 +668,8 @@ UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
     elecSrc_(consumes<edm::View<pat::Electron> >(iConfig.getUntrackedParameter<edm::InputTag>("electronSrc"))),
     muonSrc_(consumes<edm::View<pat::Muon> >(iConfig.getUntrackedParameter<edm::InputTag>("muonSrc"))),
     jetSrc_(consumes<edm::View<pat::Jet> >(iConfig.getUntrackedParameter<edm::InputTag>("jetSrc"))),
+    qgTagSrc_(consumes<edm::ValueMap<float>>(edm::InputTag("QGTagger", "qgLikelihood"))),
+     mergedjetSrc_(consumes<edm::View<pat::Jet> >(iConfig.getUntrackedParameter<edm::InputTag>("mergedjetSrc"))),
     metSrc_(consumes<edm::View<pat::MET> >(iConfig.getUntrackedParameter<edm::InputTag>("metSrc"))),
     triggerSrc_(consumes<edm::TriggerResults>(iConfig.getParameter<edm::InputTag>("triggerSrc"))),
     triggerObjects_(consumes<pat::TriggerObjectStandAloneCollection>(iConfig.getParameter<edm::InputTag>("triggerObjects"))),
@@ -688,9 +723,6 @@ UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
     doPUJetID(iConfig.getUntrackedParameter<bool>("doPUJetID",false)),
     jetIDLevel(iConfig.getUntrackedParameter<int>("jetIDLevel",1)),
     doTriggerMatching(iConfig.getUntrackedParameter<bool>("doTriggerMatching",!isMC)),
-    bStudyResolution(iConfig.getUntrackedParameter<bool>("bStudyResolution",false)),
-    bStudyDiLeptonResolution(iConfig.getUntrackedParameter<bool>("bStudyDiLeptonResolution",false)),
-    bStudyFourLeptonResolution(iConfig.getUntrackedParameter<bool>("bStudyFourLeptonResolution",false)),
     triggerList(iConfig.getUntrackedParameter<std::vector<std::string>>("triggerList")),
     skimLooseLeptons(iConfig.getUntrackedParameter<int>("skimLooseLeptons",2)),    
     verbose(iConfig.getUntrackedParameter<bool>("verbose",false))
@@ -709,12 +741,6 @@ UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
     histContainer_["NINTERACT_RW"]=fs->make<TH1F>("nInteraction_ReWeighted","Number of True Interactions",61,-0.5,60.5);
 
     passedEventsTree_All = new TTree("passedEvents","passedEvents");
-
-    if(bStudyResolution) {
-        PerLepReso = new HZZ4LPerLepResolution();
-        if(bStudyDiLeptonResolution) {  DiLepReso = new HZZ4LDiLepResolution(); }
-        if(bStudyFourLeptonResolution)  { FourLepReso = new HZZ4LResolution(); }
-    }
 
     edm::FileInPath jecfileInPath("UFHZZAnalysisRun2/UFHZZ4LAna/data/Fall15_25nsV2_MC_UncertaintySources_AK4PFchs.txt");
     jecunc = new JetCorrectionUncertainty(*(new JetCorrectorParameters(jecfileInPath.fullPath().c_str(),"Total")));
@@ -846,6 +872,15 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     edm::Handle<edm::View<pat::Jet> > jets;
     iEvent.getByToken(jetSrc_,jets);
 
+    resolution_pt = JME::JetResolution::get(iSetup, "AK4PFchs_pt");
+    resolution_phi = JME::JetResolution::get(iSetup, "AK4PFchs_phi");
+
+    edm::Handle<edm::ValueMap<float> > qgHandle;
+    iEvent.getByToken(qgTagSrc_, qgHandle);
+ 
+    edm::Handle<edm::View<pat::Jet> > mergedjets;
+    iEvent.getByToken(mergedjetSrc_,mergedjets);
+
     // GEN collections
     edm::Handle<reco::GenParticleCollection> prunedgenParticles;
     iEvent.getByToken(prunedgenParticlesSrc_, prunedgenParticles);
@@ -929,6 +964,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     jet_jerup_pt.clear(); jet_jerup_eta.clear(); jet_jerup_phi.clear(); jet_jerup_mass.clear(); 
     jet_jerdn_pt.clear(); jet_jerdn_eta.clear(); jet_jerdn_phi.clear(); jet_jerdn_mass.clear(); 
     jet_pumva.clear(); jet_csvv2.clear(); jet_isbtag.clear();
+    jet_QGTagger.clear(); jet_relpterr.clear(); jet_phierr.clear();
 
     jet_iscleanH4l.clear(); 
     jet_jesup_iscleanH4l.clear(); jet_jesdn_iscleanH4l.clear();
@@ -962,6 +998,18 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
     DijetMass=-1.0; DijetDEta=9999.0;
     DijetFisher=9999.0;
+    
+    mergedjet_iscleanH4l.clear();
+    mergedjet_pt.clear(); mergedjet_eta.clear(); mergedjet_phi.clear(); mergedjet_mass.clear();
+    mergedjet_L1.clear();
+    mergedjet_softdropmass.clear();
+    mergedjet_prunedmass.clear();
+    mergedjet_tau1.clear(); mergedjet_tau2.clear();
+    
+    mergedjet_nsubjet.clear();
+    mergedjet_subjet_pt.clear(); mergedjet_subjet_eta.clear(); 
+    mergedjet_subjet_phi.clear(); mergedjet_subjet_mass.clear();
+    mergedjet_subjet_btag.clear();
 
     // FSR Photons
     nFSRPhotons=0;
@@ -1396,20 +1444,6 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         if( (recoMuons.size() + recoElectrons.size()) >= (uint)skimLooseLeptons ) {
             if (verbose) cout<<"found two leptons"<<endl;
 
-            // Mass Resolution Study
-            /*
-            if((recoMuons.size() + recoElectrons.size()) >=2 && bStudyResolution) {
-                if (verbose) cout<<"begin 2lep mass resolution study"<<endl;
-                vector<pat::Muon> recoIsoMuons;
-                vector<pat::Electron> recoIsoElectrons;	    
-                recoIsoMuons = helper.goodMuons2012_Iso(AllMuons,_muPtCut, muRho, isoCutMu, PV);
-                recoIsoElectrons = helper.goodElectrons2012_Iso(AllElectrons,_elecPtCut, elRho, isoCutEl, elecID,PV);	   
-                PerLepReso->fillHistograms(hContainer_, hContainer2D_, hContainer3D_, recoIsoElectrons, recoIsoMuons, eventWeight, !isMC);
-                if(bStudyDiLeptonResolution) { DiLepReso->fillHistograms(hContainer_, hContainer2D_, recoIsoElectrons, recoIsoMuons, eventWeight, !isMC); }
-                if (verbose) {cout<<"finished 2lep mass resolution study"<<endl;}// cout << "" << endl;}
-            }
-            */
-
             // FSR Photons
             if(doFsrRecovery) {
                 
@@ -1552,10 +1586,18 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
             if (verbose) {cout<<"found higgs candidate? "<<foundHiggsCandidate<<endl; }
             
             // Jets
+            if (verbose) cout<<"begin filling jet candidates"<<endl;
+
             vector<pat::Jet> goodJets;
-            //double tempDeltaR = -999;
+            vector<float> patJetQGTagger;            
+            vector<float> goodJetQGTagger;
+
+            for(auto jet = jets->begin();  jet != jets->end(); ++jet){
+                edm::RefToBase<pat::Jet> jetRef(edm::Ref<edm::View<pat::Jet> >(jets, jet - jets->begin()));
+                float qgLikelihood = (*qgHandle)[jetRef];
+                patJetQGTagger.push_back(qgLikelihood);  
+            }
             
-            if (verbose) cout<<"begin filling jet candidates"<<endl;                                        
             for(unsigned int i = 0; i < jets->size(); ++i) {
                 
                 const pat::Jet & jet = jets->at(i);
@@ -1610,11 +1652,23 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                         if (!dropit) {
                             if (verbose) cout<<"adding jet candidate, pt: "<<jet.pt()<<" eta: "<<jet.eta()<<endl;
                             goodJets.push_back(jet);
+                            goodJetQGTagger.push_back(patJetQGTagger[i]);
                         } // pu jet scale factor
                         
                     } // pass loose pt cut 
                 } // pass loose pf jet id and pu jet id
             } // all jets
+            
+            vector<pat::Jet> selectedMergedJets;
+            for(unsigned int i = 0; i < mergedjets->size(); ++i) { // all merged jets
+                
+                const pat::Jet & mergedjet = mergedjets->at(i);
+                double pt = double(mergedjet.pt());
+                double eta = double(mergedjet.eta());
+                
+                if(pt>60 && abs(eta)<2.5) selectedMergedJets.push_back(mergedjet);
+                
+            } // all merged jets
                         
             if( foundHiggsCandidate ){
                 
@@ -1713,7 +1767,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
             //Set All the Variables for Saved Trees (after finding higgs candidate)
             if (verbose) cout<<"begin setting tree variables"<<endl;
-            setTreeVariables(iEvent, iSetup, selectedMuons, selectedElectrons, recoMuons, recoElectrons, goodJets);
+            setTreeVariables(iEvent, iSetup, selectedMuons, selectedElectrons, recoMuons, recoElectrons, goodJets, goodJetQGTagger, selectedMergedJets);
             if (verbose) cout<<"finshed setting tree variables"<<endl;
 
 
@@ -1954,13 +2008,6 @@ UFHZZ4LAna::beginJob()
     using namespace pat;
 
     bookPassedEventTree("passedEvents", passedEventsTree_All);
-
-    bookResolutionHistograms();
-    if(bStudyResolution){
-        PerLepReso->bookHistograms(fs, hContainer_, hContainer2D_, hContainer3D_);
-        if(bStudyDiLeptonResolution) { DiLepReso->bookHistograms(fs, hContainer_, hContainer2D_); }
-        if(bStudyFourLeptonResolution) { FourLepReso->bookHistograms(fs, hContainer_, hContainer2D_);}
-    }
 
     firstEntry = true;
 
@@ -2696,9 +2743,11 @@ void UFHZZ4LAna::bookPassedEventTree(TString treeName, TTree *tree)
     // Jets
     tree->Branch("jet_iscleanH4l",&jet_iscleanH4l);
     tree->Branch("jet_pt",&jet_pt_float);
+    tree->Branch("jet_relpterr",&jet_relpterr);    
     tree->Branch("jet_eta",&jet_eta_float);
     tree->Branch("jet_phi",&jet_phi_float);
-    tree->Branch("jet_mass",&jet_mass_float);
+    tree->Branch("jet_phierr",&jet_phierr);
+    tree->Branch("jet_mass",&jet_mass_float);    
     tree->Branch("jet_jesup_iscleanH4l",&jet_jesup_iscleanH4l);
     tree->Branch("jet_jesup_pt",&jet_jesup_pt_float);
     tree->Branch("jet_jesup_eta",&jet_jesup_eta_float);
@@ -2722,6 +2771,7 @@ void UFHZZ4LAna::bookPassedEventTree(TString treeName, TTree *tree)
     tree->Branch("jet_pumva",&jet_pumva);
     tree->Branch("jet_csvv2",&jet_csvv2);
     tree->Branch("jet_isbtag",&jet_isbtag);
+    tree->Branch("jet_QGTagger",&jet_QGTagger);
     tree->Branch("njets_pt30_eta4p7",&njets_pt30_eta4p7,"njets_pt30_eta4p7/I");
     tree->Branch("njets_pt30_eta4p7_jesup",&njets_pt30_eta4p7_jesup,"njets_pt30_eta4p7_jesup/I");
     tree->Branch("njets_pt30_eta4p7_jesdn",&njets_pt30_eta4p7_jesdn,"njets_pt30_eta4p7_jesdn/I");
@@ -2747,6 +2797,26 @@ void UFHZZ4LAna::bookPassedEventTree(TString treeName, TTree *tree)
     tree->Branch("DijetMass",&DijetMass,"DijetMass/F");
     tree->Branch("DijetDEta",&DijetDEta,"DijetDEta/F");
     tree->Branch("DijetFisher",&DijetFisher,"DijetFisher/F");
+
+    // merged jets
+    tree->Branch("mergedjet_iscleanH4l",&mergedjet_iscleanH4l);
+    tree->Branch("mergedjet_pt",&mergedjet_pt);
+    tree->Branch("mergedjet_eta",&mergedjet_eta);
+    tree->Branch("mergedjet_phi",&mergedjet_phi);
+    tree->Branch("mergedjet_mass",&mergedjet_mass);    
+    tree->Branch("mergedjet_tau1",&mergedjet_tau1);
+    tree->Branch("mergedjet_tau2",&mergedjet_tau2);
+    
+    tree->Branch("mergedjet_L1",&mergedjet_L1);
+    tree->Branch("mergedjet_softdropmass",&mergedjet_softdropmass);
+    tree->Branch("mergedjet_prunedmass",&mergedjet_prunedmass);
+
+    tree->Branch("mergedjet_nsubjet",&mergedjet_nsubjet);
+    tree->Branch("mergedjet_subjet_pt",&mergedjet_subjet_pt);
+    tree->Branch("mergedjet_subjet_eta",&mergedjet_subjet_eta);
+    tree->Branch("mergedjet_subjet_phi",&mergedjet_subjet_phi);
+    tree->Branch("mergedjet_subjet_mass",&mergedjet_subjet_mass);
+    tree->Branch("mergedjet_subjet_btag",&mergedjet_subjet_btag);
 
     // FSR Photons
     tree->Branch("nFSRPhotons",&nFSRPhotons,"nFSRPhotons/I");
@@ -2869,7 +2939,8 @@ void UFHZZ4LAna::bookPassedEventTree(TString treeName, TTree *tree)
 
 void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSetup& iSetup,
                                    std::vector<pat::Muon> selectedMuons, std::vector<pat::Electron> selectedElectrons, 
-                                   std::vector<pat::Muon> recoMuons, std::vector<pat::Electron> recoElectrons, std::vector<pat::Jet> goodJets)
+                                   std::vector<pat::Muon> recoMuons, std::vector<pat::Electron> recoElectrons, std::vector<pat::Jet> goodJets,
+                                   std::vector<float> goodJetQGTagger, std::vector<pat::Jet> selectedMergedJets)
 {
 
     using namespace edm;
@@ -2916,7 +2987,15 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
                 isclean_H4l = false;
             }
         }
+        
+        //JER from database
+        JME::JetParameters parameters;
+        parameters.setJetPt(goodJets[k].pt());
+        parameters.setJetEta(goodJets[k].eta());
+        parameters.setRho(muRho);
 
+        float relpterr = resolution_pt.getResolution(parameters);
+        float phierr = resolution_phi.getResolution(parameters);
         
         /*
         // JER Smearing
@@ -3025,6 +3104,9 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
             jet_csvv2.push_back(goodJets[k].bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
             jet_isbtag.push_back(1 ? goodJets[k].bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags")>BTagCut : 0);
             if (goodJets[k].bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags")>BTagCut && isclean_H4l) nbjets_pt30_eta4p7++;
+            jet_QGTagger.push_back(goodJetQGTagger[k]);
+            jet_relpterr.push_back(relpterr);
+            jet_phierr.push_back(phierr);
         }
         
         // JER up
@@ -3134,6 +3216,62 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
             double mass = Dijet.M();
             if (mass > 60 && mass < 120) nvjets_pt40_eta2p4++;            
         }
+    }
+
+
+    // merged jet
+    for( unsigned int k = 0; k < selectedMergedJets.size(); k++) {
+        
+        double tempDeltaR = 999.0;
+        bool isclean_H4l = true;
+        
+        unsigned int Nleptons = lep_pt.size();
+        for (unsigned int i=0; i<Nleptons; i++) {
+            
+            if (abs(lep_id[i])==13 && lep_RelIsoNoFSR[i]>isoCutMu) continue;
+            if (abs(lep_id[i])==11 && lep_RelIsoNoFSR[i]>isoCutEl) continue;
+            if (lep_pt[i]<40) continue;
+            if (!(lep_tightId[i])) continue;
+            TLorentzVector thisLep;
+            thisLep.SetPtEtaPhiM(lep_pt[i],lep_eta[i],lep_phi[i],lep_mass[i]);
+            tempDeltaR=999.0;
+            tempDeltaR=deltaR(selectedMergedJets[k].eta(),selectedMergedJets[k].phi(),thisLep.Eta(),thisLep.Phi());
+            if (tempDeltaR<0.8) {
+                isclean_H4l = false;
+            }
+        }
+                    
+        mergedjet_iscleanH4l.push_back(isclean_H4l?1:0);
+        mergedjet_pt.push_back((float)selectedMergedJets[k].pt());
+        mergedjet_eta.push_back((float)selectedMergedJets[k].eta());             
+        mergedjet_phi.push_back((float)selectedMergedJets[k].phi());
+        mergedjet_mass.push_back((float)selectedMergedJets[k].mass());            
+        mergedjet_L1.push_back((float)selectedMergedJets[k].jecFactor("L1FastJet")); // current JEC to L1
+        mergedjet_softdropmass.push_back((float)selectedMergedJets[k].userFloat("ak8PFJetsCHSSoftDropMass"));
+        mergedjet_prunedmass.push_back((float)selectedMergedJets[k].userFloat("ak8PFJetsCHSPrunedMass"));
+            
+        mergedjet_tau1.push_back((float)selectedMergedJets[k].userFloat("NjettinessAK8:tau1") );
+        mergedjet_tau2.push_back((float)selectedMergedJets[k].userFloat("NjettinessAK8:tau2") );
+        
+        auto wSubjets = selectedMergedJets[k].subjets("SoftDrop");
+        int nsub = 0;
+        vector<float> subjets_pt, subjets_eta, subjets_phi, subjets_mass, subjets_btag; 
+        for ( auto const & iw : wSubjets ) {                        
+            nsub = nsub + 1;            
+            subjets_pt.push_back((float)iw->pt());
+            subjets_eta.push_back((float)iw->eta());
+            subjets_phi.push_back((float)iw->eta());
+            subjets_mass.push_back((float)iw->mass());
+            subjets_btag.push_back((float)iw->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
+        }        
+
+        mergedjet_subjet_pt.push_back(subjets_pt);
+        mergedjet_subjet_eta.push_back(subjets_eta);
+        mergedjet_subjet_phi.push_back(subjets_phi);
+        mergedjet_subjet_mass.push_back(subjets_mass);
+        mergedjet_subjet_btag.push_back(subjets_btag);        
+        mergedjet_nsubjet.push_back(nsub);
+            
     }
 
     // Higgs Variables
