@@ -266,6 +266,10 @@ private:
     int nisoleptons;
     double muRho, elRho, rhoSUS;
 
+    // tau variables
+    vector<int> tau_id;
+    vector<double> tau_pt, tau_eta, tau_phi, tau_mass;
+
     // Higgs candidate variables
     vector<double> H_pt; vector<double> H_eta; vector<double> H_phi; vector<double> H_mass;
     vector<double> H_noFSR_pt; vector<double> H_noFSR_eta; vector<double> H_noFSR_phi; vector<double> H_noFSR_mass;
@@ -399,40 +403,41 @@ private:
     double D_g4, Djet_VAJHU, Djet_VAJHU_jesup, Djet_VAJHU_jesdn;
 
     // a vector<float> for each vector<double>
-    vector<float>  lep_pt_float; vector<float> lep_pterr_float; vector<float>  lep_pterrold_float;
-    vector<float>  lep_eta_float; vector<float> lep_phi_float; vector<float>  lep_mass_float;
-    vector<float>  lepFSR_pt_float; vector<float> lepFSR_eta_float;
-    vector<float>  lepFSR_phi_float; vector<float> lepFSR_mass_float;
-    vector<float>  H_pt_float; vector<float> H_eta_float; vector<float>  H_phi_float; vector<float>  H_mass_float;
-    vector<float>  H_noFSR_pt_float; vector<float>  H_noFSR_eta_float; 
-    vector<float>  H_noFSR_phi_float; vector<float>  H_noFSR_mass_float;
-    vector<float>  Z_pt_float; vector<float>  Z_eta_float; vector<float>  Z_phi_float; vector<float>  Z_mass_float;
-    vector<float>  Z_noFSR_pt_float; vector<float>  Z_noFSR_eta_float;
-    vector<float>  Z_noFSR_phi_float; vector<float>  Z_noFSR_mass_float;
-    vector<float>  jet_pt_float; vector<float> jet_eta_float; vector<float> jet_phi_float; vector<float> jet_mass_float;
-    vector<float>  jet_jesup_pt_float; vector<float>  jet_jesup_eta_float; 
-    vector<float>  jet_jesup_phi_float; vector<float>  jet_jesup_mass_float;
-    vector<float>  jet_jesdn_pt_float; vector<float>  jet_jesdn_eta_float;
-    vector<float>  jet_jesdn_phi_float; vector<float>  jet_jesdn_mass_float;
-    vector<float>  jet_jerup_pt_float; vector<float>  jet_jerup_eta_float;
-    vector<float>  jet_jerup_phi_float; vector<float>  jet_jerup_mass_float;
-    vector<float>  jet_jerdn_pt_float; vector<float>  jet_jerdn_eta_float;
-    vector<float>  jet_jerdn_phi_float; vector<float>  jet_jerdn_mass_float;
-    vector<float>  fsrPhotons_pt_float; vector<float>  fsrPhotons_pterr_float;
-    vector<float>  fsrPhotons_eta_float; vector<float>  fsrPhotons_phi_float; vector<float>  fsrPhotons_mass_float;
-    vector<float>  GENlep_pt_float; vector<float>  GENlep_eta_float;
-    vector<float>  GENlep_phi_float; vector<float>  GENlep_mass_float;
-    vector<float>  GENH_pt_float; vector<float>  GENH_eta_float;
-    vector<float>  GENH_phi_float; vector<float>  GENH_mass_float;
-    vector<float>  GENZ_pt_float; vector<float>  GENZ_eta_float;
-    vector<float>  GENZ_phi_float; vector<float>  GENZ_mass_float;
-    vector<float>  GENjet_pt_float; vector<float>  GENjet_eta_float;
-    vector<float>  GENjet_phi_float; vector<float>  GENjet_mass_float;
+    vector<float> lep_pt_float, lep_pterr_float, lep_pterrold_float;
+    vector<float> lep_eta_float, lep_phi_float, lep_mass_float;
+    vector<float> lepFSR_pt_float, lepFSR_eta_float;
+    vector<float> lepFSR_phi_float, lepFSR_mass_float;
+    vector<float> tau_pt_float, tau_eta_float, tau_phi_float, tau_mass_float;
+    vector<float> H_pt_float, H_eta_float, H_phi_float, H_mass_float;
+    vector<float> H_noFSR_pt_float, H_noFSR_eta_float; 
+    vector<float> H_noFSR_phi_float, H_noFSR_mass_float;
+    vector<float> Z_pt_float, Z_eta_float, Z_phi_float, Z_mass_float;
+    vector<float> Z_noFSR_pt_float, Z_noFSR_eta_float;
+    vector<float> Z_noFSR_phi_float, Z_noFSR_mass_float;
+    vector<float> jet_pt_float, jet_eta_float, jet_phi_float, jet_mass_float;
+    vector<float> jet_jesup_pt_float, jet_jesup_eta_float; 
+    vector<float> jet_jesup_phi_float, jet_jesup_mass_float;
+    vector<float> jet_jesdn_pt_float, jet_jesdn_eta_float;
+    vector<float> jet_jesdn_phi_float, jet_jesdn_mass_float;
+    vector<float> jet_jerup_pt_float, jet_jerup_eta_float;
+    vector<float> jet_jerup_phi_float, jet_jerup_mass_float;
+    vector<float> jet_jerdn_pt_float, jet_jerdn_eta_float;
+    vector<float> jet_jerdn_phi_float, jet_jerdn_mass_float;
+    vector<float> fsrPhotons_pt_float, fsrPhotons_pterr_float;
+    vector<float> fsrPhotons_eta_float, fsrPhotons_phi_float, fsrPhotons_mass_float;
+    vector<float> GENlep_pt_float, GENlep_eta_float;
+    vector<float> GENlep_phi_float, GENlep_mass_float;
+    vector<float> GENH_pt_float, GENH_eta_float;
+    vector<float> GENH_phi_float, GENH_mass_float;
+    vector<float> GENZ_pt_float, GENZ_eta_float;
+    vector<float> GENZ_phi_float, GENZ_mass_float;
+    vector<float> GENjet_pt_float, GENjet_eta_float;
+    vector<float> GENjet_phi_float, GENjet_mass_float;
 
     // Global Variables but not stored in the tree
     vector<double> lep_ptreco;
     vector<int> lep_ptid; vector<int> lep_ptindex;
-    vector<pat::Muon> recoMuons; vector<pat::Electron> recoElectrons;
+    vector<pat::Muon> recoMuons; vector<pat::Electron> recoElectrons; vector<pat::Tau> recoTaus;
     vector<pat::PFParticle> fsrPhotons; 
     TLorentzVector HVec, HVecNoFSR, Z1Vec, Z2Vec;
     TLorentzVector GENZ1Vec, GENZ2Vec;
@@ -446,6 +451,7 @@ private:
     edm::EDGetTokenT<edm::View<pat::Photon> > photonSrc_;
     edm::EDGetTokenT<edm::View<pat::Electron> > elecSrc_;
     edm::EDGetTokenT<edm::View<pat::Muon> > muonSrc_;
+    edm::EDGetTokenT<edm::View<pat::Tau> > tauSrc_;
     edm::EDGetTokenT<edm::View<pat::Jet> > jetSrc_;
     edm::EDGetTokenT<edm::ValueMap<float> > qgTagSrc_;
     edm::EDGetTokenT<edm::View<pat::Jet> > mergedjetSrc_;
@@ -483,7 +489,8 @@ private:
     float sip3dCut, leadingPtCut, subleadingPtCut;
     float genIsoCutEl, genIsoCutMu;
     double genIsoConeSizeEl, genIsoConeSizeMu;
-    float _elecPtCut, _muPtCut, BTagCut;
+    float _elecPtCut, _muPtCut, _tauPtCut;
+    float BTagCut;
     bool reweightForPU;
     std::string PUVersion;
     bool doFsrRecovery, doPUJetID;
@@ -511,6 +518,7 @@ UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
     photonSrc_(consumes<edm::View<pat::Photon> >(iConfig.getUntrackedParameter<edm::InputTag>("photonSrc"))),
     elecSrc_(consumes<edm::View<pat::Electron> >(iConfig.getUntrackedParameter<edm::InputTag>("electronSrc"))),
     muonSrc_(consumes<edm::View<pat::Muon> >(iConfig.getUntrackedParameter<edm::InputTag>("muonSrc"))),
+    tauSrc_(consumes<edm::View<pat::Tau> >(iConfig.getUntrackedParameter<edm::InputTag>("tauSrc"))),
     jetSrc_(consumes<edm::View<pat::Jet> >(iConfig.getUntrackedParameter<edm::InputTag>("jetSrc"))),
     qgTagSrc_(consumes<edm::ValueMap<float>>(edm::InputTag("QGTagger", "qgLikelihood"))),
      mergedjetSrc_(consumes<edm::View<pat::Jet> >(iConfig.getUntrackedParameter<edm::InputTag>("mergedjetSrc"))),
@@ -557,8 +565,9 @@ UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
     genIsoCutMu(iConfig.getUntrackedParameter<double>("genIsoCutMu",0.4)), 
     genIsoConeSizeEl(iConfig.getUntrackedParameter<double>("genIsoConeSizeEl",0.4)), 
     genIsoConeSizeMu(iConfig.getUntrackedParameter<double>("genIsoConeSizeMu",0.4)), 
-    _elecPtCut(iConfig.getUntrackedParameter<double>("_elecPtCut",7)),
-    _muPtCut(iConfig.getUntrackedParameter<double>("_muPtCut",5)),
+    _elecPtCut(iConfig.getUntrackedParameter<double>("_elecPtCut",7.0)),
+    _muPtCut(iConfig.getUntrackedParameter<double>("_muPtCut",5.0)),
+    _tauPtCut(iConfig.getUntrackedParameter<double>("_tauPtCut",20.0)),
     BTagCut(iConfig.getUntrackedParameter<double>("BTagCut",0.80)),
     reweightForPU(iConfig.getUntrackedParameter<bool>("reweightForPU",true)),
     PUVersion(iConfig.getUntrackedParameter<std::string>("PUVersion","Fall15_76X")),
@@ -677,6 +686,11 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     iEvent.getByToken(muonSrc_,muons);
     if (verbose) cout<<muons->size()<<" total muons in the collection"<<endl;
 
+    // tau collection
+    edm::Handle<edm::View<pat::Tau> > taus;
+    iEvent.getByToken(tauSrc_,taus);
+    if (verbose) cout<<taus->size()<<" total taus in the collection"<<endl;
+
     // met collection 
     edm::Handle<edm::View<pat::MET> > mets;
     iEvent.getByToken(metSrc_,mets);
@@ -780,6 +794,9 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     lep_missingHits.clear();
     lep_filtersMatched.clear();    
     nisoleptons=0;
+
+    //tau variables
+    tau_pt.clear(); tau_eta.clear(); tau_phi.clear(); tau_mass.clear(); 
 
     // Higgs candidate variables
     H_pt.clear(); H_eta.clear(); H_phi.clear(); H_mass.clear(); 
@@ -919,6 +936,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     // Float vectors
     lep_pt_float.clear(); lep_pterr_float.clear(); lep_pterrold_float.clear(); lep_eta_float.clear(); lep_phi_float.clear(); lep_mass_float.clear();
     lepFSR_pt_float.clear(); lepFSR_eta_float.clear(); lepFSR_phi_float.clear(); lepFSR_mass_float.clear();
+    tau_pt_float.clear(); tau_eta_float.clear(); tau_phi_float.clear(); tau_mass_float.clear();    
     H_pt_float.clear(); H_eta_float.clear(); H_phi_float.clear(); H_mass_float.clear();
     H_noFSR_pt_float.clear(); H_noFSR_eta_float.clear(); H_noFSR_phi_float.clear(); H_noFSR_mass_float.clear();
     Z_pt_float.clear(); Z_eta_float.clear(); Z_phi_float.clear(); Z_mass_float.clear();
@@ -1008,6 +1026,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     // create a string with all passing trigger names
     for (unsigned int i=0; i<_tSize; ++i) {
         std::string triggerName = trigNames.triggerName(i);
+        if (strstr(triggerName.c_str(),"_step")) continue;
         if (strstr(triggerName.c_str(),"MC_")) continue;
         if (strstr(triggerName.c_str(),"AlCa_")) continue;
         if (strstr(triggerName.c_str(),"DST_")) continue;
@@ -1056,15 +1075,17 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         }
 
         if (verbose) cout<<"start lepton analysis"<<endl;           
-        vector<pat::Muon> AllMuons;
-        vector<pat::Electron> AllElectrons;  
-        AllMuons = helper.goodLooseMuons2012(muons,_muPtCut);
+        vector<pat::Electron> AllElectrons; vector<pat::Muon> AllMuons; vector<pat::Tau> AllTaus;
         AllElectrons = helper.goodLooseElectrons2012(electrons,_elecPtCut);
-
+        AllMuons = helper.goodLooseMuons2012(muons,_muPtCut);
+        AllTaus = helper.goodLooseTaus2015(taus,_tauPtCut);
+        
         helper.cleanOverlappingLeptons(AllMuons,AllElectrons,PV);
-        if (verbose) cout<<AllMuons.size()<<" loose muons "<<AllElectrons.size()<<" loose elctrons"<<endl;
         recoMuons = helper.goodMuons2015_noIso_noPf(AllMuons,_muPtCut,PV,sip3dCut);
         recoElectrons = helper.goodElectrons2015_noIso_noBdt(AllElectrons,_elecPtCut,elecID,PV,iEvent,sip3dCut);
+        helper.cleanOverlappingTaus(recoMuons,recoElectrons,AllTaus,isoCutMu,isoCutEl,muRho,elRho);
+        recoTaus = helper.goodTaus2015(AllTaus,_tauPtCut);
+        if (verbose) cout<<AllMuons.size()<<" loose muons "<<AllElectrons.size()<<" loose electrons"<<" loose taus "<<AllTaus.size()<<endl;
 
         //sort electrons and muons by pt
         if (verbose) cout<<recoMuons.size()<<" good muons and "<<recoElectrons.size()<<" good electrons to be sorted"<<endl;
@@ -1217,6 +1238,15 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                               <<" MiniIso: "<<lep_MiniIso[i]<<" ptRatio: "<<lep_ptRatio[i]<<" ptRel: "<<lep_ptRel[i]<<endl;}
         }
 
+        if (verbose) cout<<"adding taus to sorted list"<<endl;           
+        for(int i = 0; i < (int)recoTaus.size(); i++) {
+            cout<<"tau pt: "<<recoTaus[i].pt()<<endl;
+            tau_id.push_back(recoTaus[i].pdgId());
+            tau_pt.push_back(recoTaus[i].pt());
+            tau_eta.push_back(recoTaus[i].eta());
+            tau_phi.push_back(recoTaus[i].phi());            
+            tau_mass.push_back(recoTaus[i].mass());
+        }
 
         if (doTriggerMatching) {
             if (verbose) cout<<"start trigger matching"<<endl;        
@@ -1760,6 +1790,10 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
             lepFSR_eta_float.assign(lepFSR_eta.begin(),lepFSR_eta.end());
             lepFSR_phi_float.assign(lepFSR_phi.begin(),lepFSR_phi.end());
             lepFSR_mass_float.assign(lepFSR_mass.begin(),lepFSR_mass.end());
+            tau_pt_float.assign(tau_pt.begin(),tau_pt.end());
+            tau_eta_float.assign(tau_eta.begin(),tau_eta.end());
+            tau_phi_float.assign(tau_phi.begin(),tau_phi.end());
+            tau_mass_float.assign(tau_mass.begin(),tau_mass.end());
             H_pt_float.assign(H_pt.begin(),H_pt.end());
             H_eta_float.assign(H_eta.begin(),H_eta.end());
             H_phi_float.assign(H_phi.begin(),H_phi.end());
@@ -1828,6 +1862,8 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     GENjet_mass_float.clear(); GENjet_mass_float.assign(GENjet_mass.begin(),GENjet_mass.end());
 
     if (isMC) passedEventsTree_All->Fill();
+    
+    if (nEventsTotal==1000.0) passedEventsTree_All->OptimizeBaskets();
 
 }
 
@@ -2511,6 +2547,11 @@ void UFHZZ4LAna::bookPassedEventTree(TString treeName, TTree *tree)
     tree->Branch("pTL2FSR",&pTL2FSR,"pTL2FSR/F");
     tree->Branch("pTL3FSR",&pTL3FSR,"pTL3FSR/F");
     tree->Branch("pTL4FSR",&pTL4FSR,"pTL4FSR/F");
+    tree->Branch("tau_id",&tau_id);
+    tree->Branch("tau_pt",&tau_pt_float);
+    tree->Branch("tau_eta",&tau_eta_float);
+    tree->Branch("tau_phi",&tau_phi_float);
+    tree->Branch("tau_mass",&tau_mass_float);
 
     //Higgs Candidate Variables
     tree->Branch("H_pt",&H_pt_float);
@@ -3043,7 +3084,6 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
             
             if (abs(lep_id[i])==13 && lep_RelIsoNoFSR[i]>isoCutMu) continue;
             if (abs(lep_id[i])==11 && lep_RelIsoNoFSR[i]>isoCutEl) continue;
-            if (lep_pt[i]<40) continue;
             if (!(lep_tightId[i])) continue;
             TLorentzVector thisLep;
             thisLep.SetPtEtaPhiM(lep_pt[i],lep_eta[i],lep_phi[i],lep_mass[i]);
@@ -3054,7 +3094,7 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
             }
         }
              
-        // check overlap with fsr photons                                                                                                                                                                                               
+        // check overlap with fsr photons  
         unsigned int N = fsrPhotons_pt.size();
         for(unsigned int i=0; i<N; i++) {
 
@@ -3066,7 +3106,7 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
             TLorentzVector pho;
             pho.SetPtEtaPhiM(fsrPhotons_pt[i],fsrPhotons_eta[i],fsrPhotons_phi[i],0.0);
             tempDeltaR=999.0;
-            tempDeltaR=deltaR(goodJets[k].eta(),goodJets[k].phi(),pho.Eta(),pho.Phi());
+            tempDeltaR=deltaR(selectedMergedJets[k].eta(),selectedMergedJets[k].phi(),pho.Eta(),pho.Phi());
             if (tempDeltaR<0.8) {
                 isclean_H4l = false;
             }

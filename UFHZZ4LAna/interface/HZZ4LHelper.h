@@ -87,13 +87,16 @@ public:
     HZZ4LHelper();
     ~HZZ4LHelper();
   
-    std::vector<pat::Muon> goodLooseMuons2012(edm::Handle<edm::View<pat::Muon> > Muons, double muPtCut);
     std::vector<pat::Electron> goodLooseElectrons2012(edm::Handle<edm::View<pat::Electron> > Electrons, double elPtCut);
+    std::vector<pat::Muon> goodLooseMuons2012(edm::Handle<edm::View<pat::Muon> > Muons, double muPtCut);
+    std::vector<pat::Tau> goodLooseTaus2015(edm::Handle<edm::View<pat::Tau> > Taus, double tauPtCut);
 
-    std::vector<pat::Muon> goodMuons2015_noIso_noPf(std::vector<pat::Muon> Muons, double muPtCut, const reco::Vertex *&vertex, double sip3dCut);
     std::vector<pat::Electron> goodElectrons2015_noIso_noBdt(std::vector<pat::Electron> Electrons, double elecPtCut, std::string elecID, const reco::Vertex *&vertex,const edm::Event& iEvent, double sip3dCut); 
+    std::vector<pat::Muon> goodMuons2015_noIso_noPf(std::vector<pat::Muon> Muons, double muPtCut, const reco::Vertex *&vertex, double sip3dCut);
+    std::vector<pat::Tau> goodTaus2015(std::vector<pat::Tau> Taus, double tauPtCut);
 
     void cleanOverlappingLeptons(std::vector<pat::Muon> &Muons, std::vector<pat::Electron> &Electrons,const reco::Vertex *&vertex);
+    void cleanOverlappingTaus(std::vector<pat::Muon> &Muons, std::vector<pat::Electron> &Electrons, std::vector<pat::Tau> &Taus, double isoCutMu, double IsoCutEl, double muRho, double elRho);
 
     double getSIP3D(pat::Muon muon);
     double getSIP3D(pat::Electron electron);
@@ -216,23 +219,6 @@ HZZ4LHelper::~HZZ4LHelper()
     //destructor ---do nothing
 }
 
-
-std::vector<pat::Muon> HZZ4LHelper::goodLooseMuons2012(edm::Handle<edm::View<pat::Muon> > Muons, double muPtCut) {
-    using namespace pat;
-    using namespace std;    
-    vector<pat::Muon> bestMuons;    
-    for(edm::View<pat::Muon>::const_iterator mu=Muons->begin(); mu != Muons->end(); ++mu) {
-        if( (mu->isGlobalMuon() || mu->isTrackerMuon() || mu->isPFMuon()) && fabs(mu->eta()) < 2.4 && mu->pt() > muPtCut) {
-            //cout << "dB: " << mu->userIsolation("PfPUChargedHadronIso") << endl;
-            //double PUCorrVal = 0.5*mu->userIsolation("PfPUChargedHadronIso");
-            //double tmpIso = (mu->chargedHadronIso()+max(mu->photonIso()+mu->neutralHadronIso()-PUCorrVal,0.0))/mu->pt();
-            //cout << tmpIso << endl;          
-            bestMuons.push_back(*mu);
-        }
-    }
-    return bestMuons;    
-}
-
 std::vector<pat::Electron> HZZ4LHelper::goodLooseElectrons2012(edm::Handle<edm::View<pat::Electron> > Electrons, double elPtCut) {
     using namespace pat;
     using namespace std;    
@@ -244,6 +230,32 @@ std::vector<pat::Electron> HZZ4LHelper::goodLooseElectrons2012(edm::Handle<edm::
     }
     return bestElectrons;    
 }
+
+std::vector<pat::Muon> HZZ4LHelper::goodLooseMuons2012(edm::Handle<edm::View<pat::Muon> > Muons, double muPtCut) {
+    using namespace pat;
+    using namespace std;    
+    vector<pat::Muon> bestMuons;    
+    for(edm::View<pat::Muon>::const_iterator mu=Muons->begin(); mu != Muons->end(); ++mu) {
+        if( (mu->isGlobalMuon() || mu->isTrackerMuon() || mu->isPFMuon()) && fabs(mu->eta()) < 2.4 && mu->pt() > muPtCut) {
+            bestMuons.push_back(*mu);
+        }
+    }
+    return bestMuons;    
+}
+
+
+std::vector<pat::Tau> HZZ4LHelper::goodLooseTaus2015(edm::Handle<edm::View<pat::Tau> > Taus, double tauPtCut) {
+    using namespace pat;
+    using namespace std;    
+    vector<pat::Tau> bestTaus;    
+    for(edm::View<pat::Tau>::const_iterator tau=Taus->begin(); tau != Taus->end(); ++tau) {
+        if( fabs(tau->eta()) < 2.3 && tau->pt() > tauPtCut) {
+            bestTaus.push_back(*tau);
+        }
+    }
+    return bestTaus;    
+}
+
 
 std::vector<pat::Muon> HZZ4LHelper::goodMuons2015_noIso_noPf(std::vector<pat::Muon> Muons, double muPtCut, const reco::Vertex *&vertex, double sip3dCut)
 {
@@ -301,6 +313,26 @@ std::vector<pat::Electron> HZZ4LHelper::goodElectrons2015_noIso_noBdt(std::vecto
     }
   
     return bestElectrons;
+}
+
+std::vector<pat::Tau> HZZ4LHelper::goodTaus2015(std::vector<pat::Tau> Taus, double tauPtCut)
+{
+    using namespace edm;
+    using namespace pat;
+    using namespace std;
+
+    vector<pat::Tau> bestTaus;
+  
+    for(unsigned int i = 0; i < Taus.size(); i++) {
+
+        if ( Taus[i].pt()<tauPtCut ) continue;
+        if ( Taus[i].tauID("byLooseIsolationMVA3newDMwLT") < 0.5 ) continue;
+
+        bestTaus.push_back(Taus[i]);
+
+    }
+  
+    return bestTaus;
 }
 
 
@@ -416,6 +448,35 @@ void HZZ4LHelper::cleanOverlappingLeptons(std::vector<pat::Muon> &Muons, std::ve
     }    
 }
 
+void HZZ4LHelper::cleanOverlappingTaus(std::vector<pat::Muon> &Muons, std::vector<pat::Electron> &Electrons, std::vector<pat::Tau> &Taus, double isoCutMu, double isoCutEl, double muRho, double elRho) {
+  
+    using namespace pat;
+    using namespace std;
+
+    double tmpDeltR =999.0;
+
+    for( unsigned int i = 0; i < Muons.size(); i++ ) {
+        if (pfIso03(Muons[i],muRho)>isoCutMu) continue;
+        for( unsigned int j = 0; j < Taus.size(); j++ ) {
+            tmpDeltR = deltaR(Muons[i].eta(),Muons[i].phi(),Taus[j].eta(),Taus[j].phi());
+            if( tmpDeltR < 0.05 ) {		
+                Taus.erase(Taus.begin()+j);
+            }
+        }
+    }
+
+    for( unsigned int i = 0; i < Electrons.size(); i++ ) {
+        if (pfIso03(Electrons[i],elRho)>isoCutEl) continue;
+        for( unsigned int j = 0; j < Taus.size(); j++ ) {
+            tmpDeltR = deltaR(Electrons[i].eta(),Electrons[i].phi(),Taus[j].eta(),Taus[j].phi());
+            if( tmpDeltR < 0.05 ) {		
+                Taus.erase(Taus.begin()+j);
+            }
+        }
+    }
+
+}
+
 double HZZ4LHelper::getSIP3D(pat::Muon muon) {
     using namespace pat;
     using namespace std;
@@ -472,7 +533,6 @@ bool HZZ4LHelper::passTight_Id_SUS(pat::Electron electron, std::string elecID, c
 
     double dxyCut = 0.05;
     double dzCut = 0.1;
-    //std::cout<<"dxy: "<<fabs(electron.gsfTrack()->dxy(vertex->position()))<<" dz: "<<fabs(electron.gsfTrack()->dz(vertex->position()))<<std::endl;
     if( fabs(electron.gsfTrack()->dxy(vertex->position())) >= dxyCut ) return false;
     if( fabs(electron.gsfTrack()->dz(vertex->position())) >= dzCut ) return false;
 
@@ -491,18 +551,12 @@ bool HZZ4LHelper::passTight_Id_SUS(pat::Electron electron, std::string elecID, c
     if (electron.userFloat("ElectronMVAEstimatorRun2Spring15NonTrig25nsV1Values") <= cutVal ) return false;
 
     bool vtxFitConversion = ConversionTools::hasMatchedConversion(reco::GsfElectron(electron), theConversions, BS.position());
-    //std::cout<<"vtxFitConverstion: "<<vtxFitConversion<<std::endl;
     if( vtxFitConversion )  return false;
 
     int missingHitsCuts = 1;
     int misHits = electron.gsfTrack()->hitPattern().numberOfHits(reco::HitPattern::MISSING_INNER_HITS);
-    //std::cout<<"misHits: "<<misHits<<std::endl;
     if (misHits >= missingHitsCuts) return false;
     
-    //std::cout<<"check id emulation"<<std::endl;
-    // Trigger ID Emulation
-    //std::cout<<"isEB: "<<electron.isEB()<<" iEtaieta: "<<electron.full5x5_sigmaIetaIeta()<<" hOe: "<<electron.hcalOverEcal()<<" dEta: "<<electron.deltaEtaSuperClusterTrackAtVtx()<<" dPhi: "<<electron.deltaPhiSuperClusterTrackAtVtx()<<" |1/e - 1/p| "<<fabs(1.0/electron.correctedEcalEnergy() - electron.eSuperClusterOverP()/electron.correctedEcalEnergy())<<std::endl;
-
     if (electron.isEB()) {
         if (electron.full5x5_sigmaIetaIeta()>=0.011) return false;
         if (electron.hcalOverEcal()>=0.08) return false;
@@ -517,8 +571,6 @@ bool HZZ4LHelper::passTight_Id_SUS(pat::Electron electron, std::string elecID, c
         if (fabs(electron.deltaPhiSuperClusterTrackAtVtx())>=0.08) return false;
         if (fabs(1.0/electron.correctedEcalEnergy() - electron.eSuperClusterOverP()/electron.correctedEcalEnergy())>=0.01) return false;
     }
-
-    //std::cout<<"passed id emulation"<<std::endl;
 
     return true;
 }
