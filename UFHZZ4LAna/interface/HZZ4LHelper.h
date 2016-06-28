@@ -90,10 +90,12 @@ public:
     std::vector<pat::Electron> goodLooseElectrons2012(edm::Handle<edm::View<pat::Electron> > Electrons, double elPtCut);
     std::vector<pat::Muon> goodLooseMuons2012(edm::Handle<edm::View<pat::Muon> > Muons, double muPtCut);
     std::vector<pat::Tau> goodLooseTaus2015(edm::Handle<edm::View<pat::Tau> > Taus, double tauPtCut);
+    std::vector<pat::Photon> goodLoosePhotons2015(edm::Handle<edm::View<pat::Photon> > Photons, double phoPtCut);
 
     std::vector<pat::Electron> goodElectrons2015_noIso_noBdt(std::vector<pat::Electron> Electrons, double elecPtCut, std::string elecID, const reco::Vertex *&vertex,const edm::Event& iEvent, double sip3dCut); 
     std::vector<pat::Muon> goodMuons2015_noIso_noPf(std::vector<pat::Muon> Muons, double muPtCut, const reco::Vertex *&vertex, double sip3dCut);
     std::vector<pat::Tau> goodTaus2015(std::vector<pat::Tau> Taus, double tauPtCut);
+    std::vector<pat::Photon> goodPhotons2015(std::vector<pat::Photon> Photons, double phoPtCut);
 
     void cleanOverlappingLeptons(std::vector<pat::Muon> &Muons, std::vector<pat::Electron> &Electrons,const reco::Vertex *&vertex);
     void cleanOverlappingTaus(std::vector<pat::Muon> &Muons, std::vector<pat::Electron> &Electrons, std::vector<pat::Tau> &Taus, double isoCutMu, double IsoCutEl, double muRho, double elRho);
@@ -114,8 +116,9 @@ public:
     double ptRel(pat::Electron electron, edm::Handle<edm::View<pat::Jet> > jets,bool isMC);
     double ptRel(pat::Muon muon, edm::Handle<edm::View<pat::Jet> > jets,bool isMC);
 
-    bool passTight_BDT_Id(pat::Electron electron, std::string elecID);
+    bool passTight_Id(pat::Muon muon, const reco::Vertex *&vertex);
     bool passTight_Id_SUS(pat::Muon muon, const reco::Vertex *&vertex);
+    bool passTight_BDT_Id(pat::Electron electron, float mvavalue);
     bool passTight_Id_SUS(pat::Electron electron, std::string elecID, const reco::Vertex *&vertex, const reco::BeamSpot BS, edm::Handle< std::vector<reco::Conversion> > theConversions);
     
     float kfactor_qqZZ_qcd_dPhi(float GENdPhiZZ, int finalState);
@@ -257,6 +260,19 @@ std::vector<pat::Tau> HZZ4LHelper::goodLooseTaus2015(edm::Handle<edm::View<pat::
 }
 
 
+std::vector<pat::Photon> HZZ4LHelper::goodLoosePhotons2015(edm::Handle<edm::View<pat::Photon> > Photons, double phoPtCut) {
+    using namespace pat;
+    using namespace std;    
+    vector<pat::Photon> bestPhotons;    
+    for(edm::View<pat::Photon>::const_iterator photon=Photons->begin(); photon != Photons->end(); ++photon) {
+        if( fabs(photon->eta()) < 2.3 && photon->pt() > phoPtCut) {
+            bestPhotons.push_back(*photon);
+        }
+    }
+    return bestPhotons;    
+}
+
+
 std::vector<pat::Muon> HZZ4LHelper::goodMuons2015_noIso_noPf(std::vector<pat::Muon> Muons, double muPtCut, const reco::Vertex *&vertex, double sip3dCut)
 {
     //using namespace edm;
@@ -326,13 +342,32 @@ std::vector<pat::Tau> HZZ4LHelper::goodTaus2015(std::vector<pat::Tau> Taus, doub
     for(unsigned int i = 0; i < Taus.size(); i++) {
 
         if ( Taus[i].pt()<tauPtCut ) continue;
-        if ( Taus[i].tauID("byLooseIsolationMVA3newDMwLT") < 0.5 ) continue;
-
+        if ( Taus[i].tauID("byLooseIsolationMVArun2v1DBnewDMwLT") < 0.5) continue;
         bestTaus.push_back(Taus[i]);
 
     }
   
     return bestTaus;
+}
+
+std::vector<pat::Photon> HZZ4LHelper::goodPhotons2015(std::vector<pat::Photon> Photons, double photonPtCut)
+{
+    using namespace edm;
+    using namespace pat;
+    using namespace std;
+
+    vector<pat::Photon> bestPhotons;
+  
+    for(unsigned int i = 0; i < Photons.size(); i++) {
+
+        if ( Photons[i].pt()<photonPtCut ) continue;
+        if ( Photons[i].photonID("mvaPhoID-Spring15-25ns-nonTrig-V2p1-wp90") < 0.5) continue;
+        if ( Photons[i].hasPixelSeed() ) continue; 
+        bestPhotons.push_back(Photons[i]);
+
+    }
+  
+    return bestPhotons;
 }
 
 
@@ -502,21 +537,33 @@ double HZZ4LHelper::getSIP3D(pat::Electron electron) {
     return sip;    
 }
 
-bool HZZ4LHelper::passTight_BDT_Id(pat::Electron electron, std::string elecID) {
+bool HZZ4LHelper::passTight_BDT_Id(pat::Electron electron, float mvavalue) {
     float cutVal=1000;
     float fSCeta = fabs(electron.superCluster()->eta());
     if(electron.pt()<=10){ 
-        if(fSCeta < 0.8) cutVal = -0.265; 
-        if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = -0.556;
-        if(fSCeta >= 1.479) cutVal = -0.551;  
+        if(fSCeta < 0.8) cutVal = -0.211; 
+        if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = -0.396;
+        if(fSCeta >= 1.479) cutVal = -0.215;  
     }
     else {
-        if(fSCeta < 0.8) cutVal = -0.072; 
-        if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = -0.286;
-        if(fSCeta >= 1.479) cutVal = -0.267;
+        if(fSCeta < 0.8) cutVal = -0.870; 
+        if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = -0.838;
+        if(fSCeta >= 1.479) cutVal = -0.763;
     }
-    if (electron.userFloat("ElectronMVAEstimatorRun2Spring15NonTrig25nsV1Values") > cutVal ) { return true;}
+    if (mvavalue > cutVal ) { return true;}
     return false;
+}
+
+bool HZZ4LHelper::passTight_Id(pat::Muon muon, const reco::Vertex *&vertex) {
+    if (muon.pt()<=200.0) return muon.isPFMuon();
+    else {
+        return ( (muon.numberOfMatchedStations() > 1 
+                  && (muon.muonBestTrack()->ptError()/muon.muonBestTrack()->pt()) < 0.3 
+                  && std::abs(muon.muonBestTrack()->dxy(vertex->position())) < 0.2 
+                  && std::abs(muon.muonBestTrack()->dz(vertex->position())) < 0.5 
+                  && muon.innerTrack()->hitPattern().numberOfValidPixelHits() > 0 
+                  && muon.innerTrack()->hitPattern().trackerLayersWithMeasurement() > 5) || muon.isPFMuon() );
+    }
 }
 
 bool HZZ4LHelper::passTight_Id_SUS(pat::Muon muon, const reco::Vertex *&vertex) {
