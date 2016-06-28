@@ -2,9 +2,7 @@ import FWCore.ParameterSet.Config as cms
 
 from FWCore.ParameterSet.VarParsing import VarParsing
 
-
 process = cms.Process("UFHZZ4LAnalysis")
-
 
 ## Options and Output Report
 process.options   = cms.untracked.PSet(
@@ -19,7 +17,7 @@ process.load("Configuration.StandardSequences.MagneticField_cff")
 process.load("Configuration.Geometry.GeometryRecoDB_cff")
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_condDBv2_cff')
 process.load('Configuration.StandardSequences.Services_cff')
-process.GlobalTag.globaltag='76X_mcRun2_asymptotic_v12'
+process.GlobalTag.globaltag='76X_mcRun2_asymptotic_RunIIFall15DR76_v1'
 
 process.Timing = cms.Service("Timing",
                              summaryOnly = cms.untracked.bool(True)
@@ -82,61 +80,63 @@ process.load('UFHZZAnalysisRun2.FSRPhotons.fsrPhotons_cff')
 # Jet Energy Corrections
 import os
 from CondCore.DBCommon.CondDBSetup_cfi import *
-era = "Fall15_25nsV1_MC"
-dBFile = os.environ.get('CMSSW_BASE')+"/src/UFHZZAnalysisRun2/UFHZZ4LAna/data/"+era+".db"
-process.jec = cms.ESSource("PoolDBESSource",
-                           CondDBSetup,
-                           connect = cms.string("sqlite_file:"+dBFile),
-                           toGet =  cms.VPSet(
-        cms.PSet(
-            record = cms.string("JetCorrectionsRecord"),
-            tag = cms.string("JetCorrectorParametersCollection_"+era+"_AK4PF"),
-            label= cms.untracked.string("AK4PF")
-            ),
-        cms.PSet(
-            record = cms.string("JetCorrectionsRecord"),
-            tag = cms.string("JetCorrectorParametersCollection_"+era+"_AK4PFchs"),
-            label= cms.untracked.string("AK4PFchs")
-            ),
 
-        cms.PSet(
-            record = cms.string("JetCorrectionsRecord"),
-            tag = cms.string("JetCorrectorParametersCollection_"+era+"_AK8PFchs"),
-            label= cms.untracked.string("AK8PFchs")
-            ),
-        )
-)
+#era = "Fall15_25nsV1_MC"
+#dBFile = os.environ.get('CMSSW_BASE')+"/src/UFHZZAnalysisRun2/UFHZZ4LAna/data/"+era+".db"
+#process.jec = cms.ESSource("PoolDBESSource",
+#                           CondDBSetup,
+#                           connect = cms.string("sqlite_file:"+dBFile),
+#                           toGet =  cms.VPSet(
+#        cms.PSet(
+#            record = cms.string("JetCorrectionsRecord"),
+#            tag = cms.string("JetCorrectorParametersCollection_"+era+"_AK4PF"),
+#            label= cms.untracked.string("AK4PF")
+#            ),
+#        cms.PSet(
+#            record = cms.string("JetCorrectionsRecord"),
+#            tag = cms.string("JetCorrectorParametersCollection_"+era+"_AK4PFchs"),
+#            label= cms.untracked.string("AK4PFchs")
+#            ),
+#
+#        cms.PSet(
+#            record = cms.string("JetCorrectionsRecord"),
+#            tag = cms.string("JetCorrectorParametersCollection_"+era+"_AK8PFchs"),
+#            label= cms.untracked.string("AK8PFchs")
+#            ),
+#        )
+#)
 
-process.es_prefer_jec = cms.ESPrefer("PoolDBESSource",'jec')
+#process.es_prefer_jec = cms.ESPrefer("PoolDBESSource",'jec')
 
 process.load("PhysicsTools.PatAlgos.producersLayer1.jetUpdater_cff")
 
-process.jetCorrFactors = process.patJetCorrFactorsUpdated.clone(
+process.jetCorrFactors = process.updatedPatJetCorrFactors.clone(
     src = cms.InputTag("slimmedJets"),
     levels = ['L1FastJet', 
               'L2Relative', 
               'L3Absolute'],
     payload = 'AK4PFchs' ) 
 
-process.AK8PFJetCorrFactors = process.patJetCorrFactorsUpdated.clone(
-    src = cms.InputTag("packedPatJetsAK8PFCHS"),#slimmedJetsAK8"),
+process.AK8PFJetCorrFactors = process.updatedPatJetCorrFactors.clone(
+    src = cms.InputTag("slimmedJetsAK8"),
     levels = ['L1FastJet',
               'L2Relative',
               'L3Absolute'],
     payload = 'AK8PFchs' )
 
-process.slimmedJetsJEC = process.patJetsUpdated.clone(
+process.slimmedJetsJEC = process.updatedPatJets.clone(
     jetSource = cms.InputTag("slimmedJets"),
     jetCorrFactorsSource = cms.VInputTag(cms.InputTag("jetCorrFactors"))
     )
-process.slimmedJetsAK8JEC = process.patJetsUpdated.clone(
-    jetSource = cms.InputTag("packedPatJetsAK8PFCHS"),#slimmedJetsAK8"),
+
+process.slimmedJetsAK8JEC = process.updatedPatJets.clone(
+    jetSource = cms.InputTag("slimmedJetsAK8"),
     jetCorrFactorsSource = cms.VInputTag(cms.InputTag("AK8PFJetCorrFactors"))
     )
 
 # JER
 process.load("JetMETCorrections.Modules.JetResolutionESProducer_cfi")
-dBJERFile = os.environ.get('CMSSW_BASE')+"/src/UFHZZAnalysisRun2/UFHZZ4LAna/data/Summer15_25nsV6.db"
+dBJERFile = os.environ.get('CMSSW_BASE')+"/src/UFHZZAnalysisRun2/UFHZZ4LAna/data/Summer15_25nsV6_MC_JER.db"
 process.jer = cms.ESSource("PoolDBESSource",
         CondDBSetup,
         connect = cms.string("sqlite_file:"+dBJERFile),
@@ -150,6 +150,11 @@ process.jer = cms.ESSource("PoolDBESSource",
                 record = cms.string('JetResolutionRcd'),
                 tag    = cms.string('JR_Summer15_25nsV6_MC_PhiResolution_AK4PFchs'),
                 label  = cms.untracked.string('AK4PFchs_phi')
+                ),
+            cms.PSet(
+                record = cms.string('JetResolutionScaleFactorRcd'),
+                tag    = cms.string('JR_Summer15_25nsV6_DATA_SF_AK4PFchs'),
+                label  = cms.untracked.string('AK4PFchs')
                 )
             )
         )
@@ -174,16 +179,15 @@ for type in ['AK4PFchs']:
 
 process.load('RecoJets.JetProducers.QGTagger_cfi')
 process.QGTagger.srcJets=cms.InputTag("slimmedJetsJEC")    
-# Could be reco::PFJetCollection or pat::JetCollection (both AOD and miniAOD)
 process.QGTagger.jetsLabel=cms.string('QGL_AK4PFchs')        
-# Other options: see https://twiki.cern.ch/twiki/bin/viewauth/CMS/QGDataBaseVersion
 process.QGTagger.srcVertexCollection=cms.InputTag("offlinePrimaryVertices")
-#Additional parameters:
-#process.QGTagger.jec=cms.string("")
-# Provide the jet correction service if your jets are uncorrected, otherwise keep empty
-#process.QGTagger.systematicsLabel = cms.string('')     
-# Produce systematic smearings (not yet available, keep empty)
 
+# Recompute MET
+from PhysicsTools.PatUtils.tools.runMETCorrectionsAndUncertainties import runMetCorAndUncFromMiniAOD
+
+runMetCorAndUncFromMiniAOD(process,
+            isData=False,
+            )
 
 
 # Analyzer
@@ -191,9 +195,10 @@ process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
                               photonSrc    = cms.untracked.InputTag("slimmedPhotons"),
                               electronSrc  = cms.untracked.InputTag("calibratedPatElectrons"),
                               muonSrc      = cms.untracked.InputTag("calibratedMuons"),
+                              tauSrc      = cms.untracked.InputTag("slimmedTaus"),
                               jetSrc       = cms.untracked.InputTag("slimmedJetsJEC"),
                               mergedjetSrc = cms.untracked.InputTag("slimmedJetsAK8JEC"),
-                              metSrc       = cms.untracked.InputTag("slimmedMETs"),
+                              metSrc       = cms.untracked.InputTag("slimmedMETs","","UFHZZ4LAnalysis"),
                               vertexSrc    = cms.untracked.InputTag("offlineSlimmedPrimaryVertices"),
                               beamSpotSrc  = cms.untracked.InputTag("offlineBeamSpot"),
                               conversionSrc  = cms.untracked.InputTag("reducedEgamma","reducedConversions"),
@@ -217,6 +222,7 @@ process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
                               reweightForPU = cms.untracked.bool(True),
                               triggerSrc = cms.InputTag("TriggerResults","","HLT"),
                               triggerObjects = cms.InputTag("selectedPatTrigger"),
+                              doTriggerMatching = cms.untracked.bool(False),
                               triggerList = cms.untracked.vstring(
                                             'HLT_Ele17_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v',
                                             'HLT_Ele16_Ele12_Ele8_CaloIdL_TrackIdL_v',
@@ -244,5 +250,6 @@ process.p = cms.Path(process.fsrPhotonSequence*
                      process.QGTagger*
                      process.AK8PFJetCorrFactors*
                      process.slimmedJetsAK8JEC*
+                     process.fullPatMetSequence*
                      process.Ana
                      )

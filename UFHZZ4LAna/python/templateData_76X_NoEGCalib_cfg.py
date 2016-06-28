@@ -52,21 +52,6 @@ process.calibratedMuons = cms.EDProducer("KalmanMuonCalibrationsProducer",
                                          isSync = cms.bool(False)
                                          )
 
-process.selectedElectrons = cms.EDFilter("PATElectronSelector",
-                                         src = cms.InputTag("slimmedElectrons"),
-                                         cut = cms.string("pt > 5 && abs(eta)<2.5")
-                                         )
-
-process.load('EgammaAnalysis.ElectronTools.calibratedElectronsRun2_cfi')
-process.calibratedPatElectrons = cms.EDProducer("CalibratedPatElectronProducerRun2",
-                                        # input collections
-                                        electrons = cms.InputTag('selectedElectrons'),
-                                        gbrForestName = cms.string("gedelectron_p4combination_25ns"),
-                                        isMC = cms.bool(False),
-                                        isSynchronization = cms.bool(False),
-                                        correctionFile = cms.string("EgammaAnalysis/ElectronTools/data/76X_16DecRereco_2015")
-                                        )
-
 # FSR Photons
 process.load('UFHZZAnalysisRun2.FSRPhotons.fsrPhotons_cff')
 
@@ -188,7 +173,7 @@ runMetCorAndUncFromMiniAOD(process,
 # Analyzer
 process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
                               photonSrc    = cms.untracked.InputTag("slimmedPhotons"),
-                              electronSrc  = cms.untracked.InputTag("calibratedPatElectrons"),
+                              electronSrc  = cms.untracked.InputTag("slimmedElectrons"),
                               muonSrc      = cms.untracked.InputTag("calibratedMuons"),
                               tauSrc      = cms.untracked.InputTag("slimmedTaus"),
                               jetSrc       = cms.untracked.InputTag("slimmedJetsJEC"),
@@ -237,8 +222,6 @@ process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
 process.p = cms.Path(process.fsrPhotonSequence*
                      process.boostedMuons*
                      process.calibratedMuons*
-                     process.selectedElectrons*
-                     process.calibratedPatElectrons*
                      process.jetCorrFactors*
                      process.slimmedJetsJEC*
                      process.QGTagger*

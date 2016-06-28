@@ -232,7 +232,7 @@ private:
 
     // Event Variables
     ULong64_t Run, Event, LumiSect;
-    int nVtx;
+    int nVtx, nInt;
     int finalState;
     std::string triggersPassed;
     bool passedTrig, passedFullSelection, passedZ4lSelection, passedQCDcut;
@@ -292,6 +292,8 @@ private:
 
     // MET
     float met; float met_phi;
+    float met_jesup, met_phi_jesup, met_jesdn, met_phi_jesdn;
+    float met_uncenup, met_phi_uncenup, met_uncendn, met_phi_uncendn;
 
     // Jets
     vector<int>    jet_iscleanH4l;
@@ -373,7 +375,6 @@ private:
     int GENlep_Hindex[4];//position of Higgs candidate leptons in lep_p4: 0 = Z1 lead, 1 = Z1 sub, 2 = Z2 lead, 3 = Z3 sub
     vector<float> GENlep_isoCH; vector<float> GENlep_isoNH; vector<float> GENlep_isoPhot; vector<float> GENlep_RelIso; 
 
-
     // Higgs candidate variables (calculated using selected gen leptons)
     vector<double> GENH_pt; vector<double> GENH_eta; vector<double> GENH_phi; vector<double> GENH_mass; 
     float GENmass4l, GENmass4e, GENmass4mu, GENmass2e2mu, GENpT4l, GENeta4l, GENrapidity4l;
@@ -392,6 +393,7 @@ private:
     vector<double> GENjet_pt; vector<double> GENjet_eta; vector<double> GENjet_phi; vector<double> GENjet_mass; 
     int GENnjets_pt30_eta4p7; float GENpt_leadingjet_pt30_eta4p7; 
     float GENabsrapidity_leadingjet_pt30_eta4p7; float GENabsdeltarapidity_hleadingjet_pt30_eta4p7;
+    int lheNb, lheNj, nGenStatus2bHad;
 
     //KinZfitter
     KinZfitter *kinZfitter;
@@ -782,7 +784,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
     // Event Variables
     if (verbose) {cout<<"clear variables"<<endl;}
-    nVtx = -1.0;
+    nVtx = -1.0; nInt = -1.0;
     finalState = -1;
     triggersPassed="";
     passedTrig=false; passedFullSelection=false; passedZ4lSelection=false; passedQCDcut=false; 
@@ -817,7 +819,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     nisoleptons=0;
 
     //tau variables
-    tau_pt.clear(); tau_eta.clear(); tau_phi.clear(); tau_mass.clear(); 
+    tau_id.clear(); tau_pt.clear(); tau_eta.clear(); tau_phi.clear(); tau_mass.clear(); 
 
     // Higgs candidate variables
     H_pt.clear(); H_eta.clear(); H_phi.clear(); H_mass.clear(); 
@@ -836,8 +838,9 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     massZ1=-1.0; massZ2=-1.0; pTZ1=-1.0; pTZ2=-1.0;
 
     // MET
-    met=-1.0;
-    met_phi=9999.0;
+    met=-1.0; met_phi=9999.0;
+    met_jesup=-1.0; met_phi_jesup=9999.0; met_jesdn=-1.0; met_phi_jesdn=9999.0; 
+    met_uncenup=-1.0; met_phi_uncenup=9999.0; met_uncendn=-1.0; met_phi_uncendn=9999.0; 
 
     // Jets
     jet_pt.clear(); jet_eta.clear(); jet_phi.clear(); jet_mass.clear(); 
@@ -928,6 +931,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     GENjet_pt.clear(); GENjet_eta.clear(); GENjet_phi.clear(); GENjet_mass.clear(); 
     GENnjets_pt30_eta4p7=0;
     GENpt_leadingjet_pt30_eta4p7=-1.0; GENabsrapidity_leadingjet_pt30_eta4p7=-1.0; GENabsdeltarapidity_hleadingjet_pt30_eta4p7=-1.0;
+    lheNb=0; lheNj=0; nGenStatus2bHad=0;
 
     // ME
     me_0plus_JHU=999.0; me_qqZZ_MCFM=999.0; p0plus_m4l=999.0; bkg_m4l=999.0; D_bkg_kin=999.0; D_bkg=999.0;   
@@ -994,6 +998,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
             if(BX == 0) { npv = PVI->getTrueNumInteractions(); continue;}
         }        
         if (verbose) cout<<"N true interations = "<<npv<<endl;
+        nInt = npv;
         pileupWeight = pileUp.getPUWeight(npv,PUVersion);
         if (verbose) cout<<"pileup weight = "<<pileupWeight<<", filling histograms"<<endl;
         histContainer_["NINTERACT"]->Fill(npv);
@@ -1007,10 +1012,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         genWeight = (tmpWeight > 0 ? 1.0 : -1.0);
         double rms = 0.0;
 
-        //if(lheInfos.size()>0){            
-        //edm::Handle<LHEEventProduct> lheInfo = lheInfos.front();
         if(lheInfo.isValid()){
-            //for(unsigned int i = 0; i < pdfWeightIDs.size(); i++) {
             for(unsigned int i = 0; i < lheInfo->weights().size(); i++) {
                 tmpWeight = genEventInfo->weight();
                 //tmpWeight *= lheInfo->weights()[pdfWeightIDs[i]].wgt/lheInfo->originalXWGTUP();
@@ -1025,6 +1027,20 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
             }
             pdfRMSup=sqrt(rms/100.0); pdfRMSdown=1.0/pdfRMSup;
             if (verbose) cout<<"pdfRMSup "<<pdfRMSup<<" pdfRMSdown "<<pdfRMSdown<<endl;
+        
+            const lhef::HEPEUP& lheEvent = lheInfo->hepeup();
+            std::vector<lhef::HEPEUP::FiveVector> lheParticles = lheEvent.PUP;
+            for ( size_t idxParticle = 0; idxParticle < lheParticles.size(); ++idxParticle ) {
+                int id = std::abs(lheEvent.IDUP[idxParticle]);
+                int status = lheEvent.ISTUP[idxParticle];
+                if ( status == 1 && id==5 ) { 
+                    lheNb += 1;
+                }
+                if ( status == 1 && ((id >= 1 && id <= 6) || id == 21) ) { 
+                    lheNj += 1;
+                }
+            }
+        
         }
         
         if (verbose) cout<<"setting gen variables"<<endl;       
@@ -1094,7 +1110,14 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         if (!mets->empty()) {
             met = (*mets)[0].et();
             met_phi = (*mets)[0].phi();
-            //cout<<"MET: "<<met<<endl;
+            met_jesup = (*mets)[0].shiftedPt(pat::MET::JetEnUp);
+            met_phi_jesup = (*mets)[0].shiftedPhi(pat::MET::JetEnUp);
+            met_jesdn = (*mets)[0].shiftedPt(pat::MET::JetEnDown);
+            met_phi_jesdn = (*mets)[0].shiftedPhi(pat::MET::JetEnDown);
+            met_uncenup = (*mets)[0].shiftedPt(pat::MET::UnclusteredEnUp);
+            met_phi_uncenup = (*mets)[0].shiftedPhi(pat::MET::UnclusteredEnUp);
+            met_uncendn = (*mets)[0].shiftedPt(pat::MET::UnclusteredEnDown);
+            met_phi_uncendn = (*mets)[0].shiftedPhi(pat::MET::UnclusteredEnDown);        
         }
 
         if (verbose) cout<<"start lepton analysis"<<endl;           
@@ -2498,6 +2521,7 @@ void UFHZZ4LAna::bookPassedEventTree(TString treeName, TTree *tree)
     tree->Branch("Event",&Event,"Event/l");
     tree->Branch("LumiSect",&LumiSect,"LumiSect/l");
     tree->Branch("nVtx",&nVtx,"nVtx/I");
+    tree->Branch("nInt",&nInt,"nInt/I");
     tree->Branch("finalState",&finalState,"finalState/I");
     tree->Branch("triggersPassed",&triggersPassed);
     tree->Branch("passedTrig",&passedTrig,"passedTrig/O");
@@ -2633,6 +2657,14 @@ void UFHZZ4LAna::bookPassedEventTree(TString treeName, TTree *tree)
     // MET
     tree->Branch("met",&met,"met/F");
     tree->Branch("met_phi",&met_phi,"met_phi/F");
+    tree->Branch("met_jesup",&met_jesup,"met_jesup/F");
+    tree->Branch("met_phi_jesup",&met_phi_jesup,"met_phi_jesup/F");
+    tree->Branch("met_jesdn",&met_jesdn,"met_jesdn/F");
+    tree->Branch("met_phi_jesdn",&met_phi_jesdn,"met_phi_jesdn/F");
+    tree->Branch("met_uncenup",&met_uncenup,"met_uncenup/F");
+    tree->Branch("met_phi_uncenup",&met_phi_uncenup,"met_phi_uncenup/F");
+    tree->Branch("met_uncendn",&met_uncendn,"met_uncendn/F");
+    tree->Branch("met_phi_uncendn",&met_phi_uncendn,"met_phi_uncendn/F");
 
     // Jets
     tree->Branch("jet_iscleanH4l",&jet_iscleanH4l);
@@ -2814,6 +2846,9 @@ void UFHZZ4LAna::bookPassedEventTree(TString treeName, TTree *tree)
     tree->Branch("GENpt_leadingjet_pt30_eta4p7",&GENpt_leadingjet_pt30_eta4p7,"GENpt_leadingjet_pt30_eta4p7/F");
     tree->Branch("GENabsrapidity_leadingjet_pt30_eta4p7",&GENabsrapidity_leadingjet_pt30_eta4p7,"GENabsrapidity_leadingjet_pt30_eta4p7/F");
     tree->Branch("GENabsdeltarapidity_hleadingjet_pt30_eta4p7",&GENabsdeltarapidity_hleadingjet_pt30_eta4p7,"GENabsdeltarapidity_hleadingjet_pt30_eta4p7/F");
+    tree->Branch("lheNj",&lheNj,"lheNj/I");
+    tree->Branch("lheNb",&lheNb,"lheNb/I");
+    tree->Branch("nGenStatus2bHad",&nGenStatus2bHad,"nGenStatus2bHad/I");
 
     //ME
     tree->Branch("me_0plus_JHU", &me_0plus_JHU, "me_0plus_JHU/D");
@@ -3387,6 +3422,10 @@ void UFHZZ4LAna::setGENVariables(edm::Handle<reco::GenParticleCollection> pruned
             GENZ_eta.push_back(genPart->eta());
             GENZ_phi.push_back(genPart->phi());
             GENZ_mass.push_back(genPart->mass());
+        }
+
+        if (abs(genPart->pdgId())>500 && abs(genPart->pdgId())<600 && genPart->status()==2) {
+            nGenStatus2bHad+=1;
         }
 
     }
