@@ -17,7 +17,7 @@ process.load("Configuration.StandardSequences.MagneticField_cff")
 process.load("Configuration.Geometry.GeometryRecoDB_cff")
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_condDBv2_cff')
 process.load('Configuration.StandardSequences.Services_cff')
-process.GlobalTag.globaltag='80X_mcRun2_asymptotic_2016_miniAODv2'
+process.GlobalTag.globaltag='80X_mcRun2_asymptotic_2016_miniAODv2_v1'
 
 process.Timing = cms.Service("Timing",
                              summaryOnly = cms.untracked.bool(True)
@@ -108,34 +108,35 @@ process.electronsMVA = cms.EDProducer("SlimmedElectronMvaIDProducer",
 # FSR Photons
 process.load('UFHZZAnalysisRun2.FSRPhotons.fsrPhotons_cff')
 
-# Jet Energy Corrections
 import os
 from CondCore.DBCommon.CondDBSetup_cfi import *
-era = "Spring16_25nsV3_MC"
-dBFile = os.environ.get('CMSSW_BASE')+"/src/UFHZZAnalysisRun2/UFHZZ4LAna/data/"+era+".db"
-process.jec = cms.ESSource("PoolDBESSource",
-                           CondDBSetup,
-                           connect = cms.string("sqlite_file:"+dBFile),
-                           toGet =  cms.VPSet(
-        cms.PSet(
-            record = cms.string("JetCorrectionsRecord"),
-            tag = cms.string("JetCorrectorParametersCollection_"+era+"_AK4PF"),
-            label= cms.untracked.string("AK4PF")
-            ),
-        cms.PSet(
-            record = cms.string("JetCorrectionsRecord"),
-            tag = cms.string("JetCorrectorParametersCollection_"+era+"_AK4PFchs"),
-            label= cms.untracked.string("AK4PFchs")
-            ),
 
-        cms.PSet(
-            record = cms.string("JetCorrectionsRecord"),
-            tag = cms.string("JetCorrectorParametersCollection_"+era+"_AK8PFchs"),
-            label= cms.untracked.string("AK8PFchs")
-            ),
-        )
-)
-process.es_prefer_jec = cms.ESPrefer("PoolDBESSource",'jec')
+# Jet Energy Corrections from DB file
+#era = "Spring16_25nsV3_MC"
+#dBFile = os.environ.get('CMSSW_BASE')+"/src/UFHZZAnalysisRun2/UFHZZ4LAna/data/"+era+".db"
+#process.jec = cms.ESSource("PoolDBESSource",
+#                           CondDBSetup,
+#                           connect = cms.string("sqlite_file:"+dBFile),
+#                           toGet =  cms.VPSet(
+#        cms.PSet(
+#            record = cms.string("JetCorrectionsRecord"),
+#            tag = cms.string("JetCorrectorParametersCollection_"+era+"_AK4PF"),
+#            label= cms.untracked.string("AK4PF")
+#            ),
+#        cms.PSet(
+#            record = cms.string("JetCorrectionsRecord"),
+#            tag = cms.string("JetCorrectorParametersCollection_"+era+"_AK4PFchs"),
+#            label= cms.untracked.string("AK4PFchs")
+#            ),
+#
+#        cms.PSet(
+#            record = cms.string("JetCorrectionsRecord"),
+#            tag = cms.string("JetCorrectorParametersCollection_"+era+"_AK8PFchs"),
+#            label= cms.untracked.string("AK8PFchs")
+#            ),
+#        )
+#)
+#process.es_prefer_jec = cms.ESPrefer("PoolDBESSource",'jec')
 
 process.load("PhysicsTools.PatAlgos.producersLayer1.jetUpdater_cff")
 
@@ -164,30 +165,30 @@ process.slimmedJetsAK8JEC = process.updatedPatJets.clone(
     )
 
 # JER
-process.load("JetMETCorrections.Modules.JetResolutionESProducer_cfi")
-dBJERFile = os.environ.get('CMSSW_BASE')+"/src/UFHZZAnalysisRun2/UFHZZ4LAna/data/Summer15_25nsV6_MC_JER.db"
-process.jer = cms.ESSource("PoolDBESSource",
-        CondDBSetup,
-        connect = cms.string("sqlite_file:"+dBJERFile),
-        toGet = cms.VPSet(
-            cms.PSet(
-                record = cms.string('JetResolutionRcd'),
-                tag    = cms.string('JR_Summer15_25nsV6_MC_PtResolution_AK4PFchs'),
-                label  = cms.untracked.string('AK4PFchs_pt')
-                ),
-            cms.PSet(
-                record = cms.string('JetResolutionRcd'),
-                tag    = cms.string('JR_Summer15_25nsV6_MC_PhiResolution_AK4PFchs'),
-                label  = cms.untracked.string('AK4PFchs_phi')
-                ),
-            cms.PSet(
-                record = cms.string('JetResolutionScaleFactorRcd'),
-                tag    = cms.string('JR_Summer15_25nsV6_DATA_SF_AK4PFchs'),
-                label  = cms.untracked.string('AK4PFchs')
-                )
-            )
-        )
-process.es_prefer_jer = cms.ESPrefer('PoolDBESSource', 'jer')
+#process.load("JetMETCorrections.Modules.JetResolutionESProducer_cfi")
+#dBJERFile = os.environ.get('CMSSW_BASE')+"/src/UFHZZAnalysisRun2/UFHZZ4LAna/data/Summer15_25nsV6_MC_JER.db"
+#process.jer = cms.ESSource("PoolDBESSource",
+#        CondDBSetup,
+#        connect = cms.string("sqlite_file:"+dBJERFile),
+#        toGet = cms.VPSet(
+#            cms.PSet(
+#                record = cms.string('JetResolutionRcd'),
+#                tag    = cms.string('JR_Summer15_25nsV6_MC_PtResolution_AK4PFchs'),
+#                label  = cms.untracked.string('AK4PFchs_pt')
+#                ),
+#            cms.PSet(
+#                record = cms.string('JetResolutionRcd'),
+#                tag    = cms.string('JR_Summer15_25nsV6_MC_PhiResolution_AK4PFchs'),
+#                label  = cms.untracked.string('AK4PFchs_phi')
+#                ),
+#            cms.PSet(
+#                record = cms.string('JetResolutionScaleFactorRcd'),
+#                tag    = cms.string('JR_Summer15_25nsV6_DATA_SF_AK4PFchs'),
+#                label  = cms.untracked.string('AK4PFchs')
+#                )
+#            )
+#        )
+#process.es_prefer_jer = cms.ESPrefer('PoolDBESSource', 'jer')
 
 
 #QGTag

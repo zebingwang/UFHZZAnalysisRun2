@@ -525,7 +525,7 @@ private:
 
     // JER
     JME::JetResolution resolution_pt, resolution_phi;
-    JME::JetResolutionScaleFactor res_sf;
+    JME::JetResolutionScaleFactor resolution_sf;
 
 };
 
@@ -754,6 +754,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
     resolution_pt = JME::JetResolution::get(iSetup, "AK4PFchs_pt");
     resolution_phi = JME::JetResolution::get(iSetup, "AK4PFchs_phi");
+    resolution_sf = JME::JetResolutionScaleFactor::get(iSetup, "AK4PFchs");
 
     edm::Handle<edm::ValueMap<float> > qgHandle;
     iEvent.getByToken(qgTagSrc_, qgHandle);
@@ -3140,88 +3141,44 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
         parameters.setJetPt(goodJets[k].pt());
         parameters.setJetEta(goodJets[k].eta());
         parameters.setRho(muRho);
-
         float relpterr = resolution_pt.getResolution(parameters);
         float phierr = resolution_phi.getResolution(parameters);
-        
-        /*
-        // JER Smearing
-        double factor = 1.0;
-        double factorup = 1.0;
-        double factordn = 1.0;
-        
-        if ( abs(goodJets[k].eta()) < 0.5 ) {
-            factor = 1.079;
-            factorup = 1.105;
-            factordn = 1.053;
-        }
-        else if ( abs(goodJets[k].eta()) < 1.1 && abs(goodJets[k].eta()) >= 0.5 ) {
-            factor = 1.099;
-            factorup = 1.127;
-            factordn = 1.071;
-        }
-        else if ( abs(goodJets[k].eta()) < 1.7 && abs(goodJets[k].eta()) >= 1.1 ) {
-            factor = 1.121;
-            factorup = 1.150;
-            factordn = 1.092;
-        }
-        else if ( abs(goodJets[k].eta()) < 2.3 && abs(goodJets[k].eta()) >= 1.7 ) {
-            factor = 1.208;
-            factorup = 1.254;
-            factordn = 1.162;
-        }
-        else if ( abs(goodJets[k].eta()) < 2.8 && abs(goodJets[k].eta()) >= 2.3 ) {
-            factor = 1.254;
-            factorup = 1.316;
-            factordn = 1.192;
-        }
-        else if ( abs(goodJets[k].eta()) < 3.2 && abs(goodJets[k].eta()) >= 2.8 ) {
-            factor = 1.395;
-            factorup = 1.458;
-            factordn = 1.332;
-        }
-        else if ( abs(goodJets[k].eta()) < 5.0 && abs(goodJets[k].eta()) >= 3.2 ) {
-            factor = 1.056;
-            factorup = 1.247;
-            factordn = 0.865;
-        }
+
+        double jercorr = 1.0; double jercorrup = 1.0; double jercorrdn = 1.0;
+        if (isMC) {
+            JME::JetParameters sf_parameters = {{JME::Binning::JetEta, goodJets[k].eta()}, {JME::Binning::Rho, muRho}};
+            float factor = resolution_sf.getScaleFactor(sf_parameters);
+            float factorup = resolution_sf.getScaleFactor(sf_parameters, Variation::UP);
+            float factordn = resolution_sf.getScaleFactor(sf_parameters, Variation::DOWN);
             
-        double pt_jer = goodJets[k].pt();
-        double pt_jerup = goodJets[k].pt();
-        double pt_jerdn = goodJets[k].pt();
-        const reco::GenJet * genJet = goodJets[k].genJet();
-        if (genJet && genJet->pt()>15. && (abs(genJet->pt()/pt_jer-1)<0.5)) {
-            double gen_pt = genJet->pt();
-            pt_jer = max(0.0,gen_pt+factor*(goodJets[k].pt()-gen_pt));
-            pt_jerup = max(0.0,gen_pt+factorup*(goodJets[k].pt()-gen_pt));
-            pt_jerdn = max(0.0,gen_pt+factordn*(goodJets[k].pt()-gen_pt));
+            double pt_jer, pt_jerup, pt_jerdn;
+            const reco::GenJet * genJet = goodJets[k].genJet();
+            if (genJet && deltaR(goodJets[k].eta(),goodJets[k].phi(),genJet->eta(),genJet->phi())<0.2 
+                && (abs(goodJets[k].pt()-genJet->pt())<3*relpterr*goodJets[k].pt())) {
+                double gen_pt = genJet->pt();
+                pt_jer = max(0.0,gen_pt+factor*(goodJets[k].pt()-gen_pt));
+                pt_jerup = max(0.0,gen_pt+factorup*(goodJets[k].pt()-gen_pt));
+                pt_jerdn = max(0.0,gen_pt+factordn*(goodJets[k].pt()-gen_pt));
+            } else {
+                TRandom3 rand;
+                rand.SetSeed(abs(static_cast<int>(sin(goodJets[k].phi())*100000)));
+                float smear = rand.Gaus(0,1.0);
+                float sigma = sqrt(factor*factor-1.0)*relpterr*goodJets[k].pt();
+                float sigmaup = sqrt(factorup*factorup-1.0)*relpterr*goodJets[k].pt();
+                float sigmadn = sqrt(factordn*factordn-1.0)*relpterr*goodJets[k].pt();
+                pt_jer = max(0.0,smear*sigma+goodJets[k].pt());
+                pt_jerup = max(0.0,smear*sigmaup+goodJets[k].pt());
+                pt_jerdn = max(0.0,smear*sigmadn+goodJets[k].pt());
+            }
+            
+            jercorr = pt_jer/goodJets[k].pt();
+            jercorrup = pt_jerup/goodJets[k].pt();
+            jercorrdn = pt_jerdn/goodJets[k].pt();
         }
-
-        double jercorrection = pt_jer/goodJets[k].pt();
-        double jercorrectionup = pt_jerup/goodJets[k].pt();
-        double jercorrectiondn = pt_jerdn/goodJets[k].pt();
-        */
-
-        // FIXME: For now, no smearing
-        double jercorrection = 1.0; double jercorrectionup = 1.0; double jercorrectiondn = 1.0;
-
-        double jetPx_jer = jercorrection * goodJets[k].px();
-        double jetPy_jer = jercorrection * goodJets[k].py();
-        double jetPz_jer = jercorrection * goodJets[k].pz();
-        double jetE_jer = sqrt(jetPx_jer*jetPx_jer + jetPy_jer*jetPy_jer + jetPz_jer*jetPz_jer + goodJets[k].mass()*goodJets[k].mass());          
-        TLorentzVector *jet_jer = new TLorentzVector(jetPx_jer,jetPy_jer,jetPz_jer,jetE_jer);
-
-        double jetPx_jerup = jercorrectionup * goodJets[k].px();
-        double jetPy_jerup = jercorrectionup * goodJets[k].py();
-        double jetPz_jerup = jercorrectionup * goodJets[k].pz();
-        double jetE_jerup = sqrt(jetPx_jerup*jetPx_jerup + jetPy_jerup*jetPy_jerup + jetPz_jerup*jetPz_jerup + goodJets[k].mass()*goodJets[k].mass());          
-        TLorentzVector *jet_jerup = new TLorentzVector(jetPx_jerup,jetPy_jerup,jetPz_jerup,jetE_jerup);
-
-        double jetPx_jerdn = jercorrectiondn * goodJets[k].px();
-        double jetPy_jerdn = jercorrectiondn * goodJets[k].py();
-        double jetPz_jerdn = jercorrectiondn * goodJets[k].pz();
-        double jetE_jerdn = sqrt(jetPx_jerdn*jetPx_jerdn + jetPy_jerdn*jetPy_jerdn + jetPz_jerdn*jetPz_jerdn + goodJets[k].mass()*goodJets[k].mass());          
-        TLorentzVector *jet_jerdn = new TLorentzVector(jetPx_jerdn,jetPy_jerdn,jetPz_jerdn,jetE_jerdn);
+        
+        TLorentzVector *jet_jer = new TLorentzVector(jercorr*goodJets[k].px(),jercorr*goodJets[k].py(),jercorr*goodJets[k].pz(),jercorr*goodJets[k].mass());
+        TLorentzVector *jet_jerup = new TLorentzVector(jercorrup*goodJets[k].px(),jercorrup*goodJets[k].py(),jercorrup*goodJets[k].pz(),jercorrup*goodJets[k].mass());
+        TLorentzVector *jet_jerdn = new TLorentzVector(jercorrdn*goodJets[k].px(),jercorrdn*goodJets[k].py(),jercorrdn*goodJets[k].pz(),jercorrdn*goodJets[k].mass());
 
         //std::cout<<"Jet nominal: "<<goodJets[k].pt()<<" JER corrected: "<<jet_jer->Pt()<<" JER up: "<<jet_jerup->Pt()<<" JER dn: "<<jet_jerdn->Pt()<<std::endl;
 
@@ -3274,11 +3231,10 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
                     absrapidity_leadingjet_pt30_eta4p7_jerup = jet_jerup->Rapidity(); //take abs later
                 }
             }
-            TLorentzVector jet_jerup(jetPx_jerup,jetPy_jerup,jetPz_jerup,jetE_jerup);
-            jet_jerup_pt.push_back(jet_jerup.Pt());
-            jet_jerup_eta.push_back(jet_jerup.Eta());
-            jet_jerup_phi.push_back(jet_jerup.Phi());
-            jet_jerup_mass.push_back(jet_jerup.M());            
+            jet_jerup_pt.push_back(jet_jerup->Pt());
+            jet_jerup_eta.push_back(jet_jerup->Eta());
+            jet_jerup_phi.push_back(jet_jerup->Phi());
+            jet_jerup_mass.push_back(jet_jerup->M());            
         }
 
         // JER dn
@@ -3291,11 +3247,10 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
                     absrapidity_leadingjet_pt30_eta4p7_jerdn = jet_jerdn->Rapidity(); //take abs later
                 }
             }
-            TLorentzVector jet_jerdn(jetPx_jerdn,jetPy_jerdn,jetPz_jerdn,jetE_jerdn);
-            jet_jerdn_pt.push_back(jet_jerdn.Pt());
-            jet_jerdn_eta.push_back(jet_jerdn.Eta());
-            jet_jerdn_phi.push_back(jet_jerdn.Phi());
-            jet_jerdn_mass.push_back(jet_jerdn.M());
+            jet_jerdn_pt.push_back(jet_jerdn->Pt());
+            jet_jerdn_eta.push_back(jet_jerdn->Eta());
+            jet_jerdn_phi.push_back(jet_jerdn->Phi());
+            jet_jerdn_mass.push_back(jet_jerdn->M());
         }
 
         double jetPx_jesup = jecunc_up * jet_jer->Px();
