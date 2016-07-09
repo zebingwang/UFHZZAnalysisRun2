@@ -74,9 +74,9 @@ KalmanMuonCalibrationsProducer::KalmanMuonCalibrationsProducer(const edm::Parame
    //verbose = iConfig.getParameter<bool>("verbose");
 
    if (isMC) {
-       kalmanMuonCalibrator = new KalmanMuonCalibrator("MC_76X_13TeV");
+       kalmanMuonCalibrator = new KalmanMuonCalibrator("MC_80X_13TeV");
    } else {
-       kalmanMuonCalibrator = new KalmanMuonCalibrator("DATA_76X_13TeV");
+       kalmanMuonCalibrator = new KalmanMuonCalibrator("DATA_80X_13TeV");
    }
 
    produces<std::vector<pat::Muon> >();      
@@ -134,7 +134,7 @@ KalmanMuonCalibrationsProducer::produce(edm::Event& iEvent, const edm::EventSetu
            double unsmearednewpterr = unsmearednewpt*kalmanMuonCalibrator->getCorrectedError(unsmearednewpt, mu.eta(), oldpterr/unsmearednewpt );
            if (!isSync) newpt = kalmanMuonCalibrator->smear(unsmearednewpt, mu.eta());
            else newpt = kalmanMuonCalibrator->smearForSync(unsmearednewpt, mu.eta());
-           newpterr = newpt*kalmanMuonCalibrator->getCorrectedErrorAfterSmearing(newpt, mu.eta(), unsmearednewpterr/newpt );
+           //newpterr = newpt*kalmanMuonCalibrator->getCorrectedErrorAfterSmearing(newpt, mu.eta(), unsmearednewpterr/newpt );
        }
        
        mu.addUserFloat("correctedPtError",newpterr);

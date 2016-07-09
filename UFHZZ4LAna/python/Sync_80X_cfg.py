@@ -24,23 +24,23 @@ process.Timing = cms.Service("Timing",
                              )
 
 
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(1000) )
 
 myfilelist = cms.untracked.vstring(
-#'file:/scratch/osg/dsperka/sync_80X_VBF.root',
-#'file:/scratch/osg/dsperka/sync_80X_WminusH.root'
+'file:/scratch/osg/dsperka/sync_80X_VBF.root',
+'file:/scratch/osg/dsperka/sync_80X_WminusH.root'
 #'file:/scratch/osg/dsperka/sync_80X_Graviton2TeV.root'
 #'file:/scratch/osg/dsperka/Run2/HZZ4l/SubmitArea_13TeV/ggH_HJ_NNLOPS_80X_MINIAODv2_1.root'
 #'file:/scratch/osg/dsperka/Run2/HZZ4l/SubmitArea_13TeV/ggH_HJ_NNLOPS_80X_MINIAODv2_2.root'
 #'file:/scratch/osg/dsperka/sync_80X_Graviton2TeV2l2q.root'
-'/store/mc/RunIISpring16MiniAODv2/VBF_HToZZTo4L_M125_13TeV_powheg2_JHUgenV6_pythia8/MINIAODSIM/PUSpring16RAWAODSIM_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v2/20000/0A3A0EBF-0731-E611-8792-FA163E29B5A4.root',
-'/store/mc/RunIISpring16MiniAODv2/VBF_HToZZTo4L_M125_13TeV_powheg2_JHUgenV6_pythia8/MINIAODSIM/PUSpring16RAWAODSIM_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v2/20000/0A3DDBC1-0731-E611-A3F1-FA163EC51088.root'
+#'/store/mc/RunIISpring16MiniAODv2/VBF_HToZZTo4L_M125_13TeV_powheg2_JHUgenV6_pythia8/MINIAODSIM/PUSpring16RAWAODSIM_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v2/20000/0A3A0EBF-0731-E611-8792-FA163E29B5A4.root',
+#'/store/mc/RunIISpring16MiniAODv2/VBF_HToZZTo4L_M125_13TeV_powheg2_JHUgenV6_pythia8/MINIAODSIM/PUSpring16RAWAODSIM_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v2/20000/0A3DDBC1-0731-E611-A3F1-FA163EC51088.root'
 
 )
 
 process.source = cms.Source("PoolSource",fileNames = myfilelist,
                             duplicateCheckMode = cms.untracked.string('noDuplicateCheck'),
-#                            eventsToProcess = cms.untracked.VEventRange('1:4951-1:4951')
+#                            eventsToProcess = cms.untracked.VEventRange('1:58995-1:58995')
                             )
 
 process.TFileService = cms.Service("TFileService",
@@ -49,8 +49,8 @@ process.TFileService = cms.Service("TFileService",
                                    #fileName = cms.string("HJ_NNLOPS_1.root")
                                    #fileName = cms.string("HJ_NNLOPS_2.root")
                                    #fileName = cms.string("Graviton2TeV2l2q.root")
-                                   #fileName = cms.string("test.root")
-                                   fileName = cms.string("testVBF.root")
+                                   fileName = cms.string("test.root")
+                                   #fileName = cms.string("testVBF.root")
                                    )
 
 # clean muons by segments 
@@ -212,13 +212,21 @@ process.QGTagger.srcJets=cms.InputTag("slimmedJetsJEC")
 process.QGTagger.jetsLabel=cms.string('QGL_AK4PFchs')        
 process.QGTagger.srcVertexCollection=cms.InputTag("offlinePrimaryVertices")
 
+# compute corrected pruned jet mass
+process.corrJets = cms.EDProducer ( "CorrJetsProducer",
+                                    jets    = cms.InputTag( "slimmedJetsAK8JEC" ),
+                                    vertex  = cms.InputTag( "offlineSlimmedPrimaryVertices" ), 
+                                    rho     = cms.InputTag( "fixedGridRhoFastjetAll"   ),
+                                    payload = cms.string  ( "AK8PFchs" ),
+                                    isData  = cms.bool    (  False ))
+
+
 # Recompute MET
 from PhysicsTools.PatUtils.tools.runMETCorrectionsAndUncertainties import runMetCorAndUncFromMiniAOD
 
 runMetCorAndUncFromMiniAOD(process,
             isData=False,
             )
-
 
 # Analyzer
 process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
@@ -230,9 +238,8 @@ process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
                               muonSrc      = cms.untracked.InputTag("boostedMuons"),
                               tauSrc      = cms.untracked.InputTag("slimmedTaus"),
                               jetSrc       = cms.untracked.InputTag("slimmedJetsJEC"),
-                              mergedjetSrc = cms.untracked.InputTag("slimmedJetsAK8JEC"),
+                              mergedjetSrc = cms.untracked.InputTag("corrJets"),
                               metSrc       = cms.untracked.InputTag("slimmedMETs","","UFHZZ4LAnalysis"),
-                              #metSrc       = cms.untracked.InputTag("slimmedMETs"),
                               vertexSrc    = cms.untracked.InputTag("offlineSlimmedPrimaryVertices"),
                               beamSpotSrc  = cms.untracked.InputTag("offlineBeamSpot"),
                               conversionSrc  = cms.untracked.InputTag("reducedEgamma","reducedConversions"),
@@ -300,5 +307,6 @@ process.p = cms.Path(process.fsrPhotonSequence*
                      process.AK8PFJetCorrFactors*
                      process.slimmedJetsAK8JEC*
                      process.fullPatMetSequence*
+                     process.corrJets*
                      process.Ana
                      )
