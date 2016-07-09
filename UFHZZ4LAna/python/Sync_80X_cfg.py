@@ -1,4 +1,4 @@
-import FWCore.ParameterSet.Config as cms
+import FWCore.ParameterSet.Config as cms 
 
 from FWCore.ParameterSet.VarParsing import VarParsing
 
@@ -74,36 +74,34 @@ process.selectedElectrons = cms.EDFilter("PATElectronSelector",
                                          cut = cms.string("pt > 5 && abs(eta)<2.5")
                                          )
 
-#process.RandomNumberGeneratorService = cms.Service("RandomNumberGeneratorService",
-#    calibratedPatElectrons = cms.PSet(
-#        initialSeed = cms.untracked.uint32(123456),
-#        engineName = cms.untracked.string('TRandom3')
-#    )
-#)
+process.RandomNumberGeneratorService = cms.Service("RandomNumberGeneratorService",
+    calibratedPatElectrons = cms.PSet(
+        initialSeed = cms.untracked.uint32(123456),
+        engineName = cms.untracked.string('TRandom3')
+    )
+)
 
-#process.load('EgammaAnalysis.ElectronTools.calibratedElectronsRun2_cfi')
-#process.calibratedPatElectrons = cms.EDProducer("CalibratedPatElectronProducerRun2",
-#                                        # input collections
-#                                        electrons = cms.InputTag('selectedElectrons'),
-#                                        gbrForestName = cms.string("gedelectron_p4combination_25ns"),
-#                                        isMC = cms.bool(True),
-#                                        isSynchronization = cms.bool(True),
-#                                        correctionFile = cms.string("EgammaAnalysis/ElectronTools/data/76X_16DecRereco_2015")
-#                                        )
+process.load('EgammaAnalysis.ElectronTools.calibratedElectronsRun2_cfi')
+process.calibratedPatElectrons = cms.EDProducer("CalibratedPatElectronProducerRun2",
+                                        # input collections
+                                        electrons = cms.InputTag('selectedElectrons'),
+                                        gbrForestName = cms.string("gedelectron_p4combination_25ns"),
+                                        isMC = cms.bool(True),
+                                        isSynchronization = cms.bool(True),
+                                        correctionFile = cms.string("EgammaAnalysis/ElectronTools/data/ScalesSmearings/80X_Golden22June_approval")
+                                        )
 
 from PhysicsTools.SelectorUtils.tools.vid_id_tools import *
 dataFormat = DataFormat.MiniAOD
 switchOnVIDElectronIdProducer(process, dataFormat)
-# define which IDs we want to produce
 my_id_modules = ['RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Spring16_V1_cff']
-# add them to the VID producer
 for idmod in my_id_modules:
     setupAllVIDIdsInModule(process,idmod,setupVIDElectronSelection)
-process.electronMVAValueMapProducer.srcMiniAOD = cms.InputTag("slimmedElectrons")
+process.electronMVAValueMapProducer.srcMiniAOD = cms.InputTag("calibratedPatElectrons")
 
 process.electronsMVA = cms.EDProducer("SlimmedElectronMvaIDProducer",
                                       mvaValuesMap = cms.InputTag("electronMVAValueMapProducer:ElectronMVAEstimatorRun2Spring16V1Values"),
-                                      electronsCollection = cms.InputTag("slimmedElectrons"),
+                                      electronsCollection = cms.InputTag("calibratedPatElectrons"),
                                       idname = cms.string("ElectronMVAEstimatorRun2Spring16V1Values"),
 )
 
@@ -231,11 +229,8 @@ runMetCorAndUncFromMiniAOD(process,
 # Analyzer
 process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
                               photonSrc    = cms.untracked.InputTag("slimmedPhotons"),
-                              #electronSrc  = cms.untracked.InputTag("calibratedPatElectrons"),
-                              #electronSrc  = cms.untracked.InputTag("slimmedElectrons"),
                               electronSrc  = cms.untracked.InputTag("electronsMVA"),
-                              #muonSrc      = cms.untracked.InputTag("calibratedMuons"),
-                              muonSrc      = cms.untracked.InputTag("boostedMuons"),
+                              muonSrc      = cms.untracked.InputTag("calibratedMuons"),
                               tauSrc      = cms.untracked.InputTag("slimmedTaus"),
                               jetSrc       = cms.untracked.InputTag("slimmedJetsJEC"),
                               mergedjetSrc = cms.untracked.InputTag("corrJets"),
@@ -296,9 +291,9 @@ process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
 
 process.p = cms.Path(process.fsrPhotonSequence*
                      process.boostedMuons*
-#                     process.calibratedMuons*
-#                     process.selectedElectrons*
-#                     process.calibratedPatElectrons*
+                     process.calibratedMuons*
+                     process.selectedElectrons*
+                     process.calibratedPatElectrons*
                      process.electronMVAValueMapProducer*
                      process.electronsMVA*
                      process.jetCorrFactors*
