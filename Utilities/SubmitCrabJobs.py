@@ -168,6 +168,11 @@ def submitAnalyzer():
                 print 'Submitted after retry'
         print output
 
+        if ('Success' in output):
+            cmd = 'python cleanSandbox.py'
+            output = processCmd(cmd)
+            print output
+
 # run the submitAnalyzer() as main() 
 if __name__ == "__main__": 
     submitAnalyzer() 
