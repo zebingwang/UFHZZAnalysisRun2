@@ -274,7 +274,7 @@ private:
     vector<double> Z_pt; vector<double> Z_eta; vector<double> Z_phi; vector<double> Z_mass;
     vector<double> Z_noFSR_pt; vector<double> Z_noFSR_eta; vector<double> Z_noFSR_phi; vector<double> Z_noFSR_mass;
     int Z_Hindex[2]; // position of Z1 and Z2 in Z_p4
-    float massZ1, massZ2, pTZ1, pTZ2;
+    float massZ1, massZ1_Z1L, massZ2, pTZ1, pTZ2;
 
     // MET
     float met; float met_phi;
@@ -835,7 +835,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     Z_pt.clear(); Z_eta.clear(); Z_phi.clear(); Z_mass.clear(); 
     Z_noFSR_pt.clear(); Z_noFSR_eta.clear(); Z_noFSR_phi.clear(); Z_noFSR_mass.clear(); 
     for (int i=0; i<2; ++i) {Z_Hindex[i]=-1;}
-    massZ1=-1.0; massZ2=-1.0; pTZ1=-1.0; pTZ2=-1.0;
+    massZ1=-1.0; massZ1_Z1L=-1.0; massZ2=-1.0; pTZ1=-1.0; pTZ2=-1.0;
 
     // MET
     met=-1.0; met_phi=9999.0;
@@ -1540,7 +1540,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
             if (verbose) cout<<"begin Z+1L fake rate study"<<endl;
             // Z+1L selection
             findZ1LCandidate(iEvent);
-            if (foundZ1LCandidate && passedTrig) { 
+            if (foundZ1LCandidate) { 
                 passedZ4lZ1LSelection = true;
                 if (passedTrig) passedZ1LSelection = true;
             }
@@ -2697,7 +2697,7 @@ UFHZZ4LAna::findZ1LCandidate(const edm::Event& iEvent )
             TLorentzVector Z1L;
             Z1L = Z1+lep_j1;
 
-            massZ1 = Z1.M();
+            massZ1_Z1L = Z1.M();
             mass3l = Z1L.M();
 
             lep_Hindex[0] = Z1_lepindex[0];
@@ -2864,6 +2864,7 @@ void UFHZZ4LAna::bookPassedEventTree(TString treeName, TTree *tree)
     tree->Branch("Z_noFSR_mass",&Z_noFSR_mass_float);
     tree->Branch("Z_Hindex",&Z_Hindex,"Z_Hindex[2]/I");
     tree->Branch("massZ1",&massZ1,"massZ1/F");
+    tree->Branch("massZ1_Z1L",&massZ1_Z1L,"massZ1_Z1L/F");
     tree->Branch("massZ2",&massZ2,"massZ2/F");  
     tree->Branch("pTZ1",&pTZ1,"pTZ1/F");
     tree->Branch("pTZ2",&pTZ2,"pTZ2/F");
