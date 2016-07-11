@@ -3152,6 +3152,7 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
         float phierr = resolution_phi.getResolution(parameters);
 
         double jercorr = 1.0; double jercorrup = 1.0; double jercorrdn = 1.0;
+        
         if (isMC) {
             JME::JetParameters sf_parameters = {{JME::Binning::JetEta, goodJets[k].eta()}, {JME::Binning::Rho, muRho}};
             float factor = resolution_sf.getScaleFactor(sf_parameters);

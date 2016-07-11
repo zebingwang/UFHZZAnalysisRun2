@@ -22,17 +22,14 @@ config.section_('Data')
 config.Data.inputDBS = 'https://cmsweb.cern.ch/dbs/prod/global/DBSReader/'
 config.Data.inputDataset = 'DATASETNAME'
 if ('Run2016' in 'DATASETNAME'):
-  #config.Data.lumiMask = 'Run2016_16Jun.txt'
-  #config.Data.lumiMask = 'Run2016_22Jun_not16Jun.txt'
-  config.Data.lumiMask = 'Run2016_22Jun.txt'
+  config.Data.lumiMask = 'Run2016_09Jul.txt'
   config.Data.splitting = 'EventAwareLumiBased'
-  config.Data.unitsPerJob = 100000
+  config.Data.unitsPerJob = 400000
 else:
   config.Data.splitting = 'FileBased'
   config.Data.unitsPerJob = 5
 config.Data.publication = False
 config.Data.outLFNDirBase = '/store/user/%s/UFHZZAnalysisRun2/JOBTAG/' % (getUsernameFromSiteDB())
-#config.Data.outputDatasetTag = 'UFHZZ4LAna_OUTFILENAME'
 config.Data.ignoreLocality = True
 config.Data.allowNonValidInputDataset = True
 

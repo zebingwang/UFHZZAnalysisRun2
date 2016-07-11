@@ -194,23 +194,25 @@ process.slimmedJetsAK8JEC = process.updatedPatJets.clone(
 
 
 #QGTag
-qgDatabaseVersion = 'v2b'
-QGPoolDBESSource = cms.ESSource("PoolDBESSource",
-      CondDBSetup,
-      toGet = cms.VPSet(),
-      connect = cms.string('frontier://FrontierProd/CMS_COND_PAT_000'),
+process.load("CondCore.CondDB.CondDB_cfi")
+qgDatabaseVersion = '80X'
+QGdBFile = os.environ.get('CMSSW_BASE')+"/src/UFHZZAnalysisRun2/UFHZZ4LAna/data/QGL_"+qgDatabaseVersion+".db"
+process.QGPoolDBESSource = cms.ESSource("PoolDBESSource",
+      DBParameters = cms.PSet(messageLevel = cms.untracked.int32(1)),
+      timetype = cms.string('runnumber'),
+      toGet = cms.VPSet(
+        cms.PSet(
+            record = cms.string('QGLikelihoodRcd'),
+            tag    = cms.string('QGLikelihoodObject_'+qgDatabaseVersion+'_AK4PFchs'),
+            label  = cms.untracked.string('QGL_AK4PFchs')
+        ),
+      ),
+      connect = cms.string('sqlite_file:'+QGdBFile)
 )
-
-for type in ['AK4PFchs']:
-  QGPoolDBESSource.toGet.extend(cms.VPSet(cms.PSet(
-    record = cms.string('QGLikelihoodRcd'),
-    tag    = cms.string('QGLikelihoodObject_'+qgDatabaseVersion+'_'+type),
-    label  = cms.untracked.string('QGL_'+type)
-  )))
-
+process.es_prefer_qg = cms.ESPrefer('PoolDBESSource','QGPoolDBESSource')
 process.load('RecoJets.JetProducers.QGTagger_cfi')
-process.QGTagger.srcJets=cms.InputTag("slimmedJetsJEC")    
-process.QGTagger.jetsLabel=cms.string('QGL_AK4PFchs')        
+process.QGTagger.srcJets = cms.InputTag( 'slimmedJetsJEC' )
+process.QGTagger.jetsLabel = cms.string('QGL_AK4PFchs')
 process.QGTagger.srcVertexCollection=cms.InputTag("offlinePrimaryVertices")
 
 # compute corrected pruned jet mass
@@ -281,6 +283,7 @@ process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
                                 'HLT_Mu17_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_v',
                                 'HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_v',
                                 'HLT_Mu23_TrkIsoVVL_Ele8_CaloIdL_TrackIdL_IsoVL_v',
+                                'HLT_DoubleEle33_CaloIdL_GsfTrkIdVL_v',
                                 # TriLepton
                                 'HLT_TripleMu_12_10_5_v',
                                 'HLT_Ele16_Ele12_Ele8_CaloIdL_TrackIdL_v',

@@ -124,19 +124,21 @@ KalmanMuonCalibrationsProducer::produce(edm::Event& iEvent, const edm::EventSetu
        double oldpterr=mu.muonBestTrack()->ptError();
        double newpterr=oldpterr;
 
-       if (!isMC) {
-           if (mu.pt()>2.0 && abs(mu.eta())<2.4) {
-               newpt = kalmanMuonCalibrator->getCorrectedPt(oldpt,mu.eta(),mu.phi(),mu.charge());
-               newpterr = newpt*kalmanMuonCalibrator->getCorrectedError(newpt,mu.eta(),oldpterr/newpt);
+       if(mu.muonBestTrackType() == 1) {
+           if (!isMC) {
+               if (mu.pt()>2.0 && abs(mu.eta())<2.4) {
+                   newpt = kalmanMuonCalibrator->getCorrectedPt(oldpt,mu.eta(),mu.phi(),mu.charge());
+                   //newpterr = newpt*kalmanMuonCalibrator->getCorrectedError(newpt,mu.eta(),oldpterr/newpt);
+               }
+           } else {
+               double unsmearednewpt = kalmanMuonCalibrator->getCorrectedPt(oldpt, mu.eta(), mu.phi(), mu.charge());
+               //double unsmearednewpterr = unsmearednewpt*kalmanMuonCalibrator->getCorrectedError(unsmearednewpt, mu.eta(), oldpterr/unsmearednewpt );
+               if (!isSync) newpt = kalmanMuonCalibrator->smear(unsmearednewpt, mu.eta());
+               else newpt = kalmanMuonCalibrator->smearForSync(unsmearednewpt, mu.eta());
+               //newpterr = newpt*kalmanMuonCalibrator->getCorrectedErrorAfterSmearing(newpt, mu.eta(), unsmearednewpterr/newpt );
            }
-       } else {
-           double unsmearednewpt = kalmanMuonCalibrator->getCorrectedPt(oldpt, mu.eta(), mu.phi(), mu.charge());
-           double unsmearednewpterr = unsmearednewpt*kalmanMuonCalibrator->getCorrectedError(unsmearednewpt, mu.eta(), oldpterr/unsmearednewpt );
-           if (!isSync) newpt = kalmanMuonCalibrator->smear(unsmearednewpt, mu.eta());
-           else newpt = kalmanMuonCalibrator->smearForSync(unsmearednewpt, mu.eta());
-           //newpterr = newpt*kalmanMuonCalibrator->getCorrectedErrorAfterSmearing(newpt, mu.eta(), unsmearednewpterr/newpt );
        }
-       
+
        mu.addUserFloat("correctedPtError",newpterr);
        patMuons->push_back(mu);    
        

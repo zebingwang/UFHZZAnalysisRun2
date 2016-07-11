@@ -42,9 +42,7 @@ git clone -b 74x-root6 https://github.com/cms-analysis/HiggsAnalysis-CombinedLim
 
 git clone https://github.com/cms-analysis/HiggsAnalysis-ZZMatrixElement.git ZZMatrixElement
 
-cd ZZMatrixElement ; git checkout -b from-master master
-
-cd ..
+(cd ZZMatrixElement ; git checkout -b from-v200p4 v2.0.0_patch4 ;  . setup.sh -j 8)
 
 git clone https://github.com/VBF-HZZ/KinZfitter.git
 
@@ -54,3 +52,34 @@ scram b -j 8
 
 cmsRun UFHZZAnalysisRun2/UFHZZ4LAna/python/Sync_80X_cfg.py
 
+To Submit Crab jobs:
+
+cp UFHZZAnalysisRun2/Utilities/SubmitCrabJobs.py .
+
+cp UFHZZAnalysisRun2/Utilities/crabConfig_TEMPLATE.py .
+
+cp UFHZZAnalysisRun2/Utilities/das_client.py .
+
+cp UFHZZAnalysisRun2/Utilities/manageCrabTask.py .
+
+cp UFHZZAnalysisRun2/Utilities/hadd.py .
+
+cp UFHZZAnalysisRun2/Utilities/lcgDelDir.py .
+
+cp UFHZZAnalysisRun2/Utilities/Run2016_09Jul.txt .
+
+cp UFHZZAnalysisRun2/Utilities/datasets_Run2016.txt .
+
+cp UFHZZAnalysisRun2/Utilities/datasets_Spring16_25ns_MiniAOD.txt .
+
+source /cvmfs/cms.cern.ch/crab3/crab.sh
+
+edit crabConfig_TEMPLATE.py to point to your working directory
+
+python SubmitCrabJobs.py -t "myTask_Data_2016" -d datasets_Run2016.txt -c UFHZZAnalysisRun2/UFHZZ4LAna/python/templateData_80X_cfg.py
+
+or similary for MC:
+
+python SubmitCrabJobs.py -t "myTask_MC_2016" -d datasets_Spring16_25ns_MiniAOD.txt -c UFHZZAnalysisRun2/UFHZZ4LAna/python/templateMC_80X_cfg.py
+
+You can use manageCrabTask.py to check the status, resubmit, or kill your task.
