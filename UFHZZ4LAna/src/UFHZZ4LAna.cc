@@ -100,10 +100,7 @@
 #include "DataFormats/CaloTowers/interface/CaloTowerCollection.h"
 #include "RecoVertex/VertexTools/interface/VertexDistance3D.h"
 
-//Angles / KD's
-#include "UFHZZAnalysisRun2/UFHZZ4LAna/interface/HZZ4LAngles.h"
-#include "ZZMatrixElement/MELA/src/computeAngles.h"
-#include "ZZMatrixElement/MEMCalculators/interface/MEMCalculators.h"
+// KD's
 #include "ZZMatrixElement/MELA/interface/Mela.h"
 
 //Helper
@@ -154,7 +151,6 @@
 //
 // class declaration
 //
-using namespace MEMNames;
 using namespace EwkCorrections;
 
 class UFHZZ4LAna : public edm::EDAnalyzer {
@@ -178,14 +174,8 @@ private:
     void findHiggsCandidate(std::vector< pat::Muon > &selectedMuons, std::vector< pat::Electron > &selectedElectrons, const edm::Event& iEvent);
     void findZ1LCandidate(const edm::Event& iEvent);
 
-    //MELA
-    HZZ4LAngles angles;
     //Helper Class
     HZZ4LHelper helper;
-    //Sip Class
-    HZZ4LSipAna sipAna;
-    //Mass Err
-    //HZZ4LMassErr massErr;
     //GEN
     HZZ4LGENAna genAna;
     //VBF
@@ -398,21 +388,18 @@ private:
     KinZfitter *kinZfitter;
 
     // MEM
-    MEMs* combinedMEM;
-    Mela* myMela;
+    Mela* mela;
 
-    double me_0plus_JHU, me_qqZZ_MCFM, p0plus_m4l, bkg_m4l;
-    double D_bkg_kin, D_bkg;   
+    float me_0plus_JHU, me_qqZZ_MCFM, p0plus_m4l, bkg_m4l;
+    float D_bkg_kin, D_bkg, D_g4, D_g1g4;
 
-    double bkg_VAMCFM;
-    double p0minus_VAJHU, Dgg10_VAMCFM;
-    double phjj_VAJHU, pvbf_VAJHU;
-    float pvbf_VAJHU_float;
+    float p0minus_VAJHU, Dgg10_VAMCFM, pg1g4_VAJHU;
+    float phjj_VAJHU, pvbf_VAJHU;
     float pwh_hadronic_VAJHU, pzh_hadronic_VAJHU;
-
-    double D_g4, Djet_VAJHU, D_WHh_VAJHU, D_ZHh_VAJHU;
     float pAux_vbf_VAJHU, phj_VAJHU;
-    double D_VBF1j_VAJHU, D_VBF2j, D_WHh, D_ZHh, D_VBF1j;
+
+    float D_VBF, D_VBF1j, D_HadWH, D_HadZH;
+    float D_VBF_QG, D_VBF1j_QG, D_HadWH_QG, D_HadZH_QG;
  
     // a vector<float> for each vector<double>
     vector<float> lep_pt_float, lep_pterr_float, lep_pterrold_float;
@@ -628,8 +615,8 @@ UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
    
     kinZfitter = new KinZfitter(!isMC);
     
-    combinedMEM = new MEMs(13.0,125,"CTEQ6L",false);
-    myMela = combinedMEM->m_MELA;
+    mela = new Mela(13.0, 125.0, TVar::SILENT);
+    mela->setCandidateDecayMode(TVar::CandidateDecay_ZZ); 
 
     edm::FileInPath elec_scalefacFileInPath("UFHZZAnalysisRun2/UFHZZ4LAna/data/IdIsoSip.root");
     TFile *fElecScalFac = TFile::Open(elec_scalefacFileInPath.fullPath().c_str());
@@ -641,7 +628,7 @@ UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
     TCanvas *canvas2 = (TCanvas*)fElecScalFacCracks->Get("canvas");
     hElecScaleFac_Cracks = (TH2F*)canvas2->GetPrimitive("hScaleFactors_ID");    
 
-    edm::FileInPath mu_scalefacFileInPath("UFHZZAnalysisRun2/UFHZZ4LAna/data/muSF_Moriond2015_HZZ.root");
+    edm::FileInPath mu_scalefacFileInPath("UFHZZAnalysisRun2/UFHZZ4LAna/data/final_HZZ_ICHEP16_prelim.root");
     TFile *fMuScalFac = TFile::Open(mu_scalefacFileInPath.fullPath().c_str());
     hMuScaleFac = (TH2F*)fMuScalFac->Get("FINAL");
 
@@ -665,7 +652,6 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     using namespace std;
     using namespace pat;
     using namespace trigger;
-    using namespace MEMNames;
     using namespace EwkCorrections;
 
     nEventsTotal += 1.0;
@@ -954,14 +940,13 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     // ME
     me_0plus_JHU=999.0; me_qqZZ_MCFM=999.0; p0plus_m4l=999.0; bkg_m4l=999.0; D_bkg_kin=999.0; D_bkg=999.0;   
 
-    bkg_VAMCFM=999.0; p0minus_VAJHU=999.0; Dgg10_VAMCFM=999.0;
-    phjj_VAJHU=999.0; pvbf_VAJHU=999.0; D_g4=999.0;
-    Djet_VAJHU=999.0; 
+    p0minus_VAJHU=999.0; pg1g4_VAJHU=999.0; Dgg10_VAMCFM=999.0, D_g4=999.0; D_g1g4=999.0;
+    phjj_VAJHU=999.0; pvbf_VAJHU=999.0; pAux_vbf_VAJHU=999.0;
     pwh_hadronic_VAJHU=999.0; pwh_hadronic_VAJHU=999.0; 
     pzh_hadronic_VAJHU=999.0; pzh_hadronic_VAJHU=999.0; 
-    D_WHh_VAJHU=999.0; D_ZHh_VAJHU=999.0; 
-    pvbf_VAJHU=999.0; pAux_vbf_VAJHU=999.0;
-    D_VBF1j_VAJHU=999.0; D_VBF2j=999.0; D_WHh=999.0; D_ZHh=999.0; D_VBF1j=999.0;
+    D_HadWH=999.0; D_HadZH=999.0; 
+    D_VBF=999.0; D_VBF1j=999.0; D_HadWH=999.0; D_HadZH=999.0;
+    D_VBF_QG=999.0; D_VBF1j_QG=999.0; D_HadWH_QG=999.0; D_HadZH_QG=999.0;
 
     if (verbose) {cout<<"clear other variables"<<endl; }
     // Resolution
@@ -1766,7 +1751,8 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
 
             // Comput Matrix Elelements After filling jets, Do Kinematic fit, add scale factors
-            if (foundHiggsCandidate || lep_pt.size()>=4) {
+            //if (foundHiggsCandidate || lep_pt.size()>=4) {
+            if (foundHiggsCandidate) {
 
                 if (foundHiggsCandidate) {
                     dataMCWeight = lep_dataMC[lep_Hindex[0]]*lep_dataMC[lep_Hindex[1]]*lep_dataMC[lep_Hindex[2]]*lep_dataMC[lep_Hindex[3]];
@@ -1794,12 +1780,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                     if (verbose) cout<<"mass4l "<<mass4l<<" mass4lREFIT "<<mass4lREFIT<<" massErr "<<mass4lErr<<" massErrREFIT "<<mass4lErrREFIT<<" massZ1REFIT "<<massZ1REFIT<<endl;
                 }
 
-                int tmpIdL1,tmpIdL2,tmpIdL3,tmpIdL4;
-
-                TLorentzVector  L11P4, L12P4, L21P4, L22P4, J1P4,  J2P4;
                 TLorentzVector Lep1, Lep2, Lep3, Lep4,  Jet1, Jet2;
-
-                TLorentzVector nullFourVector(0, 0, 0, 0);                 
                 if (foundHiggsCandidate) {
                     Lep1.SetPtEtaPhiM(lepFSR_pt[lep_Hindex[0]],lepFSR_eta[lep_Hindex[0]],lepFSR_phi[lep_Hindex[0]],lepFSR_mass[lep_Hindex[0]]);
                     Lep2.SetPtEtaPhiM(lepFSR_pt[lep_Hindex[1]],lepFSR_eta[lep_Hindex[1]],lepFSR_phi[lep_Hindex[1]],lepFSR_mass[lep_Hindex[1]]);
@@ -1812,104 +1793,116 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                     Lep4.SetPtEtaPhiM(lepFSR_pt[3],lepFSR_eta[3],lepFSR_phi[3],lepFSR_mass[3]);
                 }
                 
+                SimpleParticleCollection_t daughters;
+                if (foundHiggsCandidate) {
+                    daughters.push_back(SimpleParticle_t(lep_id[lep_Hindex[0]], Lep1));
+                    daughters.push_back(SimpleParticle_t(lep_id[lep_Hindex[1]], Lep2));
+                    daughters.push_back(SimpleParticle_t(lep_id[lep_Hindex[2]], Lep3));
+                    daughters.push_back(SimpleParticle_t(lep_id[lep_Hindex[3]], Lep4));
+                } else {
+                    daughters.push_back(SimpleParticle_t(lep_id[0], Lep1));
+                    daughters.push_back(SimpleParticle_t(lep_id[1], Lep2));
+                    daughters.push_back(SimpleParticle_t(lep_id[2], Lep3));
+                    daughters.push_back(SimpleParticle_t(lep_id[3], Lep4));
+                }
+
+                SimpleParticleCollection_t associated;               
                 if (njets_pt30_eta4p7 > 0) {
-                    J1P4.SetPtEtaPhiM(jet_pt[jet_iscleanH4l[0]],jet_eta[jet_iscleanH4l[0]],jet_phi[jet_iscleanH4l[0]],jet_mass[jet_iscleanH4l[0]]);
+                    Jet1.SetPtEtaPhiM(jet_pt[jet_iscleanH4l[0]],jet_eta[jet_iscleanH4l[0]],jet_phi[jet_iscleanH4l[0]],jet_mass[jet_iscleanH4l[0]]);
+                    associated.push_back(SimpleParticle_t(0, Jet1));
                 }
                 if (njets_pt30_eta4p7 > 1) {
-                    J2P4.SetPtEtaPhiM(jet_pt[jet_iscleanH4l[1]],jet_eta[jet_iscleanH4l[1]],jet_phi[jet_iscleanH4l[1]],jet_mass[jet_iscleanH4l[1]]);
+                    Jet2.SetPtEtaPhiM(jet_pt[jet_iscleanH4l[1]],jet_eta[jet_iscleanH4l[1]],jet_phi[jet_iscleanH4l[1]],jet_mass[jet_iscleanH4l[1]]);
+                    associated.push_back(SimpleParticle_t(0, Jet2));
                 }
-                
-                L11P4.SetPxPyPzE(Lep1.Px(),Lep1.Py(),Lep1.Pz(),Lep1.E()); tmpIdL1 = idL1;
-                L12P4.SetPxPyPzE(Lep2.Px(),Lep2.Py(),Lep2.Pz(),Lep2.E()); tmpIdL2 = idL2;
-                L21P4.SetPxPyPzE(Lep3.Px(),Lep3.Py(),Lep3.Pz(),Lep3.E()); tmpIdL3 = idL3;
-                L22P4.SetPxPyPzE(Lep4.Px(),Lep4.Py(),Lep4.Pz(),Lep4.E()); tmpIdL4 = idL4;
-                if (!foundHiggsCandidate) {
-                    tmpIdL1=lep_id[0]; tmpIdL2=lep_id[1]; tmpIdL3=lep_id[2]; tmpIdL4=lep_id[3];
-                }
-                
-                vector<TLorentzVector> P4s;
-                vector<int> tmpIDs;
-                vector<TLorentzVector> partPprod;
-                vector<int> partIdprod;
+                                                    
+                mela->setInputEvent(&daughters, &associated, 0, 0);
+                mela->setCurrentCandidateFromIndex(0);
 
-                P4s.push_back(L11P4); P4s.push_back(L12P4);
-                P4s.push_back(L21P4); P4s.push_back(L22P4);
+                mela->setProcess(TVar::HSMHiggs, TVar::JHUGen, TVar::ZZGG);
+                mela->computeP(me_0plus_JHU, true);
 
-                tmpIDs.push_back(tmpIdL1); tmpIDs.push_back(tmpIdL2);
-                tmpIDs.push_back(tmpIdL3); tmpIDs.push_back(tmpIdL4);
+                mela->setProcess(TVar::H0minus, TVar::JHUGen, TVar::ZZGG);
+                mela->computeP(p0minus_VAJHU, true);
 
-                partPprod.push_back(L11P4); partPprod.push_back(L12P4);
-                partPprod.push_back(L21P4); partPprod.push_back(L22P4);
-                partPprod.push_back(njets_pt30_eta4p7 > 0 ? J1P4 : nullFourVector);
-                partPprod.push_back(njets_pt30_eta4p7 > 1 ? J2P4 : nullFourVector);
+                pg1g4_VAJHU=0.0;
+                mela->setProcess(TVar::SelfDefine_spin0, TVar::JHUGen, TVar::ZZGG);
+                (mela->selfDHggcoupl)[0][0]=1.;
+                (mela->selfDHzzcoupl)[0][0][0]=1.;
+                (mela->selfDHzzcoupl)[0][3][0]=1.;
+                mela->computeP(pg1g4_VAJHU, true);
+                pg1g4_VAJHU -= me_0plus_JHU+p0minus_VAJHU;
 
-                partIdprod.push_back(tmpIdL1); partIdprod.push_back(tmpIdL2);
-                partIdprod.push_back(tmpIdL3); partIdprod.push_back(tmpIdL4);
-                partIdprod.push_back(0); partIdprod.push_back(0);
+                mela->setProcess(TVar::bkgZZ, TVar::MCFM, TVar::ZZQQB);
+                mela->computeP(me_qqZZ_MCFM, true);
 
-                TLorentzVector higgs_undec = L11P4+L12P4+L21P4+L22P4;
+                mela->computeD_gg(TVar::MCFM, TVar::D_gg10, Dgg10_VAMCFM);
 
-                combinedMEM->computePm4l(P4s,tmpIDs,MEMNames::kNone, p0plus_m4l, bkg_m4l);
-                combinedMEM->computeME(MEMNames::kSMHiggs, MEMNames::kJHUGen, P4s, tmpIDs, me_0plus_JHU); // higgs, vector algebra, JHUgen
-                combinedMEM->computeME(MEMNames::kqqZZ, MEMNames::kMCFM, P4s, tmpIDs, me_qqZZ_MCFM); // background, vector algebra, MCFM
-                combinedMEM->computeME(MEMNames::k0minus, MEMNames::kJHUGen, P4s, tmpIDs, p0minus_VAJHU); // Calculation of PS (0-, fa3=1) gg->H->4l JHUGen ME
-                combinedMEM->computeME(MEMNames::kggHZZ_10, MEMNames::kMCFM, P4s, tmpIDs, Dgg10_VAMCFM); // Direct calculation of Dgg (D^kin for off-shell) from MCFM MEs
-                
-                D_bkg_kin = me_0plus_JHU / (me_0plus_JHU + me_qqZZ_MCFM);
+                mela->setProcess(TVar::HSMHiggs, TVar::JHUGen, TVar::ZZGG);
+                mela->computePM4l(TVar::SMSyst_None, p0plus_m4l);
+
+                mela->setProcess(TVar::bkgZZ, TVar::JHUGen, TVar::ZZGG);
+                mela->computePM4l(TVar::SMSyst_None, bkg_m4l);
+
+                D_bkg_kin = me_0plus_JHU / (me_0plus_JHU + me_qqZZ_MCFM); 
                 D_bkg = me_0plus_JHU * p0plus_m4l / (me_0plus_JHU * p0plus_m4l + me_qqZZ_MCFM * bkg_m4l); // superMELA 
-                D_g4 = me_0plus_JHU / ( me_0plus_JHU + p0minus_VAJHU ); // D_0-                
-                mela::computeAngles(P4s[0], tmpIDs[0], P4s[1], tmpIDs[1], P4s[2], tmpIDs[2], P4s[3], tmpIDs[3], cosThetaStar,cosTheta1,cosTheta2,Phi,Phi1);
+                D_g4 = me_0plus_JHU / ( me_0plus_JHU + pow(2.521, 2)*p0minus_VAJHU ); // D_0-                
+                D_g1g4 = pg1g4_VAJHU*2.521 / ( me_0plus_JHU + pow(2.521, 2)*p0minus_VAJHU ); // D_CP, 2.521 since g1=1 and g4=1 is used
+
+                TUtil::computeAngles(Lep1, lep_id[lep_Hindex[0]], Lep2, lep_id[lep_Hindex[1]], \
+                                     Lep3, lep_id[lep_Hindex[2]], Lep4, lep_id[lep_Hindex[3]], \
+                                     cosThetaStar,cosTheta1,cosTheta2,Phi,Phi1);
 
                 if (njets_pt30_eta4p7>=2){
-                    combinedMEM->computeME(MEMNames::kJJ_SMHiggs_GG, MEMNames::kJHUGen, partPprod, partIdprod, phjj_VAJHU); // SM gg->H+2j
-                    combinedMEM->computeME(MEMNames::kJJ_SMHiggs_VBF, MEMNames::kJHUGen, partPprod, partIdprod, pvbf_VAJHU);  // SM VBF->H
-                    myMela->setProcess(TVar::HSMHiggs, TVar::JHUGen, TVar::WH);
-                    myMela->computeProdP(J1P4, 0, J2P4, 0, higgs_undec, pwh_hadronic_VAJHU);  // SM W(->2j)H
-                    myMela->setProcess(TVar::HSMHiggs, TVar::JHUGen, TVar::ZH);
-                    myMela->computeProdP(J1P4, 0, J2P4, 0, higgs_undec, pzh_hadronic_VAJHU); // SM Z(->2j)H
-                    Djet_VAJHU = pvbf_VAJHU / ( pvbf_VAJHU + phjj_VAJHU ); // VBF(2j) vs. gg->H+2j
-                    D_WHh_VAJHU = pwh_hadronic_VAJHU / ( pwh_hadronic_VAJHU + 100000.*phjj_VAJHU ); // W(->2j)H vs. gg->H+2j
-                    D_ZHh_VAJHU = pzh_hadronic_VAJHU / ( pzh_hadronic_VAJHU + 10000.*phjj_VAJHU ); // Z(->2j)H vs. gg->H+2j
+                    mela->setProcess(TVar::HSMHiggs, TVar::JHUGen, TVar::JJVBF);
+                    mela->computeProdP(pvbf_VAJHU, true);
+                    mela->setProcess(TVar::HSMHiggs, TVar::JHUGen, TVar::JJQCD);
+                    mela->computeProdP(phjj_VAJHU, true);
+                    mela->setProcess(TVar::HSMHiggs, TVar::JHUGen, TVar::Had_WH);
+                    mela->computeProdP(pwh_hadronic_VAJHU, true);
+                    mela->setProcess(TVar::HSMHiggs, TVar::JHUGen, TVar::Had_ZH);
+                    mela->computeProdP(pzh_hadronic_VAJHU, true);
+                    D_VBF = pvbf_VAJHU / ( pvbf_VAJHU + 0.06*phjj_VAJHU ); // VBF(2j) vs. gg->H+2j
+                    D_HadWH = pwh_hadronic_VAJHU / ( pwh_hadronic_VAJHU + 1e5*phjj_VAJHU ); // W(->2j)H vs. gg->H+2j
+                    D_HadZH = pzh_hadronic_VAJHU / ( pzh_hadronic_VAJHU + 1e4*phjj_VAJHU ); // Z(->2j)H vs. gg->H+2j
                 } else {
-                    Djet_VAJHU = -1.0; D_WHh_VAJHU = -1.0; D_ZHh_VAJHU = -1.0;
+                    D_VBF = -1.0; D_HadWH = -1.0; D_HadZH = -1.0;
                 }
 
                 if (njets_pt30_eta4p7==1) {
-                    J1P4.SetPtEtaPhiM(jet_pt[jet_iscleanH4l[0]],jet_eta[jet_iscleanH4l[0]],jet_phi[jet_iscleanH4l[0]],jet_mass[jet_iscleanH4l[0]]);
-                    J2P4.SetXYZT(0.0, 0.0, 0.0, 0.0);
-                    myMela->setProcess(TVar::HSMHiggs, TVar::JHUGen, TVar::JH);
-                    myMela->computeProdP(J1P4, 0, J2P4, 0, higgs_undec, phj_VAJHU); // SM gg->H+1j
-                    myMela->setProcess(TVar::HSMHiggs, TVar::JHUGen, TVar::JJVBF);
-                    myMela->computeProdP(J1P4, 0, J2P4, 0, higgs_undec, pvbf_VAJHU_float); // Un-integrated ME
-                    myMela->get_PAux(pAux_vbf_VAJHU); // = Integrated / un-integrated                   
-                    D_VBF1j_VAJHU = pvbf_VAJHU_float*pAux_vbf_VAJHU / ( pvbf_VAJHU_float*pAux_vbf_VAJHU + 5.*phj_VAJHU ); // VBF(1j) vs. gg->H+1j
-                } else {
-                    D_VBF1j_VAJHU = -1.0;
-                }
-
-                if (njets_pt30_eta4p7>=2) {
-                    
-                    float jetPgOverPq0 = 1./jet_QGTagger[jet_iscleanH4l[0]]- 1.;
-                    float jetPgOverPq1 = 1./jet_QGTagger[jet_iscleanH4l[1]]- 1.;
-                    D_VBF2j = 1/(1+ (1./Djet_VAJHU - 1.) * TMath::Power(jetPgOverPq0*jetPgOverPq1,1/3.) ) ;
-                    D_WHh = 1/(1+ (1./D_WHh_VAJHU - 1.) * jetPgOverPq0*jetPgOverPq1 ) ;
-                    D_ZHh = 1/(1+ (1./D_ZHh_VAJHU - 1.) * jetPgOverPq0*jetPgOverPq1 ) ;
-                } else {
-                    D_VBF2j = -1.0; D_WHh = -1.0; D_ZHh = -1.0;
-                }
-
-                if (njets_pt30_eta4p7==1) {
-                    float jetPgOverPq0 = 1./jet_QGTagger[jet_iscleanH4l[0]]- 1.;
-                    D_VBF1j = 1/(1+ (1./D_VBF1j_VAJHU - 1.) * TMath::Power(jetPgOverPq0,1/3.) ) ;
+                    mela->setProcess(TVar::HSMHiggs, TVar::JHUGen, TVar::JQCD);
+                    mela->computeProdP(phj_VAJHU, true);
+                    mela->setProcess(TVar::HSMHiggs, TVar::JHUGen, TVar::JJVBF);
+                    mela->computeProdP(pvbf_VAJHU, true); // Un-integrated ME
+                    mela->getPAux(pAux_vbf_VAJHU); // = Integrated / un-integrated
+                    D_VBF1j = pvbf_VAJHU*pAux_vbf_VAJHU / ( pvbf_VAJHU*pAux_vbf_VAJHU + 0.3*phj_VAJHU ); // VBF(1j) vs. gg->H+1j
                 } else {
                     D_VBF1j = -1.0;
                 }
 
+                if (njets_pt30_eta4p7>=2) {                    
+                    float jetPgOverPq0 = 1./jet_QGTagger[jet_iscleanH4l[0]]- 1.;
+                    float jetPgOverPq1 = 1./jet_QGTagger[jet_iscleanH4l[1]]- 1.;
+                    D_VBF_QG = 1./(1.+ (1./D_VBF - 1.) * pow(jetPgOverPq0*jetPgOverPq1, 1./3.));
+                    D_HadWH_QG = 1./(1.+ (1./D_HadWH - 1.) * jetPgOverPq0*jetPgOverPq1);
+                    D_HadZH_QG = 1./(1. + (1./D_HadZH - 1.) * jetPgOverPq0*jetPgOverPq1);
+                } else {
+                    D_VBF_QG = -1.0; D_HadWH_QG = -1.0; D_HadZH_QG = -1.0;
+                }
+
+                if (njets_pt30_eta4p7==1) {
+                    float jetPgOverPq0 = 1./jet_QGTagger[jet_iscleanH4l[0]]- 1.;
+                    D_VBF1j_QG = 1/(1+ (1./D_VBF1j - 1.) * TMath::Power(jetPgOverPq0,1/3.) ) ;
+                } else {
+                    D_VBF1j_QG = -1.0;
+                }
+
                 if (verbose) cout<<"D_bkg_kin: "<<D_bkg_kin<< ", D_bkg: " << D_bkg << ", Dgg: " << Dgg10_VAMCFM << " ,D0-: " << D_g4 << endl;               
-                if (verbose) cout<<"HJJ : "<<Djet_VAJHU<< ", WH: " << D_WHh_VAJHU << ", ZH: " << D_ZHh_VAJHU <<endl;
-                if (verbose) cout<<"D_VBF1j : "<<D_VBF1j<<" D_VBF2j : "<<D_VBF2j<<" D_WHh : "<<D_WHh<<" D_ZHh : "<<D_ZHh<<endl;
-                if (verbose) cout<<"cosThetaStar: "<<cosThetaStar<< ", cosTheta1: " << cosTheta1 << ", cosTheta2: " << cosTheta2 << ", Phi: " << Phi << " , Phi1: " << Phi1 << endl;
+                if (verbose) cout<<"D_VBF : "<<D_VBF<< ", D_VBF1j : "<< D_VBF1j<<", WH: " << D_HadWH << ", ZH: " << D_HadZH <<endl;
+                if (verbose) cout<<"cosThetaStar: "<<cosThetaStar<<", cosTheta1: "<<cosTheta1<<", cosTheta2: "<<cosTheta2<<", Phi: "<<Phi<<" , Phi1: "<<Phi1<<endl;
                 
+                mela->resetInputEvent(); 
+
                 if(njets_pt30_eta4p7>1){
                     TLorentzVector jet1, jet2;
                     jet1.SetPtEtaPhiM(jet_pt[jet_iscleanH4l[0]],jet_eta[jet_iscleanH4l[0]],jet_phi[jet_iscleanH4l[0]],jet_mass[jet_iscleanH4l[0]]);
@@ -1960,14 +1953,14 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 }
                 
                 // Event Categories
-                if (nisoleptons==4 && (((njets_pt30_eta4p7==2||njets_pt30_eta4p7==3)&&nbjets_pt30_eta4p7<2)||(njets_pt30_eta4p7>=4&&nbjets_pt30_eta4p7==0)) && D_VBF2j>0.38) {EventCat=2;}
-                else if (nisoleptons==4 && (((njets_pt30_eta4p7==2||njets_pt30_eta4p7==3)&&nbjets_pt30_eta4p7<2)||(njets_pt30_eta4p7>=4&&nbjets_pt30_eta4p7==0)) && (D_WHh>0.999 || D_ZHh>0.999)) {EventCat=4;}
+                if (nisoleptons==4 && (((njets_pt30_eta4p7==2||njets_pt30_eta4p7==3)&&nbjets_pt30_eta4p7<2)||(njets_pt30_eta4p7>=4&&nbjets_pt30_eta4p7==0)) && D_VBF_QG>0.38) {EventCat=2;}
+                else if (nisoleptons==4 && (((njets_pt30_eta4p7==2||njets_pt30_eta4p7==3)&&nbjets_pt30_eta4p7<2)||(njets_pt30_eta4p7>=4&&nbjets_pt30_eta4p7==0)) && (D_HadWH_QG>0.999 || D_HadZH_QG>0.999)) {EventCat=4;}
                 else if (nisoleptons==4 && (njets_pt30_eta4p7==2||njets_pt30_eta4p7==3) && nbjets_pt30_eta4p7>=2) {EventCat=4;}
                 else if (njets_pt30_eta4p7<=3 && nbjets_pt30_eta4p7==0 && (nisoleptons==5 || (nisoleptons>=6&&sumplus>=3&&summinus>=3))) {EventCat=3;}
                 else if (njets_pt30_eta4p7==0 && nisoleptons>=5) {EventCat=3;}
                 else if (njets_pt30_eta4p7>=4 && nbjets_pt30_eta4p7>0) {EventCat=5;}
                 else if (nisoleptons>=5) {EventCat=5;}
-                else if (nisoleptons==4 && njets_pt30_eta4p7==1 && D_VBF1j>0.56) {EventCat=1;}
+                else if (nisoleptons==4 && njets_pt30_eta4p7==1 && D_VBF1j_QG>0.56) {EventCat=1;}
                 else {EventCat=0;}
                                 
             }
@@ -2420,11 +2413,25 @@ UFHZZ4LAna::findHiggsCandidate(std::vector< pat::Muon > &selectedMuons, std::vec
 
             tmpIDs.push_back(lep_id[Z1_lepindex[0]]); tmpIDs.push_back(lep_id[Z1_lepindex[1]]);
             tmpIDs.push_back(lep_id[Z2_lepindex[0]]); tmpIDs.push_back(lep_id[Z2_lepindex[1]]);
-            
-            double me_0plus_JHU_tmp, me_qqZZ_MCFM_tmp;
-            combinedMEM->computeME(MEMNames::kSMHiggs, MEMNames::kJHUGen, P4s, tmpIDs, me_0plus_JHU_tmp); // higgs, vector algebra, JHUgen
-            combinedMEM->computeME(MEMNames::kqqZZ, MEMNames::kMCFM, P4s, tmpIDs, me_qqZZ_MCFM_tmp); // background, vector algebra, MCFM 
-            double D_bkg_kin_tmp = me_0plus_JHU_tmp / (me_0plus_JHU_tmp + me_qqZZ_MCFM_tmp);
+
+            SimpleParticleCollection_t daughters;
+            daughters.push_back(SimpleParticle_t(tmpIDs[0],P4s[0]));
+            daughters.push_back(SimpleParticle_t(tmpIDs[1],P4s[1]));
+            daughters.push_back(SimpleParticle_t(tmpIDs[2],P4s[2]));
+            daughters.push_back(SimpleParticle_t(tmpIDs[3],P4s[3]));
+
+            SimpleParticleCollection_t associated;
+            mela->setInputEvent(&daughters, &associated, 0, 0);
+            mela->setCurrentCandidateFromIndex(0);
+
+            float me_0plus_JHU_tmp, me_qqZZ_MCFM_tmp;
+            mela->setProcess(TVar::HSMHiggs, TVar::JHUGen, TVar::ZZGG);
+            mela->computeP(me_0plus_JHU_tmp, true);            
+            mela->setProcess(TVar::bkgZZ, TVar::MCFM, TVar::ZZQQB);
+            mela->computeP(me_qqZZ_MCFM_tmp, true);
+            float D_bkg_kin_tmp = me_0plus_JHU_tmp / (me_0plus_JHU_tmp + me_qqZZ_MCFM_tmp);
+
+            mela->resetInputEvent(); 
 
             if (verbose) cout<<"good ZZ candidate, D_bkg_kin: "<<D_bkg_kin_tmp<<" max D_bkg_kin SR: "<<max_D_bkg_kin_SR<<" max D_bkg_kin CR: "<<max_D_bkg_kin_CR<<endl;
             
@@ -3063,23 +3070,23 @@ void UFHZZ4LAna::bookPassedEventTree(TString treeName, TTree *tree)
     tree->Branch("nGenStatus2bHad",&nGenStatus2bHad,"nGenStatus2bHad/I");
 
     //ME
-    tree->Branch("me_0plus_JHU", &me_0plus_JHU, "me_0plus_JHU/D");
-    tree->Branch("me_qqZZ_MCFM", &me_qqZZ_MCFM, "me_qqZZ_MCFM/D");
-    tree->Branch("p0plus_m4l", &p0plus_m4l, "p0plus_m4l/D");
-    tree->Branch("bkg_m4l", &bkg_m4l, "bkg_m4l/D");
-    tree->Branch("D_bkg_kin", &D_bkg_kin, "D_bkg_kin/D");
-    tree->Branch("D_bkg", &D_bkg, "D_bkg/D");
-    tree->Branch("Dgg10_VAMCFM", &Dgg10_VAMCFM, "Dgg10_VAMCFM/D");
-    tree->Branch("D_g4", &D_g4, "D_g4/D");
-    tree->Branch("Djet_VAJHU", &Djet_VAJHU, "Djet_VAJHU/D");
-    tree->Branch("D_WHh_VAJHU",&D_WHh_VAJHU,"D_WHh_VAJHU/D");
-    tree->Branch("D_ZHh_VAJHU",&D_ZHh_VAJHU,"D_ZHh_VAJHU/D");
-    tree->Branch("D_VBF1j_VAJHU",&D_VBF1j_VAJHU,"D_VBF1j_VAJHU/D");
-    tree->Branch("D_VBF2j",&D_VBF2j,"D_VBF2j/D");
-    tree->Branch("D_WHh",&D_WHh,"D_WHh/D");
-    tree->Branch("D_ZHh",&D_ZHh,"D_ZHh/D");
-    tree->Branch("D_VBF1j",&D_VBF1j,"D_VBF1j/D");
-
+    tree->Branch("me_0plus_JHU", &me_0plus_JHU, "me_0plus_JHU/F");
+    tree->Branch("me_qqZZ_MCFM", &me_qqZZ_MCFM, "me_qqZZ_MCFM/F");
+    tree->Branch("p0plus_m4l", &p0plus_m4l, "p0plus_m4l/F");
+    tree->Branch("bkg_m4l", &bkg_m4l, "bkg_m4l/F");
+    tree->Branch("D_bkg_kin", &D_bkg_kin, "D_bkg_kin/F");
+    tree->Branch("D_bkg", &D_bkg, "D_bkg/F");
+    tree->Branch("Dgg10_VAMCFM", &Dgg10_VAMCFM, "Dgg10_VAMCFM/F");
+    tree->Branch("D_g4", &D_g4, "D_g4/F");
+    tree->Branch("D_g1g4", &D_g4, "D_g1g4/F");
+    tree->Branch("D_VBF",&D_VBF,"D_VBF/F");
+    tree->Branch("D_VBF1j",&D_VBF1j,"D_VBF1j/F");
+    tree->Branch("D_HadWH",&D_HadWH,"D_HadWH/F");
+    tree->Branch("D_HadZH",&D_HadZH,"D_HadZH/F");
+    tree->Branch("D_VBF_QG",&D_VBF_QG,"D_VBF_QG/F");
+    tree->Branch("D_VBF1j_QG",&D_VBF1j_QG,"D_VBF1j_QG/F");
+    tree->Branch("D_HadWH_QG",&D_HadWH_QG,"D_HadWH_QG/F");
+    tree->Branch("D_HadZH_QG",&D_HadZH_QG,"D_HadZH_QG/F");
 
 }
 
@@ -3175,12 +3182,12 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
             jercorrup = pt_jerup/goodJets[k].pt();
             jercorrdn = pt_jerdn/goodJets[k].pt();
         }
-        
-        TLorentzVector *jet_jer = new TLorentzVector(jercorr*goodJets[k].px(),jercorr*goodJets[k].py(),jercorr*goodJets[k].pz(),jercorr*goodJets[k].mass());
-        TLorentzVector *jet_jerup = new TLorentzVector(jercorrup*goodJets[k].px(),jercorrup*goodJets[k].py(),jercorrup*goodJets[k].pz(),jercorrup*goodJets[k].mass());
-        TLorentzVector *jet_jerdn = new TLorentzVector(jercorrdn*goodJets[k].px(),jercorrdn*goodJets[k].py(),jercorrdn*goodJets[k].pz(),jercorrdn*goodJets[k].mass());
 
-        //std::cout<<"Jet nominal: "<<goodJets[k].pt()<<" JER corrected: "<<jet_jer->Pt()<<" JER up: "<<jet_jerup->Pt()<<" JER dn: "<<jet_jerdn->Pt()<<std::endl;
+        TLorentzVector *jet_jer = new TLorentzVector(jercorr*goodJets[k].px(),jercorr*goodJets[k].py(),jercorr*goodJets[k].pz(),jercorr*goodJets[k].energy());
+        TLorentzVector *jet_jerup = new TLorentzVector(jercorrup*goodJets[k].px(),jercorrup*goodJets[k].py(),jercorrup*goodJets[k].pz(),jercorrup*goodJets[k].energy());
+        TLorentzVector *jet_jerdn = new TLorentzVector(jercorrdn*goodJets[k].px(),jercorrdn*goodJets[k].py(),jercorrdn*goodJets[k].pz(),jercorrdn*goodJets[k].energy());
+
+        //cout<<"Jet nominal: "<<goodJets[k].pt()<<" JER corrected: "<<jet_jer->Pt()<<" JER up: "<<jet_jerup->Pt()<<" JER dn: "<<jet_jerdn->Pt()<<std::endl;
 
         jecunc->setJetPt(jet_jer->Pt());
         jecunc->setJetEta(goodJets[k].eta());

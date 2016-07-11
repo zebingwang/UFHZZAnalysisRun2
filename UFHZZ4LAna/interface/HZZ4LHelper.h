@@ -1564,11 +1564,13 @@ float HZZ4LHelper::dataMC(pat::Electron electron, TH2F* hElecScaleFac, TH2F* hEl
 {
     float pt = std::min(electron.pt(),199.0);
     float eta = electron.superCluster()->eta();
+    /*
     if (electron.isGap()) {
         return hElecScaleFac_Cracks->GetBinContent(hElecScaleFac_Cracks->FindBin(pt,eta));        
     } else {
         return hElecScaleFac->GetBinContent(hElecScaleFac->FindBin(pt,eta));        
     }
+    */
     return 1.0;
 }
 
@@ -1576,12 +1578,14 @@ float HZZ4LHelper::dataMCErr(pat::Electron electron, TH2F* hElecScaleFac, TH2F* 
 {
     float pt = std::min(electron.pt(),199.0);
     float eta = electron.superCluster()->eta();
+    /*
     if (electron.isGap()) {
         return hElecScaleFac_Cracks->GetBinError(hElecScaleFac_Cracks->FindBin(pt,eta));        
     } else {
         return hElecScaleFac->GetBinError(hElecScaleFac->FindBin(pt,eta));        
     }
-    return 1.0;
+    */
+    return 0.0;
 }
 
 float HZZ4LHelper::dataMC(pat::Muon muon, TH2F* hMuScaleFac)

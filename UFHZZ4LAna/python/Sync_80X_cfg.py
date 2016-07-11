@@ -24,7 +24,7 @@ process.Timing = cms.Service("Timing",
                              )
 
 
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(1000) )
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
 
 myfilelist = cms.untracked.vstring(
 'file:/scratch/osg/dsperka/sync_80X_VBF.root',
@@ -40,16 +40,16 @@ myfilelist = cms.untracked.vstring(
 
 process.source = cms.Source("PoolSource",fileNames = myfilelist,
                             duplicateCheckMode = cms.untracked.string('noDuplicateCheck'),
-#                            eventsToProcess = cms.untracked.VEventRange('1:58995-1:58995')
+                            #eventsToProcess = cms.untracked.VEventRange('1:58936-1:58936')
                             )
 
 process.TFileService = cms.Service("TFileService",
-                                   #fileName = cms.string("Sync_80X.root")
+                                   fileName = cms.string("Sync_80X.root")
                                    #fileName = cms.string("Sync_80X_HighMass.root")
                                    #fileName = cms.string("HJ_NNLOPS_1.root")
                                    #fileName = cms.string("HJ_NNLOPS_2.root")
                                    #fileName = cms.string("Graviton2TeV2l2q.root")
-                                   fileName = cms.string("test.root")
+                                   #fileName = cms.string("test.root")
                                    #fileName = cms.string("testVBF.root")
                                    )
 
@@ -66,9 +66,10 @@ process.boostedMuons = cms.EDProducer("PATMuonCleanerBySegments",
 process.calibratedMuons = cms.EDProducer("KalmanMuonCalibrationsProducer",
                                          muonsCollection = cms.InputTag("boostedMuons"),
                                          isMC = cms.bool(True),
-                                         isSync = cms.bool(False)
+                                         isSync = cms.bool(True)
                                          )
 
+# Electron Smear/Scale
 process.selectedElectrons = cms.EDFilter("PATElectronSelector",
                                          src = cms.InputTag("slimmedElectrons"),
                                          cut = cms.string("pt > 5 && abs(eta)<2.5")
@@ -91,6 +92,7 @@ process.calibratedPatElectrons = cms.EDProducer("CalibratedPatElectronProducerRu
                                         correctionFile = cms.string("EgammaAnalysis/ElectronTools/data/ScalesSmearings/80X_Golden22June_approval")
                                         )
 
+# Electron ID
 from PhysicsTools.SelectorUtils.tools.vid_id_tools import *
 dataFormat = DataFormat.MiniAOD
 switchOnVIDElectronIdProducer(process, dataFormat)
