@@ -54,7 +54,7 @@ process.calibratedMuons = cms.EDProducer("KalmanMuonCalibrationsProducer",
 
 process.selectedElectrons = cms.EDFilter("PATElectronSelector",
                                          src = cms.InputTag("slimmedElectrons"),
-                                         cut = cms.string("pt > 5 && abs(eta)<2.5")
+                                         cut = cms.string("pt > 5 && abs(eta)<2.5 && abs(-log(tan(superClusterPosition.theta/2)))<2.5")
                                          )
 
 #process.RandomNumberGeneratorService = cms.Service("RandomNumberGeneratorService",

@@ -361,7 +361,17 @@ std::vector<pat::Photon> HZZ4LHelper::goodPhotons2015(std::vector<pat::Photon> P
     for(unsigned int i = 0; i < Photons.size(); i++) {
 
         if ( Photons[i].pt()<photonPtCut ) continue;
-        if ( Photons[i].photonID("mvaPhoID-Spring15-25ns-nonTrig-V2p1-wp90") < 0.5) continue;
+
+        float phoid;
+        try {
+            phoid=Photons[i].photonID("mvaPhoID-Spring15-25ns-nonTrig-V2p1-wp90");
+        }
+        catch(...) {
+            std::cout<<"photon ID  missing!"<<std::endl;
+            phoid=0.0;
+        }
+        if ( phoid < 0.5) continue;
+
         if ( Photons[i].hasPixelSeed() ) continue; 
         bestPhotons.push_back(Photons[i]);
 

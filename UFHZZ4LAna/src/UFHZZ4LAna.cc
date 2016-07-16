@@ -3114,16 +3114,15 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
         // check overlap with tight ID isolated leptons OR higgs candidate leptons
         unsigned int Nleptons = lep_pt.size();
         for (unsigned int i=0; i<Nleptons; i++) {            
-            bool failed_idiso=false;
-            if (abs(lep_id[i])==13 && lep_RelIsoNoFSR[i]>isoCutMu) failed_idiso=true;
-            if (abs(lep_id[i])==11 && lep_RelIsoNoFSR[i]>isoCutEl) failed_idiso=true;
-            if (!(lep_tightId[i])) failed_idiso=true;
+            bool passed_idiso=true;
+            if (abs(lep_id[i])==13 && lep_RelIsoNoFSR[i]>isoCutMu) passed_idiso=false;
+            if (abs(lep_id[i])==11 && lep_RelIsoNoFSR[i]>isoCutEl) passed_idiso=false;
+            if (!(lep_tightId[i])) passed_idiso=false;
             bool cand_lep=false;
             for (int l=0; l<3; l++) {
                 if ((int)i==lep_Hindex[l]) cand_lep=true;
             }
-            if (failed_idiso && !cand_lep) continue;
-            if (cand_lep) continue;
+            if (!(passed_idiso || cand_lep)) continue;
             TLorentzVector thisLep;
             thisLep.SetPtEtaPhiM(lep_pt[i],lep_eta[i],lep_phi[i],lep_mass[i]);
             tempDeltaR=999.0;
