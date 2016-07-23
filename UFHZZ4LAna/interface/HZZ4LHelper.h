@@ -130,6 +130,11 @@ public:
     float dataMC(pat::Muon muon, TH2F* hMuScaleFac);
     float dataMCErr(pat::Muon muon, TH2F* hMuScaleFac);
     
+    float getDVBF2jetsConstant(float ZZMass);
+    float getDVBF1jetConstant(float ZZMass);
+    float getDbkgkinConstant(int ZZflav, float ZZMass);
+    float getDbkgConstant(int ZZflav, float ZZMass);
+
     enum MuonEffectiveAreaType {
         kMuTrkIso03, 
         kMuEcalIso03, 
@@ -1572,16 +1577,15 @@ float HZZ4LHelper::kfactor_qqZZ_qcd_Pt(float GENpTZZ, int finalState)
 
 float HZZ4LHelper::dataMC(pat::Electron electron, TH2F* hElecScaleFac, TH2F* hElecScaleFac_Cracks)
 {
-    float pt = std::min(electron.pt(),199.0);
-    float eta = electron.superCluster()->eta();
-    /*
+    float pt = std::min(electron.pt(),60.0);
+    float eta = abs(electron.superCluster()->eta());
+    
     if (electron.isGap()) {
-        return hElecScaleFac_Cracks->GetBinContent(hElecScaleFac_Cracks->FindBin(pt,eta));        
+        return hElecScaleFac_Cracks->GetBinContent(hElecScaleFac_Cracks->FindBin(eta,pt));        
     } else {
-        return hElecScaleFac->GetBinContent(hElecScaleFac->FindBin(pt,eta));        
+        return hElecScaleFac->GetBinContent(hElecScaleFac->FindBin(eta,pt));        
     }
-    */
-    return 1.0;
+    
 }
 
 float HZZ4LHelper::dataMCErr(pat::Electron electron, TH2F* hElecScaleFac, TH2F* hElecScaleFac_Cracks)
@@ -1602,12 +1606,89 @@ float HZZ4LHelper::dataMC(pat::Muon muon, TH2F* hMuScaleFac)
 {
     float pt = std::min(muon.pt(),79.0);
     float eta = muon.eta();
-    return hMuScaleFac->GetBinContent(hMuScaleFac->FindBin(eta,pt)); //opposite axes as electrons
+    return hMuScaleFac->GetBinContent(hMuScaleFac->FindBin(eta,pt)); 
 }
 
 float HZZ4LHelper::dataMCErr(pat::Muon muon, TH2F* hMuScaleFac)
 {
     return 0.01;
+}
+
+
+float HZZ4LHelper::getDVBF2jetsConstant(float ZZMass){
+    float par[9]={
+        1.876,
+        -55.488,
+        403.32,
+        0.3906,
+        80.8,
+        27.7,
+        -0.06,
+        54.97,
+        309.96
+    };
+    float kappa =
+        pow(1.-atan((ZZMass-par[1])/par[2])*2./TMath::Pi(), par[0])
+        + par[3]*exp(-pow((ZZMass-par[4])/par[5], 2))
+        + par[6]*exp(-pow((ZZMass-par[7])/par[8], 2));
+    float constant = kappa/(1.-kappa);
+    return constant;
+}
+float HZZ4LHelper::getDVBF1jetConstant(float ZZMass){
+    float par[8]={
+        0.395,
+        -0.07,
+        85.,
+        30.,
+        -0.691,
+        -5659.47,
+        5734.37,
+        0.75
+    };
+    float kappa =
+        par[0]
+        + par[1]*exp(-pow((ZZMass-par[2])/par[3], 2))
+        + par[4]*pow(log((ZZMass-par[5])/par[6]), par[7])*(ZZMass>=(par[5]+par[6]));
+    float constant = kappa/(1.-kappa);
+    return constant;
+}
+float HZZ4LHelper::getDbkgkinConstant(int ZZflav, float ZZMass){ // ZZflav==id1*id2*id3*id4
+    float par[14]={
+        0.775,
+        -0.565,
+        70.,
+        5.90,
+        -0.235,
+        130.1,
+        13.25,
+        -0.33,
+        191.04,
+        16.05,
+        187.47,
+        -0.21,
+        1700.,
+        400.
+    };
+    if (abs(ZZflav)==121*121 || abs(ZZflav)==121*242 || abs(ZZflav)==242*242) par[11]=-0.42; // 4e
+    float kappa =
+        par[0]
+        +par[1]*exp(-pow(((ZZMass-par[2])/par[3]), 2))
+        +par[4]*exp(-pow(((ZZMass-par[5])/par[6]), 2))
+        +par[7]*(
+            exp(-pow(((ZZMass-par[8])/par[9]), 2))*(ZZMass<par[8])
+            + exp(-pow(((ZZMass-par[8])/par[10]), 2))*(ZZMass>=par[8])
+            )
+        + par[11]*exp(-pow(((ZZMass-par[12])/par[13]), 2));
+    
+    float constant = kappa/(1.-kappa);
+    return constant;
+}
+float HZZ4LHelper::getDbkgConstant(int ZZflav, float ZZMass){
+    float cbkgkin = getDbkgkinConstant(ZZflav, ZZMass);
+    if (abs(ZZflav==121*121) || abs(ZZflav==121*242) || abs(ZZflav==242*242)) return cbkgkin*35.6; // 4e
+    else if (abs(ZZflav==169*169)) return cbkgkin*22.8; // 4mu
+    else if (abs(ZZflav==121*169) || abs(ZZflav==242*169)) return cbkgkin*41.8; // 2e2mu
+    else return 1.;
 }
 
 #endif

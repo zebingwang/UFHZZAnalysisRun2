@@ -27,30 +27,18 @@ process.Timing = cms.Service("Timing",
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
 
 myfilelist = cms.untracked.vstring(
-'file:/scratch/osg/dsperka/sync_80X_VBF.root',
-'file:/scratch/osg/dsperka/sync_80X_WminusH.root'
-#'file:/scratch/osg/dsperka/sync_80X_Graviton2TeV.root'
-#'file:/scratch/osg/dsperka/Run2/HZZ4l/SubmitArea_13TeV/ggH_HJ_NNLOPS_80X_MINIAODv2_1.root'
-#'file:/scratch/osg/dsperka/Run2/HZZ4l/SubmitArea_13TeV/ggH_HJ_NNLOPS_80X_MINIAODv2_2.root'
-#'file:/scratch/osg/dsperka/sync_80X_Graviton2TeV2l2q.root'
-#'/store/mc/RunIISpring16MiniAODv2/VBF_HToZZTo4L_M125_13TeV_powheg2_JHUgenV6_pythia8/MINIAODSIM/PUSpring16RAWAODSIM_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v2/20000/0A3A0EBF-0731-E611-8792-FA163E29B5A4.root',
-#'/store/mc/RunIISpring16MiniAODv2/VBF_HToZZTo4L_M125_13TeV_powheg2_JHUgenV6_pythia8/MINIAODSIM/PUSpring16RAWAODSIM_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v2/20000/0A3DDBC1-0731-E611-A3F1-FA163EC51088.root'
-
+'/scratch/osg/dsperka/VBF_125_80X_reHLT.root',
+'/scratch/osg/dsperka/WH_125_80X_reHLT.root'
 )
 
 process.source = cms.Source("PoolSource",fileNames = myfilelist,
                             duplicateCheckMode = cms.untracked.string('noDuplicateCheck'),
-                            #eventsToProcess = cms.untracked.VEventRange('1:58936-1:58936')
+                            skipEvents = cms.untracked.uint32(0),
+                            eventsToProcess = cms.untracked.VEventRange('1:355727-1:355727'),
                             )
 
 process.TFileService = cms.Service("TFileService",
-                                   fileName = cms.string("Sync_80X.root")
-                                   #fileName = cms.string("Sync_80X_HighMass.root")
-                                   #fileName = cms.string("HJ_NNLOPS_1.root")
-                                   #fileName = cms.string("HJ_NNLOPS_2.root")
-                                   #fileName = cms.string("Graviton2TeV2l2q.root")
-                                   #fileName = cms.string("test.root")
-                                   #fileName = cms.string("testVBF.root")
+                                   fileName = cms.string("test.root")
                                    )
 
 # clean muons by segments 
@@ -72,7 +60,7 @@ process.calibratedMuons = cms.EDProducer("KalmanMuonCalibrationsProducer",
 # Electron Smear/Scale
 process.selectedElectrons = cms.EDFilter("PATElectronSelector",
                                          src = cms.InputTag("slimmedElectrons"),
-                                         cut = cms.string("pt > 5 && abs(eta)<2.5 && abs(-log(tan(superClusterPosition.theta/2)))<2.5")
+                                         cut = cms.string("pt > 5 && abs(eta)<2.5")
                                          )
 
 process.RandomNumberGeneratorService = cms.Service("RandomNumberGeneratorService",
@@ -261,7 +249,7 @@ process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
                               generatorSrc = cms.untracked.InputTag("generator"),
                               lheInfoSrc = cms.untracked.InputTag("externalLHEProducer"),
                               reweightForPU = cms.untracked.bool(True),
-                              triggerSrc = cms.InputTag("TriggerResults","","HLT"),
+                              triggerSrc = cms.InputTag("TriggerResults","","HLT2"),
                               triggerObjects = cms.InputTag("selectedPatTrigger"),
                               doTriggerMatching = cms.untracked.bool(True),
                               triggerList = cms.untracked.vstring(
@@ -287,7 +275,7 @@ process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
                                 # TriLepton
                                 'HLT_TripleMu_12_10_5_v',
                                 'HLT_Ele16_Ele12_Ele8_CaloIdL_TrackIdL_v',
-                                'HLT_DiMu9_Ele9_CaloIdL_TrackIdL_v',
+                                 'HLT_DiMu9_Ele9_CaloIdL_TrackIdL_v',
                                 'HLT_Mu8_DiEle12_CaloIdL_TrackIdL_v',
                               ),
                               verbose = cms.untracked.bool(False),              

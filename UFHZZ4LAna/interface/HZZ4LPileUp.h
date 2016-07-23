@@ -40,6 +40,7 @@ class HZZ4LPileUp
   ~HZZ4LPileUp();
 
   void fillPUWeights();
+  double getPUWeight(TH1D* h_pileup, int ntrue);
   double getPUWeight(double nInteraction, std::string version);
   double weightTruePileupV07toIchep52X(double input);
   double weightTruePileupV07toHcp53X(double input);
@@ -49,6 +50,7 @@ class HZZ4LPileUp
   double weightTruePileupLegacy53X(double input);
   double weightTruePileupFall15_74X(double input);
   double weightTruePileupFall15_76X(double input);
+  double weightTruePileupSpring16_80X(double input);
   double weightTrue2011(double input);
   double weightTrue2011to2012(double input);
 
@@ -78,6 +80,11 @@ HZZ4LPileUp::~HZZ4LPileUp()
 
 }
 
+double HZZ4LPileUp::getPUWeight(TH1D* h_pileup, int ntrue)
+{
+    return h_pileup->GetBinContent(ntrue);
+}
+
 double HZZ4LPileUp::getPUWeight(double nInteraction, std::string version)
 {
   
@@ -91,6 +98,7 @@ double HZZ4LPileUp::getPUWeight(double nInteraction, std::string version)
   else if(version == "Legacy53X") return weightTruePileupLegacy53X(nInteraction);
   else if(version == "Fall15_74X") return weightTruePileupFall15_74X(nInteraction);
   else if(version == "Fall15_76X") return weightTruePileupFall15_76X(nInteraction);
+  else if(version == "Spring16_80X") return weightTruePileupSpring16_80X(nInteraction);
   else{
     std::string msg;
     msg = "HZZ4LPileUp::getPUWeight() unknown version\n";
@@ -722,6 +730,69 @@ double HZZ4LPileUp::weightTruePileupFall15_76X(double input){
       0.000418244638923,
       0.000267909848803,
      0.00016893227596
+  };
+
+ return w[(int)floor(input)];
+
+}
+
+
+double HZZ4LPileUp::weightTruePileupSpring16_80X(double input){
+
+  if(input > 50) return 1.0;
+
+  double w[50] = {
+      0.0006977897,
+      0.01355602,
+      0.02092033,
+      0.03753119,
+      0.05806716,
+      0.0470678,
+      0.09734445,
+      0.3871528,
+      0.6245049,
+      0.9889339,
+      1.274338,
+      1.498751,
+      1.735016,
+      1.9445,
+      2.084375,
+      1.928796,
+      1.671028,
+      1.614396,
+      1.419708,
+      1.370662,
+      1.078287,
+      0.8692069,
+      0.744226,
+      0.6291096,
+      0.4742221,
+      0.3862415,
+      0.2543844,
+      0.1851091,
+      0.1134851,
+      0.07546794,
+      0.04801787,
+      0.03072565,
+      0.02607218,
+      0.02043605,
+      0.02261487,
+      0.03027836,
+      0.05515847,
+      0.07193636,
+      0.,
+      0.,
+      0.,
+      0.,
+      0.,
+      0.,
+      0.,
+      0.,
+      0.,
+      0.,
+      0.,
+      0.,
+
   };
 
  return w[(int)floor(input)];
