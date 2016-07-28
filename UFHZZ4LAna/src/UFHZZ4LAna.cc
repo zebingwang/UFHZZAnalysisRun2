@@ -191,6 +191,9 @@ private:
     // data/MC scale factors
     TH2F *hElecScaleFac;
     TH2F *hElecScaleFac_Cracks;
+    TH2F *hElecScaleFacUnc;
+    TH2F *hElecScaleFacUnc_Cracks;
+    TH2F *hElecScaleFacGsf;
     TH2F *hMuScaleFac;
     TH1D *h_pileup;
 
@@ -627,10 +630,16 @@ UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
     mela = new Mela(13.0, 125.0, TVar::SILENT);
     mela->setCandidateDecayMode(TVar::CandidateDecay_ZZ); 
 
-    edm::FileInPath elec_scalefacFileInPath("UFHZZAnalysisRun2/UFHZZ4LAna/data/ele_scale_factors_v1.root");
+    edm::FileInPath elec_scalefacFileInPath("UFHZZAnalysisRun2/UFHZZ4LAna/data/ele_scale_factors_v2.root");
     TFile *fElecScalFac = TFile::Open(elec_scalefacFileInPath.fullPath().c_str());
     hElecScaleFac = (TH2F*)fElecScalFac->Get("ele_scale_factors");    
     hElecScaleFac_Cracks = (TH2F*)fElecScalFac->Get("ele_scale_factors_gap");    
+    hElecScaleFacUnc = (TH2F*)fElecScalFac->Get("ele_scale_factors_uncertainties");    
+    hElecScaleFacUnc_Cracks = (TH2F*)fElecScalFac->Get("ele_scale_factors_gap_uncertainties");    
+
+    edm::FileInPath elec_GsfscalefacFileInPath("UFHZZAnalysisRun2/UFHZZ4LAna/data/egammaEffi_SF2D.root");
+    TFile *fElecScalFacGsf = TFile::Open(elec_GsfscalefacFileInPath.fullPath().c_str());
+    hElecScaleFacGsf = (TH2F*)fElecScalFacGsf->Get("EGamma_SF2D");
 
     edm::FileInPath mu_scalefacFileInPath("UFHZZAnalysisRun2/UFHZZ4LAna/data/final_HZZSF_7p65.root");
     TFile *fMuScalFac = TFile::Open(mu_scalefacFileInPath.fullPath().c_str());
@@ -1258,8 +1267,8 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 lep_tightIdHiPt.push_back(recoElectrons[lep_ptindex[i]].electronID("heepElectronID-HEEPV60"));
                 lep_ptRatio.push_back(helper.ptRatio(recoElectrons[lep_ptindex[i]],jets,isMC));           
                 lep_ptRel.push_back(helper.ptRel(recoElectrons[lep_ptindex[i]],jets,isMC));           
-                lep_dataMC.push_back(helper.dataMC(recoElectrons[lep_ptindex[i]],hElecScaleFac,hElecScaleFac_Cracks));
-                lep_dataMCErr.push_back(helper.dataMCErr(recoElectrons[lep_ptindex[i]],hElecScaleFac,hElecScaleFac_Cracks));
+                lep_dataMC.push_back(helper.dataMC(recoElectrons[lep_ptindex[i]],hElecScaleFac,hElecScaleFac_Cracks,hElecScaleFacGsf));
+                lep_dataMCErr.push_back(helper.dataMCErr(recoElectrons[lep_ptindex[i]],hElecScaleFacUnc,hElecScaleFacUnc_Cracks));
                 lep_genindex.push_back(-1.0);
             }
             if (abs(lep_ptid[i])==13) {            
@@ -1998,14 +2007,14 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 else {EventCat=0;}
                 */
                 // MELA Only
-                if (nisoleptons==4 && (((njets_pt30_eta4p7==2||njets_pt30_eta4p7==3)&&nbjets_pt30_eta4p7<2)||(njets_pt30_eta4p7>=4&&nbjets_pt30_eta4p7==0)) && D_VBF>(0.536+665./(mass4l+1530.))) {EventCat=2;}
+                if (nisoleptons==4 && (((njets_pt30_eta4p7==2||njets_pt30_eta4p7==3)&&nbjets_pt30_eta4p7<2)||(njets_pt30_eta4p7>=4&&nbjets_pt30_eta4p7==0)) && D_VBF>(1.043-460./(mass4l+634.))) {EventCat=2;}
                 else if (nisoleptons==4 && (((njets_pt30_eta4p7==2||njets_pt30_eta4p7==3)&&nbjets_pt30_eta4p7<2)||(njets_pt30_eta4p7>=4&&nbjets_pt30_eta4p7==0)) && (D_HadWH>0.959 || D_HadZH>0.9946)) {EventCat=4;}
                 else if (nisoleptons==4 && (njets_pt30_eta4p7==2||njets_pt30_eta4p7==3) && nbjets_pt30_eta4p7>=2) {EventCat=4;}
                 else if (njets_pt30_eta4p7<=3 && nbjets_pt30_eta4p7==0 && (nisoleptons==5 || (nisoleptons>=6&&sumplus>=3&&summinus>=3))) {EventCat=3;}
                 else if (njets_pt30_eta4p7==0 && nisoleptons>=5) {EventCat=3;}
                 else if (njets_pt30_eta4p7>=4 && nbjets_pt30_eta4p7>0) {EventCat=5;}
                 else if (nisoleptons>=5) {EventCat=5;}
-                else if (nisoleptons==4 && njets_pt30_eta4p7==1 && D_VBF1j>0.815) {EventCat=1;}
+                else if (nisoleptons==4 && njets_pt30_eta4p7==1 && D_VBF1j>0.699) {EventCat=1;}
                 else {EventCat=0;}
 
             }

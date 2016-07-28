@@ -125,7 +125,7 @@ public:
     float kfactor_qqZZ_qcd_Pt(float GENpTZZ, int finalState);
     float kfactor_qqZZ_qcd_M(float GENmassZZ, int finalState);
 
-    float dataMC(pat::Electron electron, TH2F* hElecScaleFac, TH2F* hElecScalFac_Cracks);
+    float dataMC(pat::Electron electron, TH2F* hElecScaleFac, TH2F* hElecScalFac_Cracks, TH2F* hElecScaleFacGsf);
     float dataMCErr(pat::Electron electron, TH2F* hElecScaleFac, TH2F* hElecScalFac_Cracks);
     float dataMC(pat::Muon muon, TH2F* hMuScaleFac);
     float dataMCErr(pat::Muon muon, TH2F* hMuScaleFac);
@@ -1575,31 +1575,39 @@ float HZZ4LHelper::kfactor_qqZZ_qcd_Pt(float GENpTZZ, int finalState)
 
 }
 
-float HZZ4LHelper::dataMC(pat::Electron electron, TH2F* hElecScaleFac, TH2F* hElecScaleFac_Cracks)
-{
-    float pt = std::min(electron.pt(),60.0);
-    float eta = abs(electron.superCluster()->eta());
-    
-    if (electron.isGap()) {
-        return hElecScaleFac_Cracks->GetBinContent(hElecScaleFac_Cracks->FindBin(eta,pt));        
-    } else {
-        return hElecScaleFac->GetBinContent(hElecScaleFac->FindBin(eta,pt));        
-    }
-    
-}
-
-float HZZ4LHelper::dataMCErr(pat::Electron electron, TH2F* hElecScaleFac, TH2F* hElecScaleFac_Cracks)
+float HZZ4LHelper::dataMC(pat::Electron electron, TH2F* hElecScaleFac, TH2F* hElecScaleFac_Cracks, TH2F* hElecScaleFacGsf)
 {
     float pt = std::min(electron.pt(),199.0);
     float eta = electron.superCluster()->eta();
-    /*
+    float abseta = abs(electron.superCluster()->eta());
+    
+    float fac=1.0;
     if (electron.isGap()) {
-        return hElecScaleFac_Cracks->GetBinError(hElecScaleFac_Cracks->FindBin(pt,eta));        
+        fac*=hElecScaleFac_Cracks->GetBinContent(hElecScaleFac_Cracks->FindBin(abseta,pt));        
     } else {
-        return hElecScaleFac->GetBinError(hElecScaleFac->FindBin(pt,eta));        
+        fac*=hElecScaleFac->GetBinContent(hElecScaleFac->FindBin(abseta,pt));        
     }
-    */
-    return 0.0;
+    if (pt<21.0) pt=25.0; // nothing below 20.0 in the file
+    fac*=hElecScaleFacGsf->GetBinContent(hElecScaleFacGsf->FindBin(eta,pt));
+    
+    return fac;
+}
+
+float HZZ4LHelper::dataMCErr(pat::Electron electron, TH2F* hElecScaleFacUnc, TH2F* hElecScaleFacUnc_Cracks)
+{
+    float pt = std::min(electron.pt(),199.0);
+    float eta = abs(electron.superCluster()->eta());
+    
+    float unc = 0.0;
+    if (electron.isGap()) {
+        unc+=hElecScaleFacUnc_Cracks->GetBinContent(hElecScaleFacUnc_Cracks->FindBin(eta,pt));        
+    } else {
+        unc+=hElecScaleFacUnc->GetBinContent(hElecScaleFacUnc->FindBin(eta,pt));        
+    }
+    if (pt<20.0) unc+=0.03;
+
+    return unc;
+
 }
 
 float HZZ4LHelper::dataMC(pat::Muon muon, TH2F* hMuScaleFac)

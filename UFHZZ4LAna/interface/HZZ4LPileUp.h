@@ -82,7 +82,7 @@ HZZ4LPileUp::~HZZ4LPileUp()
 
 double HZZ4LPileUp::getPUWeight(TH1D* h_pileup, int ntrue)
 {
-    return h_pileup->GetBinContent(ntrue);
+    return h_pileup->GetBinContent(ntrue+1);
 }
 
 double HZZ4LPileUp::getPUWeight(double nInteraction, std::string version)
