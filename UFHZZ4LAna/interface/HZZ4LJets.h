@@ -75,25 +75,37 @@ int HZZ4LJets::patjetID(const pat::Jet& jet)
   double NHF = jet.neutralHadronEnergyFraction();
   double NEMF = jet.neutralEmEnergyFraction();
   double CHF = jet.chargedHadronEnergyFraction();
-  //double MUF = jet.muonEnergyFraction();
+  double CHM = jet.chargedMultiplicity(); 
   double CEMF = jet.chargedEmEnergyFraction();
   double NumConst = jet.chargedMultiplicity()+jet.neutralMultiplicity();
-  double NumNeutralParticles =jet.neutralMultiplicity();
-  double CHM = jet.chargedMultiplicity(); 
+  double NumNeutralParticle =jet.neutralMultiplicity();
 
-  bool tightestJetID_CEN = ((NHF<0.70 && NEMF<0.90 && NumConst>1) && ((fabs(jet.eta())<=2.4 && CHF>0.2 && CHM>0 && CEMF<0.99) || fabs(jet.eta())>2.4) && fabs(jet.eta())<=3.0);
-  bool tightestJetID_FWD = (NEMF<0.90 && NumNeutralParticles>10 && fabs(jet.eta())>3.0);
-  if (tightestJetID_CEN || tightestJetID_FWD) return 3;
 
-  bool tightJetID_CEN = ((NHF<0.90 && NEMF<0.90 && NumConst>1) && ((fabs(jet.eta())<=2.4 && CHF>0 && CHM>0 && CEMF<0.99) || fabs(jet.eta())>2.4) && fabs(jet.eta())<=3.0);
-  bool tightJetID_FWD = (NEMF<0.90 && NumNeutralParticles>10 && fabs(jet.eta())>3.0);
-  if (tightJetID_CEN || tightJetID_FWD) return 2;
- 
-  bool looseJetID_CEN = ((NHF<0.99 && NEMF<0.99 && NumConst>1) && ((fabs(jet.eta())<=2.4 && CHF>0 && CHM>0 && CEMF<0.99) || fabs(jet.eta())>2.4) && fabs(jet.eta())<=3.0);
-  bool looseJetID_FWD = (NEMF<0.90 && NumNeutralParticles>10 && fabs(jet.eta())>3.0);
-  if (looseJetID_CEN || looseJetID_FWD) return 1;
+  bool looseJetID=false;
+  bool tightJetID=false;
 
-  return 0;
+  double eta = fabs(jet.eta());
+
+  if (eta<=2.7) {
+
+      looseJetID = ( (NHF<0.99 && NEMF<0.99 && NumConst>1) && ((eta<=2.4 && CHF>0 && CHM>0 && CEMF<0.99) || eta>2.4) && eta<=2.7);
+      tightJetID = ( (NHF<0.90 && NEMF<0.90 && NumConst>1) && ((eta<=2.4 && CHF>0 && CHM>0 && CEMF<0.99) || eta>2.4) && eta<=2.7);
+
+  } else if (eta>2.7 && eta<=3.0) {
+
+      looseJetID = ( NHF<0.98 && NEMF>0.01 && NumNeutralParticle>2 && eta>2.7 && eta<=3.0 );     
+      tightJetID = ( NHF<0.98 && NEMF>0.01 && NumNeutralParticle>2 && eta>2.7 && eta<=3.0 );
+
+  } else if (eta>3.0) {
+
+      looseJetID = ( NEMF<0.90 && NumNeutralParticle>10 && eta>3.0 );
+      tightJetID = ( NEMF<0.90 && NumNeutralParticle>10 && eta>3.0 );
+
+  }
+
+  if (tightJetID) {return 2;}
+  else if (looseJetID) {return 1;}
+  else {return 0;}
 
 }
 

@@ -115,6 +115,7 @@ public:
     double ptRatio(pat::Muon muon, edm::Handle<edm::View<pat::Jet> > jets,bool isMC);
     double ptRel(pat::Electron electron, edm::Handle<edm::View<pat::Jet> > jets,bool isMC);
     double ptRel(pat::Muon muon, edm::Handle<edm::View<pat::Jet> > jets,bool isMC);
+    double photonPfIso03(pat::PFParticle pho, edm::Handle<pat::PackedCandidateCollection> pfcands);
 
     bool passTight_Id(pat::Muon muon, const reco::Vertex *&vertex);
     bool passTight_Id_SUS(pat::Muon muon, const reco::Vertex *&vertex);
@@ -126,7 +127,7 @@ public:
     float kfactor_qqZZ_qcd_M(float GENmassZZ, int finalState);
 
     float dataMC(pat::Electron electron, TH2F* hElecScaleFac, TH2F* hElecScalFac_Cracks, TH2F* hElecScaleFacGsf);
-    float dataMCErr(pat::Electron electron, TH2F* hElecScaleFac, TH2F* hElecScalFac_Cracks);
+    float dataMCErr(pat::Electron electron, TH2F* hElecScaleFac, TH2F* hElecScalFacUnc_Cracks);
     float dataMC(pat::Muon muon, TH2F* hMuScaleFac);
     float dataMCErr(pat::Muon muon, TH2F* hMuScaleFac);
     
@@ -1578,33 +1579,36 @@ float HZZ4LHelper::kfactor_qqZZ_qcd_Pt(float GENpTZZ, int finalState)
 float HZZ4LHelper::dataMC(pat::Electron electron, TH2F* hElecScaleFac, TH2F* hElecScaleFac_Cracks, TH2F* hElecScaleFacGsf)
 {
     float pt = std::min(electron.pt(),199.0);
-    float eta = electron.superCluster()->eta();
-    float abseta = abs(electron.superCluster()->eta());
+    float sceta = electron.superCluster()->eta();
+    float abseta = abs(electron.eta());
     
     float fac=1.0;
     if (electron.isGap()) {
         fac*=hElecScaleFac_Cracks->GetBinContent(hElecScaleFac_Cracks->FindBin(abseta,pt));        
     } else {
-        fac*=hElecScaleFac->GetBinContent(hElecScaleFac->FindBin(abseta,pt));        
+        fac*=hElecScaleFac->GetBinContent(hElecScaleFac->FindBin(sceta,pt));        
     }
-    if (pt<21.0) pt=25.0; // nothing below 20.0 in the file
-    fac*=hElecScaleFacGsf->GetBinContent(hElecScaleFacGsf->FindBin(eta,pt));
+    // GSF SF flat vs pt
+    fac*=hElecScaleFacGsf->GetBinContent(hElecScaleFacGsf->FindBin(sceta,50.0));
     
     return fac;
 }
 
-float HZZ4LHelper::dataMCErr(pat::Electron electron, TH2F* hElecScaleFacUnc, TH2F* hElecScaleFacUnc_Cracks)
+float HZZ4LHelper::dataMCErr(pat::Electron electron, TH2F* hElecScaleFac, TH2F* hElecScaleFacUnc_Cracks)
 {
     float pt = std::min(electron.pt(),199.0);
-    float eta = abs(electron.superCluster()->eta());
+    float sceta = electron.superCluster()->eta();
+    float abseta = abs(electron.eta());
     
     float unc = 0.0;
     if (electron.isGap()) {
-        unc+=hElecScaleFacUnc_Cracks->GetBinContent(hElecScaleFacUnc_Cracks->FindBin(eta,pt));        
+        int bin = hElecScaleFacUnc_Cracks->FindBin(abseta,pt);
+        unc+=hElecScaleFacUnc_Cracks->GetBinContent(bin);
     } else {
-        unc+=hElecScaleFacUnc->GetBinContent(hElecScaleFacUnc->FindBin(eta,pt));        
+        int bin = hElecScaleFac->FindBin(sceta,pt);
+        unc+=hElecScaleFac->GetBinError(bin);
     }
-    if (pt<20.0) unc+=0.03;
+    if (pt<20.0 || pt>75.0) unc+=0.01;
 
     return unc;
 
@@ -1612,14 +1616,16 @@ float HZZ4LHelper::dataMCErr(pat::Electron electron, TH2F* hElecScaleFacUnc, TH2
 
 float HZZ4LHelper::dataMC(pat::Muon muon, TH2F* hMuScaleFac)
 {
-    float pt = std::min(muon.pt(),79.0);
+    float pt = std::min(muon.pt(),199.0);
     float eta = muon.eta();
     return hMuScaleFac->GetBinContent(hMuScaleFac->FindBin(eta,pt)); 
 }
 
-float HZZ4LHelper::dataMCErr(pat::Muon muon, TH2F* hMuScaleFac)
+float HZZ4LHelper::dataMCErr(pat::Muon muon, TH2F* hMuScaleFacUnc)
 {
-    return 0.01;
+    float pt = std::min(muon.pt(),199.0);
+    float eta = muon.eta();
+    return hMuScaleFacUnc->GetBinContent(hMuScaleFacUnc->FindBin(eta,pt)); 
 }
 
 
@@ -1692,11 +1698,28 @@ float HZZ4LHelper::getDbkgkinConstant(int ZZflav, float ZZMass){ // ZZflav==id1*
     return constant;
 }
 float HZZ4LHelper::getDbkgConstant(int ZZflav, float ZZMass){
-    float cbkgkin = getDbkgkinConstant(ZZflav, ZZMass);
-    if (abs(ZZflav==121*121) || abs(ZZflav==121*242) || abs(ZZflav==242*242)) return cbkgkin*35.6; // 4e
-    else if (abs(ZZflav==169*169)) return cbkgkin*22.8; // 4mu
-    else if (abs(ZZflav==121*169) || abs(ZZflav==242*169)) return cbkgkin*41.8; // 2e2mu
-    else return 1.;
+    return getDbkgkinConstant(ZZflav, ZZMass);
+}
+
+double HZZ4LHelper::photonPfIso03(pat::PFParticle pho, edm::Handle<pat::PackedCandidateCollection> pfcands) {
+
+    double ptsum=0.0;
+
+    for (const pat::PackedCandidate &pfc : *pfcands) {
+
+        double dr = deltaR(pho.p4(), pfc.p4());
+
+        if (dr>=0.3) continue;
+
+        if (pfc.charge()!=0 && abs(pfc.pdgId())==211 && pfc.pt()>0.2) {
+            if (dr>0.0001) ptsum+=pfc.pt();
+        } 
+        else if (pfc.charge()==0 && (abs(pfc.pdgId())==22||abs(pfc.pdgId())==130) && pfc.pt()>0.5) {
+            if (dr>0.01) ptsum+=pfc.pt();
+        }
+
+    }
+    return ptsum;
 }
 
 #endif
