@@ -6,31 +6,33 @@ To install:
 
 setenv SCRAM_ARCH slc6_amd64_gcc530
 
-cmsrel CMSSW_8_0_25
+cmsrel CMSSW_8_0_26_patch1
 
-cd CMSSW_8_0_25/src
+cd CMSSW_8_0_26_patch1/src
 
 cmsenv
 
 git cms-init
 
-echo /PhysicsTools/PatUtils/ >> .git/info/sparse-checkout
+git clone -b 80X https://github.com/VBF-HZZ/UFHZZAnalysisRun2.git
 
-git cms-merge-topic cms-met:metTool80X
-
-git cms-merge-topic shervin86:Moriond2017_JEC_energyScales
+git cms-merge-topic rafaellopesdesa:EgammaAnalysis80_EGMSmearer_Moriond17_23Jan
 
 cd EgammaAnalysis/ElectronTools/data
 
-git clone git@github.com:ECALELFS/ScalesSmearings.git
+git clone https://github.com/ECALELFS/ScalesSmearings.git
+
+git checkout Moriond17_23Jan_v1
 
 cd -
 
-git clone -b 80X https://github.com/VBF-HZZ/UFHZZAnalysisRun2.git
+git cms-merge-topic cms-met:METRecipe_8020 -u
 
 git clone https://github.com/cms-analysis/HiggsAnalysis-ZZMatrixElement.git ZZMatrixElement
 
-(cd ZZMatrixElement ; git checkout -b from-v203 v2.0.3 ;  . setup.sh -j 12)
+cp UFHZZAnalysisRun2/Utilities/fixcrab.patch ZZMatrixElement
+
+(cd ZZMatrixElement ; git checkout -b from-v203 v2.0.4 ; git apply fixcrab.patch ; . setup.sh -j 12)
 
 git clone https://github.com/VBF-HZZ/KinZfitter.git
 
@@ -38,7 +40,7 @@ git clone https://github.com/bachtis/Analysis.git -b KaMuCa_V4 KaMuCa
 
 scram b -j 8
 
-cmsRun UFHZZAnalysisRun2/UFHZZ4LAna/python/Sync_80X_cfg.py
+cmsRun UFHZZAnalysisRun2/UFHZZ4LAna/python/Sync_80X_Moriond_cfg_1.py
 
 To Submit Crab jobs:
 
