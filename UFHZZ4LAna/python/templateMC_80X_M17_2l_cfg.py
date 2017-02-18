@@ -47,6 +47,10 @@ process.calibratedMuons = cms.EDProducer("KalmanMuonCalibrationsProducer",
                                          isSync = cms.bool(False)
                                          )
 
+from EgammaAnalysis.ElectronTools.regressionWeights_cfi import regressionWeights
+process = regressionWeights(process)
+process.load('EgammaAnalysis.ElectronTools.regressionApplication_cff')
+
 process.selectedElectrons = cms.EDFilter("PATElectronSelector",
                                          src = cms.InputTag("slimmedElectrons"),
                                          cut = cms.string("pt > 5 && abs(eta)<2.5 && abs(-log(tan(superClusterPosition.theta/2)))<2.5")
@@ -67,7 +71,7 @@ process.calibratedPatElectrons = cms.EDProducer("CalibratedPatElectronProducerRu
                                         gbrForestName = cms.string("gedelectron_p4combination_25ns"),
                                         isMC = cms.bool(True),
                                         isSynchronization = cms.bool(False),
-                                        correctionFile = cms.string("EgammaAnalysis/ElectronTools/data/ScalesSmearings/Winter_2016_reReco_v1_ele")
+                                        correctionFile = cms.string("EgammaAnalysis/ElectronTools/data/ScalesSmearings/Moriond17_23Jan_ele")
                                         )
 
 from PhysicsTools.SelectorUtils.tools.vid_id_tools import *
@@ -278,10 +282,13 @@ process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
                                 'HLT_Ele25_eta2p1_WPTight_Gsf_v',
                                 'HLT_Ele27_WPTight_Gsf_v',
                                 'HLT_Ele27_eta2p1_WPLoose_Gsf_v',
+                                'HLT_Ele32_eta2p1_WPTight_Gsf_v',
                                 'HLT_IsoMu20_v',
                                 'HLT_IsoTkMu20_v',
                                 'HLT_IsoMu22_v',
                                 'HLT_IsoTkMu22_v',
+                                'HLT_IsoMu24_v',
+                                'HLT_IsoTkMu24_v',
                                 # Dilepton
                                 'HLT_Ele17_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v',
                                 'HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v',
@@ -309,6 +316,7 @@ process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
 process.p = cms.Path(process.fsrPhotonSequence*
                      process.boostedMuons*
                      process.calibratedMuons*
+                     process.regressionApplication*
                      process.selectedElectrons*
                      process.calibratedPatElectrons*
                      process.electronMVAValueMapProducer*

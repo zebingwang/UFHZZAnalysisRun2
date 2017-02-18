@@ -4,6 +4,11 @@ from FWCore.ParameterSet.VarParsing import VarParsing
 
 process = cms.Process("UFHZZ4LAnalysis")
 
+## Options and Output Report
+#process.options   = cms.untracked.PSet(
+#    allowUnscheduled = cms.untracked.bool(True)
+#)
+
 process.load("FWCore.MessageService.MessageLogger_cfi")
 process.MessageLogger.cerr.FwkReport.reportEvery = 1000
 process.MessageLogger.categories.append('UFHZZ4LAna')
@@ -12,7 +17,7 @@ process.load("Configuration.StandardSequences.MagneticField_cff")
 process.load("Configuration.Geometry.GeometryRecoDB_cff")
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_condDBv2_cff')
 process.load('Configuration.StandardSequences.Services_cff')
-process.GlobalTag.globaltag='80X_mcRun2_asymptotic_2016_TrancheIV_v8'
+process.GlobalTag.globaltag='80X_dataRun2_2016SeptRepro_v7'
 
 process.Timing = cms.Service("Timing",
                              summaryOnly = cms.untracked.bool(True)
@@ -21,19 +26,14 @@ process.Timing = cms.Service("Timing",
 
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
 
-myfilelist = cms.untracked.vstring(
-#'/store/mc/RunIISummer16MiniAODv2/VBF_HToZZTo4L_M125_13TeV_powheg2_JHUgenV6_pythia8/MINIAODSIM/PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/50000/22F32262-3FC5-E611-B373-D4AE526DEDB7.root',
-'/store/mc/RunIISummer16MiniAODv2/WplusH_HToZZTo4L_M125_13TeV_powheg2-minlo-HWJ_JHUgenV6_pythia8/MINIAODSIM/PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/60000/387FA719-E6CC-E611-A1F0-FA163E7D6032.root',
-#'/store/mc/RunIISummer16MiniAODv2/ZH_HToZZ_4LFilter_M125_13TeV_powheg2-minlo-HZJ_JHUgenV6_pythia8/MINIAODSIM/PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/50000/50DE4DA2-1EC1-E611-9A3C-002590E7E010.root'
-)
+myfilelist = cms.untracked.vstring(DUMMYFILELIST)
 
 process.source = cms.Source("PoolSource",fileNames = myfilelist,
                             duplicateCheckMode = cms.untracked.string('noDuplicateCheck'),
-#                            eventsToProcess = cms.untracked.VEventRange('1:28434-1:28434')
                             )
 
 process.TFileService = cms.Service("TFileService",
-                                   fileName = cms.string("Sync_80X_Moriond_2.root")
+                                   fileName = cms.string("DUMMYFILENAME.root")
 )
 
 # clean muons by segments 
@@ -48,8 +48,8 @@ process.boostedMuons = cms.EDProducer("PATMuonCleanerBySegments",
 # Kalman Muon Calibrations
 process.calibratedMuons = cms.EDProducer("KalmanMuonCalibrationsProducer",
                                          muonsCollection = cms.InputTag("boostedMuons"),
-                                         isMC = cms.bool(True),
-                                         isSync = cms.bool(True)
+                                         isMC = cms.bool(False),
+                                         isSync = cms.bool(False)
                                          )
 
 from EgammaAnalysis.ElectronTools.regressionWeights_cfi import regressionWeights
@@ -61,21 +61,21 @@ process.selectedElectrons = cms.EDFilter("PATElectronSelector",
                                          cut = cms.string("pt > 5 && abs(eta)<2.5 && abs(-log(tan(superClusterPosition.theta/2)))<2.5")
                                          )
 
-process.RandomNumberGeneratorService = cms.Service("RandomNumberGeneratorService",
-    calibratedPatElectrons = cms.PSet(
-        #initialSeed = cms.untracked.uint32(SEED), # for HPC
-        initialSeed = cms.untracked.uint32(123456), # for crab
-        engineName = cms.untracked.string('TRandom3')
-    )
-)
+#process.RandomNumberGeneratorService = cms.Service("RandomNumberGeneratorService",
+#    calibratedPatElectrons = cms.PSet(
+#        #initialSeed = cms.untracked.uint32(SEED), # for HPC
+#        initialSeed = cms.untracked.uint32(123456), # for crab
+#        engineName = cms.untracked.string('TRandom3')
+#    )
+#)
 
 process.load('EgammaAnalysis.ElectronTools.calibratedElectronsRun2_cfi')
 process.calibratedPatElectrons = cms.EDProducer("CalibratedPatElectronProducerRun2",
                                         # input collections
                                         electrons = cms.InputTag('selectedElectrons'),
                                         gbrForestName = cms.string("gedelectron_p4combination_25ns"),
-                                        isMC = cms.bool(True),
-                                        isSynchronization = cms.bool(True),
+                                        isMC = cms.bool(False),
+                                        isSynchronization = cms.bool(False),
                                         correctionFile = cms.string("EgammaAnalysis/ElectronTools/data/ScalesSmearings/Moriond17_23Jan_ele")
                                         )
 
@@ -101,7 +101,7 @@ process.load('UFHZZAnalysisRun2.FSRPhotons.fsrPhotons_cff')
 import os
 # Jet Energy Corrections
 #from CondCore.DBCommon.CondDBSetup_cfi import *
-#era = "Summer16_23Sep2016V3_MC"
+#era = "Summer16_23Sep2016AllV3_DATA"
 # for HPC
 #dBFile = os.environ.get('CMSSW_BASE')+"/src/UFHZZAnalysisRun2/UFHZZ4LAna/data/"+era+".db"
 # for crab
@@ -130,21 +130,22 @@ import os
 #)
 #process.es_prefer_jec = cms.ESPrefer("PoolDBESSource",'jec')
 
-
 process.load("PhysicsTools.PatAlgos.producersLayer1.jetUpdater_cff")
 
 process.jetCorrFactors = process.updatedPatJetCorrFactors.clone(
     src = cms.InputTag("slimmedJets"),
     levels = ['L1FastJet', 
               'L2Relative', 
-              'L3Absolute'],
+              'L3Absolute',
+              'L2L3Residual'],
     payload = 'AK4PFchs' ) 
 
 process.AK8PFJetCorrFactors = process.updatedPatJetCorrFactors.clone(
     src = cms.InputTag("slimmedJetsAK8"),
     levels = ['L1FastJet',
               'L2Relative',
-              'L3Absolute'],
+              'L3Absolute',
+              'L2L3Residual'],
     payload = 'AK8PFchs' )
 
 process.slimmedJetsJEC = process.updatedPatJets.clone(
@@ -191,9 +192,9 @@ process.slimmedJetsAK8JEC = process.updatedPatJets.clone(
 process.load("CondCore.CondDB.CondDB_cfi")
 qgDatabaseVersion = 'cmssw8020_v2'
 # for hpc
-QGdBFile = os.environ.get('CMSSW_BASE')+"/src/UFHZZAnalysisRun2/UFHZZ4LAna/data/QGL_"+qgDatabaseVersion+".db"
+#QGdBFile = os.environ.get('CMSSW_BASE')+"/src/UFHZZAnalysisRun2/UFHZZ4LAna/data/QGL_"+qgDatabaseVersion+".db"
 # for crab
-#QGdBFile = "src/UFHZZAnalysisRun2/UFHZZ4LAna/data/QGL_"+qgDatabaseVersion+".db"
+QGdBFile = "src/UFHZZAnalysisRun2/UFHZZ4LAna/data/QGL_"+qgDatabaseVersion+".db"
 process.QGPoolDBESSource = cms.ESSource("PoolDBESSource",
       DBParameters = cms.PSet(messageLevel = cms.untracked.int32(1)),
       timetype = cms.string('runnumber'),
@@ -208,47 +209,24 @@ process.QGPoolDBESSource = cms.ESSource("PoolDBESSource",
 )
 process.es_prefer_qg = cms.ESPrefer('PoolDBESSource','QGPoolDBESSource')
 process.load('RecoJets.JetProducers.QGTagger_cfi')
-process.QGTagger.srcJets = cms.InputTag( 'slimmedJetsJEC' )
+process.QGTagger.srcJets = cms.InputTag( 'slimmedJets' )
 process.QGTagger.jetsLabel = cms.string('QGL_AK4PFchs')
 process.QGTagger.srcVertexCollection=cms.InputTag("offlinePrimaryVertices")
 
 # compute corrected pruned jet mass
 process.corrJets = cms.EDProducer ( "CorrJetsProducer",
-                                    jets    = cms.InputTag( "slimmedJetsAK8JEC" ),
+                                    jets    = cms.InputTag( "slimmedJetsAK8" ),
                                     vertex  = cms.InputTag( "offlineSlimmedPrimaryVertices" ), 
                                     rho     = cms.InputTag( "fixedGridRhoFastjetAll"   ),
                                     payload = cms.string  ( "AK8PFchs" ),
-                                    isData  = cms.bool    (  False ))
+                                    isData  = cms.bool    (  True ))
 
 
 # Recompute MET
-from PhysicsTools.PatUtils.tools.runMETCorrectionsAndUncertainties import runMetCorAndUncFromMiniAOD
-
-runMetCorAndUncFromMiniAOD(process,
-            isData=False,
-            )
-
-# STXS
-process.load("SimGeneral.HepPDTESSource.pythiapdt_cfi")
-process.mergedGenParticles = cms.EDProducer("MergedGenParticleProducer",
-    inputPruned = cms.InputTag("prunedGenParticles"),
-    inputPacked = cms.InputTag("packedGenParticles"),
-)
-process.myGenerator = cms.EDProducer("GenParticles2HepMCConverterHTXS",
-    genParticles = cms.InputTag("mergedGenParticles"),
-    genEventInfo = cms.InputTag("generator"),
-)
-process.rivetProducerHTXS = cms.EDProducer('HTXSRivetProducer',
-  HepMCCollection = cms.InputTag('myGenerator','unsmeared'),
-  LHERunInfo = cms.InputTag('externalLHEProducer'),
-  ProductionMode = cms.string('AUTO'),
-)
-# HZZ Fiducial from RIVET
-process.rivetProducerHZZFid = cms.EDProducer('HZZRivetProducer',
-  HepMCCollection = cms.InputTag('myGenerator','unsmeared'),
-)
-
-
+#from PhysicsTools.PatUtils.tools.runMETCorrectionsAndUncertainties import runMetCorAndUncFromMiniAOD
+#runMetCorAndUncFromMiniAOD(process,
+#            isData=True,
+#            )
 
 # Analyzer
 process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
@@ -256,18 +234,18 @@ process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
                               electronSrc  = cms.untracked.InputTag("electronsMVA"),
                               muonSrc      = cms.untracked.InputTag("calibratedMuons"),
                               tauSrc      = cms.untracked.InputTag("slimmedTaus"),
-                              jetSrc       = cms.untracked.InputTag("slimmedJetsJEC"),
+                              jetSrc       = cms.untracked.InputTag("slimmedJets"),
                               mergedjetSrc = cms.untracked.InputTag("corrJets"),
-                              metSrc       = cms.untracked.InputTag("slimmedMETs","","UFHZZ4LAnalysis"),
+                              metSrc       = cms.untracked.InputTag("slimmedMETsMuEGClean"),
                               vertexSrc    = cms.untracked.InputTag("offlineSlimmedPrimaryVertices"),
                               beamSpotSrc  = cms.untracked.InputTag("offlineBeamSpot"),
                               conversionSrc  = cms.untracked.InputTag("reducedEgamma","reducedConversions"),
-                              isMC         = cms.untracked.bool(True),
-                              isSignal     = cms.untracked.bool(True),
+                              isMC         = cms.untracked.bool(False),
+                              isSignal     = cms.untracked.bool(False),
                               mH           = cms.untracked.double(125.0),
                               CrossSection = cms.untracked.double(1.0),
                               FilterEff    = cms.untracked.double(1),
-                              weightEvents = cms.untracked.bool(True),
+                              weightEvents = cms.untracked.bool(False),
                               elRhoSrc     = cms.untracked.InputTag("fixedGridRhoFastjetAll"),
                               muRhoSrc     = cms.untracked.InputTag("fixedGridRhoFastjetAll"),
                               rhoSrcSUS    = cms.untracked.InputTag("fixedGridRhoFastjetCentralNeutral"),
@@ -279,10 +257,10 @@ process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
                               genJetsSrc = cms.untracked.InputTag("slimmedGenJets"),
                               generatorSrc = cms.untracked.InputTag("generator"),
                               lheInfoSrc = cms.untracked.InputTag("externalLHEProducer"),
-                              reweightForPU = cms.untracked.bool(True),
+                              reweightForPU = cms.untracked.bool(False),
                               triggerSrc = cms.InputTag("TriggerResults","","HLT"),
                               triggerObjects = cms.InputTag("selectedPatTrigger"),
-                              doTriggerMatching = cms.untracked.bool(False),
+                              doTriggerMatching = cms.untracked.bool(True),
                               triggerList = cms.untracked.vstring(
                                 # Single Lepton:
                                 'HLT_Ele25_eta2p1_WPTight_Gsf_v',
@@ -313,8 +291,10 @@ process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
                                 'HLT_Mu8_DiEle12_CaloIdL_TrackIdL_v',
                               ),
                               verbose = cms.untracked.bool(False),              
-                              skimLooseLeptons = cms.untracked.int32(4),              
-                              skimTightLeptons = cms.untracked.int32(4),              
+                              skimLooseLeptons = cms.untracked.int32(2),              
+                              skimTightLeptons = cms.untracked.int32(2),  
+                              bestCandMela = cms.untracked.bool(False),
+                              checkOnlySingle = cms.untracked.bool(False),                              
 #                              verbose = cms.untracked.bool(True)              
                              )
 
@@ -326,13 +306,12 @@ process.p = cms.Path(process.fsrPhotonSequence*
                      process.calibratedPatElectrons*
                      process.electronMVAValueMapProducer*
                      process.electronsMVA*
-                     process.jetCorrFactors*
-                     process.slimmedJetsJEC*
+                     #process.jetCorrFactors*
+                     #process.slimmedJetsJEC*
                      process.QGTagger*
-                     process.AK8PFJetCorrFactors*
-                     process.slimmedJetsAK8JEC*
-                     process.fullPatMetSequence*
+                     #process.AK8PFJetCorrFactors*
+                     #process.slimmedJetsAK8JEC*
+                     #process.fullPatMetSequence*
                      process.corrJets*
-                     process.mergedGenParticles*process.myGenerator*process.rivetProducerHTXS*#process.rivetProducerHZZFid*
                      process.Ana
                      )

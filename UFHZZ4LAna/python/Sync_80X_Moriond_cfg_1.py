@@ -54,6 +54,7 @@ process.calibratedMuons = cms.EDProducer("KalmanMuonCalibrationsProducer",
 
 from EgammaAnalysis.ElectronTools.regressionWeights_cfi import regressionWeights
 process = regressionWeights(process)
+process.load('EgammaAnalysis.ElectronTools.regressionApplication_cff')
 
 process.selectedElectrons = cms.EDFilter("PATElectronSelector",
                                          src = cms.InputTag("slimmedElectrons"),
@@ -75,23 +76,23 @@ process.calibratedPatElectrons = cms.EDProducer("CalibratedPatElectronProducerRu
                                         gbrForestName = cms.string("gedelectron_p4combination_25ns"),
                                         isMC = cms.bool(True),
                                         isSynchronization = cms.bool(True),
-                                        correctionFile = cms.string("EgammaAnalysis/ElectronTools/data/ScalesSmearings/Winter_2016_reReco_v1_ele")
+                                        correctionFile = cms.string("EgammaAnalysis/ElectronTools/data/ScalesSmearings/Moriond17_23Jan_ele")
                                         )
 
 from PhysicsTools.SelectorUtils.tools.vid_id_tools import *
 dataFormat = DataFormat.MiniAOD
 switchOnVIDElectronIdProducer(process, dataFormat)
 # define which IDs we want to produce
-my_id_modules = ['RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Spring16_V1_cff']
+my_id_modules = [ 'RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Spring16_HZZ_V1_cff' ]
 # add them to the VID producer
 for idmod in my_id_modules:
     setupAllVIDIdsInModule(process,idmod,setupVIDElectronSelection)
 process.electronMVAValueMapProducer.srcMiniAOD = cms.InputTag("calibratedPatElectrons")
 
 process.electronsMVA = cms.EDProducer("SlimmedElectronMvaIDProducer",
-                                      mvaValuesMap = cms.InputTag("electronMVAValueMapProducer:ElectronMVAEstimatorRun2Spring16V1Values"),
+                                      mvaValuesMap = cms.InputTag("electronMVAValueMapProducer:ElectronMVAEstimatorRun2Spring16HZZV1Values"),
                                       electronsCollection = cms.InputTag("calibratedPatElectrons"),
-                                      idname = cms.string("ElectronMVAEstimatorRun2Spring16V1Values"),
+                                      idname = cms.string("ElectronMVAEstimatorRun2Spring16HZZV1Values"),
 )
 
 # FSR Photons
@@ -130,12 +131,6 @@ import os
 #process.es_prefer_jec = cms.ESPrefer("PoolDBESSource",'jec')
 
 
-process.load("RecoJets.JetProducers.PileupJetID_cfi")
-process.pileupJetId.jets=cms.InputTag("slimmedJets")
-process.pileupJetId.inputIsCorrected=True
-process.pileupJetId.applyJec=True
-process.pileupJetId.vertexes=cms.InputTag("offlineSlimmedPrimaryVertices")
-
 process.load("PhysicsTools.PatAlgos.producersLayer1.jetUpdater_cff")
 
 process.jetCorrFactors = process.updatedPatJetCorrFactors.clone(
@@ -156,7 +151,6 @@ process.slimmedJetsJEC = process.updatedPatJets.clone(
     jetSource = cms.InputTag("slimmedJets"),
     jetCorrFactorsSource = cms.VInputTag(cms.InputTag("jetCorrFactors"))
     )
-process.slimmedJetsJEC.userData.userFloats.src += ['pileupJetId:fullDiscriminant']
 
 process.slimmedJetsAK8JEC = process.updatedPatJets.clone(
     jetSource = cms.InputTag("slimmedJetsAK8"),
@@ -294,10 +288,13 @@ process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
                                 'HLT_Ele25_eta2p1_WPTight_Gsf_v',
                                 'HLT_Ele27_WPTight_Gsf_v',
                                 'HLT_Ele27_eta2p1_WPLoose_Gsf_v',
+                                'HLT_Ele32_eta2p1_WPTight_Gsf_v',
                                 'HLT_IsoMu20_v',
                                 'HLT_IsoTkMu20_v',
                                 'HLT_IsoMu22_v',
                                 'HLT_IsoTkMu22_v',
+                                'HLT_IsoMu24_v',
+                                'HLT_IsoTkMu24_v',
                                 # Dilepton
                                 'HLT_Ele17_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v',
                                 'HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v',
@@ -321,15 +318,14 @@ process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
 #                              verbose = cms.untracked.bool(True)              
                              )
 
-
 process.p = cms.Path(process.fsrPhotonSequence*
                      process.boostedMuons*
                      process.calibratedMuons*
+                     process.regressionApplication*
                      process.selectedElectrons*
                      process.calibratedPatElectrons*
                      process.electronMVAValueMapProducer*
                      process.electronsMVA*
-                     process.pileupJetId*
                      process.jetCorrFactors*
                      process.slimmedJetsJEC*
                      process.QGTagger*

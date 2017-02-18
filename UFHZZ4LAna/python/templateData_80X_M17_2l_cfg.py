@@ -72,7 +72,7 @@ process.calibratedPatElectrons = cms.EDProducer("CalibratedPatElectronProducerRu
                                         gbrForestName = cms.string("gedelectron_p4combination_25ns"),
                                         isMC = cms.bool(False),
                                         isSynchronization = cms.bool(False),
-                                        correctionFile = cms.string("EgammaAnalysis/ElectronTools/data/ScalesSmearings/Winter_2016_reReco_v1_ele")
+                                        correctionFile = cms.string("EgammaAnalysis/ElectronTools/data/ScalesSmearings/Moriond17_23Jan_ele")
                                         )
 
 from PhysicsTools.SelectorUtils.tools.vid_id_tools import *
