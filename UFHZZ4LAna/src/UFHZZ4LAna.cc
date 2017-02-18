@@ -73,7 +73,7 @@
 
 //HTXS
 #include "SimDataFormats/HTXS/interface/HiggsTemplateCrossSections.h"
-#include "SimDataFormats/HZZFiducial/interface/HZZFiducialVolume.h"
+//#include "SimDataFormats/HZZFiducial/interface/HZZFiducialVolume.h"
 
 // PAT
 #include "DataFormats/PatCandidates/interface/PFParticle.h"
@@ -508,7 +508,7 @@ private:
     edm::EDGetTokenT<LHEEventProduct> lheInfoSrc_;
     edm::EDGetTokenT<LHERunInfoProduct> lheRunInfoToken_;
     edm::EDGetTokenT<HTXS::HiggsClassification> htxsSrc_;
-    edm::EDGetTokenT<HZZFid::FiducialSummary> fidRivetSrc_;
+    //edm::EDGetTokenT<HZZFid::FiducialSummary> fidRivetSrc_;
 
     // Configuration
     const float Zmass;
@@ -582,7 +582,7 @@ UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
     lheInfoSrc_(consumes<LHEEventProduct>(iConfig.getUntrackedParameter<edm::InputTag>("lheInfoSrc"))),
     lheRunInfoToken_(consumes<LHERunInfoProduct,edm::InRun>(edm::InputTag("externalLHEProducer",""))),
     htxsSrc_(consumes<HTXS::HiggsClassification>(edm::InputTag("rivetProducerHTXS","HiggsClassification"))),
-    fidRivetSrc_(consumes<HZZFid::FiducialSummary>(edm::InputTag("rivetProducerHZZFid","FiducialSummary"))),
+    //fidRivetSrc_(consumes<HZZFid::FiducialSummary>(edm::InputTag("rivetProducerHZZFid","FiducialSummary"))),
     Zmass(91.1876),
     mZ1Low(iConfig.getUntrackedParameter<double>("mZ1Low",40.0)),
     mZ2Low(iConfig.getUntrackedParameter<double>("mZ2Low",12.0)), // was 12
