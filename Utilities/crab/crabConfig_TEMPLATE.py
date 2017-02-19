@@ -10,6 +10,7 @@ config.General.transferOutputs = True
 config.General.transferLogs=True
 config.General.failureLimit=1
 
+import os
 config.section_('JobType')
 config.JobType.scriptExe = 'submitFileCrab.sh'
 config.JobType.inputFiles = [os.environ.get('CMSSW_BASE')+'/src/ZZMatrixElement/MEKD',os.environ.get('CMSSW_BASE')+'/src/KinZfitter/KinZfitter/ParamZ1',os.environ.get('CMSSW_BASE')+'/src/KinZfitter/HelperFunction/hists',os.environ.get('CMSSW_BASE')+'/src/ZZMatrixElement/MELA']
