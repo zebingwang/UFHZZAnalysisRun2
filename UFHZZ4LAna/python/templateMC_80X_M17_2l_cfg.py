@@ -68,7 +68,10 @@ process.load('EgammaAnalysis.ElectronTools.calibratedElectronsRun2_cfi')
 process.calibratedPatElectrons = cms.EDProducer("CalibratedPatElectronProducerRun2",
                                         # input collections
                                         electrons = cms.InputTag('selectedElectrons'),
-                                        gbrForestName = cms.string("gedelectron_p4combination_25ns"),
+                                        gbrForestName = cms.vstring('electron_eb_ECALTRK_lowpt', 'electron_eb_ECALTRK',
+                                                                    'electron_ee_ECALTRK_lowpt', 'electron_ee_ECALTRK',
+                                                                    'electron_eb_ECALTRK_lowpt_var', 'electron_eb_ECALTRK_var',
+                                                                    'electron_ee_ECALTRK_lowpt_var', 'electron_ee_ECALTRK_var'),
                                         isMC = cms.bool(True),
                                         isSynchronization = cms.bool(False),
                                         correctionFile = cms.string("EgammaAnalysis/ElectronTools/data/ScalesSmearings/Moriond17_23Jan_ele")
@@ -78,16 +81,16 @@ from PhysicsTools.SelectorUtils.tools.vid_id_tools import *
 dataFormat = DataFormat.MiniAOD
 switchOnVIDElectronIdProducer(process, dataFormat)
 # define which IDs we want to produce
-my_id_modules = ['RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Spring16_V1_cff']
+my_id_modules = [ 'RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Spring16_HZZ_V1_cff' ]
 # add them to the VID producer
 for idmod in my_id_modules:
     setupAllVIDIdsInModule(process,idmod,setupVIDElectronSelection)
 process.electronMVAValueMapProducer.srcMiniAOD = cms.InputTag("calibratedPatElectrons")
 
 process.electronsMVA = cms.EDProducer("SlimmedElectronMvaIDProducer",
-                                      mvaValuesMap = cms.InputTag("electronMVAValueMapProducer:ElectronMVAEstimatorRun2Spring16V1Values"),
+                                      mvaValuesMap = cms.InputTag("electronMVAValueMapProducer:ElectronMVAEstimatorRun2Spring16HZZV1Values"),
                                       electronsCollection = cms.InputTag("calibratedPatElectrons"),
-                                      idname = cms.string("ElectronMVAEstimatorRun2Spring16V1Values"),
+                                      idname = cms.string("ElectronMVAEstimatorRun2Spring16HZZV1Values"),
 )
 
 # FSR Photons
