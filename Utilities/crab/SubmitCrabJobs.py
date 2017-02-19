@@ -20,6 +20,7 @@ def parseOptions():
     parser.add_option('-t', '--tag', dest='TAG', type='string',default='', help='tag to be appended to the results, default is an empty string')
     parser.add_option('-d', '--datasets', dest='DATASETS', type='string', default='datasets_Fall15_25ns_MiniAODv1.txt', help='txt file with datasets to run over')
     parser.add_option('-c', '--cfg', dest='CONFIGFILE', type='string', default='/scratch/osg/dsperka/Run2/HZZ4l/CMSSW_7_6_4/src/UFHZZAnalysisRun2/UFHZZ4LAna/python/templateData_76X_cfg.py', help='configuration template')
+    parser.add_option('-s', '--substring', dest='SUBSTRING', type='string', default='', help='only submit datasets with this string in the name')
 
     # store options and arguments as global variables
     global opt, args
@@ -69,18 +70,8 @@ def submitAnalyzer():
 
             if (line.startswith('#')): continue
 
-            #if (not ("DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8" in line)): continue
-
-            #if (not ("125" in line)): continue
-            #if ("MCFM" in line): continue
-
-            #if (not ("ZZTo4L_13TeV_powheg" in line)): continue
-
-            #if (not ("MCFM701" in line)): continue
-
-            #if (not ("GluGluHToZZ" in line)): continue
-            
-            #if (not (("GluGluToContinToZZTo2e2mu" in line) or ("GluGluToContinToZZTo2e2tau" in line)) ): continue
+            if ( not (opt.SUBSTRING=="")):
+                if (not (opt.SUBSTRING in line)): continue
 
             dataset = line.split()[0]
             dataset = dataset.rstrip()
@@ -190,6 +181,16 @@ def submitAnalyzer():
 
         output = processCmd(cmd)
         if ("ERROR!!!" in output):
+            print " "
+            print " "
+            print " "
+            print " Something when wrong submitting the last dataset. You should:"
+            print "     1) Remove the folder in your resultsAna directory"
+            print "     2) Comment out the datasets which have been submitted in the datasets txt file"
+            print "     3) Rerun the SubmitCrabJobs.py with the same arguments"
+            print " "
+            print " "
+            print " "
             break
         else:
             print output

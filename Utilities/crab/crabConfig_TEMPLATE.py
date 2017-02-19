@@ -12,13 +12,12 @@ config.General.failureLimit=1
 
 config.section_('JobType')
 config.JobType.scriptExe = 'submitFileCrab.sh'
-config.JobType.inputFiles = ['/raid/raid5/dsperka/Run2/HZZ4l/CMSSW_8_0_26_patch1/src/ZZMatrixElement/MEKD','/raid/raid5/dsperka/Run2/HZZ4l/CMSSW_8_0_26_patch1/src/KinZfitter/KinZfitter/ParamZ1','/raid/raid5/dsperka/Run2/HZZ4l/CMSSW_8_0_26_patch1/src/KinZfitter/HelperFunction/hists','/raid/raid5/dsperka/Run2/HZZ4l/CMSSW_8_0_26_patch1/src/ZZMatrixElement/MELA']
+config.JobType.inputFiles = [os.environ.get('CMSSW_BASE')+'/src/ZZMatrixElement/MEKD',os.environ.get('CMSSW_BASE')+'/src/KinZfitter/KinZfitter/ParamZ1',os.environ.get('CMSSW_BASE')+'/src/KinZfitter/HelperFunction/hists',os.environ.get('CMSSW_BASE')+'/src/ZZMatrixElement/MELA']
 config.JobType.psetName = 'CFGFILE'
 config.JobType.pluginName = 'Analysis'
 config.JobType.disableAutomaticOutputCollection = True
 config.JobType.outputFiles = ['OUTFILENAME.root']
 config.JobType.maxMemoryMB = 2500
-#config.JobType.maxJobRuntimeMin = 30
 
 config.section_('Data')
 config.Data.inputDBS = 'https://cmsweb.cern.ch/dbs/prod/global/DBSReader/'

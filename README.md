@@ -20,32 +20,26 @@ cp UFHZZAnalysisRun2/install.sh .
 
 ./install.sh
 
-cp UFHZZAnalysisRun2/Utilities/SubmitCrabJobs.py .
+cmsRun UFHZZAnalysisRun2/UFHZZ4LAna/python/Sync_80X_Moriond_cfg_1.py
 
-cp UFHZZAnalysisRun2/Utilities/crabConfig_TEMPLATE.py .
+cp UFHZZAnalysisRun2/Utilities/crab/* .
 
-cp UFHZZAnalysisRun2/Utilities/das_client.py .
-
-cp UFHZZAnalysisRun2/Utilities/manageCrabTask.py .
-
-cp UFHZZAnalysisRun2/Utilities/hadd.py .
-
-cp UFHZZAnalysisRun2/Utilities/lcgDelDir.py .
-
-cp UFHZZAnalysisRun2/Utilities/Run2016_09Jul.txt .
-
-cp UFHZZAnalysisRun2/Utilities/datasets_Run2016.txt .
-
-cp UFHZZAnalysisRun2/Utilities/datasets_Spring16_25ns_MiniAOD.txt .
+voms-proxy-init --valid=168:00
 
 source /cvmfs/cms.cern.ch/crab3/crab.sh
 
-edit crabConfig_TEMPLATE.py to point to your working directory
-
-python SubmitCrabJobs.py -t "myTask_Data_2016" -d datasets_Run2016.txt -c UFHZZAnalysisRun2/UFHZZ4LAna/python/templateData_80X_cfg.py
+python SubmitCrabJobs.py -t "myTask_Data" -d datasets_2016ReReco.txt -c UFHZZAnalysisRun2/UFHZZ4LAna/python/templateData_80X_M1703Feb_2l_cfg.py
 
 or similary for MC:
 
-python SubmitCrabJobs.py -t "myTask_MC_2016" -d datasets_Spring16_25ns_MiniAOD.txt -c UFHZZAnalysisRun2/UFHZZ4LAna/python/templateMC_80X_cfg.py
+python SubmitCrabJobs.py -t "myTask_MC" -d datasets_Summer16_25ns_MiniAOD.txt -c UFHZZAnalysisRun2/UFHZZ4LAna/python/templateMC_80X_M17_4l_cfg.py
 
-You can use manageCrabTask.py to check the status, resubmit, or kill your task.
+You can use manageCrabTask.py to check the status, resubmit, or kill your task. E.g. after submitting:
+
+nohup python -u manageCrabTask.py -t resultsAna_Data_M17_Feb19 -r -l >& managedata.log &
+
+This will start an infinite loop of running crab resubmit on all of your tasks, then sleep for 30min. You should kill the process once all of your tasks are done. Once all of your tasks are done, you should run the following command to purge your crab cache so that it doesn't fill up:
+
+python manageCrabTask.py -t resultsAna_Data_M17_Feb19 -p
+
+
