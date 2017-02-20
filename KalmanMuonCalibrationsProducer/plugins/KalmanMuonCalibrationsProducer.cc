@@ -19,7 +19,8 @@
 
 // Kalman Muon Corrections 
 #include "KaMuCa/Calibration/interface/KalmanMuonCalibrator.h"
-
+// Rochester Corrections
+#include "UFHZZAnalysisRun2/KalmanMuonCalibrationsProducer/src/RoccoR.cc"
 //
 // class declaration
 //
@@ -45,10 +46,11 @@ class KalmanMuonCalibrationsProducer : public edm::EDProducer {
 
       // Kalman Muon Calibrator 
       KalmanMuonCalibrator *kalmanMuonCalibrator;
-
+      RoccoR  *rc;
       edm::EDGetToken muonsCollection_;
       bool isMC;
       bool isSync;
+      bool useRochester;
       //bool verbose;
 
 };
@@ -71,6 +73,7 @@ KalmanMuonCalibrationsProducer::KalmanMuonCalibrationsProducer(const edm::Parame
    muonsCollection_ = consumes<std::vector<pat::Muon> >(iConfig.getParameter<edm::InputTag>("muonsCollection"));
    isMC = iConfig.getParameter<bool>("isMC");
    isSync = iConfig.getParameter<bool>("isSync");
+   useRochester = iConfig.getParameter<bool>("useRochester");
    //verbose = iConfig.getParameter<bool>("verbose");
 
    if (isMC) {
@@ -78,6 +81,11 @@ KalmanMuonCalibrationsProducer::KalmanMuonCalibrationsProducer(const edm::Parame
    } else {
        kalmanMuonCalibrator = new KalmanMuonCalibrator("DATA_80X_13TeV");
    }
+
+   
+   std::string DATAPATH = std::getenv( "CMSSW_BASE" );
+   DATAPATH+="/src/UFHZZAnalysisRun2/KalmanMuonCalibrationsProducer/data/rcdata.2016.v3";
+   rc = new RoccoR(DATAPATH); 
 
    produces<std::vector<pat::Muon> >();      
 
@@ -124,17 +132,39 @@ KalmanMuonCalibrationsProducer::produce(edm::Event& iEvent, const edm::EventSetu
        double oldpterr=mu.muonBestTrack()->ptError();
        double newpterr=oldpterr;
 
-       if(mu.muonBestTrackType() == 1 && mu.pt()<200.0) {
+       if (useRochester) {
+           double sf=1.0;
            if (!isMC) {
-               if (mu.pt()>2.0 && abs(mu.eta())<2.4) {
-                   newpt = kalmanMuonCalibrator->getCorrectedPt(oldpt,mu.eta(),mu.phi(),mu.charge());
-                   newpterr = newpt*kalmanMuonCalibrator->getCorrectedError(newpt,mu.eta(),oldpterr/newpt);
-               }
+               sf = rc->kScaleDT(mu.charge(), oldpt, mu.eta(), mu.phi(), 0, 0);
            } else {
-               double unsmearednewpt = kalmanMuonCalibrator->getCorrectedPt(oldpt, mu.eta(), mu.phi(), mu.charge());
-               if (!isSync) newpt = kalmanMuonCalibrator->smear(unsmearednewpt, mu.eta());
-               else newpt = kalmanMuonCalibrator->smearForSync(unsmearednewpt, mu.eta());
-               newpterr = newpt*kalmanMuonCalibrator->getCorrectedError(newpt, mu.eta(), oldpterr/newpt );
+               TRandom3 rand;
+               rand.SetSeed(abs(static_cast<int>(sin(mu.phi())*100000)));
+               double u1 = rand.Uniform(1.); 
+               double u2 = rand.Uniform(1.); 
+               if (mu.genParticle()) {
+                   //for MC, if matched gen-level muon (genPt) is available, use this function
+                   sf = rc->kScaleFromGenMC(mu.charge(), oldpt, mu.eta(), mu.phi(), mu.innerTrack()->hitPattern().trackerLayersWithMeasurement(), mu.genParticle()->pt(), u1, 0, 0);     
+               } else {
+                   //if not, then:
+                   sf = rc->kScaleAndSmearMC(mu.charge(), oldpt, mu.eta(), mu.phi(), mu.innerTrack()->hitPattern().trackerLayersWithMeasurement(), u1, u2, 0, 0);
+               }
+           }
+           newpt = oldpt*sf;
+           newpterr = oldpterr;
+       } else {
+           
+           if(mu.muonBestTrackType() == 1 && mu.pt()<200.0) {
+               if (!isMC) {
+                   if (mu.pt()>2.0 && abs(mu.eta())<2.4) {
+                       newpt = kalmanMuonCalibrator->getCorrectedPt(oldpt,mu.eta(),mu.phi(),mu.charge());
+                       newpterr = newpt*kalmanMuonCalibrator->getCorrectedError(newpt,mu.eta(),oldpterr/newpt);
+                   }
+               } else {
+                   double unsmearednewpt = kalmanMuonCalibrator->getCorrectedPt(oldpt, mu.eta(), mu.phi(), mu.charge());
+                   if (!isSync) newpt = kalmanMuonCalibrator->smear(unsmearednewpt, mu.eta());
+                   else newpt = kalmanMuonCalibrator->smearForSync(unsmearednewpt, mu.eta());
+                   newpterr = newpt*kalmanMuonCalibrator->getCorrectedError(newpt, mu.eta(), oldpterr/newpt );
+               }
            }
        }
 
