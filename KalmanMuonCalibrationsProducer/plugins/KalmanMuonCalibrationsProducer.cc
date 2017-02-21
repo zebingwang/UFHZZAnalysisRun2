@@ -5,6 +5,7 @@
 
 // system include files
 #include <memory>
+#include <math.h>
 #include "TLorentzVector.h"
 
 // user include files
@@ -141,7 +142,7 @@ KalmanMuonCalibrationsProducer::produce(edm::Event& iEvent, const edm::EventSetu
                rand.SetSeed(abs(static_cast<int>(sin(mu.phi())*100000)));
                double u1 = rand.Uniform(1.); 
                double u2 = rand.Uniform(1.); 
-               if (mu.genParticle()) {
+               if (mu.genParticle() && mu.genParticle()) {                   
                    //for MC, if matched gen-level muon (genPt) is available, use this function
                    sf = rc->kScaleFromGenMC(mu.charge(), oldpt, mu.eta(), mu.phi(), mu.innerTrack()->hitPattern().trackerLayersWithMeasurement(), mu.genParticle()->pt(), u1, 0, 0);     
                } else {
@@ -149,10 +150,10 @@ KalmanMuonCalibrationsProducer::produce(edm::Event& iEvent, const edm::EventSetu
                    sf = rc->kScaleAndSmearMC(mu.charge(), oldpt, mu.eta(), mu.phi(), mu.innerTrack()->hitPattern().trackerLayersWithMeasurement(), u1, u2, 0, 0);
                }
            }
+           if (std::isnan(sf) || sf<0.0) sf=1.0; 
            newpt = oldpt*sf;
            newpterr = oldpterr;
        } else {
-           
            if(mu.muonBestTrackType() == 1 && mu.pt()<200.0) {
                if (!isMC) {
                    if (mu.pt()>2.0 && abs(mu.eta())<2.4) {
