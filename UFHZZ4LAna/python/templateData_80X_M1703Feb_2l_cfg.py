@@ -49,7 +49,8 @@ process.boostedMuons = cms.EDProducer("PATMuonCleanerBySegments",
 process.calibratedMuons = cms.EDProducer("KalmanMuonCalibrationsProducer",
                                          muonsCollection = cms.InputTag("boostedMuons"),
                                          isMC = cms.bool(False),
-                                         isSync = cms.bool(False)
+                                         isSync = cms.bool(False),
+                                         useRochester = cms.untracked.bool(False)
                                          )
 
 from EgammaAnalysis.ElectronTools.regressionWeights_cfi import regressionWeights

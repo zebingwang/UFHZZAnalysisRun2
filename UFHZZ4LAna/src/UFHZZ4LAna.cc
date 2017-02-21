@@ -2090,31 +2090,59 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                     }
                     
                     int sumplus=0; int summinus=0;
+                    int sumflavor=0;
+                    int noverlapping=0;
                     for(unsigned int i = 0; i < lep_pt.size(); i++) {
-                        if ((int)i==lep_Hindex[0] || (int)i==lep_Hindex[1] || (int)i==lep_Hindex[2] || (int)i==lep_Hindex[3]) { 
-                            nisoleptons++;  
-                            if (lep_id[i]>0) sumplus++;
-                            if (lep_id[i]<0) summinus++;
-                        }
-                        else {
-                            if (abs(lep_id[i])==11 && lep_tightId[i]==1 && lep_RelIsoNoFSR[i]<isoCutEl) { 
-                                nisoleptons++; 
-                                if (lep_id[i]>0) sumplus++;
-                                if (lep_id[i]<0) summinus++;                
-                            }
-                            else if (abs(lep_id[i])==13 && lep_tightId[i]==1 && lep_RelIsoNoFSR[i]<isoCutMu) { 
-                                nisoleptons++; 
-                                if (lep_id[i]>0) sumplus++;
-                                if (lep_id[i]<0) summinus++;
+
+                        bool goodi=false;
+                        if ((int)i==lep_Hindex[0] || (int)i==lep_Hindex[1] || (int)i==lep_Hindex[2] || (int)i==lep_Hindex[3]) {
+                            goodi=true;
+                        } else {
+                            if ( (abs(lep_id[i])==11 && lep_tightId[i]==1 && lep_RelIsoNoFSR[i]<isoCutEl) || 
+                                 (abs(lep_id[i])==13 && lep_tightId[i]==1 && lep_RelIsoNoFSR[i]<isoCutMu) ) {
+                                goodi=true;
                             }
                         }
+                        if (!goodi) continue;
+                                                
+                        nisoleptons++;  
+
+                        if (lep_id[i]>0) sumplus++;
+                        if (lep_id[i]<0) summinus++;
+                        sumflavor+=lep_id[i];
+
+                        TLorentzVector lepi;
+                        lepi.SetPtEtaPhiM(lep_pt[i],lep_eta[i],lep_phi[i],lep_mass[i]);
+
+                        float minDr=9999.0;
+                        for(unsigned int j = 0; j < lep_pt.size(); j++) {
+                        
+                            if (i==j) continue;
+
+                            bool goodj=false;
+                            if ((int)j==lep_Hindex[0] || (int)j==lep_Hindex[1] || (int)j==lep_Hindex[2] || (int)j==lep_Hindex[3]) {
+                                goodj=true;
+                            } else {
+                                if ( (abs(lep_id[j])==11 && lep_tightId[j]==1 && lep_RelIsoNoFSR[j]<isoCutEl) || 
+                                     (abs(lep_id[j])==13 && lep_tightId[j]==1 && lep_RelIsoNoFSR[j]<isoCutMu) ) {
+                                    goodj=true;
+                                }
+                            }
+                            if (!goodj) continue;
+                           
+                            TLorentzVector lepj;
+                            lepj.SetPtEtaPhiM(lep_pt[j],lep_eta[j],lep_phi[j],lep_mass[j]);
+                            float thisdR = lepi.DeltaR(lepj);
+                            if (thisdR<minDr) minDr=thisdR;
+                        }
+                        if (minDr<0.02) noverlapping+=1;
                     }
-                
-                    // Event Categories
+                    nisoleptons-=(noverlapping/2);
+
+                    // Event Categories 
                     if (nisoleptons==4 && (((njets_pt30_eta4p7==2||njets_pt30_eta4p7==3)&&nbjets_pt30_eta4p7<2)||(njets_pt30_eta4p7>=4&&nbjets_pt30_eta4p7==0)) && D_VBF>(1.043-460./(mass4l+634.))) {EventCat=2;}
-                    else if (nisoleptons==4 && (((njets_pt30_eta4p7==2||njets_pt30_eta4p7==3)&&nbjets_pt30_eta4p7<2)||(njets_pt30_eta4p7>=4&&nbjets_pt30_eta4p7==0)) && (D_HadWH>0.951 || D_HadZH>0.9937)) {EventCat=4;}
-                    else if (nisoleptons==4 && (njets_pt30_eta4p7==2||njets_pt30_eta4p7==3) && nbjets_pt30_eta4p7>=2) {EventCat=4;}
-                    else if (njets_pt30_eta4p7<=3 && nbjets_pt30_eta4p7==0 && (nisoleptons==5 || (nisoleptons>=6&&sumplus>=3&&summinus>=3))) {EventCat=3;}
+                    else if (nisoleptons==4 && ((njets_pt30_eta4p7==2||njets_pt30_eta4p7==3)||(njets_pt30_eta4p7>=4&&nbjets_pt30_eta4p7==0)) && (D_HadWH>0.951 || D_HadZH>0.9937)) {EventCat=4;}
+                    else if (njets_pt30_eta4p7<=3 && nbjets_pt30_eta4p7==0 && (nisoleptons==5 || (nisoleptons>=6&&sumplus>=3&&summinus>=3&&sumflavor==0))) {EventCat=3;}
                     else if (njets_pt30_eta4p7==0 && nisoleptons>=5) {EventCat=3;}
                     else if (njets_pt30_eta4p7>=4 && nbjets_pt30_eta4p7>0) {EventCat=5;}
                     else if (nisoleptons>=5) {EventCat=5;}

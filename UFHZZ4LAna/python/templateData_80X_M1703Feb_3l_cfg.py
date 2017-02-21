@@ -49,7 +49,8 @@ process.boostedMuons = cms.EDProducer("PATMuonCleanerBySegments",
 process.calibratedMuons = cms.EDProducer("KalmanMuonCalibrationsProducer",
                                          muonsCollection = cms.InputTag("boostedMuons"),
                                          isMC = cms.bool(False),
-                                         isSync = cms.bool(False)
+                                         isSync = cms.bool(False),
+                                         useRochester = cms.untracked.bool(False)
                                          )
 
 from EgammaAnalysis.ElectronTools.regressionWeights_cfi import regressionWeights
@@ -328,7 +329,7 @@ process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
                                 'HLT_Mu8_DiEle12_CaloIdL_TrackIdL_v',
                               ),
                               verbose = cms.untracked.bool(False),              
-                              skimLooseLeptons = cms.untracked.int32(4),              
+                              skimLooseLeptons = cms.untracked.int32(3),              
                               skimTightLeptons = cms.untracked.int32(2),  
                               bestCandMela = cms.untracked.bool(False),
                               checkOnlySingle = cms.untracked.bool(False),                              

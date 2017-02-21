@@ -29,7 +29,7 @@ myfilelist = cms.untracked.vstring(
 
 process.source = cms.Source("PoolSource",fileNames = myfilelist,
                             duplicateCheckMode = cms.untracked.string('noDuplicateCheck'),
-#                            eventsToProcess = cms.untracked.VEventRange('1:28434-1:28434')
+#                            eventsToProcess = cms.untracked.VEventRange('1:79534-1:79534','1:3340785-1:3340785')
                             )
 
 process.TFileService = cms.Service("TFileService",
@@ -49,7 +49,8 @@ process.boostedMuons = cms.EDProducer("PATMuonCleanerBySegments",
 process.calibratedMuons = cms.EDProducer("KalmanMuonCalibrationsProducer",
                                          muonsCollection = cms.InputTag("boostedMuons"),
                                          isMC = cms.bool(True),
-                                         isSync = cms.bool(True)
+                                         isSync = cms.bool(True),
+                                         useRochester = cms.bool(False)
                                          )
 
 from EgammaAnalysis.ElectronTools.regressionWeights_cfi import regressionWeights

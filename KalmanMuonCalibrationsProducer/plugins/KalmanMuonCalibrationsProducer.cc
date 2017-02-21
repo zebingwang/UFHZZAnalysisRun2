@@ -52,6 +52,7 @@ class KalmanMuonCalibrationsProducer : public edm::EDProducer {
       bool isMC;
       bool isSync;
       bool useRochester;
+      int rochesterSys;
       //bool verbose;
 
 };
@@ -68,21 +69,18 @@ class KalmanMuonCalibrationsProducer : public edm::EDProducer {
 //
 // constructors and destructor
 //
-KalmanMuonCalibrationsProducer::KalmanMuonCalibrationsProducer(const edm::ParameterSet& iConfig)
+KalmanMuonCalibrationsProducer::KalmanMuonCalibrationsProducer(const edm::ParameterSet& iConfig) :
+    muonsCollection_ (consumes<std::vector<pat::Muon> >(iConfig.getParameter<edm::InputTag>("muonsCollection"))),
+    isMC(iConfig.getParameter<bool>("isMC")),
+    isSync(iConfig.getParameter<bool>("isSync")),
+    useRochester(iConfig.getUntrackedParameter<bool>("useRochester",false)),
+    rochesterSys(iConfig.getUntrackedParameter<int>("rochesterSys",0))
 {
-
-   muonsCollection_ = consumes<std::vector<pat::Muon> >(iConfig.getParameter<edm::InputTag>("muonsCollection"));
-   isMC = iConfig.getParameter<bool>("isMC");
-   isSync = iConfig.getParameter<bool>("isSync");
-   useRochester = iConfig.getParameter<bool>("useRochester");
-   //verbose = iConfig.getParameter<bool>("verbose");
-
    if (isMC) {
        kalmanMuonCalibrator = new KalmanMuonCalibrator("MC_80X_13TeV");
    } else {
        kalmanMuonCalibrator = new KalmanMuonCalibrator("DATA_80X_13TeV");
    }
-
    
    std::string DATAPATH = std::getenv( "CMSSW_BASE" );
    DATAPATH+="/src/UFHZZAnalysisRun2/KalmanMuonCalibrationsProducer/data/rcdata.2016.v3";
@@ -142,17 +140,92 @@ KalmanMuonCalibrationsProducer::produce(edm::Event& iEvent, const edm::EventSetu
                rand.SetSeed(abs(static_cast<int>(sin(mu.phi())*100000)));
                double u1 = rand.Uniform(1.); 
                double u2 = rand.Uniform(1.); 
-               if (mu.genParticle() && mu.genParticle()) {                   
-                   //for MC, if matched gen-level muon (genPt) is available, use this function
-                   sf = rc->kScaleFromGenMC(mu.charge(), oldpt, mu.eta(), mu.phi(), mu.innerTrack()->hitPattern().trackerLayersWithMeasurement(), mu.genParticle()->pt(), u1, 0, 0);     
+               if (mu.genParticle()) {
+
+                   sf = rc->kScaleFromGenMC(mu.charge(), oldpt, mu.eta(), mu.phi(), mu.innerTrack()->hitPattern().trackerLayersWithMeasurement(), mu.genParticle()->pt(), u1, 0, 0);
+
+                   if (rochesterSys!=0) {
+                       double statrms=0.0;
+                       for (int i=0; i<100; i++) {
+                           double sfi =  rc->kScaleFromGenMC(mu.charge(), oldpt, mu.eta(), mu.phi(), mu.innerTrack()->hitPattern().trackerLayersWithMeasurement(), mu.genParticle()->pt(), u1, 1, i);
+                           statrms += (sfi-sf)*(sfi-sf);
+                       }
+                       double uncstat=sqrt(statrms/100);
+                       double sfZpt =  rc->kScaleFromGenMC(mu.charge(), oldpt, mu.eta(), mu.phi(), mu.innerTrack()->hitPattern().trackerLayersWithMeasurement(), mu.genParticle()->pt(), u1, 2, 0);
+                       double uncZpt=abs(sf-sfZpt);
+              
+                       double maxCorDm=0.0, maxFitDm=0.0;
+                       double minCorDm=0.0, minFitDm=0.0;
+                       for (int i=0; i<5; i++) {
+                           double sfCorDm = rc->kScaleFromGenMC(mu.charge(), oldpt, mu.eta(), mu.phi(), mu.innerTrack()->hitPattern().trackerLayersWithMeasurement(), mu.genParticle()->pt(), u1, 4, i);
+                           if ( (sfCorDm-sf)>maxCorDm ) maxCorDm = (sfCorDm-sf);
+                           if ( (sfCorDm-sf)<minCorDm ) minCorDm = (sfCorDm-sf);
+                           double sfFitDm = rc->kScaleFromGenMC(mu.charge(), oldpt, mu.eta(), mu.phi(), mu.innerTrack()->hitPattern().trackerLayersWithMeasurement(), mu.genParticle()->pt(), u1, 5, i);
+                           if ( (sfFitDm-sf)>maxCorDm ) maxFitDm = (sfFitDm-sf);
+                           if ( (sfFitDm-sf)<minCorDm ) minFitDm = (sfFitDm-sf);
+                       }                       
+                       double uncCorDm=0.0, uncFitDm=0.0;
+                       if (rochesterSys==1) {
+                           uncCorDm=abs(maxCorDm); uncFitDm=abs(maxFitDm);
+                       } else if (rochesterSys==-1) {
+                           uncCorDm=abs(minCorDm); uncFitDm=abs(minFitDm);
+                       }
+
+                       //std::cout<<uncstat<<" "<<uncZpt<<" "<<uncCorDm<<" "<<" "<<uncFitDm<<std::endl;
+                       double total_unc = sqrt(uncstat*uncstat+uncZpt*uncZpt+uncCorDm*uncCorDm+uncFitDm*uncFitDm);
+                       //std::cout<<"old sf: "<<sf<<std::endl;
+                       if (rochesterSys==1) sf *= (1.0+total_unc);
+                       if (rochesterSys==-1) sf /= (1.0+total_unc);
+                       //std::cout<<"new sf: "<<sf<<std::endl;
+                       
+                   }
+                       
                } else {
-                   //if not, then:
+
                    sf = rc->kScaleAndSmearMC(mu.charge(), oldpt, mu.eta(), mu.phi(), mu.innerTrack()->hitPattern().trackerLayersWithMeasurement(), u1, u2, 0, 0);
+
+                   if (rochesterSys!=0) {
+                       double statrms=0.0;
+                       for (int i=0; i<100; i++) {
+                           double sfi =  rc->kScaleAndSmearMC(mu.charge(), oldpt, mu.eta(), mu.phi(), mu.innerTrack()->hitPattern().trackerLayersWithMeasurement(), u1, u2, 1, i);
+                           statrms += (sfi-sf)*(sfi-sf);
+                       }
+                       double uncstat=sqrt(statrms/100);
+                       double sfZpt =  rc->kScaleAndSmearMC(mu.charge(), oldpt, mu.eta(), mu.phi(), mu.innerTrack()->hitPattern().trackerLayersWithMeasurement(), u1, u2, 2, 0);
+                       double uncZpt=abs(sf-sfZpt);
+              
+                       double maxCorDm=0.0, maxFitDm=0.0;
+                       double minCorDm=0.0, minFitDm=0.0;
+                       for (int i=0; i<5; i++) {
+                           double sfCorDm = rc->kScaleAndSmearMC(mu.charge(), oldpt, mu.eta(), mu.phi(), mu.innerTrack()->hitPattern().trackerLayersWithMeasurement(), u1, u2, 4, i);
+                           if ( (sfCorDm-sf)>maxCorDm ) maxCorDm = (sfCorDm-sf);
+                           if ( (sfCorDm-sf)<minCorDm ) minCorDm = (sfCorDm-sf);
+                           double sfFitDm = rc->kScaleAndSmearMC(mu.charge(), oldpt, mu.eta(), mu.phi(), mu.innerTrack()->hitPattern().trackerLayersWithMeasurement(), u1, u2, 5, i);
+                           if ( (sfFitDm-sf)>maxCorDm ) maxFitDm = (sfFitDm-sf);
+                           if ( (sfFitDm-sf)<minCorDm ) minFitDm = (sfFitDm-sf);
+                       }                       
+                       double uncCorDm=0.0, uncFitDm=0.0;
+                       if (rochesterSys==1) {
+                           uncCorDm=abs(maxCorDm); uncFitDm=abs(maxFitDm);
+                       } else if (rochesterSys==-1) {
+                           uncCorDm=abs(minCorDm); uncFitDm=abs(minFitDm);
+                       }
+
+                       //std::cout<<uncstat<<" "<<uncZpt<<" "<<uncCorDm<<" "<<" "<<uncFitDm<<std::endl;
+                       double total_unc = sqrt(uncstat*uncstat+uncZpt*uncZpt+uncCorDm*uncCorDm+uncFitDm*uncFitDm);
+                       //std::cout<<"old sf: "<<sf<<std::endl;
+                       if (rochesterSys==1) sf *= (1.0+total_unc);
+                       if (rochesterSys==-1) sf /= (1.0+total_unc);
+                       //std::cout<<"new sf: "<<sf<<std::endl;
+                       
+                   }
                }
            }
+
            if (std::isnan(sf) || sf<0.0) sf=1.0; 
            newpt = oldpt*sf;
            newpterr = oldpterr;
+
        } else {
            if(mu.muonBestTrackType() == 1 && mu.pt()<200.0) {
                if (!isMC) {
