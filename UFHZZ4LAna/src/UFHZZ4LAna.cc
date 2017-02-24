@@ -203,6 +203,7 @@ private:
     TH1D *h_pileup;
     TH1D *h_pileupUp;
     TH1D *h_pileupDn;
+    std::vector<TH1F*> h_medians;
 
     //Saved Events Trees
     TTree *passedEventsTree_All;
@@ -681,6 +682,12 @@ UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
     h_pileupUp = (TH1D*)f_pileup->Get("weights_varUp");
     h_pileupDn = (TH1D*)f_pileup->Get("weights_varDn");
 
+    edm::FileInPath medians_FileInPath("UFHZZAnalysisRun2/UFHZZ4LAna/data/medianWeights.root");
+    TFile *f_medians = TFile::Open(medians_FileInPath.fullPath().c_str());
+    for (int i=0; i<=35; i++) {
+        std::string hname = "hMedians"+std::to_string(i);
+        h_medians.push_back((TH1F*)f_medians->Get(hname.c_str()));
+    }
 
 }
 
@@ -1123,9 +1130,16 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                     if (int(i)<posNNPDF) {qcdWeights.push_back(tmpWeight);}
                 }
                 else {
-                    //tmpWeight = lheInfo->weights()[i].wgt/lheInfo->weights()[9].wgt;
                     tmpWeight = lheInfo->weights()[i].wgt;
-                    if (i==9) genWeight = lheInfo->weights()[9].wgt/lheInfo->originalXWGTUP();
+                    float yh=0.0;
+                    reco::GenParticleCollection::const_iterator genPart;
+                    for(genPart = prunedgenParticles->begin(); genPart != prunedgenParticles->end(); genPart++) {                        
+                        if (genPart->pdgId()==25 && genPart->status()==22) yh=genPart->p4().Rapidity();
+                    } 
+                    float medianWeight = h_medians[i]->GetBinContent( h_medians[i]->FindBin(yh) );
+                    if (abs(tmpWeight-medianWeight)/medianWeight > 50.0) tmpWeight = medianWeight;
+                    tmpWeight /= lheInfo->originalXWGTUP();
+                    if (i==9) genWeight = tmpWeight;
                     if (int(i)<posNNPDF) {nnloWeights.push_back(tmpWeight);}
                 }
                 // NNPDF30 variations
@@ -3350,7 +3364,7 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
             if (abs(lep_id[i])==11 && lep_RelIsoNoFSR[i]>isoCutEl) passed_idiso=false;
             if (!(lep_tightId[i])) passed_idiso=false;
             bool cand_lep=false;
-            for (int l=0; l<3; l++) {
+            for (int l=0; l<4; l++) {
                 if ((int)i==lep_Hindex[l]) cand_lep=true;
             }
             if (!(passed_idiso || cand_lep)) continue;
