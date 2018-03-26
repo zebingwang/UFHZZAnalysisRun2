@@ -2002,9 +2002,9 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                     D_g4 = me_0plus_JHU/(me_0plus_JHU+pow(2.521, 2)*p0minus_VAJHU); // D_0-                
                     D_g1g4 = pg1g4_VAJHU*2.521/(me_0plus_JHU+pow(2.521, 2)*p0minus_VAJHU); // D_CP, 2.521 since g1=1 and g4=1 is used
                     
-                    TUtil::computeAngles(Lep1, lep_id[lep_Hindex[0]], Lep2, lep_id[lep_Hindex[1]], \
-                                         Lep3, lep_id[lep_Hindex[2]], Lep4, lep_id[lep_Hindex[3]], \
-                                         cosThetaStar,cosTheta1,cosTheta2,Phi,Phi1);
+                    TUtil::computeAngles(cosThetaStar,cosTheta1,cosTheta2,Phi,Phi1, \
+                                         Lep1, lep_id[lep_Hindex[0]], Lep2, lep_id[lep_Hindex[1]], \
+                                         Lep3, lep_id[lep_Hindex[2]], Lep4, lep_id[lep_Hindex[3]]);
                     
                     if (njets_pt30_eta4p7>=2){
                         mela->setProcess(TVar::HSMHiggs, TVar::JHUGen, TVar::JJVBF);
@@ -3958,9 +3958,10 @@ void UFHZZ4LAna::setGENVariables(edm::Handle<reco::GenParticleCollection> pruned
             if(GENlep_id[L4] > 0) { GENL22P4.SetPxPyPzE(LS3_Z2_2.Px(),LS3_Z2_2.Py(),LS3_Z2_2.Pz(),LS3_Z2_2.E()); tmpIdL4 = GENlep_id[L4];}
             else{ GENL22P4.SetPxPyPzE(LS3_Z2_1.Px(),LS3_Z2_1.Py(),LS3_Z2_1.Pz(),LS3_Z2_1.E()); tmpIdL4 = GENlep_id[L3];}
                     
-            TUtil::computeAngles(GENL11P4, tmpIdL1, GENL12P4, tmpIdL2,  \
-                                 GENL21P4, tmpIdL3, GENL22P4, tmpIdL4,  \
-                                 GENcosThetaStar,GENcosTheta1,GENcosTheta2,GENPhi,GENPhi1);
+            TUtil::computeAngles(GENcosThetaStar,GENcosTheta1,GENcosTheta2,GENPhi,GENPhi1, \
+                                 GENL11P4, tmpIdL1, GENL12P4, tmpIdL2,  \
+                                 GENL21P4, tmpIdL3, GENL22P4, tmpIdL4);
+                                 
 
             
         }
