@@ -4,23 +4,21 @@ HZZ Analyzer for CMS Run2
 
 To install:
 
-setenv SCRAM_ARCH slc6_amd64_gcc530
+cmsrel CMSSW_9_4_2
 
-cmsrel CMSSW_8_0_26_patch1
-
-cd CMSSW_8_0_26_patch1/src
+cd CMSSW_9_4_2/src
 
 cmsenv
 
 git cms-init
 
-git clone -b 80X https://github.com/VBF-HZZ/UFHZZAnalysisRun2.git
+git clone -b 94X https://github.com/VBF-HZZ/UFHZZAnalysisRun2.git
 
 cp UFHZZAnalysisRun2/install.sh .
 
 ./install.sh
 
-cmsRun UFHZZAnalysisRun2/UFHZZ4LAna/python/Sync_80X_Moriond_cfg_1.py
+cmsRun UFHZZAnalysisRun2/UFHZZ4LAna/python/Sync_94X_cfg.py
 
 cp UFHZZAnalysisRun2/Utilities/crab/* .
 

@@ -51,5 +51,7 @@
 <use   name="JetMETCorrections/Algorithms"/>
 <use   name="JetMETCorrections/JetCorrector"/>
 <use   name="JetMETCorrections/Modules"/>
+<use   name="CondFormats/BTauObjects"/>
+<use   name="CondTools/BTau"/>
 <flags EDM_PLUGIN="1"/>
 <Flags CXXFLAGS="-g"/>
