@@ -1244,10 +1244,14 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     int theVertex = -1;
     for (unsigned int i=0; i<vertex->size(); i++) {
         PV = &(vertex->at(i));        
-        if (PV->chi2()==0 && PV->ndof()==0) continue;
+        if (verbose) std::cout<<"isFake: "<<PV->isFake()<<" chi2 "<<PV->chi2()<<" ndof "<<PV->ndof()<<" rho "<<PV->position().Rho()<<" Z "<<PV->position().Z()<<endl; 
+        //if (PV->chi2()==0 && PV->ndof()==0) continue;
+        if (PV->isFake()) continue;
         if (PV->ndof()<=4 || PV->position().Rho()>2.0 || fabs(PV->position().Z())>24.0) continue;
         theVertex=(int)i; break;
     }        
+
+    if (verbose) std::cout<<"vtx: "<<theVertex<<" trigConditionData "<<trigConditionData<<" passedTrig "<<passedTrig<<std::endl;
  
     if(theVertex >= 0 && (isMC || (!isMC && trigConditionData)) )  {
 
@@ -1486,11 +1490,12 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                         double hlt_phi = obj.phi();
                         double dR =  deltaR(reco_eta,reco_phi,hlt_eta,hlt_phi); 
                         if (dR<0.5) {
+                            obj.unpackFilterLabels(iEvent, *trigger); 
                             for (unsigned h = 0; h < obj.filterLabels().size(); ++h) filtersMatched += obj.filterLabels()[h];
                         }
                     }
                     
-                    //if (verbose) cout<<"Trigger matching lep id: "<<lep_id[i]<<" pt: "<<reco.Pt()<<" filters: "<<filtersMatched<<endl;
+                    if (verbose) cout<<"Trigger matching lep id: "<<lep_id[i]<<" pt: "<<reco.Pt()<<" filters: "<<filtersMatched<<endl;
                     lep_filtersMatched.push_back(filtersMatched);
                     
                 }
