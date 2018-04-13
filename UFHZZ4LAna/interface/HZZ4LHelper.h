@@ -126,7 +126,7 @@ public:
     float kfactor_qqZZ_qcd_Pt(float GENpTZZ, int finalState);
     float kfactor_qqZZ_qcd_M(float GENmassZZ, int finalState);
 
-    float dataMC(pat::Electron electron, TH2F* hElecScaleFac, TH2F* hElecScalFac_Cracks, TH2F* hElecScaleFacGsf);
+    float dataMC(pat::Electron electron, TH2F* hElecScaleFac, TH2F* hElecScalFac_Cracks, TH2F* hElecScaleFacGsf, TH2F* hElecScaleFacGsfLowET);
     float dataMCErr(pat::Electron electron, TH2F* hElecScaleFac, TH2F* hElecScalFacUnc_Cracks);
     float dataMC(pat::Muon muon, TH2F* hMuScaleFac);
     float dataMCErr(pat::Muon muon, TH2F* hMuScaleFac);
@@ -1633,7 +1633,7 @@ float HZZ4LHelper::kfactor_qqZZ_qcd_Pt(float GENpTZZ, int finalState)
 
 }
 
-float HZZ4LHelper::dataMC(pat::Electron electron, TH2F* hElecScaleFac, TH2F* hElecScaleFac_Cracks, TH2F* hElecScaleFacGsf)
+float HZZ4LHelper::dataMC(pat::Electron electron, TH2F* hElecScaleFac, TH2F* hElecScaleFac_Cracks, TH2F* hElecScaleFacGsf, TH2F* hElecScaleFacGsfLowET)
 {
     float pt = std::min(electron.pt(),199.0);
     float sceta = electron.superCluster()->eta();
@@ -1645,8 +1645,11 @@ float HZZ4LHelper::dataMC(pat::Electron electron, TH2F* hElecScaleFac, TH2F* hEl
         fac*=hElecScaleFac->GetBinContent(hElecScaleFac->FindBin(sceta,pt));        
     }
     // GSF SF flat vs pt
-    fac*=hElecScaleFacGsf->GetBinContent(hElecScaleFacGsf->FindBin(sceta,50.0));
-    
+    if (pt>20.0) {
+        fac*=hElecScaleFacGsf->GetBinContent(hElecScaleFacGsf->FindBin(sceta,pt));
+    } else if (pt>10.0) {
+        fac*=hElecScaleFacGsfLowET->GetBinContent(hElecScaleFacGsfLowET->FindBin(sceta,pt));
+    }    
     return fac;
 }
 
