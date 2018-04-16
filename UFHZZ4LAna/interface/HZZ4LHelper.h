@@ -1647,8 +1647,8 @@ float HZZ4LHelper::dataMC(pat::Electron electron, TH2F* hElecScaleFac, TH2F* hEl
     // GSF SF flat vs pt
     if (pt>20.0) {
         fac*=hElecScaleFacGsf->GetBinContent(hElecScaleFacGsf->FindBin(sceta,pt));
-    } else if (pt>10.0) {
-        fac*=hElecScaleFacGsfLowET->GetBinContent(hElecScaleFacGsfLowET->FindBin(sceta,pt));
+    } else {
+        fac*=hElecScaleFacGsfLowET->GetBinContent(hElecScaleFacGsfLowET->FindBin(sceta,std::max((float)10.5,pt)));
     }    
     return fac;
 }
