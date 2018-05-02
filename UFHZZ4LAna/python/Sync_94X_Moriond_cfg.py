@@ -19,7 +19,7 @@ process.Timing = cms.Service("Timing",
                              )
 
 
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(100) )
 
 myfilelist = cms.untracked.vstring(
 '/store/mc/RunIIFall17MiniAOD/GluGluHToZZTo4L_M125_13TeV_powheg2_JHUGenV7011_pythia8/MINIAODSIM/94X_mc2017_realistic_v10-v1/40000/205E2EB6-2600-E811-A8D9-A0369FC5E090.root',
@@ -28,13 +28,14 @@ myfilelist = cms.untracked.vstring(
 )
 
 process.source = cms.Source("PoolSource",fileNames = myfilelist,
-                            duplicateCheckMode = cms.untracked.string('noDuplicateCheck'),
-#                            eventsToProcess = cms.untracked.VEventRange('1:213528-1:213528')
+#                            duplicateCheckMode = cms.untracked.string('noDuplicateCheck'),
+#                            eventsToProcess = cms.untracked.VEventRange('1:767837-1:767837','1:219504-1:219504','1:767206-1:767206')
+                            eventsToProcess = cms.untracked.VEventRange('1:767206-1:767206','1:773914-1:773914','1:219725-1:219725')
                             )
 
 process.TFileService = cms.Service("TFileService",
-                                   fileName = cms.string("Sync_94X.root")
-#                                   fileName = cms.string("Sync_94X_test.root")
+#                                   fileName = cms.string("Sync_94X.root")
+                                   fileName = cms.string("Sync_94X_test.root")
 )
 
 # clean muons by segments 
@@ -319,10 +320,10 @@ process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
                                   'HLT_TripleMu_10_5_5_DZ_v',
                                   'HLT_TripleMu_12_10_5_v',
                               ),
-                              verbose = cms.untracked.bool(False),              
-                              skimLooseLeptons = cms.untracked.int32(4),              
-                              skimTightLeptons = cms.untracked.int32(4),              
-#                              verbose = cms.untracked.bool(True)              
+#                              verbose = cms.untracked.bool(False),              
+                              skimLooseLeptons = cms.untracked.int32(2),              
+                              skimTightLeptons = cms.untracked.int32(2),              
+                              verbose = cms.untracked.bool(True)              
                              )
 
 process.p = cms.Path(process.fsrPhotonSequence*
