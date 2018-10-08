@@ -203,7 +203,6 @@ private:
     TH1D *h_pileup;
     TH1D *h_pileupUp;
     TH1D *h_pileupDn;
-    std::vector<TH1F*> h_medians;
 
     //Saved Events Trees
     TTree *passedEventsTree_All;
@@ -682,13 +681,6 @@ UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
     h_pileupUp = (TH1D*)f_pileup->Get("weights_varUp");
     h_pileupDn = (TH1D*)f_pileup->Get("weights_varDn");
 
-    edm::FileInPath medians_FileInPath("UFHZZAnalysisRun2/UFHZZ4LAna/data/medianWeights.root");
-    TFile *f_medians = TFile::Open(medians_FileInPath.fullPath().c_str());
-    for (int i=0; i<=35; i++) {
-        std::string hname = "hMedians"+std::to_string(i);
-        h_medians.push_back((TH1F*)f_medians->Get(hname.c_str()));
-    }
-
 }
 
 
@@ -1131,13 +1123,6 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 }
                 else {
                     tmpWeight = lheInfo->weights()[i].wgt;
-                    float yh=0.0;
-                    reco::GenParticleCollection::const_iterator genPart;
-                    for(genPart = prunedgenParticles->begin(); genPart != prunedgenParticles->end(); genPart++) {                        
-                        if (genPart->pdgId()==25 && genPart->status()==22) yh=genPart->p4().Rapidity();
-                    } 
-                    float medianWeight = h_medians[i]->GetBinContent( h_medians[i]->FindBin(yh) );
-                    if (abs(tmpWeight-medianWeight)/medianWeight > 50.0) tmpWeight = medianWeight;
                     tmpWeight /= lheInfo->originalXWGTUP();
                     if (i==9) genWeight = tmpWeight;
                     if (int(i)<posNNPDF) {nnloWeights.push_back(tmpWeight);}
