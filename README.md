@@ -23,6 +23,7 @@ cmsRun UFHZZAnalysisRun2/UFHZZ4LAna/python/Sync_94X_cfg.py
 cp UFHZZAnalysisRun2/Utilities/crab/* .
 
 voms-proxy-init --valid=168:00
+# probably need voms-proxy-init -voms cms -rfc
 
 source /cvmfs/cms.cern.ch/crab3/crab.sh
 
