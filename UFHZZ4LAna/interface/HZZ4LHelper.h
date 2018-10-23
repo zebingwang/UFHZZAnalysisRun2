@@ -301,7 +301,7 @@ std::vector<pat::Muon> HZZ4LHelper::goodLooseMuons2012(edm::Handle<edm::View<pat
     using namespace std;    
     vector<pat::Muon> bestMuons;    
     for(edm::View<pat::Muon>::const_iterator mu=Muons->begin(); mu != Muons->end(); ++mu) {
-        std::cout<<"global? "<<mu->isGlobalMuon()<<" tracker? "<<mu->isTrackerMuon()<<" PF "<<mu->isPFMuon()<<" pt: "<< mu->pt()<<std::endl;
+        //std::cout<<"global? "<<mu->isGlobalMuon()<<" tracker? "<<mu->isTrackerMuon()<<" PF "<<mu->isPFMuon()<<" pt: "<< mu->pt()<<std::endl;
         if( (mu->isGlobalMuon() || mu->isTrackerMuon() || mu->isPFMuon()) && fabs(mu->eta()) < 2.4 && mu->pt() > muPtCut) {
             bestMuons.push_back(*mu);
         }
@@ -352,14 +352,14 @@ std::vector<pat::Muon> HZZ4LHelper::goodMuons2015_noIso_noPf(std::vector<pat::Mu
         if( Muons[i].pt() > muPtCut && abs(Muons[i].eta()) < muEtaCut &&
             (Muons[i].isGlobalMuon() || (Muons[i].isTrackerMuon() && Muons[i].numberOfMatches() > 0 ) ) &&
             Muons[i].muonBestTrackType() != 2 ) {
-            std::cout<<"test1 "<<std::endl;
+            //std::cout<<"test1 "<<std::endl;
             if( abs(getSIP3D(Muons[i])) < sip3dCut ) {
-                std::cout<<"test2 "<<std::endl;
+                //std::cout<<"test2 "<<std::endl;
                 if( fabs(Muons[i].muonBestTrack()->dxy(vertex->position())) < dxyCut ) { //miniAOD 
-                    std::cout<<"test3 "<<std::endl;
+                    //std::cout<<"test3 "<<std::endl;
                     if( fabs(Muons[i].muonBestTrack()->dz(vertex->position())) < dzCut ) {// miniAOD       
 
-                        std::cout<<"test4 "<<std::endl;
+                        //std::cout<<"test4 "<<std::endl;
                         bestMuons.push_back(Muons[i]);
                     } //else {cout<<"muon "<<i<<" failed dz cut, |dz|="<<fabs(Muons[i].muonBestTrack()->dxy(vertex->position()))<<endl;}
                 } //else {cout<<"muon "<<i<<" failed dxy cut, |dxz|="<<fabs(Muons[i].muonBestTrack()->dz(vertex->position()))<<endl;}
