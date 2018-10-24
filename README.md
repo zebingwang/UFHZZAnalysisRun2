@@ -4,21 +4,21 @@ HZZ Analyzer for CMS Run2
 
 To install:
 
-cmsrel CMSSW_9_4_2
+cmsrel CMSSW_10_2_5
 
-cd CMSSW_9_4_2/src
+cd CMSSW_10_2_5/src
 
 cmsenv
 
 git cms-init
 
-git clone -b 94X https://github.com/VBF-HZZ/UFHZZAnalysisRun2.git
+git clone -b 102X https://github.com/VBF-HZZ/UFHZZAnalysisRun2.git
 
 cp UFHZZAnalysisRun2/install.sh .
 
 ./install.sh
 
-cmsRun UFHZZAnalysisRun2/UFHZZ4LAna/python/Sync_94X_cfg.py
+cmsRun UFHZZAnalysisRun2/UFHZZ4LAna/python/102X_data_test.py
 
 cp UFHZZAnalysisRun2/Utilities/crab/* .
 
