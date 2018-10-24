@@ -84,7 +84,7 @@ KalmanMuonCalibrationsProducer::KalmanMuonCalibrationsProducer(const edm::Parame
    
    std::string DATAPATH = std::getenv( "CMSSW_BASE" );
    DATAPATH+="/src/UFHZZAnalysisRun2/KalmanMuonCalibrationsProducer/data/rcdata.2016.v3";
-   rc = new RoccoR(DATAPATH); 
+   if(useRochester)rc = new RoccoR(DATAPATH); 
 
    produces<std::vector<pat::Muon> >();      
 

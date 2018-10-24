@@ -348,7 +348,7 @@ std::vector<pat::Muon> HZZ4LHelper::goodMuons2015_noIso_noPf(std::vector<pat::Mu
     double dzCut = 1;
     /**************************************/
     for(unsigned int i = 0; i < Muons.size(); i++) {
-        std::cout<<"pt: "<<Muons[i].pt()<<std::endl;
+        //std::cout<<"pt: "<<Muons[i].pt()<<std::endl;
         if( Muons[i].pt() > muPtCut && abs(Muons[i].eta()) < muEtaCut &&
             (Muons[i].isGlobalMuon() || (Muons[i].isTrackerMuon() && Muons[i].numberOfMatches() > 0 ) ) &&
             Muons[i].muonBestTrackType() != 2 ) {
@@ -431,7 +431,8 @@ std::vector<pat::Photon> HZZ4LHelper::goodPhotons2015(std::vector<pat::Photon> P
 
         float phoid;
         try {
-            phoid=Photons[i].photonID("mvaPhoID-Spring15-25ns-nonTrig-V2p1-wp90");
+            //phoid=Photons[i].photonID("mvaPhoID-Spring15-25ns-nonTrig-V2p1-wp90");
+            phoid=Photons[i].userFloat("PhotonMVAEstimatorRun2Spring16NonTrigV1Values");
         }
         catch(...) {
             std::cout<<"photon ID  missing!"<<std::endl;
@@ -673,7 +674,7 @@ bool HZZ4LHelper::passTight_Id_SUS(pat::Electron electron, std::string elecID, c
         if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = 0.60;
         if(fSCeta >= 1.479) cutVal = 0.17;
     }
-    if (electron.userFloat("ElectronMVAEstimatorRun2Spring15NonTrig25nsV1Values") <= cutVal ) return false;
+    if (electron.userFloat("ElectronMVAEstimatorRun2Fall17IsoV2Values") <= cutVal ) return false;
 
     bool vtxFitConversion = ConversionTools::hasMatchedConversion(reco::GsfElectron(electron), theConversions, BS.position());
     if( vtxFitConversion )  return false;
