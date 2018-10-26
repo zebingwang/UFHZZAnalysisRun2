@@ -1,3 +1,5 @@
+import cjson
+import json
 from WMCore.Configuration import Configuration
 from CRABClient.UserUtilities import config, getUsernameFromSiteDB
 
@@ -24,8 +26,9 @@ config.JobType.maxMemoryMB = 2500
 config.section_('Data')
 config.Data.inputDBS = 'https://cmsweb.cern.ch/dbs/prod/global/DBSReader/'
 config.Data.inputDataset = 'DATASETNAME'
-if ('Run2016' in 'DATASETNAME'):
-  config.Data.lumiMask = 'Run2016_ReRecoJSON.txt'
+if ('Run2018' in 'DATASETNAME'):
+  config.Data.lumiMask = 'Cert_314472-323523_13TeV_PromptReco_Collisions18_JSON.txt'
+  #config.Data.lumiMask = 'Run2016_ReRecoJSON.txt'
   config.Data.splitting = 'EventAwareLumiBased'
   config.Data.unitsPerJob = 100000
 else:
@@ -39,7 +42,7 @@ else:
   else: config.Data.unitsPerJob = 5
 
 config.Data.publication = False
-config.Data.outLFNDirBase = '/store/user/%s/UFHZZAnalysisRun2/JOBTAG/' % (getUsernameFromSiteDB())
+config.Data.outLFNDirBase = '/store/user/%s/2018data/UFHZZAnalysisRun2/JOBTAG/' % (getUsernameFromSiteDB())
 config.Data.ignoreLocality = True
 config.Data.allowNonValidInputDataset = True
 
