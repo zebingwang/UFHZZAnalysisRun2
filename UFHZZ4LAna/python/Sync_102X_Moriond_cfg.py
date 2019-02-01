@@ -31,12 +31,12 @@ myfilelist = cms.untracked.vstring(
 process.source = cms.Source("PoolSource",fileNames = myfilelist,
 #                            duplicateCheckMode = cms.untracked.string('noDuplicateCheck'),
 #                            eventsToProcess = cms.untracked.VEventRange('1:767837-1:767837','1:219504-1:219504','1:767206-1:767206')
-                            eventsToProcess = cms.untracked.VEventRange('1:66051-1:66051')
+#                            eventsToProcess = cms.untracked.VEventRange('1:448880-1:448880')
                             )
 
 process.TFileService = cms.Service("TFileService",
-                                   fileName = cms.string("Sync_102X_test.root")
-#                                   fileName = cms.string("Sync_102X.root")
+#                                   fileName = cms.string("Sync_102X_test.root")
+                                   fileName = cms.string("Sync_102X.root")
 )
 
 # clean muons by segments 

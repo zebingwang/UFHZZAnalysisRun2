@@ -248,6 +248,7 @@ private:
     // pdf weights                                                                   
     vector<float> qcdWeights;
     vector<float> nnloWeights;
+    vector<float> pdfWeights;
     int posNNPDF;
     float pdfRMSup, pdfRMSdown, pdfENVup, pdfENVdown;
     // lepton variables
@@ -731,7 +732,7 @@ UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
     hMuScaleFac = (TH2F*)fMuScalFac->Get("FINAL");
     hMuScaleFacUnc = (TH2F*)fMuScalFac->Get("ERROR");
 
-    edm::FileInPath pileup_FileInPath("UFHZZAnalysisRun2/UFHZZ4LAna/data/puWeightsMoriond18.root");
+    edm::FileInPath pileup_FileInPath("UFHZZAnalysisRun2/UFHZZ4LAna/data/pu_weights_2018.root");
     TFile *f_pileup = TFile::Open(pileup_FileInPath.fullPath().c_str());
     h_pileup = (TH1D*)f_pileup->Get("weights");
     h_pileupUp = (TH1D*)f_pileup->Get("weights_varUp");
@@ -942,7 +943,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     genWeight=1.0; pileupWeight=1.0; pileupWeightUp=1.0; pileupWeightDn=1.0; dataMCWeight=1.0; eventWeight=1.0;
     k_ggZZ=1.0; k_qqZZ_qcd_dPhi = 1.0; k_qqZZ_qcd_M = 1.0; k_qqZZ_qcd_Pt = 1.0; k_qqZZ_ewk = 1.0;
 
-    qcdWeights.clear(); nnloWeights.clear();
+    qcdWeights.clear(); nnloWeights.clear(); pdfWeights.clear();
     pdfRMSup=1.0; pdfRMSdown=1.0; pdfENVup=1.0; pdfENVdown=1.0;
 
     //lepton variables
@@ -1214,8 +1215,16 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         genWeight = (tmpWeight > 0 ? 1.0 : -1.0);
         double rms = 0.0;
 
+        //std::cout<<"tmpWeight: "<<tmpWeight<<std::endl;
+
         if(lheInfo.isValid()){
+            
             for(unsigned int i = 0; i < lheInfo->weights().size(); i++) {
+
+                tmpWeight = genEventInfo->weight();
+                tmpWeight *= lheInfo->weights()[i].wgt/lheInfo->originalXWGTUP();
+                pdfWeights.push_back(tmpWeight);
+
                 if (i<=8 or int(i)>=posNNPDF) {
                     tmpWeight = genEventInfo->weight();
                     tmpWeight *= lheInfo->weights()[i].wgt/lheInfo->originalXWGTUP();
@@ -1224,7 +1233,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 else {
                     tmpWeight = lheInfo->weights()[i].wgt;
                     tmpWeight /= lheInfo->originalXWGTUP();
-                    if (i==9) genWeight = tmpWeight;
+                    //if (i==9) genWeight = tmpWeight;
                     if (int(i)<posNNPDF) {nnloWeights.push_back(tmpWeight);}
                 }
                 // NNPDF30 variations
@@ -2107,15 +2116,15 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                     if (njets_pt30_eta4p7>=2){
 
                         mela->setProcess(TVar::HSMHiggs, TVar::MCFM, TVar::JJVBF_S);
-                        mela->computeProdP(p_JJVBF_S_SIG_ghv1_1_MCFM_JECNominal);
+                        mela->computeProdDecP(p_JJVBF_S_SIG_ghv1_1_MCFM_JECNominal);
                         mela->getConstant(pConst_JJVBF_S_SIG_ghv1_1_MCFM_JECNominal);
 
                         mela->setProcess(TVar::HSMHiggs, TVar::MCFM, TVar::Had_ZH_S);
-                        mela->computeProdP(p_HadZH_S_SIG_ghz1_1_MCFM_JECNominal);
+                        mela->computeProdDecP(p_HadZH_S_SIG_ghz1_1_MCFM_JECNominal);
                         mela->getConstant(pConst_HadZH_S_SIG_ghz1_1_MCFM_JECNominal);
 
                         mela->setProcess(TVar::HSMHiggs, TVar::MCFM, TVar::Had_WH_S);
-                        mela->computeProdP(p_HadWH_S_SIG_ghw1_1_MCFM_JECNominal);
+                        mela->computeProdDecP(p_HadWH_S_SIG_ghw1_1_MCFM_JECNominal);
                         mela->getConstant(pConst_HadWH_S_SIG_ghw1_1_MCFM_JECNominal);
 
                         mela->setProcess(TVar::HSMHiggs, TVar::JHUGen, TVar::JJVBF);
@@ -2147,23 +2156,23 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                         mela->getConstant(pConst_JJQCD_SIG_ghg2_1_JHUGen_JECNominal);
 
                         mela->setProcess(TVar::bkgZZ, TVar::MCFM, TVar::JJVBF);
-                        mela->computeProdP(p_JJVBF_BKG_MCFM_JECNominal);
+                        mela->computeProdDecP(p_JJVBF_BKG_MCFM_JECNominal);
                         mela->getConstant(pConst_JJVBF_BKG_MCFM_JECNominal);
 
                         mela->setProcess(TVar::bkgZZ, TVar::MCFM, TVar::Had_ZH);
-                        mela->computeProdP(p_HadZH_BKG_MCFM_JECNominal);
+                        mela->computeProdDecP(p_HadZH_BKG_MCFM_JECNominal);
                         mela->getConstant(pConst_HadZH_BKG_MCFM_JECNominal);
 
                         mela->setProcess(TVar::bkgZZ, TVar::MCFM, TVar::Had_WH);
-                        mela->computeProdP(p_HadWH_BKG_MCFM_JECNominal);
+                        mela->computeProdDecP(p_HadWH_BKG_MCFM_JECNominal);
                         mela->getConstant(pConst_HadWH_BKG_MCFM_JECNominal);
 
                         mela->setProcess(TVar::bkgZZ, TVar::MCFM, TVar::JJQCD);
-                        mela->computeProdP(p_JJQCD_BKG_MCFM_JECNominal);
+                        mela->computeProdDecP(p_JJQCD_BKG_MCFM_JECNominal);
                         mela->getConstant(pConst_JJQCD_BKG_MCFM_JECNominal);
 
-
-
+                        
+                        /*
                         std::cout<<"p_JJVBF_S_SIG_ghv1_1_MCFM_JECNominal "<<p_JJVBF_S_SIG_ghv1_1_MCFM_JECNominal<<std::endl;
                         std::cout<<"pConst_JJVBF_S_SIG_ghv1_1_MCFM_JECNominal "<<pConst_JJVBF_S_SIG_ghv1_1_MCFM_JECNominal<<std::endl;
                         std::cout<<"p_HadZH_S_SIG_ghz1_1_MCFM_JECNominal "<<p_HadZH_S_SIG_ghz1_1_MCFM_JECNominal<<std::endl;
@@ -2186,8 +2195,8 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                         std::cout<<"pConst_HadWH_BKG_MCFM_JECNominal "<<pConst_HadWH_BKG_MCFM_JECNominal<<std::endl;
                         std::cout<<"p_JJQCD_BKG_MCFM_JECNominal "<<p_JJQCD_BKG_MCFM_JECNominal<<std::endl;
                         std::cout<<"pConst_JJQCD_BKG_MCFM_JECNominal "<<pConst_JJQCD_BKG_MCFM_JECNominal<<std::endl;
-
-
+                        */
+                        
 
                         D_VBF = 1./(1.+ helper.getDVBF2jetsConstant(mass4l)*p_JJQCD_SIG_ghg2_1_JHUGen_JECNominal/p_JJVBF_SIG_ghv1_1_JHUGen_JECNominal);
                         D_HadWH = 1./(1.+ helper.getDWHhConstant(mass4l)*(p_HadWH_mavjj_true_JECNominal*p_JJQCD_SIG_ghg2_1_JHUGen_JECNominal)/(p_HadWH_mavjj_JECNominal*p_HadWH_SIG_ghw1_1_JHUGen_JECNominal));
@@ -2225,9 +2234,9 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                         float PA = (vbf + zh + wh)*constA;
                         float PB = (vbs + zzz + wzz + qcdzz)*constB;
 
-                        std::cout<<"DbkgVBFdecConstant: "<<DbkgVBFdecConstant<<std::endl;
-                        std::cout<<"PA: "<<PA<<std::endl;
-                        std::cout<<"PB: "<<PB<<std::endl;
+                        //std::cout<<"DbkgVBFdecConstant: "<<DbkgVBFdecConstant<<std::endl;
+                        //std::cout<<"PA: "<<PA<<std::endl;
+                        //std::cout<<"PB: "<<PB<<std::endl;
 
                         D_bkg_VBFdec =  PA/(PA+DbkgVBFdecConstant*PB);
 
@@ -3260,6 +3269,7 @@ void UFHZZ4LAna::bookPassedEventTree(TString treeName, TTree *tree)
     tree->Branch("k_qqZZ_ewk",&k_qqZZ_ewk,"k_qqZZ_ewk/F");
     tree->Branch("qcdWeights",&qcdWeights);
     tree->Branch("nnloWeights",&nnloWeights);
+    tree->Branch("pdfWeights",&pdfWeights);
     tree->Branch("pdfRMSup",&pdfRMSup,"pdfRMSup/F");
     tree->Branch("pdfRMSdown",&pdfRMSdown,"pdfRMSdown/F");
     tree->Branch("pdfENVup",&pdfENVup,"pdfENVup/F");
