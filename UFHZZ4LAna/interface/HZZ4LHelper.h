@@ -136,6 +136,9 @@ public:
     float getDWHhConstant(float ZZMass);
     float getDZHhConstant(float ZZMass);
 
+    float getDbkgVBFdecConstant(int ZZflav, float ZZMass);
+    float getDbkgVHdecConstant(int ZZflav, float ZZMass);
+
     float getDbkgkinConstant(int ZZflav, float ZZMass);
     float getDbkgConstant(int ZZflav, float ZZMass);
 
@@ -212,10 +215,16 @@ public:
     TSpline3 *DbkgkinSpline4e;
     TSpline3 *DbkgkinSpline4mu;
 
+    TSpline3 *DbkgVBFdecSpline2l2l;
+    TSpline3 *DbkgVBFdecSpline4l;
+    TSpline3 *DbkgVHdecSpline2l2l;
+    TSpline3 *DbkgVHdecSpline4l;
+
     TSpline3 *DjjVBFSpline;
     TSpline3 *DjVBFSpline;
     TSpline3 *DjjZHSpline;
     TSpline3 *DjjWHSpline;
+
 
 };
 
@@ -250,6 +259,30 @@ HZZ4LHelper::HZZ4LHelper()
     DbkgkinSpline4mu = (TSpline3*) fDbkgkinSpline4mu->Get("sp_gr_varReco_Constant_Smooth");
     fDbkgkinSpline4mu->Close();
     delete fDbkgkinSpline4mu;
+
+    edm::FileInPath DbkgVBFdecSpline2l2lfileInPath("UFHZZAnalysisRun2/UFHZZ4LAna/data/SmoothKDConstant_m4l_DbkgjjEWQCD_2l2l_JJVBFTagged_13TeV.root");
+    TFile *fDbkgVBFdecSpline2l2l = TFile::Open(DbkgVBFdecSpline2l2lfileInPath.fullPath().c_str());
+    DbkgVBFdecSpline2l2l = (TSpline3*) fDbkgVBFdecSpline2l2l->Get("sp_gr_varReco_Constant_Smooth");
+    fDbkgVBFdecSpline2l2l->Close();
+    delete fDbkgVBFdecSpline2l2l;
+
+    edm::FileInPath DbkgVBFdecSpline4lfileInPath("UFHZZAnalysisRun2/UFHZZ4LAna/data/SmoothKDConstant_m4l_DbkgjjEWQCD_4l_JJVBFTagged_13TeV.root");
+    TFile *fDbkgVBFdecSpline4l = TFile::Open(DbkgVBFdecSpline4lfileInPath.fullPath().c_str());
+    DbkgVBFdecSpline4l = (TSpline3*) fDbkgVBFdecSpline4l->Get("sp_gr_varReco_Constant_Smooth");
+    fDbkgVBFdecSpline4l->Close();
+    delete fDbkgVBFdecSpline4l;
+
+    edm::FileInPath DbkgVHdecSpline2l2lfileInPath("UFHZZAnalysisRun2/UFHZZ4LAna/data/SmoothKDConstant_m4l_DbkgjjEWQCD_2l2l_HadVHTagged_13TeV.root");
+    TFile *fDbkgVHdecSpline2l2l = TFile::Open(DbkgVHdecSpline2l2lfileInPath.fullPath().c_str());
+    DbkgVHdecSpline2l2l = (TSpline3*) fDbkgVHdecSpline2l2l->Get("sp_gr_varReco_Constant_Smooth");
+    fDbkgVHdecSpline2l2l->Close();
+    delete fDbkgVHdecSpline2l2l;
+
+    edm::FileInPath DbkgVHdecSpline4lfileInPath("UFHZZAnalysisRun2/UFHZZ4LAna/data/SmoothKDConstant_m4l_DbkgjjEWQCD_4l_HadVHTagged_13TeV.root");
+    TFile *fDbkgVHdecSpline4l = TFile::Open(DbkgVHdecSpline4lfileInPath.fullPath().c_str());
+    DbkgVHdecSpline4l = (TSpline3*) fDbkgVHdecSpline4l->Get("sp_gr_varReco_Constant_Smooth");
+    fDbkgVHdecSpline4l->Close();
+    delete fDbkgVHdecSpline4l;
 
     edm::FileInPath DjjVBFSplinefileInPath("UFHZZAnalysisRun2/UFHZZ4LAna/data/SmoothKDConstant_m4l_DjjVBF13TeV.root");
     TFile *fDjjVBFSpline = TFile::Open(DjjVBFSplinefileInPath.fullPath().c_str());
@@ -618,17 +651,17 @@ double HZZ4LHelper::getSIP3D(pat::Electron electron) {
 bool HZZ4LHelper::passTight_BDT_Id(pat::Electron electron, float mvavalue) {
     float cutVal=1000;
     float fSCeta = fabs(electron.superCluster()->eta());
-
-    if(electron.pt()<=10){ 
-        if(fSCeta < 0.8) cutVal = 0.5739521065342641; 
-        if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = 0.5504628790992929;
-        if(fSCeta >= 1.479) cutVal = 0.5924627534389098;  
+    if(electron.pt()<=10){
+        if(fSCeta < 0.8) cutVal = 1.26402092475;
+        if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = 1.17808089508;
+        if(fSCeta >= 1.479) cutVal = 1.33051972806;
     }
     else {
-        if(fSCeta < 0.8) cutVal = -0.03391387993354392; 
-        if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = -0.018451958064666783;
-        if(fSCeta >= 1.479) cutVal = -0.38565459150737535;
+        if(fSCeta < 0.8) cutVal = 2.36464785939;
+        if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = 2.07880614597;
+        if(fSCeta >= 1.479) cutVal = 1.08080644615;
     }
+
     if (mvavalue > cutVal ) { return true;}
     return false;
 }
@@ -663,18 +696,19 @@ bool HZZ4LHelper::passTight_Id_SUS(pat::Electron electron, std::string elecID, c
     if( fabs(electron.gsfTrack()->dz(vertex->position())) >= dzCut ) return false;
 
     float cutVal=1000;
-    float fSCeta = fabs(electron.eta());
+    //float fSCeta = fabs(electron.eta());
+    float fSCeta = fabs(electron.superCluster()->eta());
     if(electron.pt()<=10){
-        if(fSCeta < 0.8) cutVal = 0.87;
-        if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = 0.60;
-        if(fSCeta >= 1.479) cutVal = 0.17;
+        if(fSCeta < 0.8) cutVal = 1.26402092475;
+        if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = 1.17808089508;
+        if(fSCeta >= 1.479) cutVal = 1.33051972806;
     }
     else {
-        if(fSCeta < 0.8) cutVal = 0.87;
-        if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = 0.60;
-        if(fSCeta >= 1.479) cutVal = 0.17;
+        if(fSCeta < 0.8) cutVal = 2.36464785939;
+        if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = 2.07880614597;
+        if(fSCeta >= 1.479) cutVal = 1.08080644615;
     }
-    if (electron.userFloat("ElectronMVAEstimatorRun2Fall17IsoV2Values") <= cutVal ) return false;
+    if (electron.userFloat("ElectronMVAEstimatorRun2Fall17IsoV2RawValues") <= cutVal ) return false;
 
     bool vtxFitConversion = ConversionTools::hasMatchedConversion(reco::GsfElectron(electron), theConversions, BS.position());
     if( vtxFitConversion )  return false;
@@ -1719,6 +1753,22 @@ float HZZ4LHelper::getDbkgkinConstant(int ZZflav, float ZZMass){ // ZZflav==id1*
 
 float HZZ4LHelper::getDbkgConstant(int ZZflav, float ZZMass){
     return getDbkgkinConstant(ZZflav, ZZMass);
+}
+
+
+
+float HZZ4LHelper::getDbkgVBFdecConstant(int ZZflav, float ZZMass) { // ZZflav==id1*id2*id3*id4
+    if (abs(ZZflav)==11*11*11*11 || abs(ZZflav)==2*11*11*11*11 || abs(ZZflav)==2*11*11*2*11*11) return DbkgVBFdecSpline4l->Eval(ZZMass);
+    if (abs(ZZflav)==11*11*13*13 || abs(ZZflav)==2*11*11*13*13 || abs(ZZflav)==2*11*11*2*13*13) return DbkgVBFdecSpline2l2l->Eval(ZZMass);
+    if (abs(ZZflav)==13*13*13*13 || abs(ZZflav)==2*13*13*13*13 || abs(ZZflav)==2*13*13*2*13*13) return DbkgVBFdecSpline4l->Eval(ZZMass);
+    return 0.0;
+}
+
+float HZZ4LHelper::getDbkgVHdecConstant(int ZZflav, float ZZMass) { // ZZflav==id1*id2*id3*id4
+    if (abs(ZZflav)==11*11*11*11 || abs(ZZflav)==2*11*11*11*11 || abs(ZZflav)==2*11*11*2*11*11) return DbkgVHdecSpline4l->Eval(ZZMass);
+    if (abs(ZZflav)==11*11*13*13 || abs(ZZflav)==2*11*11*13*13 || abs(ZZflav)==2*11*11*2*13*13) return DbkgVHdecSpline2l2l->Eval(ZZMass);
+    if (abs(ZZflav)==13*13*13*13 || abs(ZZflav)==2*13*13*13*13 || abs(ZZflav)==2*13*13*2*13*13) return DbkgVHdecSpline4l->Eval(ZZMass);
+    return 0.0;
 }
 
 double HZZ4LHelper::photonPfIso03(pat::PFParticle pho, edm::Handle<pat::PackedCandidateCollection> pfcands) {

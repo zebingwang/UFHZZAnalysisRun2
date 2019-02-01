@@ -415,6 +415,7 @@ private:
     // STXS info
     int stage0cat;
     int stage1cat;
+    int stage1p1cat;
     // Fiducial Rivet
     int passedFiducialRivet;
     float GENpT4lRivet;
@@ -431,17 +432,50 @@ private:
     float D_bkg_kin, D_bkg, D_g4, D_g1g4;
 
     float p0minus_VAJHU, Dgg10_VAMCFM, pg1g4_VAJHU;
+
+    // old but working
     float phjj_VAJHU, pvbf_VAJHU;
     float pwh_hadronic_VAJHU, pzh_hadronic_VAJHU;
     float pAux_vbf_VAJHU, phj_VAJHU;
-    float p_HadWH_mavjj_JECNominal;
-    float p_HadWH_mavjj_true_JECNominal;
+
+    float p_JJVBF_S_SIG_ghv1_1_MCFM_JECNominal;
+    float p_HadZH_S_SIG_ghz1_1_MCFM_JECNominal;
+    float p_HadWH_S_SIG_ghw1_1_MCFM_JECNominal;
+    float p_JJVBF_SIG_ghv1_1_JHUGen_JECNominal;
+    float p_HadWH_SIG_ghw1_1_JHUGen_JECNominal;
+    float p_HadZH_SIG_ghz1_1_JHUGen_JECNominal;
+    float p_JJQCD_SIG_ghg2_1_JHUGen_JECNominal;
+    float p_JVBF_SIG_ghv1_1_JHUGen_JECNominal;
+    float pAux_JVBF_SIG_ghv1_1_JHUGen_JECNominal;
+    float p_JQCD_SIG_ghv1_1_JHUGen_JECNominal;
+    float p_JQCD_SIG_ghg2_1_JHUGen_JECNominal;
+
+    float p_JJVBF_BKG_MCFM_JECNominal;
+    float p_HadZH_BKG_MCFM_JECNominal;
+    float p_HadWH_BKG_MCFM_JECNominal;
+    float p_JJQCD_BKG_MCFM_JECNominal;
+
     float p_HadZH_mavjj_JECNominal;
     float p_HadZH_mavjj_true_JECNominal;
-    
+    float p_HadWH_mavjj_JECNominal;
+    float p_HadWH_mavjj_true_JECNominal;
+
+    float pConst_JJVBF_S_SIG_ghv1_1_MCFM_JECNominal;
+    float pConst_HadZH_S_SIG_ghz1_1_MCFM_JECNominal;
+    float pConst_HadWH_S_SIG_ghw1_1_MCFM_JECNominal;
+    float pConst_JJVBF_BKG_MCFM_JECNominal;
+    float pConst_HadZH_BKG_MCFM_JECNominal;
+    float pConst_HadWH_BKG_MCFM_JECNominal;
+    float pConst_JJQCD_BKG_MCFM_JECNominal;
+    float pConst_JJVBF_SIG_ghv1_1_JHUGen_JECNominal;
+    float pConst_HadWH_SIG_ghw1_1_JHUGen_JECNominal;
+    float pConst_HadZH_SIG_ghz1_1_JHUGen_JECNominal;
+    float pConst_JJQCD_SIG_ghg2_1_JHUGen_JECNominal;
+
     float D_VBF, D_VBF1j, D_HadWH, D_HadZH;
     float D_VBF_QG, D_VBF1j_QG, D_HadWH_QG, D_HadZH_QG;
- 
+    float D_bkg_VBFdec, D_bkg_VHdec;
+
     // a vector<float> for each vector<double>
     vector<float> lep_pt_float, lep_pterr_float, lep_pterrold_float;
     vector<float> lep_eta_float, lep_phi_float, lep_mass_float;
@@ -544,6 +578,7 @@ private:
     bool doFsrRecovery,bestCandMela, doMela, GENbestM4l;
     bool doPUJetID;
     int jetIDLevel;
+    bool doJER;
     bool doTriggerMatching;
     bool checkOnlySingle;
     std::vector<std::string> triggerList;
@@ -635,6 +670,7 @@ UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
     GENbestM4l(iConfig.getUntrackedParameter<bool>("GENbestM4l",false)),
     doPUJetID(iConfig.getUntrackedParameter<bool>("doPUJetID",true)),
     jetIDLevel(iConfig.getUntrackedParameter<int>("jetIDLevel",2)),
+    doJER(iConfig.getUntrackedParameter<bool>("doJER",true)),
     doTriggerMatching(iConfig.getUntrackedParameter<bool>("doTriggerMatching",!isMC)),
     checkOnlySingle(iConfig.getUntrackedParameter<bool>("checkOnlySingle",false)),
     triggerList(iConfig.getUntrackedParameter<std::vector<std::string>>("triggerList")),
@@ -872,6 +908,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         iEvent.getByToken(htxsSrc_,htxs);
         stage0cat = htxs->stage0_cat;
         stage1cat = htxs->stage1_cat_pTjet30GeV;
+        stage1p1cat = htxs->stage1p1_cat;
         if (verbose) cout<<"stage1cat "<<stage1cat<<endl;
     }
 
@@ -1064,14 +1101,41 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     me_0plus_JHU=999.0; me_qqZZ_MCFM=999.0; p0plus_m4l=999.0; bkg_m4l=999.0; D_bkg_kin=999.0; D_bkg=999.0;   
 
     p0minus_VAJHU=999.0; pg1g4_VAJHU=999.0; Dgg10_VAMCFM=999.0, D_g4=999.0; D_g1g4=999.0;
+    // OLD but working
     phjj_VAJHU=999.0; pvbf_VAJHU=999.0; pAux_vbf_VAJHU=999.0;
     pwh_hadronic_VAJHU=999.0; pwh_hadronic_VAJHU=999.0; 
     pzh_hadronic_VAJHU=999.0; pzh_hadronic_VAJHU=999.0; 
-    p_HadWH_mavjj_JECNominal=999.0; p_HadWH_mavjj_true_JECNominal=999.0;
-    p_HadZH_mavjj_JECNominal=999.0; p_HadZH_mavjj_true_JECNominal=999.0;
+
+    p_JJVBF_S_SIG_ghv1_1_MCFM_JECNominal=999.0;
+    p_HadZH_S_SIG_ghz1_1_MCFM_JECNominal=999.0;
+    p_HadWH_S_SIG_ghw1_1_MCFM_JECNominal=999.0;
+    p_JJVBF_BKG_MCFM_JECNominal=999.0;
+    p_HadZH_BKG_MCFM_JECNominal=999.0;
+    p_HadWH_BKG_MCFM_JECNominal=999.0;
+    p_JJQCD_BKG_MCFM_JECNominal=999.0;
+    p_HadZH_mavjj_JECNominal=999.0;
+    p_HadZH_mavjj_true_JECNominal=999.0;
+    p_HadWH_mavjj_JECNominal=999.0;
+    p_HadWH_mavjj_true_JECNominal=999.0;
+    pConst_JJVBF_S_SIG_ghv1_1_MCFM_JECNominal=999.0;
+    pConst_HadZH_S_SIG_ghz1_1_MCFM_JECNominal=999.0;
+    pConst_HadWH_S_SIG_ghw1_1_MCFM_JECNominal=999.0;
+    pConst_JJVBF_BKG_MCFM_JECNominal=999.0;
+    pConst_HadZH_BKG_MCFM_JECNominal=999.0;
+    pConst_HadWH_BKG_MCFM_JECNominal=999.0;
+    pConst_JJQCD_BKG_MCFM_JECNominal=999.0;
+
+    p_JJVBF_SIG_ghv1_1_JHUGen_JECNominal=999.0;
+    pConst_JJVBF_SIG_ghv1_1_JHUGen_JECNominal=999.0;
+    p_HadWH_SIG_ghw1_1_JHUGen_JECNominal=999.0;
+    pConst_HadWH_SIG_ghw1_1_JHUGen_JECNominal=999.0;
+    p_HadZH_SIG_ghz1_1_JHUGen_JECNominal=999.0;
+    pConst_HadZH_SIG_ghz1_1_JHUGen_JECNominal=999.0;
+
     D_HadWH=999.0; D_HadZH=999.0; 
     D_VBF=999.0; D_VBF1j=999.0; D_HadWH=999.0; D_HadZH=999.0;
     D_VBF_QG=999.0; D_VBF1j_QG=999.0; D_HadWH_QG=999.0; D_HadZH_QG=999.0;
+    D_bkg_VBFdec=999.0; D_bkg_VHdec=999.0;
 
     if (verbose) {cout<<"clear other variables"<<endl; }
     // Resolution
@@ -1399,9 +1463,9 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                     }
                     lep_MiniIso.push_back(helper.miniIsolation(pfCands, dynamic_cast<const reco::Candidate *>(&recoElectrons[lep_ptindex[i]]), 0.05, 0.2, 10., rhoSUS, false));
                     lep_Sip.push_back(helper.getSIP3D(recoElectrons[lep_ptindex[i]]));           
-                    lep_mva.push_back(recoElectrons[lep_ptindex[i]].userFloat("ElectronMVAEstimatorRun2Fall17IsoV2Values")); 
+                    lep_mva.push_back(recoElectrons[lep_ptindex[i]].userFloat("ElectronMVAEstimatorRun2Fall17IsoV2RawValues")); 
                     lep_ecalDriven.push_back(recoElectrons[lep_ptindex[i]].ecalDriven()); 
-                    lep_tightId.push_back(helper.passTight_BDT_Id(recoElectrons[lep_ptindex[i]],recoElectrons[lep_ptindex[i]].userFloat("ElectronMVAEstimatorRun2Fall17IsoV2Values")));           
+                    lep_tightId.push_back(helper.passTight_BDT_Id(recoElectrons[lep_ptindex[i]],recoElectrons[lep_ptindex[i]].userFloat("ElectronMVAEstimatorRun2Fall17IsoV2RawValues")));           
                     //cout<<"old "<<recoElectrons[lep_ptindex[i]].userFloat("ElectronMVAEstimatorRun2Spring15NonTrig25nsV1Values") <<" new" <<recoElectrons[lep_ptindex[i]].userFloat("ElectronMVAEstimatorRun2Spring16HZZV1Values")<<endl;
                     lep_tightIdSUS.push_back(helper.passTight_Id_SUS(recoElectrons[lep_ptindex[i]],elecID,PV,BS,theConversions));           
                     lep_tightIdHiPt.push_back(recoElectrons[lep_ptindex[i]].electronID("heepElectronID-HEEPV70"));
@@ -1637,10 +1701,12 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                         if (fsrDrOEt2>0.012) continue;
 
                         // this photon is now a good one, check if it is the best one
+                        /*
                         if ( verbose) cout<<"fsr photon cand, pt: "<<phot->pt()<<" eta: "<<phot->eta()<<" phi: "<<phot->phi()
                                           <<" isoCHPUNoPU: "<<phot->userFloat("fsrPhotonPFIsoChHadPUNoPU03pt02")
                                           <<" isoNHPhoton: "<<phot->userFloat("fsrPhotonPFIsoNHadPhoton03")
-                                          <<" photoniso: "<<photoniso<<" DrOEt2: "<< fsrDrOEt2 <<"minDrOEt2: "<<minDrOEt2<<endl;                        
+                                          <<" photoniso: "<<photoniso<<" DrOEt2: "<< fsrDrOEt2 <<"minDrOEt2: "<<minDrOEt2<<endl;                                        */
+
                         if( fsrDrOEt2 < minDrOEt2 ) {
                             selected = true;
                             selectedPhoton=(*phot);
@@ -2039,6 +2105,168 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                                          Lep3, lep_id[lep_Hindex[2]], Lep4, lep_id[lep_Hindex[3]]);
                     
                     if (njets_pt30_eta4p7>=2){
+
+                        mela->setProcess(TVar::HSMHiggs, TVar::MCFM, TVar::JJVBF_S);
+                        mela->computeProdP(p_JJVBF_S_SIG_ghv1_1_MCFM_JECNominal);
+                        mela->getConstant(pConst_JJVBF_S_SIG_ghv1_1_MCFM_JECNominal);
+
+                        mela->setProcess(TVar::HSMHiggs, TVar::MCFM, TVar::Had_ZH_S);
+                        mela->computeProdP(p_HadZH_S_SIG_ghz1_1_MCFM_JECNominal);
+                        mela->getConstant(pConst_HadZH_S_SIG_ghz1_1_MCFM_JECNominal);
+
+                        mela->setProcess(TVar::HSMHiggs, TVar::MCFM, TVar::Had_WH_S);
+                        mela->computeProdP(p_HadWH_S_SIG_ghw1_1_MCFM_JECNominal);
+                        mela->getConstant(pConst_HadWH_S_SIG_ghw1_1_MCFM_JECNominal);
+
+                        mela->setProcess(TVar::HSMHiggs, TVar::JHUGen, TVar::JJVBF);
+                        mela->computeProdP(p_JJVBF_SIG_ghv1_1_JHUGen_JECNominal);
+                        mela->getConstant(pConst_JJVBF_SIG_ghv1_1_JHUGen_JECNominal);
+
+                        mela->setProcess(TVar::HSMHiggs, TVar::JHUGen, TVar::Had_WH);
+                        mela->computeProdP(p_HadWH_SIG_ghw1_1_JHUGen_JECNominal);
+                        mela->getConstant(pConst_HadWH_SIG_ghw1_1_JHUGen_JECNominal);
+
+                        mela->setProcess(TVar::HSMHiggs, TVar::JHUGen, TVar::Had_WH);
+                        mela->computeDijetConvBW(p_HadWH_mavjj_JECNominal, false);
+
+                        mela->setProcess(TVar::HSMHiggs, TVar::JHUGen, TVar::Had_WH);
+                        mela->computeDijetConvBW(p_HadWH_mavjj_true_JECNominal, true);
+
+                        mela->setProcess(TVar::HSMHiggs, TVar::JHUGen, TVar::Had_ZH);
+                        mela->computeProdP(p_HadZH_SIG_ghz1_1_JHUGen_JECNominal);
+                        mela->getConstant(pConst_HadZH_SIG_ghz1_1_JHUGen_JECNominal);
+
+                        mela->setProcess(TVar::HSMHiggs, TVar::JHUGen, TVar::Had_ZH);
+                        mela->computeDijetConvBW(p_HadZH_mavjj_JECNominal, false);
+
+                        mela->setProcess(TVar::HSMHiggs, TVar::JHUGen, TVar::Had_ZH);
+                        mela->computeDijetConvBW(p_HadZH_mavjj_true_JECNominal, true);
+
+                        mela->setProcess(TVar::HSMHiggs, TVar::JHUGen, TVar::JJQCD);
+                        mela->computeProdP(p_JJQCD_SIG_ghg2_1_JHUGen_JECNominal);
+                        mela->getConstant(pConst_JJQCD_SIG_ghg2_1_JHUGen_JECNominal);
+
+                        mela->setProcess(TVar::bkgZZ, TVar::MCFM, TVar::JJVBF);
+                        mela->computeProdP(p_JJVBF_BKG_MCFM_JECNominal);
+                        mela->getConstant(pConst_JJVBF_BKG_MCFM_JECNominal);
+
+                        mela->setProcess(TVar::bkgZZ, TVar::MCFM, TVar::Had_ZH);
+                        mela->computeProdP(p_HadZH_BKG_MCFM_JECNominal);
+                        mela->getConstant(pConst_HadZH_BKG_MCFM_JECNominal);
+
+                        mela->setProcess(TVar::bkgZZ, TVar::MCFM, TVar::Had_WH);
+                        mela->computeProdP(p_HadWH_BKG_MCFM_JECNominal);
+                        mela->getConstant(pConst_HadWH_BKG_MCFM_JECNominal);
+
+                        mela->setProcess(TVar::bkgZZ, TVar::MCFM, TVar::JJQCD);
+                        mela->computeProdP(p_JJQCD_BKG_MCFM_JECNominal);
+                        mela->getConstant(pConst_JJQCD_BKG_MCFM_JECNominal);
+
+
+
+                        std::cout<<"p_JJVBF_S_SIG_ghv1_1_MCFM_JECNominal "<<p_JJVBF_S_SIG_ghv1_1_MCFM_JECNominal<<std::endl;
+                        std::cout<<"pConst_JJVBF_S_SIG_ghv1_1_MCFM_JECNominal "<<pConst_JJVBF_S_SIG_ghv1_1_MCFM_JECNominal<<std::endl;
+                        std::cout<<"p_HadZH_S_SIG_ghz1_1_MCFM_JECNominal "<<p_HadZH_S_SIG_ghz1_1_MCFM_JECNominal<<std::endl;
+                        std::cout<<"pConst_HadZH_S_SIG_ghz1_1_MCFM_JECNominal "<<pConst_HadZH_S_SIG_ghz1_1_MCFM_JECNominal<<std::endl;
+                        std::cout<<"p_HadWH_S_SIG_ghw1_1_MCFM_JECNominal "<<p_HadWH_S_SIG_ghw1_1_MCFM_JECNominal<<std::endl;
+                        std::cout<<"pConst_HadWH_S_SIG_ghw1_1_MCFM_JECNominal "<<pConst_HadWH_S_SIG_ghw1_1_MCFM_JECNominal<<std::endl;
+                        std::cout<<"p_JJVBF_SIG_ghv1_1_JHUGen_JECNominal "<<p_JJVBF_SIG_ghv1_1_JHUGen_JECNominal<<std::endl;
+                        std::cout<<"pConst_JJVBF_SIG_ghv1_1_JHUGen_JECNominal "<<pConst_JJVBF_SIG_ghv1_1_JHUGen_JECNominal<<std::endl;
+                        std::cout<<"p_HadWH_SIG_ghw1_1_JHUGen_JECNominal "<<p_HadWH_SIG_ghw1_1_JHUGen_JECNominal<<std::endl;
+                        std::cout<<"pConst_HadWH_SIG_ghw1_1_JHUGen_JECNominal "<<pConst_HadWH_SIG_ghw1_1_JHUGen_JECNominal<<std::endl;
+                        std::cout<<"p_HadZH_SIG_ghz1_1_JHUGen_JECNominal "<<p_HadZH_SIG_ghz1_1_JHUGen_JECNominal<<std::endl;
+                        std::cout<<"pConst_HadZH_SIG_ghz1_1_JHUGen_JECNominal "<<pConst_HadZH_SIG_ghz1_1_JHUGen_JECNominal<<std::endl;
+                        std::cout<<"p_JJQCD_SIG_ghg2_1_JHUGen_JECNominal "<<p_JJQCD_SIG_ghg2_1_JHUGen_JECNominal<<std::endl;
+                        std::cout<<"pConst_JJQCD_SIG_ghg2_1_JHUGen_JECNominal "<<pConst_JJQCD_SIG_ghg2_1_JHUGen_JECNominal<<std::endl;
+                        std::cout<<"p_JJVBF_BKG_MCFM_JECNominal "<<p_JJVBF_BKG_MCFM_JECNominal<<std::endl;
+                        std::cout<<"pConst_JJVBF_BKG_MCFM_JECNominal "<<pConst_JJVBF_BKG_MCFM_JECNominal<<std::endl;
+                        std::cout<<"p_HadZH_BKG_MCFM_JECNominal "<<p_HadZH_BKG_MCFM_JECNominal<<std::endl;
+                        std::cout<<"pConst_HadZH_BKG_MCFM_JECNominal "<<pConst_HadZH_BKG_MCFM_JECNominal<<std::endl;
+                        std::cout<<"p_HadWH_BKG_MCFM_JECNominal "<<p_HadWH_BKG_MCFM_JECNominal<<std::endl;
+                        std::cout<<"pConst_HadWH_BKG_MCFM_JECNominal "<<pConst_HadWH_BKG_MCFM_JECNominal<<std::endl;
+                        std::cout<<"p_JJQCD_BKG_MCFM_JECNominal "<<p_JJQCD_BKG_MCFM_JECNominal<<std::endl;
+                        std::cout<<"pConst_JJQCD_BKG_MCFM_JECNominal "<<pConst_JJQCD_BKG_MCFM_JECNominal<<std::endl;
+
+
+
+                        D_VBF = 1./(1.+ helper.getDVBF2jetsConstant(mass4l)*p_JJQCD_SIG_ghg2_1_JHUGen_JECNominal/p_JJVBF_SIG_ghv1_1_JHUGen_JECNominal);
+                        D_HadWH = 1./(1.+ helper.getDWHhConstant(mass4l)*(p_HadWH_mavjj_true_JECNominal*p_JJQCD_SIG_ghg2_1_JHUGen_JECNominal)/(p_HadWH_mavjj_JECNominal*p_HadWH_SIG_ghw1_1_JHUGen_JECNominal));
+                        D_HadZH =  1./(1.+ helper.getDZHhConstant(mass4l)*(p_HadZH_mavjj_true_JECNominal*p_JJQCD_SIG_ghg2_1_JHUGen_JECNominal)/(p_HadZH_mavjj_JECNominal*p_HadZH_SIG_ghz1_1_JHUGen_JECNominal));
+
+                        
+                        //D_bkg_VBFdec
+                        float DbkgVBFdecConstant = helper.getDbkgVBFdecConstant(idL1*idL2*idL3*idL3,mass4l);
+
+                        float vbf = p_JJVBF_S_SIG_ghv1_1_MCFM_JECNominal/pConst_JJVBF_S_SIG_ghv1_1_MCFM_JECNominal;
+                        float zh = p_HadZH_S_SIG_ghz1_1_MCFM_JECNominal/pConst_HadZH_S_SIG_ghz1_1_MCFM_JECNominal;
+                        float wh = p_HadWH_S_SIG_ghw1_1_MCFM_JECNominal/pConst_HadWH_S_SIG_ghw1_1_MCFM_JECNominal;
+                        float constA = 1./(1./pConst_JJVBF_S_SIG_ghv1_1_MCFM_JECNominal+1./pConst_HadZH_S_SIG_ghz1_1_MCFM_JECNominal+1./pConst_HadWH_S_SIG_ghw1_1_MCFM_JECNominal);
+
+                        float vbs = p_JJVBF_BKG_MCFM_JECNominal/pConst_JJVBF_BKG_MCFM_JECNominal;
+                        float zzz = p_HadZH_BKG_MCFM_JECNominal/pConst_HadZH_BKG_MCFM_JECNominal;
+                        float wzz = p_HadWH_BKG_MCFM_JECNominal/pConst_HadWH_BKG_MCFM_JECNominal;
+                        float qcdzz = p_JJQCD_BKG_MCFM_JECNominal/pConst_JJQCD_BKG_MCFM_JECNominal;
+                        float constB = 1./(1./pConst_JJVBF_BKG_MCFM_JECNominal+1./pConst_HadZH_BKG_MCFM_JECNominal+1./pConst_HadWH_BKG_MCFM_JECNominal+1./pConst_JJQCD_BKG_MCFM_JECNominal);
+
+                        const float scale_Pmjj_vb=1;
+                        float scale_Pmjj_z = p_HadZH_mavjj_JECNominal/p_HadZH_mavjj_true_JECNominal;
+                        float scale_Pmjj_w = p_HadWH_mavjj_JECNominal/p_HadWH_mavjj_true_JECNominal;
+
+                        vbf *= scale_Pmjj_vb;
+                        vbs *= scale_Pmjj_vb;
+
+                        zh *= scale_Pmjj_z;
+                        zzz *= scale_Pmjj_z;
+
+                        wh *= scale_Pmjj_w;
+                        wzz *= scale_Pmjj_w;
+
+
+                        float PA = (vbf + zh + wh)*constA;
+                        float PB = (vbs + zzz + wzz + qcdzz)*constB;
+
+                        std::cout<<"DbkgVBFdecConstant: "<<DbkgVBFdecConstant<<std::endl;
+                        std::cout<<"PA: "<<PA<<std::endl;
+                        std::cout<<"PB: "<<PB<<std::endl;
+
+                        D_bkg_VBFdec =  PA/(PA+DbkgVBFdecConstant*PB);
+
+
+                        // D_bkg_VHdec
+                        float DbkgVHdecConstant = helper.getDbkgVHdecConstant(idL1*idL2*idL3*idL3,mass4l);
+
+                        vbf = p_JJVBF_S_SIG_ghv1_1_MCFM_JECNominal/pConst_JJVBF_S_SIG_ghv1_1_MCFM_JECNominal;
+                        zh = p_HadZH_S_SIG_ghz1_1_MCFM_JECNominal/pConst_HadZH_S_SIG_ghz1_1_MCFM_JECNominal;
+                        wh = p_HadWH_S_SIG_ghw1_1_MCFM_JECNominal/pConst_HadWH_S_SIG_ghw1_1_MCFM_JECNominal;
+                        constA = 1./(1./pConst_JJVBF_S_SIG_ghv1_1_MCFM_JECNominal+1./pConst_HadZH_S_SIG_ghz1_1_MCFM_JECNominal+1./pConst_HadWH_S_SIG_ghw1_1_MCFM_JECNominal);
+
+                        vbs = p_JJVBF_BKG_MCFM_JECNominal/pConst_JJVBF_BKG_MCFM_JECNominal;
+                        zzz = p_HadZH_BKG_MCFM_JECNominal/pConst_HadZH_BKG_MCFM_JECNominal;
+                        wzz = p_HadWH_BKG_MCFM_JECNominal/pConst_HadWH_BKG_MCFM_JECNominal;
+                        qcdzz = p_JJQCD_BKG_MCFM_JECNominal/pConst_JJQCD_BKG_MCFM_JECNominal;
+                        constB = 1./(1./pConst_JJVBF_BKG_MCFM_JECNominal+1./pConst_HadZH_BKG_MCFM_JECNominal+1./pConst_HadWH_BKG_MCFM_JECNominal+1./pConst_JJQCD_BKG_MCFM_JECNominal);
+
+                        //scale_Pmjj_vb=1;
+                        scale_Pmjj_z = p_HadZH_mavjj_JECNominal/p_HadZH_mavjj_true_JECNominal;
+                        scale_Pmjj_w = p_HadWH_mavjj_JECNominal/p_HadWH_mavjj_true_JECNominal;
+
+                        vbf *= scale_Pmjj_vb;
+                        vbs *= scale_Pmjj_vb;
+
+                        zh *= scale_Pmjj_z;
+                        zzz *= scale_Pmjj_z;
+
+                        wh *= scale_Pmjj_w;
+                        wzz *= scale_Pmjj_w;
+
+
+                        PA = (vbf + zh + wh)*constA;
+                        PB = (vbs + zzz + wzz + qcdzz)*constB;
+
+                        D_bkg_VHdec = PA/(PA+DbkgVHdecConstant*PB);
+
+
+                        /* OLD BUT WORKING
                         mela->setProcess(TVar::HSMHiggs, TVar::JHUGen, TVar::JJVBF);
                         mela->computeProdP(pvbf_VAJHU, true);
                         mela->setProcess(TVar::HSMHiggs, TVar::JHUGen, TVar::JJQCD);
@@ -2064,18 +2292,34 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
                         D_HadWH =  1./(1.+ helper.getDWHhConstant(mass4l)*(p_HadWH_mavjj_true_JECNominal*phjj_VAJHU)/(p_HadWH_mavjj_JECNominal*pwh_hadronic_VAJHU));
                         D_HadZH =  1./(1.+ helper.getDZHhConstant(mass4l)*(p_HadZH_mavjj_true_JECNominal*phjj_VAJHU)/(p_HadZH_mavjj_JECNominal*pzh_hadronic_VAJHU));
+                        */
 
                     } else {
-                        D_VBF = -1.0; D_HadWH = -1.0; D_HadZH = -1.0;
+                        D_VBF = -1.0; D_HadWH = -1.0; D_HadZH = -1.0;  D_bkg_VBFdec=-1.0; D_bkg_VHdec=-1.0;
                     }
                     
                     if (njets_pt30_eta4p7==1) {
+                        
+                        mela->setProcess(TVar::HSMHiggs, TVar::JHUGen, TVar::JJVBF);
+                        mela->computeProdP(p_JVBF_SIG_ghv1_1_JHUGen_JECNominal,true);
+                        mela->getPAux(pAux_JVBF_SIG_ghv1_1_JHUGen_JECNominal);
+
                         mela->setProcess(TVar::HSMHiggs, TVar::JHUGen, TVar::JQCD);
-                        mela->computeProdP(phj_VAJHU, true);
+                        mela->computeProdP(p_JQCD_SIG_ghv1_1_JHUGen_JECNominal,true);
+
+                        D_VBF1j = 1./(1.+ helper.getDVBF1jetConstant(mass4l)*p_JQCD_SIG_ghv1_1_JHUGen_JECNominal/(p_JVBF_SIG_ghv1_1_JHUGen_JECNominal*pAux_JVBF_SIG_ghv1_1_JHUGen_JECNominal));
+
+                        /*
                         mela->setProcess(TVar::HSMHiggs, TVar::JHUGen, TVar::JJVBF);
                         mela->computeProdP(pvbf_VAJHU, true); // Un-integrated ME
                         mela->getPAux(pAux_vbf_VAJHU); // = Integrated / un-integrated
+
+                        mela->setProcess(TVar::HSMHiggs, TVar::JHUGen, TVar::JQCD);
+                        mela->computeProdP(phj_VAJHU, true);
+
                         D_VBF1j = pvbf_VAJHU*pAux_vbf_VAJHU/(pvbf_VAJHU*pAux_vbf_VAJHU+phj_VAJHU*helper.getDVBF1jetConstant(mass4l)); // VBF(1j) vs. gg->H+1j
+                        */
+
                     } else {
                         D_VBF1j = -1.0;
                     }
@@ -3343,6 +3587,7 @@ void UFHZZ4LAna::bookPassedEventTree(TString treeName, TTree *tree)
     // STXS 
     tree->Branch("stage0cat",&stage0cat,"stage0cat/I");
     tree->Branch("stage1cat",&stage1cat,"stage1cat/I");
+    tree->Branch("stage1p1cat",&stage1p1cat,"stage1p1cat/I");
     // Fiducial Rivet
     tree->Branch("passedFiducialRivet",&passedFiducialRivet,"passedFiducialRivet/I");
     tree->Branch("GENpT4lRivet",&GENpT4lRivet,"GENpT4lRivet/F");
@@ -3378,6 +3623,8 @@ void UFHZZ4LAna::bookPassedEventTree(TString treeName, TTree *tree)
     tree->Branch("D_VBF1j",&D_VBF1j,"D_VBF1j/F");
     tree->Branch("D_HadWH",&D_HadWH,"D_HadWH/F");
     tree->Branch("D_HadZH",&D_HadZH,"D_HadZH/F");
+    tree->Branch("D_bkg_VBFdec",&D_bkg_VBFdec,"D_bkg_VBFdec/F");
+    tree->Branch("D_bkg_VHdec",&D_bkg_VHdec,"D_bkg_VHdec/F");
     tree->Branch("D_VBF_QG",&D_VBF_QG,"D_VBF_QG/F");
     tree->Branch("D_VBF1j_QG",&D_VBF1j_QG,"D_VBF1j_QG/F");
     tree->Branch("D_HadWH_QG",&D_HadWH_QG,"D_HadWH_QG/F");
@@ -3454,7 +3701,7 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
 
         double jercorr = 1.0; double jercorrup = 1.0; double jercorrdn = 1.0;
         
-        if (isMC) {
+        if (isMC && doJER) {
             JME::JetParameters sf_parameters = {{JME::Binning::JetEta, goodJets[k].eta()}, {JME::Binning::Rho, muRho}};
             float factor = resolution_sf.getScaleFactor(sf_parameters);
             float factorup = resolution_sf.getScaleFactor(sf_parameters, Variation::UP);
