@@ -246,6 +246,7 @@ private:
     float genWeight, pileupWeight, pileupWeightUp, pileupWeightDn, dataMCWeight, eventWeight;
     float k_ggZZ, k_qqZZ_qcd_dPhi, k_qqZZ_qcd_M, k_qqZZ_qcd_Pt, k_qqZZ_ewk;
     // pdf weights                                                                   
+    vector<float> pdfWeights;
     vector<float> qcdWeights;
     vector<float> nnloWeights;
     int posNNPDF;
@@ -415,6 +416,7 @@ private:
     // STXS info
     int stage0cat;
     int stage1cat;
+    int stage1p1cat;
     // Fiducial Rivet
     int passedFiducialRivet;
     float GENpT4lRivet;
@@ -870,6 +872,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         iEvent.getByToken(htxsSrc_,htxs);
         stage0cat = htxs->stage0_cat;
         stage1cat = htxs->stage1_cat_pTjet30GeV;
+        stage1p1cat = htxs->stage1p1_cat;
         if (verbose) cout<<"stage1cat "<<stage1cat<<endl;
     }
 
@@ -903,7 +906,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     genWeight=1.0; pileupWeight=1.0; pileupWeightUp=1.0; pileupWeightDn=1.0; dataMCWeight=1.0; eventWeight=1.0;
     k_ggZZ=1.0; k_qqZZ_qcd_dPhi = 1.0; k_qqZZ_qcd_M = 1.0; k_qqZZ_qcd_Pt = 1.0; k_qqZZ_ewk = 1.0;
 
-    qcdWeights.clear(); nnloWeights.clear();
+    pdfWeights.clear(); qcdWeights.clear(); nnloWeights.clear();
     pdfRMSup=1.0; pdfRMSdown=1.0; pdfENVup=1.0; pdfENVdown=1.0;
 
     //lepton variables
@@ -1056,6 +1059,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     GENnjets_pt30_eta4p7=0;
     GENnjets_pt30_eta2p5=0;
     GENpt_leadingjet_pt30_eta4p7=-1.0; GENabsrapidity_leadingjet_pt30_eta4p7=-1.0; GENabsdeltarapidity_hleadingjet_pt30_eta4p7=-1.0;
+    GENpt_leadingjet_pt30_eta2p5=-1.0; 
     lheNb=0; lheNj=0; nGenStatus2bHad=0;
 
     // ME
@@ -1150,9 +1154,16 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
         if(lheInfo.isValid()){
             for(unsigned int i = 0; i < lheInfo->weights().size(); i++) {
+
+                tmpWeight = lheInfo->weights()[i].wgt;
+                tmpWeight /= lheInfo->originalXWGTUP();
+                pdfWeights.push_back(tmpWeight);
+
                 if (i<=8 or int(i)>=posNNPDF) {
+
                     tmpWeight = genEventInfo->weight();
                     tmpWeight *= lheInfo->weights()[i].wgt/lheInfo->originalXWGTUP();
+
                     if (int(i)<posNNPDF) {qcdWeights.push_back(tmpWeight);}
                 }
                 else {
@@ -1162,7 +1173,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                     if (int(i)<posNNPDF) {nnloWeights.push_back(tmpWeight);}
                 }
                 // NNPDF30 variations
-                if (int(i)>=posNNPDF && int(i)<=(posNNPDF+100)) {
+                if (int(i)>=posNNPDF && int(i)<=(posNNPDF+102)) {
                     rms += tmpWeight*tmpWeight;
                     if (tmpWeight>pdfENVup) pdfENVup=tmpWeight;
                     if (tmpWeight<pdfENVdown) pdfENVdown=tmpWeight;
@@ -1635,10 +1646,12 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                         if (fsrDrOEt2>0.012) continue;
 
                         // this photon is now a good one, check if it is the best one
+                        /*
                         if ( verbose) cout<<"fsr photon cand, pt: "<<phot->pt()<<" eta: "<<phot->eta()<<" phi: "<<phot->phi()
                                           <<" isoCHPUNoPU: "<<phot->userFloat("fsrPhotonPFIsoChHadPUNoPU03pt02")
                                           <<" isoNHPhoton: "<<phot->userFloat("fsrPhotonPFIsoNHadPhoton03")
                                           <<" photoniso: "<<photoniso<<" DrOEt2: "<< fsrDrOEt2 <<"minDrOEt2: "<<minDrOEt2<<endl;                        
+                        */
                         if( fsrDrOEt2 < minDrOEt2 ) {
                             selected = true;
                             selectedPhoton=(*phot);
@@ -2354,7 +2367,7 @@ UFHZZ4LAna::beginRun(const edm::Run& iRun, const edm::EventSetup& iSetup)
                         std::string pdf_weight_id = pdfid.substr(12,4);
                         int pdf_weightid=atoi(pdf_weight_id.c_str());
                         std::cout<<"parsed id: "<<pdf_weightid<<std::endl;
-                        if (pdf_weightid==2001) {posNNPDF=int(pos);}
+                        if (pdf_weightid==2000) {posNNPDF=int(pos);}
                         pos+=1;
                     }
                 }
@@ -3012,6 +3025,7 @@ void UFHZZ4LAna::bookPassedEventTree(TString treeName, TTree *tree)
     tree->Branch("k_qqZZ_ewk",&k_qqZZ_ewk,"k_qqZZ_ewk/F");
     tree->Branch("qcdWeights",&qcdWeights);
     tree->Branch("nnloWeights",&nnloWeights);
+    tree->Branch("pdfWeights",&pdfWeights);
     tree->Branch("pdfRMSup",&pdfRMSup,"pdfRMSup/F");
     tree->Branch("pdfRMSdown",&pdfRMSdown,"pdfRMSdown/F");
     tree->Branch("pdfENVup",&pdfENVup,"pdfENVup/F");
@@ -3339,6 +3353,7 @@ void UFHZZ4LAna::bookPassedEventTree(TString treeName, TTree *tree)
     // STXS 
     tree->Branch("stage0cat",&stage0cat,"stage0cat/I");
     tree->Branch("stage1cat",&stage1cat,"stage1cat/I");
+    tree->Branch("stage1p1cat",&stage1p1cat,"stage1p1cat/I");
     // Fiducial Rivet
     tree->Branch("passedFiducialRivet",&passedFiducialRivet,"passedFiducialRivet/I");
     tree->Branch("GENpT4lRivet",&GENpT4lRivet,"GENpT4lRivet/F");

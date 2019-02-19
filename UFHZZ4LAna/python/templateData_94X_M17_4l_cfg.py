@@ -237,21 +237,22 @@ runMetCorAndUncFromMiniAOD(process,
             )
 
 ## STXS
-#process.load("SimGeneral.HepPDTESSource.pythiapdt_cfi")
-#process.mergedGenParticles = cms.EDProducer("MergedGenParticleProducer",
-#    inputPruned = cms.InputTag("prunedGenParticles"),
-#    inputPacked = cms.InputTag("packedGenParticles"),
-#)
-#process.myGenerator = cms.EDProducer("GenParticles2HepMCConverter",
-#    genParticles = cms.InputTag("mergedGenParticles"),
-#    genEventInfo = cms.InputTag("generator"),
-#    signalParticlePdgIds = cms.vint32(25)
-#)
-#process.rivetProducerHTXS = cms.EDProducer('HTXSRivetProducer',
-#  HepMCCollection = cms.InputTag('myGenerator','unsmeared'),
-#  LHERunInfo = cms.InputTag('externalLHEProducer'),
-#  ProductionMode = cms.string('AUTO'),
-#)
+process.load("SimGeneral.HepPDTESSource.pythiapdt_cfi")
+process.mergedGenParticles = cms.EDProducer("MergedGenParticleProducer",
+    inputPruned = cms.InputTag("prunedGenParticles"),
+    inputPacked = cms.InputTag("packedGenParticles"),
+)
+process.myGenerator = cms.EDProducer("GenParticles2HepMCConverter",
+    genParticles = cms.InputTag("mergedGenParticles"),
+    genEventInfo = cms.InputTag("generator"),
+    signalParticlePdgIds = cms.vint32(25)
+)
+process.rivetProducerHTXS = cms.EDProducer('HTXSRivetProducer',
+  HepMCCollection = cms.InputTag('myGenerator','unsmeared'),
+  LHERunInfo = cms.InputTag('externalLHEProducer'),
+  ProductionMode = cms.string('AUTO'),
+)
+
 ## HZZ Fiducial from RIVET
 #process.rivetProducerHZZFid = cms.EDProducer('HZZRivetProducer',
 #  HepMCCollection = cms.InputTag('myGenerator','unsmeared'),
@@ -318,7 +319,8 @@ process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
                               verbose = cms.untracked.bool(False),              
                               skimLooseLeptons = cms.untracked.int32(4),              
                               skimTightLeptons = cms.untracked.int32(4),              
-#                              verbose = cms.untracked.bool(True)              
+#                              verbose = cms.untracked.bool(True),              
+                             bestCandMela = cms.untracked.bool(True)
                              )
 
 process.p = cms.Path(process.fsrPhotonSequence*
@@ -336,6 +338,6 @@ process.p = cms.Path(process.fsrPhotonSequence*
                      process.slimmedJetsAK8JEC*
                      process.fullPatMetSequence*
                      process.corrJets*
-#                     process.mergedGenParticles*process.myGenerator*process.rivetProducerHTXS*#process.rivetProducerHZZFid*
+                     process.mergedGenParticles*process.myGenerator*process.rivetProducerHTXS*#process.rivetProducerHZZFid*
                      process.Ana
                      )
