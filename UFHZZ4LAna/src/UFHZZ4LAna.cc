@@ -719,15 +719,16 @@ UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
     TFile *fElecScalFac = TFile::Open(elec_scalefacFileInPath.fullPath().c_str());
     hElecScaleFac = (TH2F*)fElecScalFac->Get("EGamma_SF2D");    
 
-    edm::FileInPath elec_GsfscalefacFileInPath("UFHZZAnalysisRun2/UFHZZ4LAna/data/egammaEffi.txt_EGM2D_Moriond2018v1_runBCDEF_passingRECO.root");
+    edm::FileInPath elec_GsfscalefacFileInPath("UFHZZAnalysisRun2/UFHZZ4LAna/data/Ele_Reco_2018.root");
     TFile *fElecScalFacGsf = TFile::Open(elec_GsfscalefacFileInPath.fullPath().c_str());
     hElecScaleFacGsf = (TH2F*)fElecScalFacGsf->Get("EGamma_SF2D");
 
-    edm::FileInPath elec_GsfLowETscalefacFileInPath("UFHZZAnalysisRun2/UFHZZ4LAna/data/egammaEffi.txt_EGM2D_Moriond2018v1_runBCDEF_passingRECO_lowEt.root");
+    edm::FileInPath elec_GsfLowETscalefacFileInPath("UFHZZAnalysisRun2/UFHZZ4LAna/data/Ele_Reco_LowEt_2018.root");
     TFile *fElecScalFacGsfLowET = TFile::Open(elec_GsfLowETscalefacFileInPath.fullPath().c_str());
     hElecScaleFacGsfLowET = (TH2F*)fElecScalFacGsfLowET->Get("EGamma_SF2D");
 
-    edm::FileInPath mu_scalefacFileInPath("UFHZZAnalysisRun2/UFHZZ4LAna/data/ScaleFactors_mu_Moriond2018_final.root");
+
+    edm::FileInPath mu_scalefacFileInPath("UFHZZAnalysisRun2/UFHZZ4LAna/data/final_HZZ_muon_SF_2018RunA2D_ER_1802.root");
     TFile *fMuScalFac = TFile::Open(mu_scalefacFileInPath.fullPath().c_str());
     hMuScaleFac = (TH2F*)fMuScalFac->Get("FINAL");
     hMuScaleFacUnc = (TH2F*)fMuScalFac->Get("ERROR");
@@ -1096,6 +1097,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     GENnjets_pt30_eta4p7=0;
     GENnjets_pt30_eta2p5=0;
     GENpt_leadingjet_pt30_eta4p7=-1.0; GENabsrapidity_leadingjet_pt30_eta4p7=-1.0; GENabsdeltarapidity_hleadingjet_pt30_eta4p7=-1.0;
+    GENpt_leadingjet_pt30_eta2p5=-1.0; 
     lheNb=0; lheNj=0; nGenStatus2bHad=0;
 
     // ME

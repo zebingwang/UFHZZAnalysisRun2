@@ -86,20 +86,25 @@ int HZZ4LJets::patjetID(const pat::Jet& jet)
 
   double eta = fabs(jet.eta());
 
-  if (eta<=2.7) {
+  if (eta<=2.6) {
 
-      looseJetID = ( (NHF<0.99 && NEMF<0.99 && NumConst>1) && ((eta<=2.4 && CHF>0 && CHM>0) || eta>2.4) && eta<=2.7);
-      tightJetID = ( (NHF<0.90 && NEMF<0.90 && NumConst>1) && ((eta<=2.4 && CHF>0 && CHM>0) || eta>2.4) && eta<=2.7);
+      looseJetID = ( CHM>0 && CHF>0 && NumConst>1 && NEMF<0.9 && NHF < 0.9 );
+      tightJetID = ( CHM>0 && CHF>0 && NumConst>1 && NEMF<0.9 && NHF < 0.9 );
+
+  } else if (eta>2.6 && eta<=2.7) {
+
+      looseJetID = ( CHM>0 && NEMF<0.99 && NHF < 0.9 );
+      tightJetID = ( CHM>0 && NEMF<0.99 && NHF < 0.9 );
 
   } else if (eta>2.7 && eta<=3.0) {
 
-      looseJetID = ( NEMF>0.02 && NEMF<0.99 && eta>2.7 && eta<=3.0 );
-      tightJetID = ( NEMF>0.02 && NEMF<0.99 && NumNeutralParticle>2 && eta>2.7 && eta<=3.0 );
+      looseJetID = ( NEMF>0.02 && NEMF<0.99 && NumNeutralParticle>2 );
+      tightJetID = ( NEMF>0.02 && NEMF<0.99 && NumNeutralParticle>2 );
 
   } else if (eta>3.0) {
 
-      looseJetID = ( NEMF<0.90 && NumNeutralParticle>10 && eta>3.0 );
-      tightJetID = ( NEMF<0.90 && NHF>0.02 && NumNeutralParticle>10 && eta>3.0 );
+      looseJetID = (NEMF<0.90 && NHF>0.02 && NumNeutralParticle>10 ); 
+      tightJetID = (NEMF<0.90 && NHF>0.02 && NumNeutralParticle>10 ); 
 
   }
 
