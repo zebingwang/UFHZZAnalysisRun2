@@ -41,11 +41,12 @@ process.boostedMuons = cms.EDProducer("PATMuonCleanerBySegments",
 
 
 # Kalman Muon Calibrations
-#process.calibratedMuons = cms.EDProducer("KalmanMuonCalibrationsProducer",
-#                                         muonsCollection = cms.InputTag("boostedMuons"),
-#                                         isMC = cms.bool(True),
-#                                         isSync = cms.bool(False)
-#                                         )
+process.calibratedMuons = cms.EDProducer("KalmanMuonCalibrationsProducer",
+                                         muonsCollection = cms.InputTag("boostedMuons"),
+                                         isMC = cms.bool(True),
+                                         isSync = cms.bool(False),
+                                         useRochester = cms.untracked.bool(True)
+                                         )
 
 #from EgammaAnalysis.ElectronTools.regressionWeights_cfi import regressionWeights
 #process = regressionWeights(process)
@@ -216,8 +217,8 @@ process.QGPoolDBESSource = cms.ESSource("PoolDBESSource",
 )
 process.es_prefer_qg = cms.ESPrefer('PoolDBESSource','QGPoolDBESSource')
 process.load('RecoJets.JetProducers.QGTagger_cfi')
-process.QGTagger.srcJets = cms.InputTag( 'slimmedJetsJEC' )
-#process.QGTagger.srcJets = cms.InputTag( 'slimmedJets' )
+#process.QGTagger.srcJets = cms.InputTag( 'slimmedJetsJEC' )
+process.QGTagger.srcJets = cms.InputTag( 'slimmedJets' )
 process.QGTagger.jetsLabel = cms.string('QGL_AK4PFchs')
 process.QGTagger.srcVertexCollection=cms.InputTag("offlinePrimaryVertices")
 
@@ -233,9 +234,9 @@ process.corrJets = cms.EDProducer ( "CorrJetsProducer",
 # Recompute MET
 from PhysicsTools.PatUtils.tools.runMETCorrectionsAndUncertainties import runMetCorAndUncFromMiniAOD
 
-runMetCorAndUncFromMiniAOD(process,
-            isData=False,
-            )
+#runMetCorAndUncFromMiniAOD(process,
+#            isData=False,
+#            )
 
 # STXS
 process.load("SimGeneral.HepPDTESSource.pythiapdt_cfi")
@@ -264,14 +265,14 @@ process.rivetProducerHZZFid = cms.EDProducer('HZZRivetProducer',
 process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
                               photonSrc    = cms.untracked.InputTag("slimmedPhotons"),
                               electronSrc  = cms.untracked.InputTag("electronsMVA"),
-#                              muonSrc      = cms.untracked.InputTag("calibratedMuons"),
-                              muonSrc      = cms.untracked.InputTag("boostedMuons"),
+                              muonSrc      = cms.untracked.InputTag("calibratedMuons"),
+#                              muonSrc      = cms.untracked.InputTag("boostedMuons"),
                               tauSrc      = cms.untracked.InputTag("slimmedTaus"),
-                              jetSrc       = cms.untracked.InputTag("slimmedJetsJEC"),
-#                              jetSrc       = cms.untracked.InputTag("slimmedJets"),
+#                              jetSrc       = cms.untracked.InputTag("slimmedJetsJEC"),
+                              jetSrc       = cms.untracked.InputTag("slimmedJets"),
                               mergedjetSrc = cms.untracked.InputTag("corrJets"),
-                              metSrc       = cms.untracked.InputTag("slimmedMETs","","UFHZZ4LAnalysis"),
-#                              metSrc       = cms.untracked.InputTag("slimmedMETs"),
+#                              metSrc       = cms.untracked.InputTag("slimmedMETs","","UFHZZ4LAnalysis"),
+                              metSrc       = cms.untracked.InputTag("slimmedMETs"),
                               vertexSrc    = cms.untracked.InputTag("offlineSlimmedPrimaryVertices"),
                               beamSpotSrc  = cms.untracked.InputTag("offlineBeamSpot"),
                               conversionSrc  = cms.untracked.InputTag("reducedEgamma","reducedConversions"),
@@ -296,7 +297,7 @@ process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
                               triggerSrc = cms.InputTag("TriggerResults","","HLT"),
                               triggerObjects = cms.InputTag("slimmedPatTrigger"),
                               doJER = cms.untracked.bool(False),
-                              doTriggerMatching = cms.untracked.bool(False),
+                              doTriggerMatching = cms.untracked.bool(True),
                               triggerList = cms.untracked.vstring(
                                   # Toni
                                   'HLT_Ele32_WPTight_Gsf_v', 
@@ -339,19 +340,19 @@ process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
 
 process.p = cms.Path(process.fsrPhotonSequence*
                      process.boostedMuons*
-#                     process.calibratedMuons*
+                     process.calibratedMuons*
 #                     process.regressionApplication*
 #                     process.selectedElectrons*
 #                     process.calibratedPatElectrons*
                      process.egmGsfElectronIDSequence*
                      process.electronMVAValueMapProducer*
                      process.electronsMVA*
-                     process.jetCorrFactors*
-                     process.slimmedJetsJEC*
+#                     process.jetCorrFactors*
+#                     process.slimmedJetsJEC*
                      process.QGTagger*
                      process.AK8PFJetCorrFactors*
                      process.slimmedJetsAK8JEC*
-                     process.fullPatMetSequence*
+#                     process.fullPatMetSequence*
                      process.corrJets*
                      process.mergedGenParticles*process.myGenerator*process.rivetProducerHTXS*#process.rivetProducerHZZFid*
                      process.Ana

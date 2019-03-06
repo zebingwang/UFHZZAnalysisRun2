@@ -86,6 +86,28 @@ int HZZ4LJets::patjetID(const pat::Jet& jet)
 
   double eta = fabs(jet.eta());
 
+
+  // 2017 Jet ID
+  /*
+  if (eta<=2.7) {
+
+      looseJetID = ( (NHF<0.99 && NEMF<0.99 && NumConst>1) && ((eta<=2.4 && CHF>0 && CHM>0) || eta>2.4) && eta<=2.7);
+      tightJetID = ( (NHF<0.90 && NEMF<0.90 && NumConst>1) && ((eta<=2.4 && CHF>0 && CHM>0) || eta>2.4) && eta<=2.7);
+
+  } else if (eta>2.7 && eta<=3.0) {
+
+      looseJetID = ( NEMF>0.02 && NEMF<0.99 && eta>2.7 && eta<=3.0 );
+      tightJetID = ( NEMF>0.02 && NEMF<0.99 && NumNeutralParticle>2 && eta>2.7 && eta<=3.0 );
+
+  } else if (eta>3.0) {
+
+      looseJetID = ( NEMF<0.90 && NumNeutralParticle>10 && eta>3.0 );
+      tightJetID = ( NEMF<0.90 && NHF>0.02 && NumNeutralParticle>10 && eta>3.0 );
+
+  }
+  */
+  
+  // 2018 Jet ID
   if (eta<=2.6) {
 
       looseJetID = ( CHM>0 && CHF>0 && NumConst>1 && NEMF<0.9 && NHF < 0.9 );

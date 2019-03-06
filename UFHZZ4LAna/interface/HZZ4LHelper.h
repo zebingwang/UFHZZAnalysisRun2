@@ -418,14 +418,16 @@ std::vector<pat::Electron> HZZ4LHelper::goodElectrons2015_noIso_noBdt(std::vecto
 
     for(unsigned int i = 0; i < Electrons.size(); i++) {
 
+        //std::cout<<"el pt: "<<Electrons[i].pt()<<" eta: "<<Electrons[i].eta()<<" phi: "<<Electrons[i].phi()<<std::endl;
+
         if( abs(getSIP3D(Electrons[i])) < sip3dCut) {
             if (fabs(Electrons[i].gsfTrack()->dxy(vertex->position())) < dxyCut) {
                 if (fabs(Electrons[i].gsfTrack()->dz(vertex->position())) < dzCut ) {                  
                     int misHits = Electrons[i].gsfTrack()->hitPattern().numberOfAllHits(reco::HitPattern::MISSING_INNER_HITS); // for miniAOD
-                    if (misHits < missingHitsCuts) { bestElectrons.push_back(Electrons[i]);}                  
-                }
-            }
-        }
+                    if (misHits < missingHitsCuts) { bestElectrons.push_back(Electrons[i]);} //else {std::cout<<"el with pt "<<Electrons[i].pt()<<" failed misHitsCut "<<misHits <<std::endl;}
+                }  //else {std::cout<<"el with pt "<<Electrons[i].pt()<<" failed dzCut "<<fabs(Electrons[i].gsfTrack()->dz(vertex->position())) <<std::endl;}
+            } //else {std::cout<<"el with pt "<<Electrons[i].pt()<<" failed dxyCut "<<fabs(Electrons[i].gsfTrack()->dxy(vertex->position())) <<std::endl;}
+        } //else {std::cout<<"el with pt "<<Electrons[i].pt()<<" failed sip3dcut "<<abs(getSIP3D(Electrons[i]))<<std::endl;}
     }
   
     return bestElectrons;
@@ -1675,9 +1677,13 @@ float HZZ4LHelper::kfactor_qqZZ_qcd_Pt(float GENpTZZ, int finalState)
 
 float HZZ4LHelper::dataMC(pat::Electron electron, TH2F* hElecScaleFac, TH2F* hElecScaleFac_Cracks, TH2F* hElecScaleFacGsf, TH2F* hElecScaleFacGsfLowET)
 {
-    float pt = std::min(electron.pt(),199.0);
+    float pt = std::min(electron.pt(),499.0);
     float sceta = electron.superCluster()->eta();
-    
+    float eta = electron.eta();
+
+    if ( eta <= 2.5 && sceta >= 2.5) sceta = 2.49;
+    else if ( eta >= -2.5 && sceta <= -2.5) sceta = -2.49;
+
     float fac=1.0;
     if (electron.isGap()) {
         fac*=hElecScaleFac_Cracks->GetBinContent(hElecScaleFac_Cracks->FindBin(sceta,pt));        

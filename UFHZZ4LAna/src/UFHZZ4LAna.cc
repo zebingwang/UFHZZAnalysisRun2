@@ -580,6 +580,8 @@ private:
     bool doPUJetID;
     int jetIDLevel;
     bool doJER;
+    bool doJEC;
+    bool doRefit;
     bool doTriggerMatching;
     bool checkOnlySingle;
     std::vector<std::string> triggerList;
@@ -672,6 +674,8 @@ UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
     doPUJetID(iConfig.getUntrackedParameter<bool>("doPUJetID",true)),
     jetIDLevel(iConfig.getUntrackedParameter<int>("jetIDLevel",2)),
     doJER(iConfig.getUntrackedParameter<bool>("doJER",true)),
+    doJEC(iConfig.getUntrackedParameter<bool>("doJEC",true)),
+    doRefit(iConfig.getUntrackedParameter<bool>("doRefit",true)),
     doTriggerMatching(iConfig.getUntrackedParameter<bool>("doTriggerMatching",!isMC)),
     checkOnlySingle(iConfig.getUntrackedParameter<bool>("checkOnlySingle",false)),
     triggerList(iConfig.getUntrackedParameter<std::vector<std::string>>("triggerList")),
@@ -711,11 +715,11 @@ UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
     mela->setCandidateDecayMode(TVar::CandidateDecay_ZZ); 
 	}
 
-    edm::FileInPath elec_scalefacFileInPathCracks("UFHZZAnalysisRun2/UFHZZ4LAna/data/egammaEffi.txt_EGM2D_Moriond2018v1_gap.root");
+    edm::FileInPath elec_scalefacFileInPathCracks("UFHZZAnalysisRun2/UFHZZ4LAna/data/egammaEffi.txt_EGM2D_Moriond2019_v1_gap.root");
     TFile *fElecScalFacCracks = TFile::Open(elec_scalefacFileInPathCracks.fullPath().c_str());
     hElecScaleFac_Cracks = (TH2F*)fElecScalFacCracks->Get("EGamma_SF2D");    
 
-    edm::FileInPath elec_scalefacFileInPath("UFHZZAnalysisRun2/UFHZZ4LAna/data/egammaEffi.txt_EGM2D_Moriond2018v1.root");
+    edm::FileInPath elec_scalefacFileInPath("UFHZZAnalysisRun2/UFHZZ4LAna/data/egammaEffi.txt_EGM2D_Moriond2019_v1.root");
     TFile *fElecScalFac = TFile::Open(elec_scalefacFileInPath.fullPath().c_str());
     hElecScaleFac = (TH2F*)fElecScalFac->Get("EGamma_SF2D");    
 
@@ -728,7 +732,7 @@ UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
     hElecScaleFacGsfLowET = (TH2F*)fElecScalFacGsfLowET->Get("EGamma_SF2D");
 
 
-    edm::FileInPath mu_scalefacFileInPath("UFHZZAnalysisRun2/UFHZZ4LAna/data/final_HZZ_muon_SF_2018RunA2D_ER_1802.root");
+    edm::FileInPath mu_scalefacFileInPath("UFHZZAnalysisRun2/UFHZZ4LAna/data/final_HZZ_muon_SF_2018RunA2D_ER_2702.root");
     TFile *fMuScalFac = TFile::Open(mu_scalefacFileInPath.fullPath().c_str());
     hMuScaleFac = (TH2F*)fMuScalFac->Get("FINAL");
     hMuScaleFacUnc = (TH2F*)fMuScalFac->Get("ERROR");
@@ -1319,7 +1323,8 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     }
     
     bool passedOnlySingle=((passedSingleEl && !passedAnyOther) || (passedSingleMu && !passedSingleEl && !passedAnyOther));
-    bool trigConditionData = ( passedTrig && (!checkOnlySingle || (checkOnlySingle && passedOnlySingle)) );
+    //bool trigConditionData = ( passedTrig && (!checkOnlySingle || (checkOnlySingle && passedOnlySingle)) );
+    bool trigConditionData = true;
     
     if (verbose) cout<<"checking PV"<<endl;       
     const reco::Vertex *PV = 0;
@@ -1480,8 +1485,8 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                     //cout<<"old "<<recoElectrons[lep_ptindex[i]].userFloat("ElectronMVAEstimatorRun2Spring15NonTrig25nsV1Values") <<" new" <<recoElectrons[lep_ptindex[i]].userFloat("ElectronMVAEstimatorRun2Spring16HZZV1Values")<<endl;
                     lep_tightIdSUS.push_back(helper.passTight_Id_SUS(recoElectrons[lep_ptindex[i]],elecID,PV,BS,theConversions));           
                     lep_tightIdHiPt.push_back(recoElectrons[lep_ptindex[i]].electronID("heepElectronID-HEEPV70"));
-                    lep_ptRatio.push_back(helper.ptRatio(recoElectrons[lep_ptindex[i]],jets,isMC));           
-                    lep_ptRel.push_back(helper.ptRel(recoElectrons[lep_ptindex[i]],jets,isMC));           
+                    lep_ptRatio.push_back(helper.ptRatio(recoElectrons[lep_ptindex[i]],jets,true)); // no L2L3 yet           
+                    lep_ptRel.push_back(helper.ptRel(recoElectrons[lep_ptindex[i]],jets,true)); // no L2L3 yet           
                     lep_dataMC.push_back(helper.dataMC(recoElectrons[lep_ptindex[i]],hElecScaleFac,hElecScaleFac_Cracks,hElecScaleFacGsf,hElecScaleFacGsfLowET));
                     lep_dataMCErr.push_back(helper.dataMCErr(recoElectrons[lep_ptindex[i]],hElecScaleFac,hElecScaleFac_Cracks));
                     lep_genindex.push_back(-1.0);
@@ -1527,8 +1532,8 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                     lep_tightId.push_back(helper.passTight_Id(recoMuons[lep_ptindex[i]],PV));         
                     lep_tightIdSUS.push_back(helper.passTight_Id_SUS(recoMuons[lep_ptindex[i]],PV));
                     lep_tightIdHiPt.push_back(recoMuons[lep_ptindex[i]].isHighPtMuon(*PV));
-                    lep_ptRatio.push_back(helper.ptRatio(recoMuons[lep_ptindex[i]],jets,isMC));           
-                    lep_ptRel.push_back(helper.ptRel(recoMuons[lep_ptindex[i]],jets,isMC));                      
+                    lep_ptRatio.push_back(helper.ptRatio(recoMuons[lep_ptindex[i]],jets,true)); // no L2L3 yet           
+                    lep_ptRel.push_back(helper.ptRel(recoMuons[lep_ptindex[i]],jets,true)); // no L2L3 yet       
                     lep_dataMC.push_back(helper.dataMC(recoMuons[lep_ptindex[i]],hMuScaleFac));
                     lep_dataMCErr.push_back(helper.dataMCErr(recoMuons[lep_ptindex[i]],hMuScaleFacUnc));
                     lep_genindex.push_back(-1.0);
@@ -1832,9 +1837,14 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                     //JetID ID
                     if (verbose) cout<<"checking jetid..."<<endl;
                     float jpumva=0.;
-                    bool passPU = bool(jet.userInt("pileupJetId:fullId") & (1 << 0));
-
-                    jpumva=jet.userFloat("pileupJetId:fullDiscriminant");
+                    bool passPU;
+                    if (doJEC) {
+                        passPU = bool(jet.userInt("pileupJetIdUpdated:fullId") & (1 << 0));
+                        jpumva=jet.userFloat("pileupJetIdUpdated:fullDiscriminant");
+                    } else {
+                        passPU = bool(jet.userInt("pileupJetId:fullId") & (1 << 0));
+                        jpumva=jet.userFloat("pileupJetId:fullDiscriminant");
+                    }
                     if (verbose) cout<< " jet pu mva  "<<jpumva <<endl;
                     /*
                     if(jet.pt()>20){
@@ -2026,13 +2036,16 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                     if (verbose) cout<<"Kin fitter begin with lep size "<<selectedLeptons.size()<<" fsr size "<<selectedFsrMap.size()<<endl;
                     
                     kinZfitter->Setup(selectedLeptons, selectedFsrMap);
-                    kinZfitter->KinRefitZ();
-                    mass4lREFIT = (float)kinZfitter->GetRefitM4l();
-                    mass4lErrREFIT = (float)kinZfitter->GetRefitM4lErrFullCov();
                     mass4lErr = (float)kinZfitter->GetM4lErr();
-                    massZ1REFIT = (float)kinZfitter->GetRefitMZ1(); 
-                    massZ2REFIT = (float)kinZfitter->GetRefitMZ2(); 
-                    
+
+                    if (doRefit) {
+                        kinZfitter->KinRefitZ();
+                        mass4lREFIT = (float)kinZfitter->GetRefitM4l();
+                        mass4lErrREFIT = (float)kinZfitter->GetRefitM4lErrFullCov();
+                        massZ1REFIT = (float)kinZfitter->GetRefitMZ1(); 
+                        massZ2REFIT = (float)kinZfitter->GetRefitMZ2(); 
+                    }
+
                     if (verbose) cout<<"mass4l "<<mass4l<<" mass4lREFIT "<<mass4lREFIT<<" massErr "<<mass4lErr<<" massErrREFIT "<<mass4lErrREFIT<<" massZ1REFIT "<<massZ1REFIT<<endl;
                 }
                 
@@ -3783,7 +3796,12 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
             jet_eta.push_back(jet_jer->Eta());
             jet_phi.push_back(jet_jer->Phi());
             jet_mass.push_back(jet_jer->M());
-            jet_pumva.push_back(goodJets[k].userFloat("pileupJetId:fullDiscriminant"));
+            if (doJEC) {
+                jet_pumva.push_back(goodJets[k].userFloat("pileupJetIdUpdated:fullDiscriminant"));
+            } else {
+                jet_pumva.push_back(goodJets[k].userFloat("pileupJetId:fullDiscriminant"));
+            }
+            
             jet_csvv2.push_back(goodJets[k].bDiscriminator("pfDeepCSVDiscriminatorsJetTags:BvsAll"));
 
             TRandom3 rand;

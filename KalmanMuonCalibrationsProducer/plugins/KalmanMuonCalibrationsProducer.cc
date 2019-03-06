@@ -47,7 +47,7 @@ class KalmanMuonCalibrationsProducer : public edm::EDProducer {
 
       // Kalman Muon Calibrator 
       KalmanMuonCalibrator *kalmanMuonCalibrator;
-      RoccoR  *rc;
+      RoccoR  *calibrator;
       edm::EDGetToken muonsCollection_;
       bool isMC;
       bool isSync;
@@ -83,8 +83,8 @@ KalmanMuonCalibrationsProducer::KalmanMuonCalibrationsProducer(const edm::Parame
    }
    
    std::string DATAPATH = std::getenv( "CMSSW_BASE" );
-   DATAPATH+="/src/UFHZZAnalysisRun2/KalmanMuonCalibrationsProducer/data/rcdata.2016.v3";
-   if(useRochester)rc = new RoccoR(DATAPATH); 
+   DATAPATH+="/src/UFHZZAnalysisRun2/KalmanMuonCalibrationsProducer/data/roccor.Run2.v3/RoccoR2018.txt";
+   if(useRochester) calibrator = new RoccoR(DATAPATH); 
 
    produces<std::vector<pat::Muon> >();      
 
@@ -125,13 +125,83 @@ KalmanMuonCalibrationsProducer::produce(edm::Event& iEvent, const edm::EventSetu
    for(unsigned i = 0 ; i < nbMuon; i++){
 
        pat::Muon mu = theMuons->at(i); 
-       
        double oldpt=mu.pt();
        double newpt=oldpt;
+       double scale_factor=1.0;
        double oldpterr=mu.muonBestTrack()->ptError();
        double newpterr=oldpterr;
+       double scale_error = 0.;
+       double smear_error = 0.;
+
+       TRandom3 rand;                                                                                                                                                                                                             
+       rand.SetSeed(abs(static_cast<int>(sin(mu.phi())*100000)));                                                                                          
+
+
+       double u1;
+       if (isSync) {
+           u1 = 0.5;
+       }
+       else {
+           u1 = rand.Uniform(1.);
+       }
 
        if (useRochester) {
+
+           if(mu.muonBestTrackType() == 1 && mu.pt()<200.0) {
+
+
+           int nl = mu.track()->hitPattern().trackerLayersWithMeasurement();
+
+           //std::cout<<"test0 nl "<<nl<<std::endl;
+           if(isMC && nl > 5)//Protection against muons with low number of layers, they are not used in the analysis anyway as we apply thight muon ID
+           {
+               
+               /// ====== ON MC (correction plus smearing) =====
+               auto gen_particle = mu.genParticle();       
+               if ( gen_particle != 0)
+               {                                                        
+                   //std::cout<<"test1  charge "<<mu.charge()<<" oldpt "<<oldpt<<" eta "<<mu.eta()<<" phi "<<mu.phi()<<" genpt "<<gen_particle->pt()<<std::endl;
+                   scale_factor = calibrator->kSpreadMC(mu.charge(), oldpt, mu.eta(), mu.phi(), gen_particle->pt());
+                   smear_error = calibrator->kSpreadMCerror(mu.charge(), oldpt, mu.eta(), mu.phi(), gen_particle->pt());
+               }
+               else
+               {
+                   //std::cout<<"test2  charge "<<mu.charge()<<" oldpt "<<oldpt<<" eta "<<mu.eta()<<" phi "<<mu.phi()<<std::endl;
+                   scale_factor = calibrator->kSmearMC(mu.charge(), oldpt, mu.eta(), mu.phi(), nl, u1);
+                   smear_error = calibrator->kSmearMCerror(mu.charge(), oldpt, mu.eta(), mu.phi(), nl, u1);
+                   
+               }
+
+               scale_error = calibrator->kScaleDTerror(mu.charge(), oldpt, mu.eta(), mu.phi());
+
+               newpt = oldpt*scale_factor;
+               newpterr = oldpterr*scale_factor;
+               //std::cout<<"scale_factor "<<scale_factor<<" newpt "<<newpt<<std::endl;
+
+           }
+            
+           else if(!isMC && nl > 5)
+           {
+               /// ====== ON DATA (correction only) =====
+               if(mu.pt()>2.0 && fabs(mu.eta())<2.4)
+               {
+                   scale_factor = calibrator->kScaleDT(mu.charge(), oldpt, mu.eta(), mu.phi());
+                   scale_error = calibrator->kScaleDTerror(mu.charge(), oldpt, mu.eta(), mu.phi());
+                   smear_error = calibrator->kSmearMCerror(mu.charge(), oldpt, mu.eta(), mu.phi(), nl, u1);
+               }
+               else
+               {
+                   // keep old values
+                   scale_factor = 1.;
+                   scale_error = 0.;
+                   smear_error = 0.;
+               }
+               
+               newpt = oldpt*scale_factor;
+               newpterr = oldpterr*scale_factor;
+           }       
+
+           /*
            double sf=1.0;
            if (!isMC) {
                sf = rc->kScaleDT(mu.charge(), oldpt, mu.eta(), mu.phi(), 0, 0);
@@ -221,11 +291,12 @@ KalmanMuonCalibrationsProducer::produce(edm::Event& iEvent, const edm::EventSetu
                    }
                }
            }
-
+           
            if (std::isnan(sf) || sf<0.0) sf=1.0; 
            newpt = oldpt*sf;
            newpterr = oldpterr;
-
+           */
+           }
        } else {
            if(mu.muonBestTrackType() == 1 && mu.pt()<200.0) {
                if (!isMC) {
@@ -243,6 +314,10 @@ KalmanMuonCalibrationsProducer::produce(edm::Event& iEvent, const edm::EventSetu
        }
 
        mu.addUserFloat("correctedPtError",newpterr);
+       if (useRochester) {
+           mu.addUserFloat("scale_unc", 1. + scale_error);
+           mu.addUserFloat("smear_unc", 1. + smear_error);
+       }
        patMuons->push_back(mu);    
        
        //std::cout<<"muon old pt: "<<mu.pt()<<" +/- "<<oldpterr<<", eta: "<< mu.eta()<<" new pt: "<<newpt<<" +/- "<<newpterr<<std::endl;
