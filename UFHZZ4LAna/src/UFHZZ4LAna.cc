@@ -211,7 +211,7 @@ private:
     TH1D *h_pileupDn;
     std::vector<TH1F*> h_medians;
 
-    BTagCalibrationReader* reader;
+    //BTagCalibrationReader* reader;
 
     //Saved Events Trees
     TTree *passedEventsTree_All;
@@ -745,6 +745,7 @@ UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
 
 
     //BTag calibration
+    /*
     edm::FileInPath btagfileInPath("UFHZZAnalysisRun2/UFHZZ4LAna/data/DeepCSV_94XSF_V1_B_F.csv");
 
     BTagCalibration calib("DeepCSV", btagfileInPath.fullPath().c_str());
@@ -756,6 +757,7 @@ UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
     reader->load(calib,                // calibration instance
                 BTagEntry::FLAV_B,    // btag flavour
                 "comb");               // measurement type
+    */
 
 }
 
@@ -3804,16 +3806,20 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
             
             jet_csvv2.push_back(goodJets[k].bDiscriminator("pfDeepCSVDiscriminatorsJetTags:BvsAll"));
 
+
             TRandom3 rand;
             rand.SetSeed(abs(static_cast<int>(sin(goodJets[k].phi())*100000)));
             float coin = rand.Uniform(1.); 
-            
-            double jet_scalefactor    = reader->eval_auto_bounds(
+
+            double jet_scalefactor    = 1.0;
+            /*
+            jet_scalefactor    = reader->eval_auto_bounds(
                 "central", 
                 BTagEntry::FLAV_B, 
                 goodJets[k].eta(), 
                 goodJets[k].pt()
                 ); 
+            */
 
             if (goodJets[k].bDiscriminator("pfDeepCSVDiscriminatorsJetTags:BvsAll")>BTagCut && coin>(1.0-jet_scalefactor)) {
                 jet_isbtag.push_back(1);
