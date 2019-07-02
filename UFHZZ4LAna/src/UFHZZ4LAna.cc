@@ -159,6 +159,7 @@
 #include "CondFormats/BTauObjects/interface/BTagCalibration.h"
 #include "CondTools/BTau/interface/BTagCalibrationReader.h"
 
+
 //
 // class declaration
 //
@@ -587,6 +588,9 @@ private:
     std::vector<std::string> triggerList;
     int skimLooseLeptons, skimTightLeptons;
     bool verbose;
+
+    int year;///use to choose Muon BDT
+
     // register to the TFileService
     edm::Service<TFileService> fs;
 
@@ -636,6 +640,7 @@ UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
     htxsSrc_(consumes<HTXS::HiggsClassification>(edm::InputTag("rivetProducerHTXS","HiggsClassification"))),
     //fidRivetSrc_(consumes<HZZFid::FiducialSummary>(edm::InputTag("rivetProducerHZZFid","FiducialSummary"))),
     Zmass(91.1876),
+    year(iConfig.getUntrackedParameter<int>("year",2018)),////for year put 2016,2017, or 2018 to select correct training
     mZ1Low(iConfig.getUntrackedParameter<double>("mZ1Low",40.0)),
     mZ2Low(iConfig.getUntrackedParameter<double>("mZ2Low",12.0)), // was 12
     mZ1High(iConfig.getUntrackedParameter<double>("mZ1High",120.0)),
@@ -650,7 +655,7 @@ UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
     crossSection(iConfig.getUntrackedParameter<double>("CrossSection",1.0)),
     weightEvents(iConfig.getUntrackedParameter<bool>("weightEvents",false)),
     isoCutEl(iConfig.getUntrackedParameter<double>("isoCutEl",9999.0)),
-    isoCutMu(iConfig.getUntrackedParameter<double>("isoCutMu",0.35)),
+    isoCutMu(iConfig.getUntrackedParameter<double>("isoCutMu",9999.0)),/////ios is applied to new Muon BDT //previous 0.35///Qianying
     isoConeSizeEl(iConfig.getUntrackedParameter<double>("isoConeSizeEl",0.3)),
     isoConeSizeMu(iConfig.getUntrackedParameter<double>("isoConeSizeMu",0.3)),
     sip3dCut(iConfig.getUntrackedParameter<double>("sip3dCut",4)),
@@ -1481,9 +1486,9 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                     }
                     lep_MiniIso.push_back(helper.miniIsolation(pfCands, dynamic_cast<const reco::Candidate *>(&recoElectrons[lep_ptindex[i]]), 0.05, 0.2, 10., rhoSUS, false));
                     lep_Sip.push_back(helper.getSIP3D(recoElectrons[lep_ptindex[i]]));           
-                    lep_mva.push_back(recoElectrons[lep_ptindex[i]].userFloat("ElectronMVAEstimatorRun2Fall17IsoV2RawValues")); 
+                    lep_mva.push_back(recoElectrons[lep_ptindex[i]].userFloat("ElectronMVAEstimatorRun2Autumn18IdIsoValues")); 
                     lep_ecalDriven.push_back(recoElectrons[lep_ptindex[i]].ecalDriven()); 
-                    lep_tightId.push_back(helper.passTight_BDT_Id(recoElectrons[lep_ptindex[i]],recoElectrons[lep_ptindex[i]].userFloat("ElectronMVAEstimatorRun2Fall17IsoV2RawValues")));           
+                    lep_tightId.push_back(helper.passTight_BDT_Id(recoElectrons[lep_ptindex[i]],recoElectrons[lep_ptindex[i]].userFloat("ElectronMVAEstimatorRun2Autumn18IdIsoValues")));           
                     //cout<<"old "<<recoElectrons[lep_ptindex[i]].userFloat("ElectronMVAEstimatorRun2Spring15NonTrig25nsV1Values") <<" new" <<recoElectrons[lep_ptindex[i]].userFloat("ElectronMVAEstimatorRun2Spring16HZZV1Values")<<endl;
                     lep_tightIdSUS.push_back(helper.passTight_Id_SUS(recoElectrons[lep_ptindex[i]],elecID,PV,BS,theConversions));           
                     lep_tightIdHiPt.push_back(recoElectrons[lep_ptindex[i]].electronID("heepElectronID-HEEPV70"));
@@ -1529,10 +1534,13 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                     }
                     lep_MiniIso.push_back(helper.miniIsolation(pfCands, dynamic_cast<const reco::Candidate *>(&recoMuons[lep_ptindex[i]]), 0.05, 0.2, 10., rhoSUS, false));
                     lep_Sip.push_back(helper.getSIP3D(recoMuons[lep_ptindex[i]]));            
-                    lep_mva.push_back(recoMuons[lep_ptindex[i]].isPFMuon());  
+                    //lep_mva.push_back(recoMuons[lep_ptindex[i]].isPFMuon());  
+                    lep_mva.push_back(helper.get_Muon_MVA_Value(recoMuons[lep_ptindex[i]],PV,muRho,year))
                     lep_ecalDriven.push_back(0);  
-                    lep_tightId.push_back(helper.passTight_Id(recoMuons[lep_ptindex[i]],PV));         
-                    lep_tightIdSUS.push_back(helper.passTight_Id_SUS(recoMuons[lep_ptindex[i]],PV));
+                    //lep_tightId.push_back(helper.passTight_Id(recoMuons[lep_ptindex[i]],PV));         
+                    //lep_tightIdSUS.push_back(helper.passTight_Id_SUS(recoMuons[lep_ptindex[i]],PV));
+                    lep_tightId.push_back();
+                    lep_tightIdSUS.push_back();
                     lep_tightIdHiPt.push_back(recoMuons[lep_ptindex[i]].isHighPtMuon(*PV));
                     lep_ptRatio.push_back(helper.ptRatio(recoMuons[lep_ptindex[i]],jets,true)); // no L2L3 yet           
                     lep_ptRel.push_back(helper.ptRel(recoMuons[lep_ptindex[i]],jets,true)); // no L2L3 yet       

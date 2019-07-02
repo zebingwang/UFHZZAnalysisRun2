@@ -77,7 +77,8 @@
 #include "CommonTools/CandUtils/interface/CenterOfMassBooster.h"
 #include "CommonTools/CandUtils/interface/Booster.h"
 
-
+//Muon MVA
+#include "MuonMVAReader/Reader/interface/MuonGBRForestReader.hpp"
 
 class HZZ4LHelper
 {
@@ -122,6 +123,10 @@ public:
     bool passTight_BDT_Id(pat::Electron electron, float mvavalue);
     bool passTight_Id_SUS(pat::Electron electron, std::string elecID, const reco::Vertex *&vertex, const reco::BeamSpot BS, edm::Handle< std::vector<reco::Conversion> > theConversions);
     
+    bool isTrackerHighPt(pat::Muon muon, const reco::Vertex *&vertex);
+    float get_Muon_MVA_Value(pat::Muon muon, const reco::Vertex *&vertices, double rho, int year);
+    bool passTight_BDT_Id(pat::Muon muon, const reco::Vertex *&vertices, double rho, int year);
+
     float kfactor_qqZZ_qcd_dPhi(float GENdPhiZZ, int finalState);
     float kfactor_qqZZ_qcd_Pt(float GENpTZZ, int finalState);
     float kfactor_qqZZ_qcd_M(float GENmassZZ, int finalState);
@@ -376,6 +381,7 @@ std::vector<pat::Muon> HZZ4LHelper::goodMuons2015_noIso_noPf(std::vector<pat::Mu
     using namespace std;
     vector<pat::Muon> bestMuons;
     /********** M U O N  C U T S **********/
+    sip3dCut = 99999;
     double muEtaCut = 2.4;
     double dxyCut = 0.5;
     double dzCut = 1;
@@ -654,14 +660,14 @@ bool HZZ4LHelper::passTight_BDT_Id(pat::Electron electron, float mvavalue) {
     float cutVal=1000;
     float fSCeta = fabs(electron.superCluster()->eta());
     if(electron.pt()<=10){
-        if(fSCeta < 0.8) cutVal = 1.26402092475;
-        if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = 1.17808089508;
-        if(fSCeta >= 1.479) cutVal = 1.33051972806;
+        if(fSCeta < 0.8) cutVal = 0.8955937602;
+        if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = 0.91106464032;
+        if(fSCeta >= 1.479) cutVal = 0.94067753025;
     }
     else {
-        if(fSCeta < 0.8) cutVal = 2.36464785939;
-        if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = 2.07880614597;
-        if(fSCeta >= 1.479) cutVal = 1.08080644615;
+        if(fSCeta < 0.8) cutVal = 0.04240620843;
+        if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = 0.0047338429;
+        if(fSCeta >= 1.479) cutVal = -0.60423293572;
     }
 
     if (mvavalue > cutVal ) { return true;}
@@ -678,6 +684,85 @@ bool HZZ4LHelper::passTight_Id(pat::Muon muon, const reco::Vertex *&vertex) {
                   && muon.innerTrack()->hitPattern().numberOfValidPixelHits() > 0 
                   && muon.innerTrack()->hitPattern().trackerLayersWithMeasurement() > 5) || muon.isPFMuon() );
     }
+}
+
+bool HZZ4LHelper::isTrackerHighPt(pat::Muon muon, const reco::Vertex *&vertex){
+    return ( muon.numberOfMatchedStations() > 1 
+              && (muon.muonBestTrack()->ptError()/muon.muonBestTrack()->pt()) < 0.3 
+              && std::abs(muon.muonBestTrack()->dxy(vertex->position())) < 0.2 
+              && std::abs(muon.muonBestTrack()->dz(vertex->position())) < 0.5 
+              && muon.innerTrack()->hitPattern().numberOfValidPixelHits() > 0 
+              && muon.innerTrack()->hitPattern().trackerLayersWithMeasurement() > 5 )
+}
+
+float HZZ4LHelper::get_Muon_MVA_Value(pat::Muon muon, const reco::Vertex *&vertices, double rho, int year){
+    //MVA Reader
+    MuonGBRForestReader *r;
+    r = new MuonGBRForestReader(year); //for year put 2016,2017, or 2018 to select correct training
+
+    float pt  = muon.pt();
+    float eta = muon.eta();
+    float PFChargedHadIso   = muon.pfIsolationR03().sumChargedHadronPt;
+    float PFNeutralHadIso   = muon.pfIsolationR03().sumNeutralHadronEt;
+    float PFPhotonIso       = muon.pfIsolationR03().sumPhotonEt;
+    float SIP               = getSIP3D(muon);
+
+    float dxy = 999.;
+    float dz  = 999.;
+    const Vertex* vertex = 0;
+    if (vertices->size()>0) 
+    {
+        vertex = &(vertices->front());
+        dxy = fabs(muon.muonBestTrack()->dxy(vertex->position()));
+        dz  = fabs(muon.muonBestTrack()->dz(vertex->position()));
+    }
+
+    float mu_N_hits_, mu_chi_square_, mu_N_pixel_hits_, mu_N_tracker_hits_;
+    bool is_global_mu_  = muon.isGlobalMuon();
+    if ( is_global_mu_ )
+    {
+        // Number of muon chamber hits included in the the global muon track fit
+        mu_N_hits_ = (muon.globalTrack()->hitPattern().numberOfValidMuonHits());
+        // Chi2 of the global track fit
+        mu_chi_square_ = (muon.globalTrack()->normalizedChi2());
+    }
+    else
+    {
+        mu_N_hits_     = -1;
+        mu_chi_square_ = -1;
+    }
+
+    // Number of hits in the pixel detector
+    bool valid_KF = false;
+    reco::TrackRef myTrackRef = muon.innerTrack();
+    valid_KF = (myTrackRef.isAvailable());
+    valid_KF = (myTrackRef.isNonnull());  
+      
+    if ( valid_KF )
+    {
+        // Number of pixel hits
+        mu_N_pixel_hits_ = muon.innerTrack()->hitPattern().numberOfValidPixelHits();
+
+        // Number of hits in the tracker layers
+        mu_N_tracker_hits_ = muon.innerTrack()->hitPattern().trackerLayersWithMeasurement();
+    }
+    else
+    {
+        mu_N_pixel_hits_ = -1;
+        mu_N_tracker_hits_ = -1;
+    }
+
+    float BDT = r->Get_MVA_value(pt, eta, mu_N_hits_, mu_N_pixel_hits_, mu_N_tracker_hits_, mu_chi_square_, PFPhotonIso, PFChargedHadIso, PFNeutralHadIso, rho, SIP, dxy, dz);
+    return BDT;
+}
+
+bool HZZ4LHelper::passTight_BDT_Id(pat::Muon muon, const reco::Vertex *&vertices, double rho, int year){
+    float BDT = get_Muon_MVA_Value(muon, vertices, rho, year);
+    bool isBDT = ((pt <= 10 && BDT > 2.5212153674837317) || (pt > 10  && BDT > 1.496530520574132));
+    if(isBDT)    return true;
+    else
+        return {isTrackerHighPt(muon, vertices)&&(muon.pt()>200)};
+
 }
 
 bool HZZ4LHelper::passTight_Id_SUS(pat::Muon muon, const reco::Vertex *&vertex) {
@@ -701,16 +786,16 @@ bool HZZ4LHelper::passTight_Id_SUS(pat::Electron electron, std::string elecID, c
     //float fSCeta = fabs(electron.eta());
     float fSCeta = fabs(electron.superCluster()->eta());
     if(electron.pt()<=10){
-        if(fSCeta < 0.8) cutVal = 1.26402092475;
-        if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = 1.17808089508;
-        if(fSCeta >= 1.479) cutVal = 1.33051972806;
+        if(fSCeta < 0.8) cutVal = 0.8955937602;
+        if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = 0.91106464032;
+        if(fSCeta >= 1.479) cutVal = 0.94067753025;
     }
     else {
-        if(fSCeta < 0.8) cutVal = 2.36464785939;
-        if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = 2.07880614597;
-        if(fSCeta >= 1.479) cutVal = 1.08080644615;
+        if(fSCeta < 0.8) cutVal = 0.04240620843;
+        if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = 0.0047338429;
+        if(fSCeta >= 1.479) cutVal = -0.60423293572;
     }
-    if (electron.userFloat("ElectronMVAEstimatorRun2Fall17IsoV2RawValues") <= cutVal ) return false;
+    if (electron.userFloat("ElectronMVAEstimatorRun2Autumn18IdIsoValues") <= cutVal ) return false;
 
     bool vtxFitConversion = ConversionTools::hasMatchedConversion(reco::GsfElectron(electron), theConversions, BS.position());
     if( vtxFitConversion )  return false;

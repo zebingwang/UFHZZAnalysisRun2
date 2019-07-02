@@ -48,7 +48,7 @@ process.TFileService = cms.Service("TFileService",
 
 # clean muons by segments 
 process.boostedMuons = cms.EDProducer("PATMuonCleanerBySegments",
-				     src = cms.InputTag("slimmedMuons"),
+				     src = cms.InputTag("calibratedMuons"),#### was "slimmedMuons"
 				     preselection = cms.string("track.isNonnull"),
 				     passthrough = cms.string("isGlobalMuon && numberOfMatches >= 2"),
 				     fractionOfSharedSegments = cms.double(0.499),
@@ -103,6 +103,15 @@ process.RandomNumberGeneratorService = cms.Service("RandomNumberGeneratorService
 #setupEgammaPostRecoSeq(process,
 #                       era='2018-Prompt')  
 #a sequence egammaPostRecoSeq has now been created and should be added to your path, eg process.p=cms.Path(process.egammaPostRecoSeq)
+
+##### new added
+from RecoEgamma.EgammaTools.EgammaPostRecoTools import setupEgammaPostRecoSeq
+   setupEgammaPostRecoSeq(process,
+                          runEnergyCorrections=True,
+                          runVID=True,
+                          eleIDModules=['RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Autumn18_ID_ISO_cff','RecoEgamma.ElectronIdentification.Identification.heepElectronID_HEEPV70_cff'],
+                          era='2018-Prompt')
+# and don't forget to add the producer 'process.egmGsfElectronIDSequence' to the path, i.e. process.electrons
 
 process.load("RecoEgamma.EgammaTools.calibratedEgammas_cff")
 process.calibratedPatElectrons.correctionFile = "EgammaAnalysis/ElectronTools/data/ScalesSmearings/Run2018_Step2Closure_CoarseEtaR9Gain"
@@ -313,7 +322,7 @@ process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
                               mergedjetSrc = cms.untracked.InputTag("corrJets"),
                               metSrc       = cms.untracked.InputTag("slimmedMETs","","UFHZZ4LAnalysis"),
 #                              metSrc       = cms.untracked.InputTag("slimmedMETs"),
-                              vertexSrc    = cms.untracked.InputTag("offlineSlimmedPrimaryVertices"),
+                              vertexSrc    = cms.untracked.InputTag("goodPrimaryVertices"),####"offlineSlimmedPrimaryVertices"
                               beamSpotSrc  = cms.untracked.InputTag("offlineBeamSpot"),
                               conversionSrc  = cms.untracked.InputTag("reducedEgamma","reducedConversions"),
                               isMC         = cms.untracked.bool(True),

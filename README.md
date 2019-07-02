@@ -4,15 +4,15 @@ HZZ Analyzer for CMS Run2
 
 To install:
 
-cmsrel CMSSW_10_2_5
+cmsrel CMSSW_10_3_1
 
-cd CMSSW_10_2_5/src
+cd CMSSW_10_3_1/src
 
 cmsenv
 
 git cms-init
 
-git clone -b 102X https://github.com/VBF-HZZ/UFHZZAnalysisRun2.git
+git clone -b 2018_L https://github.com/VBF-HZZ/UFHZZAnalysisRun2.git
 
 cp UFHZZAnalysisRun2/install.sh .
 
