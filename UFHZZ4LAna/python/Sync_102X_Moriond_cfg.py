@@ -64,10 +64,9 @@ process.calibratedMuons = cms.EDProducer("KalmanMuonCalibrationsProducer",
                                          useRochester = cms.untracked.bool(True)
                                          )
 
-# clean muons by segments 
-#process.boostedMuons = cms.EDProducer("PATMuonCleanerBySegments",
-#                                    src = cms.InputTag("calibratedMuons"),#### was "slimmedMuons"
-#                                    #src = cms.InputTag("slimmedMuons"),
+# Ghost cleaning
+#process.cleanedMu = cms.EDProducer("PATMuonCleanerBySegments",
+#                                    src = cms.InputTag("calibratedMuons"),
 #                                    preselection = cms.string("track.isNonnull"),
 #                                    passthrough = cms.string("isGlobalMuon && numberOfMatches >= 2"),
 #                                    fractionOfSharedSegments = cms.double(0.499),
