@@ -79,7 +79,7 @@
 
 //Muon MVA
 #include "MuonMVAReader/Reader/interface/MuonGBRForestReader.hpp"
-
+//class MuonGBRForestReader;
 class HZZ4LHelper
 {
 
@@ -755,6 +755,7 @@ float HZZ4LHelper::get_Muon_MVA_Value(pat::Muon muon, edm::Handle<reco::VertexCo
     }
 
     float BDT = r->Get_MVA_value(pt, eta, mu_N_hits_, mu_N_pixel_hits_, mu_N_tracker_hits_, mu_chi_square_, PFPhotonIso, PFChargedHadIso, PFNeutralHadIso, rho, SIP, dxy, dz);
+    delete r;
     return BDT;
 }
 
