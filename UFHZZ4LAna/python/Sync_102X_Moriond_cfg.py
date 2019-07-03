@@ -106,11 +106,11 @@ process.RandomNumberGeneratorService = cms.Service("RandomNumberGeneratorService
 
 ##### new added
 from RecoEgamma.EgammaTools.EgammaPostRecoTools import setupEgammaPostRecoSeq
-   setupEgammaPostRecoSeq(process,
-                          runEnergyCorrections=True,
-                          runVID=True,
-                          eleIDModules=['RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Autumn18_ID_ISO_cff','RecoEgamma.ElectronIdentification.Identification.heepElectronID_HEEPV70_cff'],
-                          era='2018-Prompt')
+setupEgammaPostRecoSeq(process,
+                       runEnergyCorrections=True,
+                       runVID=True,
+                       eleIDModules=['RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Autumn18_ID_ISO_cff','RecoEgamma.ElectronIdentification.Identification.heepElectronID_HEEPV70_cff'],
+                       era='2018-Prompt')
 # and don't forget to add the producer 'process.egmGsfElectronIDSequence' to the path, i.e. process.electrons
 
 process.load("RecoEgamma.EgammaTools.calibratedEgammas_cff")
