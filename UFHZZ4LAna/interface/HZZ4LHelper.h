@@ -124,7 +124,7 @@ public:
     bool passTight_Id_SUS(pat::Electron electron, std::string elecID, const reco::Vertex *&vertex, const reco::BeamSpot BS, edm::Handle< std::vector<reco::Conversion> > theConversions);
     
     bool isTrackerHighPt(pat::Muon muon, const reco::Vertex *&vertex);
-    float get_Muon_MVA_Value(pat::Muon muon, edm::Handle<reco::VertexCollection> vertices, double rho, int year);
+    float get_Muon_MVA_Value(pat::Muon muon, edm::Handle<reco::VertexCollection> vertices, double rho, int year, const reco::Vertex *&vertex);
     bool passTight_BDT_Id(pat::Muon muon, edm::Handle<reco::VertexCollection> vertices, double rho, int year, const reco::Vertex *&vertex);
     //float get_Muon_MVA_Value(pat::Muon muon, const reco::Vertex *&vertices, double rho, int year);
     //bool passTight_BDT_Id(pat::Muon muon, const reco::Vertex *&vertices, double rho, int year);
@@ -697,7 +697,7 @@ bool HZZ4LHelper::isTrackerHighPt(pat::Muon muon, const reco::Vertex *&vertex){
               && muon.innerTrack()->hitPattern().trackerLayersWithMeasurement() > 5 );
 }
 
-float HZZ4LHelper::get_Muon_MVA_Value(pat::Muon muon, edm::Handle<reco::VertexCollection> vertices, double rho, int year){
+float HZZ4LHelper::get_Muon_MVA_Value(pat::Muon muon, edm::Handle<reco::VertexCollection> vertices, double rho, int year, const reco::Vertex *&vertex){
     //MVA Reader
     MuonGBRForestReader *r;
     r = new MuonGBRForestReader(year); //for year put 2016,2017, or 2018 to select correct training
@@ -711,13 +711,15 @@ float HZZ4LHelper::get_Muon_MVA_Value(pat::Muon muon, edm::Handle<reco::VertexCo
 
     float dxy = 999.;
     float dz  = 999.;
-    const reco::Vertex* vertex = 0;
-    if (vertices->size()>0) 
-    {
-        vertex = &(vertices->front());
-        dxy = fabs(muon.muonBestTrack()->dxy(vertex->position()));
-        dz  = fabs(muon.muonBestTrack()->dz(vertex->position()));
-    }
+    //const reco::Vertex* vertex = 0;
+    //if (vertices->size()>0) 
+    //{
+    //    vertex = &(vertices->front());
+    //    dxy = fabs(muon.muonBestTrack()->dxy(vertex->position()));
+    //    dz  = fabs(muon.muonBestTrack()->dz(vertex->position()));
+    //}
+    dxy = fabs(muon.muonBestTrack()->dxy(vertex->position()));
+    dz  = fabs(muon.muonBestTrack()->dz(vertex->position()));
 
     float mu_N_hits_, mu_chi_square_, mu_N_pixel_hits_, mu_N_tracker_hits_;
     bool is_global_mu_  = muon.isGlobalMuon();
@@ -760,7 +762,7 @@ float HZZ4LHelper::get_Muon_MVA_Value(pat::Muon muon, edm::Handle<reco::VertexCo
 }
 
 bool HZZ4LHelper::passTight_BDT_Id(pat::Muon muon, edm::Handle<reco::VertexCollection> vertices, double rho, int year, const reco::Vertex *&vertex){
-    float BDT = get_Muon_MVA_Value(muon, vertices, rho, year);
+    float BDT = get_Muon_MVA_Value(muon, vertices, rho, year, vertex);
     bool isBDT = ((muon.pt() <= 10 && BDT > 2.5212153674837317) || (muon.pt() > 10  && BDT > 1.496530520574132));
     if(isBDT)    return true;
     else

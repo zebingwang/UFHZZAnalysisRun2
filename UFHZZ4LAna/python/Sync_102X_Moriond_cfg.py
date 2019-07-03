@@ -43,12 +43,13 @@ process.source = cms.Source("PoolSource",fileNames = myfilelist,
 process.TFileService = cms.Service("TFileService",
 #                                   fileName = cms.string("Sync_102X_test.root")
 #                                   fileName = cms.string("Sync_102X.root")
-                                   fileName = cms.string("Sync_102X_JER.root")
+                                   fileName = cms.string("Sync_1031_test.root")
 )
 
 # clean muons by segments 
 process.boostedMuons = cms.EDProducer("PATMuonCleanerBySegments",
-				     src = cms.InputTag("calibratedMuons"),#### was "slimmedMuons"
+#				     #src = cms.InputTag("calibratedMuons"),#### was "slimmedMuons"
+                                     src = cms.InputTag("slimmedMuons"),
 				     preselection = cms.string("track.isNonnull"),
 				     passthrough = cms.string("isGlobalMuon && numberOfMatches >= 2"),
 				     fractionOfSharedSegments = cms.double(0.499),
@@ -62,6 +63,16 @@ process.calibratedMuons = cms.EDProducer("KalmanMuonCalibrationsProducer",
                                          isSync = cms.bool(True),
                                          useRochester = cms.untracked.bool(True)
                                          )
+
+# clean muons by segments 
+#process.boostedMuons = cms.EDProducer("PATMuonCleanerBySegments",
+#                                    src = cms.InputTag("calibratedMuons"),#### was "slimmedMuons"
+#                                    #src = cms.InputTag("slimmedMuons"),
+#                                    preselection = cms.string("track.isNonnull"),
+#                                    passthrough = cms.string("isGlobalMuon && numberOfMatches >= 2"),
+#                                    fractionOfSharedSegments = cms.double(0.499),
+#                                    )
+
 
 #from EgammaAnalysis.ElectronTools.regressionWeights_cfi import regressionWeights
 #process = regressionWeights(process)
@@ -105,12 +116,12 @@ process.RandomNumberGeneratorService = cms.Service("RandomNumberGeneratorService
 #a sequence egammaPostRecoSeq has now been created and should be added to your path, eg process.p=cms.Path(process.egammaPostRecoSeq)
 
 ##### new added
-from RecoEgamma.EgammaTools.EgammaPostRecoTools import setupEgammaPostRecoSeq
-setupEgammaPostRecoSeq(process,
-                       runEnergyCorrections=True,
-                       runVID=True,
-                       eleIDModules=['RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Autumn18_ID_ISO_cff','RecoEgamma.ElectronIdentification.Identification.heepElectronID_HEEPV70_cff'],
-                       era='2018-Prompt')
+#from RecoEgamma.EgammaTools.EgammaPostRecoTools import setupEgammaPostRecoSeq
+#setupEgammaPostRecoSeq(process,
+#                       runEnergyCorrections=True,
+#                       runVID=True,
+#                       eleIDModules=['RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Autumn18_ID_ISO_cff','RecoEgamma.ElectronIdentification.Identification.heepElectronID_HEEPV70_cff'],
+#                       era='2018-Prompt')
 # and don't forget to add the producer 'process.egmGsfElectronIDSequence' to the path, i.e. process.electrons
 
 process.load("RecoEgamma.EgammaTools.calibratedEgammas_cff")
@@ -123,7 +134,8 @@ from PhysicsTools.SelectorUtils.tools.vid_id_tools import *
 dataFormat = DataFormat.MiniAOD
 switchOnVIDElectronIdProducer(process, dataFormat)
 # define which IDs we want to produce
-my_id_modules = ['RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Fall17_iso_V2_cff']
+#my_id_modules = ['RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Fall17_iso_V2_cff']
+my_id_modules = ['RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Autumn18_ID_ISO_cff']
 # add them to the VID producer
 for idmod in my_id_modules:
    setupAllVIDIdsInModule(process,idmod,setupVIDElectronSelection)
@@ -136,10 +148,12 @@ process.electronMVAVariableHelper.srcMiniAOD = cms.InputTag('calibratedPatElectr
 process.electronMVAValueMapProducer.srcMiniAOD= cms.InputTag('calibratedPatElectrons')
 
 process.electronsMVA = cms.EDProducer("SlimmedElectronMvaIDProducer",
-                                      mvaValuesMap = cms.InputTag("electronMVAValueMapProducer:ElectronMVAEstimatorRun2Fall17IsoV2RawValues"),
+                                      #mvaValuesMap = cms.InputTag("electronMVAValueMapProducer:ElectronMVAEstimatorRun2Fall17IsoV2RawValues"),
+                                      mvaValuesMap = cms.InputTag("electronMVAValueMapProducer:ElectronMVAEstimatorRun2Autumn18IdIsoValues"),
                                       electronsCollection = cms.InputTag("calibratedPatElectrons"),
 #                                      electronsCollection = cms.InputTag("slimmedElectrons"),
-                                      idname = cms.string("ElectronMVAEstimatorRun2Fall17IsoV2RawValues"),
+                                      #idname = cms.string("ElectronMVAEstimatorRun2Fall17IsoV2RawValues"),
+                                      idname = cms.string("ElectronMVAEstimatorRun2Autumn18IdIsoValues"),
 )
 
 # FSR Photons
@@ -322,7 +336,8 @@ process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
                               mergedjetSrc = cms.untracked.InputTag("corrJets"),
                               metSrc       = cms.untracked.InputTag("slimmedMETs","","UFHZZ4LAnalysis"),
 #                              metSrc       = cms.untracked.InputTag("slimmedMETs"),
-                              vertexSrc    = cms.untracked.InputTag("goodPrimaryVertices"),####"offlineSlimmedPrimaryVertices"
+#                              vertexSrc    = cms.untracked.InputTag("goodPrimaryVertices"),####"offlineSlimmedPrimaryVertices"
+                              vertexSrc    = cms.untracked.InputTag("offlineSlimmedPrimaryVertices"),
                               beamSpotSrc  = cms.untracked.InputTag("offlineBeamSpot"),
                               conversionSrc  = cms.untracked.InputTag("reducedEgamma","reducedConversions"),
                               isMC         = cms.untracked.bool(True),
