@@ -161,7 +161,7 @@ process.load('UFHZZAnalysisRun2.FSRPhotons.fsrPhotons_cff')
 import os
 # Jet Energy Corrections
 from CondCore.DBCommon.CondDBSetup_cfi import *
-era = "Autumn18_V3_MC"
+era = "Autumn18_V8_MC"
 # for HPC
 dBFile = os.environ.get('CMSSW_BASE')+"/src/UFHZZAnalysisRun2/UFHZZ4LAna/data/"+era+".db"
 # for crab
