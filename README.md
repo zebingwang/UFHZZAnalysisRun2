@@ -18,7 +18,7 @@ cp UFHZZAnalysisRun2/install.sh .
 
 ./install.sh
 
-cmsRun UFHZZAnalysisRun2/UFHZZ4LAna/python/102X_data_test.py
+cmsRun UFHZZAnalysisRun2/UFHZZ4LAna/python/Sync_102X_Moriond_cfg.py
 
 cp UFHZZAnalysisRun2/Utilities/crab/* .
 
