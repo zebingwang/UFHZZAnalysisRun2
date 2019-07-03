@@ -6,7 +6,7 @@ git cms-init
 #cd -
 #git cms-merge-topic cms-egamma:EgammaPostRecoTools_dev
 git cms-merge-topic mkovac:Electron_XGBoost_MVA_2016_and_2018_CMSSW_10_3_1
-scram b -j 8
+#scram b -j 8
 git cms-addpkg GeneratorInterface/RivetInterface
 git cms-addpkg SimDataFormats/HTXS
 cp /raid/raid7/dsperka/Run2/HZZ4l/CMSSW_10_2_5/src/SimDataFormats/HTXS/interface/HiggsTemplateCrossSections.h SimDataFormats/HTXS/interface/
@@ -14,7 +14,7 @@ cp /raid/raid7/dsperka/Run2/HZZ4l/CMSSW_10_2_5/src/GeneratorInterface/RivetInter
 cp /raid/raid7/dsperka/Run2/HZZ4l/CMSSW_10_2_5/src/GeneratorInterface/RivetInterface/plugins/HTXSRivetProducer.cc GeneratorInterface/RivetInterface/plugins/
 git clone https://github.com/mkovac/MuonMVAReader.git MuonMVAReader
 git clone https://github.com/bachtis/Analysis.git -b KaMuCa_V4 KaMuCa
-git clone -b 2018_L https://github.com/qyguo/UFHZZAnalysisRun2.git
+#git clone -b 2018_L https://github.com/qyguo/UFHZZAnalysisRun2.git
 #MELA Analytics
 git clone https://github.com/usarica/MelaAnalytics.git
 (cd MelaAnalytics; git checkout -b from-v14 v1.4)
