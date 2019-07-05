@@ -214,7 +214,7 @@ private:
     TH1D *h_pileupDn;
     std::vector<TH1F*> h_medians;
 
-    //BTagCalibrationReader* reader;
+    BTagCalibrationReader* reader;
 
     //Saved Events Trees
     TTree *passedEventsTree_All;
@@ -752,8 +752,12 @@ UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
 
 
     //BTag calibration
-    /*
-    edm::FileInPath btagfileInPath("UFHZZAnalysisRun2/UFHZZ4LAna/data/DeepCSV_94XSF_V1_B_F.csv");
+    //string csv_name_161718[3] = {"UFHZZAnalysisRun2/UFHZZ4LAna/data/DeepCSV_2016LegacySF_V1.csv", "UFHZZAnalysisRun2/UFHZZ4LAna/data/DeepCSV_94XSF_V4_B_F.csv", "UFHZZAnalysisRun2/UFHZZ4LAna/data/DeepCSV_102XSF_V1.csv"};
+    string csv_name_161718[3] = {"DeepCSV_2016LegacySF_V1.csv", "DeepCSV_94XSF_V4_B_F.csv", "DeepCSV_102XSF_V1.csv"};
+    //if(year==2018)    edm::FileInPath btagfileInPath("UFHZZAnalysisRun2/UFHZZ4LAna/data/DeepCSV_102XSF_V1.csv");
+    //if(year==2017)    edm::FileInPath btagfileInPath("UFHZZAnalysisRun2/UFHZZ4LAna/data/DeepCSV_94XSF_V4_B_F.csv");
+    //if(year==2016)    edm::FileInPath btagfileInPath("UFHZZAnalysisRun2/UFHZZ4LAna/data/DeepCSV_2016LegacySF_V1.csv");
+    edm::FileInPath btagfileInPath(("UFHZZAnalysisRun2/UFHZZ4LAna/data/"+csv_name_161718[year-2016]).c_str());
 
     BTagCalibration calib("DeepCSV", btagfileInPath.fullPath().c_str());
     reader = new BTagCalibrationReader(BTagEntry::OP_MEDIUM,  // operating point
@@ -764,7 +768,7 @@ UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
     reader->load(calib,                // calibration instance
                 BTagEntry::FLAV_B,    // btag flavour
                 "comb");               // measurement type
-    */
+   
 
 }
 
@@ -3821,14 +3825,14 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
             float coin = rand.Uniform(1.); 
 
             double jet_scalefactor    = 1.0;
-            /*
+            
             jet_scalefactor    = reader->eval_auto_bounds(
                 "central", 
                 BTagEntry::FLAV_B, 
                 goodJets[k].eta(), 
                 goodJets[k].pt()
                 ); 
-            */
+            
 
             if (goodJets[k].bDiscriminator("pfDeepCSVDiscriminatorsJetTags:BvsAll")>BTagCut && coin>(1.0-jet_scalefactor)) {
                 jet_isbtag.push_back(1);

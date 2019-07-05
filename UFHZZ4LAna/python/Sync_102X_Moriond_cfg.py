@@ -1,5 +1,4 @@
 import FWCore.ParameterSet.Config as cms
-
 from FWCore.ParameterSet.VarParsing import VarParsing
 
 process = cms.Process("UFHZZ4LAnalysis")
@@ -12,22 +11,24 @@ process.load("Configuration.StandardSequences.MagneticField_cff")
 process.load("Configuration.Geometry.GeometryRecoDB_cff")
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_condDBv2_cff')
 process.load('Configuration.StandardSequences.Services_cff')
-process.GlobalTag.globaltag='102X_upgrade2018_realistic_v15'
+#process.GlobalTag.globaltag='102X_upgrade2018_realistic_v15'
+process.GlobalTag.globaltag='102X_upgrade2018_realistic_v18'
 
 process.Timing = cms.Service("Timing",
                              summaryOnly = cms.untracked.bool(True)
                              )
 
 
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(1000) )
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
 
 myfilelist = cms.untracked.vstring(
 
-'/store/mc/RunIIAutumn18MiniAOD/GluGluHToZZTo4L_M125_13TeV_powheg2_JHUGenV7011_pythia8/MINIAODSIM/102X_upgrade2018_realistic_v15-v2/270000/E5E2F122-AA57-5248-8177-594EC87DD494.root',
+'/store/mc/RunIIAutumn18MiniAOD/ttH_HToZZ_4LFilter_M125_13TeV_powheg2_JHUGenV7011_pythia8/MINIAODSIM/102X_upgrade2018_realistic_v15-v2/60000/DCB7927B-269F-3B4B-9DA3-EFE07A37FC9E.root',
+#'/store/mc/RunIIAutumn18MiniAOD/GluGluHToZZTo4L_M125_13TeV_powheg2_JHUGenV7011_pythia8/MINIAODSIM/102X_upgrade2018_realistic_v15-v2/270000/E5E2F122-AA57-5248-8177-594EC87DD494.root',
 #'/store/mc/RunIIAutumn18MiniAOD/VBF_HToZZTo4L_M125_13TeV_powheg2_JHUGenV7011_pythia8/MINIAODSIM/102X_upgrade2018_realistic_v15-v2/90000/96A5F68D-DCB8-3D4E-8615-919D86D1534F.root',
 #'/store/mc/RunIIAutumn18MiniAOD/ttH_HToZZ_4LFilter_M125_13TeV_powheg2_JHUGenV7011_pythia8/MINIAODSIM/102X_upgrade2018_realistic_v15-v2/60000/19B6ADC2-4F62-AA4D-9488-F53CE2936856.root'
-'file:VBF_HZZ4l_Sync.root',
-'file:ttH_HZZ4l_Sync.root'
+#'file:VBF_HZZ4l_Sync.root',
+#'file:ttH_HZZ4l_Sync.root'
 )
 
 process.source = cms.Source("PoolSource",fileNames = myfilelist,
@@ -43,7 +44,7 @@ process.source = cms.Source("PoolSource",fileNames = myfilelist,
 process.TFileService = cms.Service("TFileService",
 #                                   fileName = cms.string("Sync_102X_test.root")
 #                                   fileName = cms.string("Sync_102X.root")
-                                   fileName = cms.string("Sync_1031_test.root")
+                                   fileName = cms.string("Sync_1031_ttH.root")
 )
 
 # clean muons by segments 
@@ -161,6 +162,7 @@ process.load('UFHZZAnalysisRun2.FSRPhotons.fsrPhotons_cff')
 import os
 # Jet Energy Corrections
 from CondCore.DBCommon.CondDBSetup_cfi import *
+#era = "Autumn18_V3_MC"
 era = "Autumn18_V8_MC"
 # for HPC
 dBFile = os.environ.get('CMSSW_BASE')+"/src/UFHZZAnalysisRun2/UFHZZ4LAna/data/"+era+".db"
