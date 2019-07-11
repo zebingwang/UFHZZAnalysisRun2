@@ -801,11 +801,14 @@ bool HZZ4LHelper::passTight_BDT_Id(pat::Muon muon, edm::Handle<reco::VertexColle
     float BDT = get_Muon_MVA_Value(muon, vertices, rho, year, vertex);
     bool isBDT;
     if(year==2018)
-        isBDT = ((muon.pt() <= 10 && BDT > 2.5212153674837317) || (muon.pt() > 10  && BDT > 1.496530520574132));
+        isBDT = ((muon.pt() <= 10 && BDT > 0.9506129026412962) || (muon.pt() > 10  && BDT > -0.3629065185785282));///new WP
+        //isBDT = ((muon.pt() <= 10 && BDT > 2.5212153674837317) || (muon.pt() > 10  && BDT > 1.496530520574132));
     if(year==2017)
-        isBDT = ((muon.pt() <= 10 && BDT > 2.2993430596975) || (muon.pt() > 10  && BDT > 1.4943015903718289));
+        isBDT = ((muon.pt() <= 10 && BDT > 0.883555161952972) || (muon.pt() > 10  && BDT > -0.3830992293357821));
+        //isBDT = ((muon.pt() <= 10 && BDT > 2.2993430596975) || (muon.pt() > 10  && BDT > 1.4943015903718289));
     if(year==2016)
-        isBDT = ((muon.pt() <= 10 && BDT > 2.1081259567775534) || (muon.pt() > 10  && BDT > 1.3359052488630339));
+        isBDT = ((muon.pt() <= 10 && BDT > 0.8847169876098633) || (muon.pt() > 10  && BDT > -0.19389629721641488));
+        //isBDT = ((muon.pt() <= 10 && BDT > 2.1081259567775534) || (muon.pt() > 10  && BDT > 1.3359052488630339));
     if(isBDT)    return true;
     else
         return {isTrackerHighPt(muon, vertex)&&(muon.pt()>200)};
