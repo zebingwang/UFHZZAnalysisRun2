@@ -96,7 +96,7 @@ public:
     std::vector<pat::Electron> goodElectrons2015_noIso_noBdt(std::vector<pat::Electron> Electrons, double elecPtCut, std::string elecID, const reco::Vertex *&vertex,const edm::Event& iEvent, double sip3dCut); 
     std::vector<pat::Muon> goodMuons2015_noIso_noPf(std::vector<pat::Muon> Muons, double muPtCut, const reco::Vertex *&vertex, double sip3dCut);
     std::vector<pat::Tau> goodTaus2015(std::vector<pat::Tau> Taus, double tauPtCut);
-    std::vector<pat::Photon> goodPhotons2015(std::vector<pat::Photon> Photons, double phoPtCut);
+    std::vector<pat::Photon> goodPhotons2015(std::vector<pat::Photon> Photons, double phoPtCut, int year);
 
     void cleanOverlappingLeptons(std::vector<pat::Muon> &Muons, std::vector<pat::Electron> &Electrons,const reco::Vertex *&vertex);
     void cleanOverlappingTaus(std::vector<pat::Muon> &Muons, std::vector<pat::Electron> &Electrons, std::vector<pat::Tau> &Taus, double isoCutMu, double IsoCutEl, double muRho, double elRho);
@@ -120,8 +120,9 @@ public:
 
     bool passTight_Id(pat::Muon muon, const reco::Vertex *&vertex);
     bool passTight_Id_SUS(pat::Muon muon, const reco::Vertex *&vertex);
-    bool passTight_BDT_Id(pat::Electron electron, float mvavalue);
-    bool passTight_Id_SUS(pat::Electron electron, std::string elecID, const reco::Vertex *&vertex, const reco::BeamSpot BS, edm::Handle< std::vector<reco::Conversion> > theConversions);
+    //bool passTight_BDT_Id(pat::Electron electron, float mvavalue, int year);
+    bool passTight_BDT_Id(pat::Electron electron, int year);
+    bool passTight_Id_SUS(pat::Electron electron, std::string elecID, const reco::Vertex *&vertex, const reco::BeamSpot BS, edm::Handle< std::vector<reco::Conversion> > theConversions, int year);
     
     bool isTrackerHighPt(pat::Muon muon, const reco::Vertex *&vertex);
     float get_Muon_MVA_Value(pat::Muon muon, edm::Handle<reco::VertexCollection> vertices, double rho, int year, const reco::Vertex *&vertex);
@@ -460,7 +461,7 @@ std::vector<pat::Tau> HZZ4LHelper::goodTaus2015(std::vector<pat::Tau> Taus, doub
     return bestTaus;
 }
 
-std::vector<pat::Photon> HZZ4LHelper::goodPhotons2015(std::vector<pat::Photon> Photons, double photonPtCut)
+std::vector<pat::Photon> HZZ4LHelper::goodPhotons2015(std::vector<pat::Photon> Photons, double photonPtCut, int year)
 {
     using namespace edm;
     using namespace pat;
@@ -474,8 +475,10 @@ std::vector<pat::Photon> HZZ4LHelper::goodPhotons2015(std::vector<pat::Photon> P
 
         float phoid;
         try {
-            //phoid=Photons[i].photonID("mvaPhoID-Spring15-25ns-nonTrig-V2p1-wp90");
-            phoid=Photons[i].userFloat("PhotonMVAEstimatorRun2Spring16NonTrigV1Values");
+            if(year == 2016)
+                phoid=Photons[i].photonID("mvaPhoID-Spring15-25ns-nonTrig-V2p1-wp90");
+            else
+                phoid=Photons[i].userFloat("PhotonMVAEstimatorRun2Spring16NonTrigV1Values");
         }
         catch(...) {
             std::cout<<"photon ID  missing!"<<std::endl;
@@ -658,21 +661,54 @@ double HZZ4LHelper::getSIP3D(pat::Electron electron) {
     return sip;    
 }
 
-bool HZZ4LHelper::passTight_BDT_Id(pat::Electron electron, float mvavalue) {
+bool HZZ4LHelper::passTight_BDT_Id(pat::Electron electron, int year) {
     float cutVal=1000;
+    float mvaVal=-1;
     float fSCeta = fabs(electron.superCluster()->eta());
-    if(electron.pt()<=10){
-        if(fSCeta < 0.8) cutVal = 0.8955937602;
-        if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = 0.91106464032;
-        if(fSCeta >= 1.479) cutVal = 0.94067753025;
+    if(year==2018)
+    {
+        if(electron.pt()<=10){
+            if(fSCeta < 0.8) cutVal = 0.8955937602;
+            if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = 0.91106464032;
+            if(fSCeta >= 1.479) cutVal = 0.94067753025;
+        }
+        else {
+            if(fSCeta < 0.8) cutVal = 0.04240620843;
+            if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = 0.0047338429;
+            if(fSCeta >= 1.479) cutVal = -0.60423293572;
+        }
+        mvaVal = electron.userFloat("ElectronMVAEstimatorRun2Autumn18IdIsoValues");
     }
-    else {
-        if(fSCeta < 0.8) cutVal = 0.04240620843;
-        if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = 0.0047338429;
-        if(fSCeta >= 1.479) cutVal = -0.60423293572;
+    if(year==2017)
+    {
+        if(electron.pt()<=10){
+            if(fSCeta < 0.8) cutVal = 0.85216885148;
+            if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = 0.82684550976;
+            if(fSCeta >= 1.479) cutVal = 0.86937630022;
+        }
+        else {
+            if(fSCeta < 0.8) cutVal = 0.98248928759;
+            if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = 0.96919224579;
+            if(fSCeta >= 1.479) cutVal = 0.79349796445;
+        }
+        mvaVal = electron.userFloat("ElectronMVAEstimatorRun2Fall17IsoV2Values");
     }
-
-    if (mvavalue > cutVal ) { return true;}
+    if(year==2016)
+    {
+        if(electron.pt()<=10){
+            if(fSCeta < 0.8) cutVal = 0.95034841889;
+            if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = 0.94606270058;
+            if(fSCeta >= 1.479) cutVal = 0.93872558098;
+        }
+        else {
+            if(fSCeta < 0.8) cutVal = 0.3782357877;
+            if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = 0.35871320305;
+            if(fSCeta >= 1.479) cutVal = -0.57451499543;
+        }
+        mvaVal = electron.userFloat("ElectronMVAEstimatorRun2Summer16IdIsoValues");
+    }
+    if( mvaVal > cutVal ) { return true;}
+    //if (mvavalue > cutVal ) { return true;}
     return false;
 }
 
@@ -763,7 +799,13 @@ float HZZ4LHelper::get_Muon_MVA_Value(pat::Muon muon, edm::Handle<reco::VertexCo
 
 bool HZZ4LHelper::passTight_BDT_Id(pat::Muon muon, edm::Handle<reco::VertexCollection> vertices, double rho, int year, const reco::Vertex *&vertex){
     float BDT = get_Muon_MVA_Value(muon, vertices, rho, year, vertex);
-    bool isBDT = ((muon.pt() <= 10 && BDT > 2.5212153674837317) || (muon.pt() > 10  && BDT > 1.496530520574132));
+    bool isBDT;
+    if(year==2018)
+        isBDT = ((muon.pt() <= 10 && BDT > 2.5212153674837317) || (muon.pt() > 10  && BDT > 1.496530520574132));
+    if(year==2017)
+        isBDT = ((muon.pt() <= 10 && BDT > 2.2993430596975) || (muon.pt() > 10  && BDT > 1.4943015903718289));
+    if(year==2016)
+        isBDT = ((muon.pt() <= 10 && BDT > 2.1081259567775534) || (muon.pt() > 10  && BDT > 1.3359052488630339));
     if(isBDT)    return true;
     else
         return {isTrackerHighPt(muon, vertex)&&(muon.pt()>200)};
@@ -780,7 +822,7 @@ bool HZZ4LHelper::passTight_Id_SUS(pat::Muon muon, const reco::Vertex *&vertex) 
     return true;
 }
 
-bool HZZ4LHelper::passTight_Id_SUS(pat::Electron electron, std::string elecID, const reco::Vertex *&vertex, const reco::BeamSpot BS, edm::Handle< std::vector<reco::Conversion> > theConversions) {
+bool HZZ4LHelper::passTight_Id_SUS(pat::Electron electron, std::string elecID, const reco::Vertex *&vertex, const reco::BeamSpot BS, edm::Handle< std::vector<reco::Conversion> > theConversions, int year) {
 
     double dxyCut = 0.05;
     double dzCut = 0.1;
@@ -788,19 +830,54 @@ bool HZZ4LHelper::passTight_Id_SUS(pat::Electron electron, std::string elecID, c
     if( fabs(electron.gsfTrack()->dz(vertex->position())) >= dzCut ) return false;
 
     float cutVal=1000;
+    float mvaVal=-1;
     //float fSCeta = fabs(electron.eta());
     float fSCeta = fabs(electron.superCluster()->eta());
-    if(electron.pt()<=10){
-        if(fSCeta < 0.8) cutVal = 0.8955937602;
-        if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = 0.91106464032;
-        if(fSCeta >= 1.479) cutVal = 0.94067753025;
+    if(year==2018)
+    {
+        if(electron.pt()<=10){
+            if(fSCeta < 0.8) cutVal = 0.8955937602;
+            if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = 0.91106464032;
+            if(fSCeta >= 1.479) cutVal = 0.94067753025;
+        }
+        else {
+            if(fSCeta < 0.8) cutVal = 0.04240620843;
+            if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = 0.0047338429;
+            if(fSCeta >= 1.479) cutVal = -0.60423293572;
+        }
+        mvaVal = electron.userFloat("ElectronMVAEstimatorRun2Autumn18IdIsoValues");
     }
-    else {
-        if(fSCeta < 0.8) cutVal = 0.04240620843;
-        if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = 0.0047338429;
-        if(fSCeta >= 1.479) cutVal = -0.60423293572;
+    if(year==2017)
+    {
+        if(electron.pt()<=10){
+            if(fSCeta < 0.8) cutVal = 0.85216885148;
+            if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = 0.82684550976;
+            if(fSCeta >= 1.479) cutVal = 0.86937630022;
+        }
+        else {
+            if(fSCeta < 0.8) cutVal = 0.98248928759;
+            if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = 0.96919224579;
+            if(fSCeta >= 1.479) cutVal = 0.79349796445;
+        }
+        mvaVal = electron.userFloat("ElectronMVAEstimatorRun2Fall17IsoV2Values");
     }
-    if (electron.userFloat("ElectronMVAEstimatorRun2Autumn18IdIsoValues") <= cutVal ) return false;
+    if(year==2016)
+    {
+        if(electron.pt()<=10){
+            if(fSCeta < 0.8) cutVal = 0.95034841889;
+            if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = 0.94606270058;
+            if(fSCeta >= 1.479) cutVal = 0.93872558098;
+        }
+        else {
+            if(fSCeta < 0.8) cutVal = 0.3782357877;
+            if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = 0.35871320305;
+            if(fSCeta >= 1.479) cutVal = -0.57451499543;
+        }
+        mvaVal = electron.userFloat("ElectronMVAEstimatorRun2Summer16IdIsoValues");
+    }
+
+    //if (electron.userFloat("ElectronMVAEstimatorRun2Autumn18IdIsoValues") <= cutVal ) return false;
+    if( mvaVal <= cutVal ) return false;
 
     bool vtxFitConversion = ConversionTools::hasMatchedConversion(reco::GsfElectron(electron), theConversions, BS.position());
     if( vtxFitConversion )  return false;
