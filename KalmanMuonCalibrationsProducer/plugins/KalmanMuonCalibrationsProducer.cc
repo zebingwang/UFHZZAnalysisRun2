@@ -53,6 +53,7 @@ class KalmanMuonCalibrationsProducer : public edm::EDProducer {
       bool isSync;
       bool useRochester;
       int rochesterSys;
+      int year;
       //bool verbose;
 
 };
@@ -75,6 +76,7 @@ KalmanMuonCalibrationsProducer::KalmanMuonCalibrationsProducer(const edm::Parame
     isSync(iConfig.getParameter<bool>("isSync")),
     useRochester(iConfig.getUntrackedParameter<bool>("useRochester",false)),
     rochesterSys(iConfig.getUntrackedParameter<int>("rochesterSys",0))
+    year(iConfig.getUntrackedParameter<int>("year"))
 {
    if (isMC) {
        kalmanMuonCalibrator = new KalmanMuonCalibrator("MC_80X_13TeV");
@@ -83,7 +85,9 @@ KalmanMuonCalibrationsProducer::KalmanMuonCalibrationsProducer(const edm::Parame
    }
    
    std::string DATAPATH = std::getenv( "CMSSW_BASE" );
-   DATAPATH+="/src/UFHZZAnalysisRun2/KalmanMuonCalibrationsProducer/data/roccor.Run2.v3/RoccoR2018.txt";
+   if(year == 2018)    DATAPATH+="/src/UFHZZAnalysisRun2/KalmanMuonCalibrationsProducer/data/roccor.Run2.v3/RoccoR2018.txt";
+   if(year == 2017)    DATAPATH+="/src/UFHZZAnalysisRun2/KalmanMuonCalibrationsProducer/data/roccor.Run2.v3/RoccoR2017.txt";
+   if(year == 2016)    DATAPATH+="/src/UFHZZAnalysisRun2/KalmanMuonCalibrationsProducer/data/roccor.Run2.v3/RoccoR2016.txt";
    if(useRochester) calibrator = new RoccoR(DATAPATH); 
 
    produces<std::vector<pat::Muon> >();      
