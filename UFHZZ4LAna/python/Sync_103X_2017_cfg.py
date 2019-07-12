@@ -20,7 +20,7 @@ process.Timing = cms.Service("Timing",
                              )
 
 
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(20) )
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
 
 myfilelist = cms.untracked.vstring(
 '/store/mc/RunIIFall17MiniAODv2/VBF_HToZZTo4L_M125_13TeV_powheg2_JHUGenV7011_pythia8/MINIAODSIM/PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/60000/3450B123-E8BF-E811-B895-FA163E9604CF.root',
@@ -37,7 +37,7 @@ process.source = cms.Source("PoolSource",fileNames = myfilelist,
 
 process.TFileService = cms.Service("TFileService",
 #                                   fileName = cms.string("Sync_94X.root")
-                                   fileName = cms.string("Sync_103X_2017_test.root")
+                                   fileName = cms.string("Sync_103X_2017_Nojer.root")
 )
 
 # clean muons by segments 
@@ -262,7 +262,8 @@ process.corrJets = cms.EDProducer ( "CorrJetsProducer",
                                     vertex  = cms.InputTag( "offlineSlimmedPrimaryVertices" ), 
                                     rho     = cms.InputTag( "fixedGridRhoFastjetAll"   ),
                                     payload = cms.string  ( "AK8PFchs" ),
-                                    isData  = cms.bool    (  False ))
+                                    isData  = cms.bool    (  False ),
+                                    year    = cms.untracked.int32(2017))
 
 
 # Recompute MET
