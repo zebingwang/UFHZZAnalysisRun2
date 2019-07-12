@@ -75,7 +75,7 @@ KalmanMuonCalibrationsProducer::KalmanMuonCalibrationsProducer(const edm::Parame
     isMC(iConfig.getParameter<bool>("isMC")),
     isSync(iConfig.getParameter<bool>("isSync")),
     useRochester(iConfig.getUntrackedParameter<bool>("useRochester",false)),
-    rochesterSys(iConfig.getUntrackedParameter<int>("rochesterSys",0))
+    rochesterSys(iConfig.getUntrackedParameter<int>("rochesterSys",0)),
     year(iConfig.getUntrackedParameter<int>("year"))
 {
    if (isMC) {
