@@ -33,11 +33,13 @@ process.source = cms.Source("PoolSource",fileNames = myfilelist,
 #                            duplicateCheckMode = cms.untracked.string('noDuplicateCheck'),
 #                            eventsToProcess = cms.untracked.VEventRange('1:767837-1:767837','1:219504-1:219504','1:767206-1:767206')
 #                            eventsToProcess = cms.untracked.VEventRange('1:767206-1:767206','1:773914-1:773914','1:219725-1:219725')
+#                            eventsToProcess = cms.untracked.VEventRange('1:47585-1:47585')
                             )
 
 process.TFileService = cms.Service("TFileService",
 #                                   fileName = cms.string("Sync_94X.root")
-                                   fileName = cms.string("Sync_103X_2017_Nojer.root")
+#                                   fileName = cms.string("Sync_103X_2017_jer.root")
+                                   fileName = cms.string("Sync_103X_2017_Kal.root")
 )
 
 # clean muons by segments 
@@ -54,7 +56,8 @@ process.calibratedMuons = cms.EDProducer("KalmanMuonCalibrationsProducer",
                                          muonsCollection = cms.InputTag("boostedMuons"),
                                          isMC = cms.bool(True),
                                          isSync = cms.bool(True),
-                                         useRochester = cms.untracked.bool(True)
+                                         useRochester = cms.untracked.bool(True),
+                                         year = cms.untracked.int32(2017)
                                          )
 
 #from EgammaAnalysis.ElectronTools.regressionWeights_cfi import regressionWeights
@@ -200,35 +203,35 @@ process.pileupJetIdUpdated = process.pileupJetId.clone(
 process.slimmedJetsJEC.userData.userFloats.src += ['pileupJetIdUpdated:fullDiscriminant']
 process.slimmedJetsJEC.userData.userInts.src += ['pileupJetIdUpdated:fullId']
 
-## JER
-#process.load("JetMETCorrections.Modules.JetResolutionESProducer_cfi")
-## for hpc
-#dBJERFile = os.environ.get('CMSSW_BASE')+"/src/UFHZZAnalysisRun2/UFHZZ4LAna/data/Fall17_V3_94X_MC.db"
-## for crab
-#dBFile = "src/UFHZZAnalysisRun2/UFHZZ4LAna/data/Fall17_V3_94X_MC.db"
-#process.jer = cms.ESSource("PoolDBESSource",
-#        CondDBSetup,
-#        connect = cms.string("sqlite_file:"+dBJERFile),
-#        toGet = cms.VPSet(
-#            cms.PSet(
-#                record = cms.string('JetResolutionRcd'),
-#                tag    = cms.string('Fall17_V3_94X_MC_PtResolution_AK4PFchs'),
-#                label  = cms.untracked.string('AK4PFchs_pt')
-#                ),
-#            cms.PSet(
-#                record = cms.string('JetResolutionRcd'),
-#                tag    = cms.string('Fall17_V3_94X_MC_PhiResolution_AK4PFchs'),
-#                label  = cms.untracked.string('AK4PFchs_phi')
-#                ),
-#            cms.PSet(
-#                record = cms.string('JetResolutionScaleFactorRcd'),
-#                #tag    = cms.string('JR_Summer15_25nsV6_DATA_SF_AK4PFchs'),
-#                tag    = cms.string('Fall17_V3_94X_MC_SF_AK4PFchs'),
-#                label  = cms.untracked.string('AK4PFchs')
-#                )
-#            )
-#        )
-#process.es_prefer_jer = cms.ESPrefer('PoolDBESSource', 'jer')
+# JER
+process.load("JetMETCorrections.Modules.JetResolutionESProducer_cfi")
+# for hpc
+dBJERFile = os.environ.get('CMSSW_BASE')+"/src/UFHZZAnalysisRun2/UFHZZ4LAna/data/Fall17_V3_94X_MC.db"
+# for crab
+dBFile = "src/UFHZZAnalysisRun2/UFHZZ4LAna/data/Fall17_V3_94X_MC.db"
+process.jer = cms.ESSource("PoolDBESSource",
+        CondDBSetup,
+        connect = cms.string("sqlite_file:"+dBJERFile),
+        toGet = cms.VPSet(
+            cms.PSet(
+                record = cms.string('JetResolutionRcd'),
+                tag    = cms.string('JR_Fall17_V3_94X_MC_PtResolution_AK4PFchs'),
+                label  = cms.untracked.string('AK4PFchs_pt')
+                ),
+            cms.PSet(
+                record = cms.string('JetResolutionRcd'),
+                tag    = cms.string('JR_Fall17_V3_94X_MC_PhiResolution_AK4PFchs'),
+                label  = cms.untracked.string('AK4PFchs_phi')
+                ),
+            cms.PSet(
+                record = cms.string('JetResolutionScaleFactorRcd'),
+                #tag    = cms.string('JR_Summer15_25nsV6_DATA_SF_AK4PFchs'),
+                tag    = cms.string('JR_Fall17_V3_94X_MC_SF_AK4PFchs'),
+                label  = cms.untracked.string('AK4PFchs')
+                )
+            )
+        )
+process.es_prefer_jer = cms.ESPrefer('PoolDBESSource', 'jer')
 
 
 #QGTag
