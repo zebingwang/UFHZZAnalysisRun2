@@ -89,6 +89,7 @@ public:
     ~HZZ4LHelper();
   
     std::vector<pat::Electron> goodLooseElectrons2012(edm::Handle<edm::View<pat::Electron> > Electrons, double elPtCut);
+    std::vector<pat::Electron> goodLooseElectrons2012(edm::Handle<edm::View<pat::Electron> > Electrons, edm::Handle<edm::View<pat::Electron> > ElectronsUnS, double elPtCut);
     std::vector<pat::Muon> goodLooseMuons2012(edm::Handle<edm::View<pat::Muon> > Muons, double muPtCut);
     std::vector<pat::Tau> goodLooseTaus2015(edm::Handle<edm::View<pat::Tau> > Taus, double tauPtCut);
     std::vector<pat::Photon> goodLoosePhotons2015(edm::Handle<edm::View<pat::Photon> > Photons, double phoPtCut);
@@ -335,6 +336,28 @@ std::vector<pat::Electron> HZZ4LHelper::goodLooseElectrons2012(edm::Handle<edm::
         }
     }
     return bestElectrons;    
+}
+
+std::vector<pat::Electron> HZZ4LHelper::goodLooseElectrons2012(edm::Handle<edm::View<pat::Electron> > Electrons, edm::Handle<edm::View<pat::Electron> > ElectronsUnS, double elPtCut) {
+    using namespace pat;
+    using namespace std;
+    vector<pat::Electron> bestElectrons;
+    vector <bool> Ele_passLoose;
+    for(edm::View<pat::Electron>::const_iterator elec=Electrons->begin(); elec!=Electrons->end(); ++elec) {
+        if( abs(elec->eta()) < 2.5 && elec->pt() > elPtCut) {
+            //bestElectrons.push_back(*elec);
+            Ele_passLoose.push_back(true);
+        }
+        else    Ele_passLoose.push_back(false);
+    }
+    int i = 0;
+    for(edm::View<pat::Electron>::const_iterator elec_=ElectronsUnS->begin(); elec_!=ElectronsUnS->end(); ++elec_) {
+        if(Ele_passLoose[i]) {
+            bestElectrons.push_back(*elec_);
+        }
+        i++;
+    }
+    return bestElectrons;
 }
 
 std::vector<pat::Muon> HZZ4LHelper::goodLooseMuons2012(edm::Handle<edm::View<pat::Muon> > Muons, double muPtCut) {
