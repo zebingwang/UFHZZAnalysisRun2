@@ -30,8 +30,14 @@ if ('Run2018' in 'DATASETNAME'):
   #config.Data.lumiMask = 'Cert_314472-323523_13TeV_PromptReco_Collisions18_JSON.txt'##Moriond18
   #config.Data.lumiMask = 'Run2016_ReRecoJSON.txt'
   config.Data.lumiMask = 'Cert_314472-325175_13TeV_PromptReco_Collisions18_JSON.txt'###Legacy 18
-  #config.Data.lumiMask = 'Cert_294927-306462_13TeV_EOY2017ReReco_Collisions17_JSON.txt'###Legacy 17
-  #config.Data.lumiMask = 'Cert_271036-284044_13TeV_23Sep2016ReReco_Collisions16_JSON.txt'###Legacy 16
+  config.Data.splitting = 'EventAwareLumiBased'
+  config.Data.unitsPerJob = 100000
+elif ('Run2017' in 'DATASETNAME'):
+  config.Data.lumiMask = 'Cert_294927-306462_13TeV_EOY2017ReReco_Collisions17_JSON.txt'###Legacy 17
+  config.Data.splitting = 'EventAwareLumiBased'
+  config.Data.unitsPerJob = 100000
+elif ('Run2016' in 'DATASETNAME'):
+  config.Data.lumiMask = 'Cert_271036-284044_13TeV_23Sep2016ReReco_Collisions16_JSON.txt'###Legacy 16
   config.Data.splitting = 'EventAwareLumiBased'
   config.Data.unitsPerJob = 100000
 else:
