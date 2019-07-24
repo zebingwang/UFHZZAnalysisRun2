@@ -265,9 +265,11 @@ process.mergedGenParticles = cms.EDProducer("MergedGenParticleProducer",
     inputPruned = cms.InputTag("prunedGenParticles"),
     inputPacked = cms.InputTag("packedGenParticles"),
 )
-process.myGenerator = cms.EDProducer("GenParticles2HepMCConverterHTXS",
+#process.myGenerator = cms.EDProducer("GenParticles2HepMCConverterHTXS",
+process.myGenerator = cms.EDProducer("GenParticles2HepMCConverter",
     genParticles = cms.InputTag("mergedGenParticles"),
     genEventInfo = cms.InputTag("generator"),
+    signalParticlePdgIds = cms.vint32(25)
 )
 process.rivetProducerHTXS = cms.EDProducer('HTXSRivetProducer',
   HepMCCollection = cms.InputTag('myGenerator','unsmeared'),
@@ -395,6 +397,7 @@ process.p = cms.Path(process.fsrPhotonSequence*
                      process.electronsMVA*
                      process.calibratedPatElectrons*
                      process.jetCorrFactors*
+                     process.pileupJetIdUpdated*
                      process.slimmedJetsJEC*
                      process.QGTagger*
                      process.AK8PFJetCorrFactors*

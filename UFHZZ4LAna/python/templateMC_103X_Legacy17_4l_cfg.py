@@ -364,6 +364,7 @@ process.p = cms.Path(process.fsrPhotonSequence*
                      process.electronsMVA*
                      process.calibratedPatElectrons*
                      process.jetCorrFactors*
+                     process.pileupJetIdUpdated*
                      process.slimmedJetsJEC*
                      process.QGTagger*
                      process.AK8PFJetCorrFactors*
