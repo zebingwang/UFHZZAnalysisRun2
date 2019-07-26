@@ -500,8 +500,10 @@ std::vector<pat::Photon> HZZ4LHelper::goodPhotons2015(std::vector<pat::Photon> P
         try {
             if(year == 2016)
                 phoid=Photons[i].photonID("mvaPhoID-Spring15-25ns-nonTrig-V2p1-wp90");
-            else
+            else if(year == 2017)
                 phoid=Photons[i].userFloat("PhotonMVAEstimatorRun2Spring16NonTrigV1Values");
+            else(year == 2018)
+                phoid=Photons[i].userFloat("cutBasedPhotonID-Fall17-94X-V2-loose");
         }
         catch(...) {
             std::cout<<"photon ID  missing!"<<std::endl;
