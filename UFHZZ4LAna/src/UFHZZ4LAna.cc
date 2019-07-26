@@ -159,6 +159,9 @@
 #include "CondFormats/BTauObjects/interface/BTagCalibration.h"
 #include "CondTools/BTau/interface/BTagCalibrationReader.h"
 
+//Muon MVA
+#include "MuonMVAReader/Reader/interface/MuonGBRForestReader.hpp"
+
 //
 // class declaration
 //
@@ -211,7 +214,7 @@ private:
     TH1D *h_pileupDn;
     std::vector<TH1F*> h_medians;
 
-    //BTagCalibrationReader* reader;
+    BTagCalibrationReader* reader;
 
     //Saved Events Trees
     TTree *passedEventsTree_All;
@@ -513,7 +516,7 @@ private:
     // Global Variables but not stored in the tree
     vector<double> lep_ptreco;
     vector<int> lep_ptid; vector<int> lep_ptindex;
-    vector<pat::Muon> recoMuons; vector<pat::Electron> recoElectrons; 
+    vector<pat::Muon> recoMuons; vector<pat::Electron> recoElectrons; vector<pat::Electron> recoElectronsUnS; 
     vector<pat::Tau> recoTaus; vector<pat::Photon> recoPhotons;
     vector<pat::PFParticle> fsrPhotons; 
     TLorentzVector HVec, HVecNoFSR, Z1Vec, Z2Vec;
@@ -527,6 +530,7 @@ private:
 
     //Input edm
     edm::EDGetTokenT<edm::View<pat::Electron> > elecSrc_;
+    edm::EDGetTokenT<edm::View<pat::Electron> > elecUnSSrc_;
     edm::EDGetTokenT<edm::View<pat::Muon> > muonSrc_;
     edm::EDGetTokenT<edm::View<pat::Tau> > tauSrc_;
     edm::EDGetTokenT<edm::View<pat::Photon> > photonSrc_;
@@ -587,6 +591,9 @@ private:
     std::vector<std::string> triggerList;
     int skimLooseLeptons, skimTightLeptons;
     bool verbose;
+
+    int year;///use to choose Muon BDT
+
     // register to the TFileService
     edm::Service<TFileService> fs;
 
@@ -599,6 +606,8 @@ private:
     JME::JetResolution resolution_pt, resolution_phi;
     JME::JetResolutionScaleFactor resolution_sf;
 
+    string EleBDT_name_161718;
+    string heepID_name_161718;
 
 };
 
@@ -606,6 +615,7 @@ private:
 UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
     histContainer_(),
     elecSrc_(consumes<edm::View<pat::Electron> >(iConfig.getUntrackedParameter<edm::InputTag>("electronSrc"))),
+    elecUnSSrc_(consumes<edm::View<pat::Electron> >(iConfig.getUntrackedParameter<edm::InputTag>("electronUnSSrc"))),
     muonSrc_(consumes<edm::View<pat::Muon> >(iConfig.getUntrackedParameter<edm::InputTag>("muonSrc"))),
     tauSrc_(consumes<edm::View<pat::Tau> >(iConfig.getUntrackedParameter<edm::InputTag>("tauSrc"))),
     photonSrc_(consumes<edm::View<pat::Photon> >(iConfig.getUntrackedParameter<edm::InputTag>("photonSrc"))),
@@ -650,7 +660,7 @@ UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
     crossSection(iConfig.getUntrackedParameter<double>("CrossSection",1.0)),
     weightEvents(iConfig.getUntrackedParameter<bool>("weightEvents",false)),
     isoCutEl(iConfig.getUntrackedParameter<double>("isoCutEl",9999.0)),
-    isoCutMu(iConfig.getUntrackedParameter<double>("isoCutMu",0.35)),
+    isoCutMu(iConfig.getUntrackedParameter<double>("isoCutMu",9999.0)),/////ios is applied to new Muon BDT //previous 0.35///Qianying
     isoConeSizeEl(iConfig.getUntrackedParameter<double>("isoConeSizeEl",0.3)),
     isoConeSizeMu(iConfig.getUntrackedParameter<double>("isoConeSizeMu",0.3)),
     sip3dCut(iConfig.getUntrackedParameter<double>("sip3dCut",4)),
@@ -664,7 +674,7 @@ UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
     _muPtCut(iConfig.getUntrackedParameter<double>("_muPtCut",5.0)),
     _tauPtCut(iConfig.getUntrackedParameter<double>("_tauPtCut",20.0)),
     _phoPtCut(iConfig.getUntrackedParameter<double>("_phoPtCut",10.0)),
-    BTagCut(iConfig.getUntrackedParameter<double>("BTagCut",0.4941)),
+    //BTagCut(iConfig.getUntrackedParameter<double>("BTagCut",0.4184)),/////2016: 0.6321; 2017: 0.4941; 2018: 0.4184
     reweightForPU(iConfig.getUntrackedParameter<bool>("reweightForPU",true)),
     PUVersion(iConfig.getUntrackedParameter<std::string>("PUVersion","Summer16_80X")),
     doFsrRecovery(iConfig.getUntrackedParameter<bool>("doFsrRecovery",true)),
@@ -681,7 +691,8 @@ UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
     triggerList(iConfig.getUntrackedParameter<std::vector<std::string>>("triggerList")),
     skimLooseLeptons(iConfig.getUntrackedParameter<int>("skimLooseLeptons",2)),    
     skimTightLeptons(iConfig.getUntrackedParameter<int>("skimTightLeptons",2)),    
-    verbose(iConfig.getUntrackedParameter<bool>("verbose",false))
+    verbose(iConfig.getUntrackedParameter<bool>("verbose",false)),
+    year(iConfig.getUntrackedParameter<int>("year",2018))////for year put 2016,2017, or 2018 to select correct training
 
 {
   
@@ -715,29 +726,37 @@ UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
     mela->setCandidateDecayMode(TVar::CandidateDecay_ZZ); 
 	}
 
-    edm::FileInPath elec_scalefacFileInPathCracks("UFHZZAnalysisRun2/UFHZZ4LAna/data/egammaEffi.txt_EGM2D_Moriond2019_v1_gap.root");
+    string elec_scalefac_Cracks_name_161718[3] = {"egammaEffi.txt_EGM2D_cracks.root", "egammaEffi.txt_EGM2D_Moriond2018v1_gap.root", "egammaEffi.txt_EGM2D_Moriond2019_v1_gap.root"};
+    edm::FileInPath elec_scalefacFileInPathCracks(("UFHZZAnalysisRun2/UFHZZ4LAna/data/"+elec_scalefac_Cracks_name_161718[year-2016]).c_str());
     TFile *fElecScalFacCracks = TFile::Open(elec_scalefacFileInPathCracks.fullPath().c_str());
     hElecScaleFac_Cracks = (TH2F*)fElecScalFacCracks->Get("EGamma_SF2D");    
 
-    edm::FileInPath elec_scalefacFileInPath("UFHZZAnalysisRun2/UFHZZ4LAna/data/egammaEffi.txt_EGM2D_Moriond2019_v1.root");
+    string elec_scalefac_name_161718[3] = {"egammaEffi.txt_EGM2D.root", "egammaEffi.txt_EGM2D_Moriond2018v1.root", "egammaEffi.txt_EGM2D_Moriond2019_v1.root"};
+    edm::FileInPath elec_scalefacFileInPath(("UFHZZAnalysisRun2/UFHZZ4LAna/data/"+elec_scalefac_name_161718[year-2016]).c_str());
     TFile *fElecScalFac = TFile::Open(elec_scalefacFileInPath.fullPath().c_str());
     hElecScaleFac = (TH2F*)fElecScalFac->Get("EGamma_SF2D");    
 
-    edm::FileInPath elec_GsfscalefacFileInPath("UFHZZAnalysisRun2/UFHZZ4LAna/data/Ele_Reco_2018.root");
+    //string elec_Gsfscalefac_name_161718[3] = {"egammaEffi.txt_EGM2D_GSF.root", "egammaEffi.txt_EGM2D_Moriond2018v1_runBCDEF_passingRECO.root", "Ele_Reco_2018.root"};//was previous;
+    string elec_Gsfscalefac_name_161718[3] = {"Ele_Reco_2016.root", "Ele_Reco_2017.root", "Ele_Reco_2018.root"};
+    edm::FileInPath elec_GsfscalefacFileInPath(("UFHZZAnalysisRun2/UFHZZ4LAna/data/"+elec_Gsfscalefac_name_161718[year-2016]).c_str());
     TFile *fElecScalFacGsf = TFile::Open(elec_GsfscalefacFileInPath.fullPath().c_str());
     hElecScaleFacGsf = (TH2F*)fElecScalFacGsf->Get("EGamma_SF2D");
 
-    edm::FileInPath elec_GsfLowETscalefacFileInPath("UFHZZAnalysisRun2/UFHZZ4LAna/data/Ele_Reco_LowEt_2018.root");
+    //string elec_GsfLowETscalefac_name_161718[3]= {"", "egammaEffi.txt_EGM2D_Moriond2018v1_runBCDEF_passingRECO_lowEt.root", "Ele_Reco_LowEt_2018.root"};//was previous
+    string elec_GsfLowETscalefac_name_161718[3]= {"Ele_Reco_LowEt_2016.root", "Ele_Reco_LowEt_2017.root", "Ele_Reco_LowEt_2018.root"};
+    edm::FileInPath elec_GsfLowETscalefacFileInPath(("UFHZZAnalysisRun2/UFHZZ4LAna/data/"+elec_GsfLowETscalefac_name_161718[year-2016]).c_str());
     TFile *fElecScalFacGsfLowET = TFile::Open(elec_GsfLowETscalefacFileInPath.fullPath().c_str());
     hElecScaleFacGsfLowET = (TH2F*)fElecScalFacGsfLowET->Get("EGamma_SF2D");
 
-
-    edm::FileInPath mu_scalefacFileInPath("UFHZZAnalysisRun2/UFHZZ4LAna/data/final_HZZ_muon_SF_2018RunA2D_ER_2702.root");
+    string mu_scalefac_name_161718[3] = {"final_HZZ_Moriond17Preliminary_v4.root", "ScaleFactors_mu_Moriond2018_final.root", "final_HZZ_muon_SF_2018RunA2D_ER_2702.root"};//was previous; 
+    edm::FileInPath mu_scalefacFileInPath(("UFHZZAnalysisRun2/UFHZZ4LAna/data/"+mu_scalefac_name_161718[year-2016]).c_str());
     TFile *fMuScalFac = TFile::Open(mu_scalefacFileInPath.fullPath().c_str());
     hMuScaleFac = (TH2F*)fMuScalFac->Get("FINAL");
     hMuScaleFacUnc = (TH2F*)fMuScalFac->Get("ERROR");
 
-    edm::FileInPath pileup_FileInPath("UFHZZAnalysisRun2/UFHZZ4LAna/data/pu_weights_2018.root");
+    //string pileup_name_161718[3] = {"puWeightsMoriond17_v2.root", "puWeightsMoriond18.root", "pu_weights_2018.root"};///was previous
+    string pileup_name_161718[3] = {"pu_weights_2016.root", "pu_weights_2017.root", "pu_weights_2018.root"};
+    edm::FileInPath pileup_FileInPath(("UFHZZAnalysisRun2/UFHZZ4LAna/data/"+pileup_name_161718[year-2016]).c_str());
     TFile *f_pileup = TFile::Open(pileup_FileInPath.fullPath().c_str());
     h_pileup = (TH1D*)f_pileup->Get("weights");
     h_pileupUp = (TH1D*)f_pileup->Get("weights_varUp");
@@ -745,8 +764,8 @@ UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
 
 
     //BTag calibration
-    /*
-    edm::FileInPath btagfileInPath("UFHZZAnalysisRun2/UFHZZ4LAna/data/DeepCSV_94XSF_V1_B_F.csv");
+    string csv_name_161718[3] = {"DeepCSV_2016LegacySF_V1.csv", "DeepCSV_94XSF_V4_B_F.csv", "DeepCSV_102XSF_V1.csv"};
+    edm::FileInPath btagfileInPath(("UFHZZAnalysisRun2/UFHZZ4LAna/data/"+csv_name_161718[year-2016]).c_str());
 
     BTagCalibration calib("DeepCSV", btagfileInPath.fullPath().c_str());
     reader = new BTagCalibrationReader(BTagEntry::OP_MEDIUM,  // operating point
@@ -757,7 +776,10 @@ UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
     reader->load(calib,                // calibration instance
                 BTagEntry::FLAV_B,    // btag flavour
                 "comb");               // measurement type
-    */
+
+    if(year==2018)    {EleBDT_name_161718 = "ElectronMVAEstimatorRun2Autumn18IdIsoValues"; BTagCut=0.4184; heepID_name_161718 = "heepElectronID-HEEPV70";}
+    if(year==2017)    {EleBDT_name_161718 = "ElectronMVAEstimatorRun2Fall17IsoV2Values"; BTagCut=0.4941; heepID_name_161718 = "heepElectronID-HEEPV70";}
+    if(year==2016)    {EleBDT_name_161718 = "ElectronMVAEstimatorRun2Summer16IdIsoValues"; BTagCut=0.6321; heepID_name_161718 = "heepElectronID-HEEPV60";}
 
 }
 
@@ -811,6 +833,10 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     edm::Handle<edm::View<pat::Electron> > electrons;
     iEvent.getByToken(elecSrc_,electrons);
     if (verbose) cout<<electrons->size()<<" total electrons in the collection"<<endl;
+
+    // electron before scale/smearing corrections
+    edm::Handle<edm::View<pat::Electron> > electronsUnS;
+    iEvent.getByToken(elecUnSSrc_,electronsUnS);
 
     // muon collection
     edm::Handle<edm::View<pat::Muon> > muons;
@@ -1155,7 +1181,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
     // Global variables not stored in tree
     lep_ptreco.clear(); lep_ptid.clear(); lep_ptindex.clear();
-    recoMuons.clear(); recoElectrons.clear(); fsrPhotons.clear();
+    recoMuons.clear(); recoElectrons.clear(); fsrPhotons.clear(); recoElectronsUnS.clear();
     HVec.SetPtEtaPhiM(0.0,0.0,0.0,0.0);
     HVecNoFSR.SetPtEtaPhiM(0.0,0.0,0.0,0.0);
     Z1Vec.SetPtEtaPhiM(0.0,0.0,0.0,0.0);
@@ -1369,18 +1395,22 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
         if (verbose) cout<<"start lepton analysis"<<endl;           
         vector<pat::Electron> AllElectrons; vector<pat::Muon> AllMuons; 
+        vector<pat::Electron> AllElectronsUnS;////uncorrected electron 
         vector<pat::Tau> AllTaus; vector<pat::Photon> AllPhotons;
         AllElectrons = helper.goodLooseElectrons2012(electrons,_elecPtCut);
+        AllElectronsUnS = helper.goodLooseElectrons2012(electrons,electronsUnS,_elecPtCut);
         AllMuons = helper.goodLooseMuons2012(muons,_muPtCut);
         AllTaus = helper.goodLooseTaus2015(taus,_tauPtCut);
         AllPhotons = helper.goodLoosePhotons2015(photons,_phoPtCut);
 
         helper.cleanOverlappingLeptons(AllMuons,AllElectrons,PV);
+        helper.cleanOverlappingLeptons(AllMuons,AllElectronsUnS,PV);
         recoMuons = helper.goodMuons2015_noIso_noPf(AllMuons,_muPtCut,PV,sip3dCut);
         recoElectrons = helper.goodElectrons2015_noIso_noBdt(AllElectrons,_elecPtCut,elecID,PV,iEvent,sip3dCut);
+        recoElectronsUnS = helper.goodElectrons2015_noIso_noBdt(AllElectronsUnS,_elecPtCut,elecID,PV,iEvent,sip3dCut);
         helper.cleanOverlappingTaus(recoMuons,recoElectrons,AllTaus,isoCutMu,isoCutEl,muRho,elRho);
         recoTaus = helper.goodTaus2015(AllTaus,_tauPtCut);
-        recoPhotons = helper.goodPhotons2015(AllPhotons,_phoPtCut);
+        recoPhotons = helper.goodPhotons2015(AllPhotons,_phoPtCut,year);
 
         if (verbose) cout<<AllMuons.size()<<" loose muons "<<AllElectrons.size()<<" loose electrons"<<endl;
 
@@ -1481,12 +1511,16 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                     }
                     lep_MiniIso.push_back(helper.miniIsolation(pfCands, dynamic_cast<const reco::Candidate *>(&recoElectrons[lep_ptindex[i]]), 0.05, 0.2, 10., rhoSUS, false));
                     lep_Sip.push_back(helper.getSIP3D(recoElectrons[lep_ptindex[i]]));           
-                    lep_mva.push_back(recoElectrons[lep_ptindex[i]].userFloat("ElectronMVAEstimatorRun2Fall17IsoV2RawValues")); 
+                    //lep_mva.push_back(recoElectrons[lep_ptindex[i]].userFloat("ElectronMVAEstimatorRun2Autumn18IdIsoValues")); 
+                    //cout<<EleBDT_name_161718<<endl;
+                    lep_mva.push_back(recoElectrons[lep_ptindex[i]].userFloat(EleBDT_name_161718.c_str())); 
                     lep_ecalDriven.push_back(recoElectrons[lep_ptindex[i]].ecalDriven()); 
-                    lep_tightId.push_back(helper.passTight_BDT_Id(recoElectrons[lep_ptindex[i]],recoElectrons[lep_ptindex[i]].userFloat("ElectronMVAEstimatorRun2Fall17IsoV2RawValues")));           
+                    //lep_tightId.push_back(helper.passTight_BDT_Id(recoElectrons[lep_ptindex[i]],recoElectrons[lep_ptindex[i]].userFloat("ElectronMVAEstimatorRun2Autumn18IdIsoValues"), year));           
+                    lep_tightId.push_back(helper.passTight_BDT_Id(recoElectronsUnS[lep_ptindex[i]],year));
                     //cout<<"old "<<recoElectrons[lep_ptindex[i]].userFloat("ElectronMVAEstimatorRun2Spring15NonTrig25nsV1Values") <<" new" <<recoElectrons[lep_ptindex[i]].userFloat("ElectronMVAEstimatorRun2Spring16HZZV1Values")<<endl;
-                    lep_tightIdSUS.push_back(helper.passTight_Id_SUS(recoElectrons[lep_ptindex[i]],elecID,PV,BS,theConversions));           
-                    lep_tightIdHiPt.push_back(recoElectrons[lep_ptindex[i]].electronID("heepElectronID-HEEPV70"));
+                    lep_tightIdSUS.push_back(helper.passTight_Id_SUS(recoElectrons[lep_ptindex[i]],elecID,PV,BS,theConversions, year));           
+                    //lep_tightIdHiPt.push_back(recoElectrons[lep_ptindex[i]].electronID("heepElectronID-HEEPV70"));
+                    lep_tightIdHiPt.push_back(recoElectrons[lep_ptindex[i]].electronID(heepID_name_161718.c_str()));
                     lep_ptRatio.push_back(helper.ptRatio(recoElectrons[lep_ptindex[i]],jets,true)); // no L2L3 yet           
                     lep_ptRel.push_back(helper.ptRel(recoElectrons[lep_ptindex[i]],jets,true)); // no L2L3 yet           
                     lep_dataMC.push_back(helper.dataMC(recoElectrons[lep_ptindex[i]],hElecScaleFac,hElecScaleFac_Cracks,hElecScaleFacGsf,hElecScaleFacGsfLowET));
@@ -1529,9 +1563,11 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                     }
                     lep_MiniIso.push_back(helper.miniIsolation(pfCands, dynamic_cast<const reco::Candidate *>(&recoMuons[lep_ptindex[i]]), 0.05, 0.2, 10., rhoSUS, false));
                     lep_Sip.push_back(helper.getSIP3D(recoMuons[lep_ptindex[i]]));            
-                    lep_mva.push_back(recoMuons[lep_ptindex[i]].isPFMuon());  
+                    //lep_mva.push_back(recoMuons[lep_ptindex[i]].isPFMuon());  
+                    lep_mva.push_back(helper.get_Muon_MVA_Value(recoMuons[lep_ptindex[i]],vertex,muRho,year,PV));
                     lep_ecalDriven.push_back(0);  
-                    lep_tightId.push_back(helper.passTight_Id(recoMuons[lep_ptindex[i]],PV));         
+                    //lep_tightId.push_back(helper.passTight_Id(recoMuons[lep_ptindex[i]],PV));         
+                    lep_tightId.push_back(helper.passTight_BDT_Id(recoMuons[lep_ptindex[i]],vertex,muRho,year,PV));
                     lep_tightIdSUS.push_back(helper.passTight_Id_SUS(recoMuons[lep_ptindex[i]],PV));
                     lep_tightIdHiPt.push_back(recoMuons[lep_ptindex[i]].isHighPtMuon(*PV));
                     lep_ptRatio.push_back(helper.ptRatio(recoMuons[lep_ptindex[i]],jets,true)); // no L2L3 yet           
@@ -1540,9 +1576,17 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                     lep_dataMCErr.push_back(helper.dataMCErr(recoMuons[lep_ptindex[i]],hMuScaleFacUnc));
                     lep_genindex.push_back(-1.0);
                 }
-                if (verbose) {cout<<" RelIso: "<<lep_RelIso[i]<<" isoCH: "<<lep_isoCH[i]<<" isoNH: "<<lep_isoNH[i]
-                                  <<" isoPhot: "<<lep_isoPhot[i]<<" isoPUcorr: "<<lep_isoPUcorr[i]<<" Sip: "<<lep_Sip[i]
-                                  <<" MiniIso: "<<lep_MiniIso[i]<<" ptRatio: "<<lep_ptRatio[i]<<" ptRel: "<<lep_ptRel[i]<<endl;}
+                if (verbose) {cout<<" eta: "<<lep_eta[i]<<" phi: "<<lep_phi[i];
+                              cout<<" eSuperClusterOverP: "<<recoElectrons[lep_ptindex[i]].eSuperClusterOverP()<<" ecalEnergy: "<<recoElectrons[lep_ptindex[i]].ecalEnergy()<<" p: "<<recoElectrons[lep_ptindex[i]].p();
+                              cout<<" RelIso: "<<lep_RelIso[i]<<" isoCH: "<<lep_isoCH[i]<<" isoNH: "<<lep_isoNH[i]
+                                  <<" isoPhot: "<<lep_isoPhot[i]<<" lep_isoPU: "<<lep_isoPU[i]<<" isoPUcorr: "<<lep_isoPUcorr[i]<<" Sip: "<<lep_Sip[i]
+                                  <<" MiniIso: "<<lep_MiniIso[i]<<" ptRatio: "<<lep_ptRatio[i]<<" ptRel: "<<lep_ptRel[i]<<" lep_mva: "<<lep_mva[i];
+                              if(abs(lep_ptid[i])==11)    cout<<" SCeta: "<<recoElectrons[lep_ptindex[i]].superCluster()->eta()<<" dxy: "<<recoElectrons[lep_ptindex[i]].gsfTrack()->dxy(PV->position())<<" dz: "<<recoElectrons[lep_ptindex[i]].gsfTrack()->dz(PV->position());
+                              if(abs(lep_ptid[i])==11)    cout<<" Rho: "<<elRho<<" EleBDT_name: "<<EleBDT_name_161718<<" Uncorrected electron pt: "<<recoElectronsUnS[lep_ptindex[i]].pt();
+                              if(abs(lep_ptid[i])==13)    cout<<" Rho: "<<muRho;
+                              cout<<" dataMC: "<<lep_dataMC[i]<<" dataMCErr: "<<lep_dataMCErr[i];
+                              cout<<" lep_pterr: "<<lep_pterr[i]<<" lep_pterrold: "<<lep_pterrold[i]<<" lep_tightIdHiPt: "<<lep_tightIdHiPt[i]<<endl;
+                              if((abs(lep_ptid[i])==13)&&lep_pt[i]>200)    cout<<"Muon pt over 200 isTrackerHighPtID? "<<helper.isTrackerHighPt(recoMuons[lep_ptindex[i]],PV)<<endl;}
             }
             
             if (verbose) cout<<"adding taus to sorted list"<<endl;           
@@ -1719,11 +1763,11 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                         if (fsrDrOEt2>0.012) continue;
 
                         // this photon is now a good one, check if it is the best one
-                        /*
+                        
                         if ( verbose) cout<<"fsr photon cand, pt: "<<phot->pt()<<" eta: "<<phot->eta()<<" phi: "<<phot->phi()
-                                          <<" isoCHPUNoPU: "<<phot->userFloat("fsrPhotonPFIsoChHadPUNoPU03pt02")
-                                          <<" isoNHPhoton: "<<phot->userFloat("fsrPhotonPFIsoNHadPhoton03")
-                                          <<" photoniso: "<<photoniso<<" DrOEt2: "<< fsrDrOEt2 <<"minDrOEt2: "<<minDrOEt2<<endl;                                        */
+                                          //<<" isoCHPUNoPU: "<<phot->userFloat("fsrPhotonPFIsoChHadPUNoPU03pt02")
+                                          //<<" isoNHPhoton: "<<phot->userFloat("fsrPhotonPFIsoNHadPhoton03")
+                                          <<" photoniso: "<<photoniso<<" DrOEt2: "<< fsrDrOEt2 <<endl;                                       
 
                         if( fsrDrOEt2 < minDrOEt2 ) {
                             selected = true;
@@ -1731,6 +1775,8 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                             selectedPhotonIso=photoniso;
                             selectedPhotonDr=fsrDr;
                             minDrOEt2 = fsrDrOEt2;
+                            if (verbose) cout<<"****selected fsr: "<<i<<endl;
+                            if (verbose) cout<<"photoniso: "<<photoniso<<" fsr dR over Et^2: "<<fsrDrOEt2<<" fsr dR: "<<fsrDr<<endl;
                         }
                         
                     } // all photons
@@ -1757,6 +1803,11 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                         lepFSR_mass[i] = lepfsr.M();
 
                         fsrmap[i] = phofsr;
+                        if (verbose) cout<<"****selected fsr: "<<i<<endl;
+                        if (verbose) cout<<"phofsr pt: "<<phofsr.Pt()<<" eta: "<<phofsr.Eta()<<" phi: "<<phofsr.Phi()<<" mass: "<<phofsr.M()<<endl;
+                        if (verbose) cout<<"lep pt: "<<thisLep.Pt()<<" eta: "<<thisLep.Eta()<<" phi: "<<thisLep.Phi()<<" mass: "<<thisLep.M()<<endl;
+                        if (verbose) cout<<"lep+fsr pt: "<<lepFSR_pt[i]<<" eta: "<<lepFSR_eta[i]<<" phi: "<<lepFSR_phi[i]<<" mass: "<<lepfsr.M()<<endl;
+                        
  
                     }
 
@@ -1779,7 +1830,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
                     double RelIsoNoFSR = (lep_isoCH[i]+std::max(lep_isoNH[i]+lep_isoPhot[i]-lep_isoPUcorr[i]-isoFSR,0.0))/lep_nofsr.Pt();
                     lep_RelIsoNoFSR[i] = RelIsoNoFSR;               
-                    if (verbose) cout<<"lep pt: "<<lep_nofsr.Pt()<<" eta: "<<lep_nofsr.Eta()<<" phi: "<<lep_nofsr.Phi()<<" RelIsoNoFSR: "<<RelIsoNoFSR<<" tightId? "<<lep_tightId[i]<<endl;
+                    if (verbose) cout<<"lep pt: "<<lep_nofsr.Pt()<<" eta: "<<lep_nofsr.Eta()<<" phi: "<<lep_nofsr.Phi()<<" RelIsoNoFSR: "<<RelIsoNoFSR<<" lep mva: "<<lep_mva[i]<<" tightId? "<<lep_tightId[i]<<endl;
                 }
                 if (verbose) {cout<<"finished filling fsr photon candidates"<<endl;}
             } // doFsrRecovery
@@ -1869,9 +1920,9 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                     */                   
                         
                     if (verbose) cout<<"pt: "<<jet.pt()<<" eta: "<<jet.eta()<<" passPU: "<<passPU
-                                     <<" jetid: "<<jetHelper.patjetID(jet)<<endl;
+                                     <<" jetid: "<<jetHelper.patjetID(jet,year)<<endl;
                     
-                    if( jetHelper.patjetID(jet)>=jetIDLevel && (passPU || !doPUJetID) ) {
+                    if( jetHelper.patjetID(jet,year)>=jetIDLevel && (passPU || !doPUJetID) ) {
                         
                         if (verbose) cout<<"passed pf jet id and pu jet id"<<endl;
                         
@@ -3812,14 +3863,14 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
             float coin = rand.Uniform(1.); 
 
             double jet_scalefactor    = 1.0;
-            /*
+            
             jet_scalefactor    = reader->eval_auto_bounds(
                 "central", 
                 BTagEntry::FLAV_B, 
                 goodJets[k].eta(), 
                 goodJets[k].pt()
                 ); 
-            */
+            
 
             if (goodJets[k].bDiscriminator("pfDeepCSVDiscriminatorsJetTags:BvsAll")>BTagCut && coin>(1.0-jet_scalefactor)) {
                 jet_isbtag.push_back(1);

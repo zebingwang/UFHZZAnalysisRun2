@@ -77,8 +77,9 @@
 #include "CommonTools/CandUtils/interface/CenterOfMassBooster.h"
 #include "CommonTools/CandUtils/interface/Booster.h"
 
-
-
+//Muon MVA
+#include "MuonMVAReader/Reader/interface/MuonGBRForestReader.hpp"
+//class MuonGBRForestReader;
 class HZZ4LHelper
 {
 
@@ -88,6 +89,7 @@ public:
     ~HZZ4LHelper();
   
     std::vector<pat::Electron> goodLooseElectrons2012(edm::Handle<edm::View<pat::Electron> > Electrons, double elPtCut);
+    std::vector<pat::Electron> goodLooseElectrons2012(edm::Handle<edm::View<pat::Electron> > Electrons, edm::Handle<edm::View<pat::Electron> > ElectronsUnS, double elPtCut);
     std::vector<pat::Muon> goodLooseMuons2012(edm::Handle<edm::View<pat::Muon> > Muons, double muPtCut);
     std::vector<pat::Tau> goodLooseTaus2015(edm::Handle<edm::View<pat::Tau> > Taus, double tauPtCut);
     std::vector<pat::Photon> goodLoosePhotons2015(edm::Handle<edm::View<pat::Photon> > Photons, double phoPtCut);
@@ -95,7 +97,7 @@ public:
     std::vector<pat::Electron> goodElectrons2015_noIso_noBdt(std::vector<pat::Electron> Electrons, double elecPtCut, std::string elecID, const reco::Vertex *&vertex,const edm::Event& iEvent, double sip3dCut); 
     std::vector<pat::Muon> goodMuons2015_noIso_noPf(std::vector<pat::Muon> Muons, double muPtCut, const reco::Vertex *&vertex, double sip3dCut);
     std::vector<pat::Tau> goodTaus2015(std::vector<pat::Tau> Taus, double tauPtCut);
-    std::vector<pat::Photon> goodPhotons2015(std::vector<pat::Photon> Photons, double phoPtCut);
+    std::vector<pat::Photon> goodPhotons2015(std::vector<pat::Photon> Photons, double phoPtCut, int year);
 
     void cleanOverlappingLeptons(std::vector<pat::Muon> &Muons, std::vector<pat::Electron> &Electrons,const reco::Vertex *&vertex);
     void cleanOverlappingTaus(std::vector<pat::Muon> &Muons, std::vector<pat::Electron> &Electrons, std::vector<pat::Tau> &Taus, double isoCutMu, double IsoCutEl, double muRho, double elRho);
@@ -119,9 +121,16 @@ public:
 
     bool passTight_Id(pat::Muon muon, const reco::Vertex *&vertex);
     bool passTight_Id_SUS(pat::Muon muon, const reco::Vertex *&vertex);
-    bool passTight_BDT_Id(pat::Electron electron, float mvavalue);
-    bool passTight_Id_SUS(pat::Electron electron, std::string elecID, const reco::Vertex *&vertex, const reco::BeamSpot BS, edm::Handle< std::vector<reco::Conversion> > theConversions);
+    //bool passTight_BDT_Id(pat::Electron electron, float mvavalue, int year);
+    bool passTight_BDT_Id(pat::Electron electron, int year);
+    bool passTight_Id_SUS(pat::Electron electron, std::string elecID, const reco::Vertex *&vertex, const reco::BeamSpot BS, edm::Handle< std::vector<reco::Conversion> > theConversions, int year);
     
+    bool isTrackerHighPt(pat::Muon muon, const reco::Vertex *&vertex);
+    float get_Muon_MVA_Value(pat::Muon muon, edm::Handle<reco::VertexCollection> vertices, double rho, int year, const reco::Vertex *&vertex);
+    bool passTight_BDT_Id(pat::Muon muon, edm::Handle<reco::VertexCollection> vertices, double rho, int year, const reco::Vertex *&vertex);
+    //float get_Muon_MVA_Value(pat::Muon muon, const reco::Vertex *&vertices, double rho, int year);
+    //bool passTight_BDT_Id(pat::Muon muon, const reco::Vertex *&vertices, double rho, int year);
+
     float kfactor_qqZZ_qcd_dPhi(float GENdPhiZZ, int finalState);
     float kfactor_qqZZ_qcd_Pt(float GENpTZZ, int finalState);
     float kfactor_qqZZ_qcd_M(float GENmassZZ, int finalState);
@@ -329,6 +338,28 @@ std::vector<pat::Electron> HZZ4LHelper::goodLooseElectrons2012(edm::Handle<edm::
     return bestElectrons;    
 }
 
+std::vector<pat::Electron> HZZ4LHelper::goodLooseElectrons2012(edm::Handle<edm::View<pat::Electron> > Electrons, edm::Handle<edm::View<pat::Electron> > ElectronsUnS, double elPtCut) {
+    using namespace pat;
+    using namespace std;
+    vector<pat::Electron> bestElectrons;
+    vector <bool> Ele_passLoose;
+    for(edm::View<pat::Electron>::const_iterator elec=Electrons->begin(); elec!=Electrons->end(); ++elec) {
+        if( abs(elec->eta()) < 2.5 && elec->pt() > elPtCut) {
+            //bestElectrons.push_back(*elec);
+            Ele_passLoose.push_back(true);
+        }
+        else    Ele_passLoose.push_back(false);
+    }
+    int i = 0;
+    for(edm::View<pat::Electron>::const_iterator elec_=ElectronsUnS->begin(); elec_!=ElectronsUnS->end(); ++elec_) {
+        if(Ele_passLoose[i]) {
+            bestElectrons.push_back(*elec_);
+        }
+        i++;
+    }
+    return bestElectrons;
+}
+
 std::vector<pat::Muon> HZZ4LHelper::goodLooseMuons2012(edm::Handle<edm::View<pat::Muon> > Muons, double muPtCut) {
     using namespace pat;
     using namespace std;    
@@ -376,6 +407,7 @@ std::vector<pat::Muon> HZZ4LHelper::goodMuons2015_noIso_noPf(std::vector<pat::Mu
     using namespace std;
     vector<pat::Muon> bestMuons;
     /********** M U O N  C U T S **********/
+    sip3dCut = 99999;
     double muEtaCut = 2.4;
     double dxyCut = 0.5;
     double dzCut = 1;
@@ -452,7 +484,7 @@ std::vector<pat::Tau> HZZ4LHelper::goodTaus2015(std::vector<pat::Tau> Taus, doub
     return bestTaus;
 }
 
-std::vector<pat::Photon> HZZ4LHelper::goodPhotons2015(std::vector<pat::Photon> Photons, double photonPtCut)
+std::vector<pat::Photon> HZZ4LHelper::goodPhotons2015(std::vector<pat::Photon> Photons, double photonPtCut, int year)
 {
     using namespace edm;
     using namespace pat;
@@ -466,8 +498,10 @@ std::vector<pat::Photon> HZZ4LHelper::goodPhotons2015(std::vector<pat::Photon> P
 
         float phoid;
         try {
-            //phoid=Photons[i].photonID("mvaPhoID-Spring15-25ns-nonTrig-V2p1-wp90");
-            phoid=Photons[i].userFloat("PhotonMVAEstimatorRun2Spring16NonTrigV1Values");
+            if(year == 2016)
+                phoid=Photons[i].photonID("mvaPhoID-Spring15-25ns-nonTrig-V2p1-wp90");
+            else
+                phoid=Photons[i].userFloat("PhotonMVAEstimatorRun2Spring16NonTrigV1Values");
         }
         catch(...) {
             std::cout<<"photon ID  missing!"<<std::endl;
@@ -650,21 +684,54 @@ double HZZ4LHelper::getSIP3D(pat::Electron electron) {
     return sip;    
 }
 
-bool HZZ4LHelper::passTight_BDT_Id(pat::Electron electron, float mvavalue) {
+bool HZZ4LHelper::passTight_BDT_Id(pat::Electron electron, int year) {
     float cutVal=1000;
+    float mvaVal=-1;
     float fSCeta = fabs(electron.superCluster()->eta());
-    if(electron.pt()<=10){
-        if(fSCeta < 0.8) cutVal = 1.26402092475;
-        if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = 1.17808089508;
-        if(fSCeta >= 1.479) cutVal = 1.33051972806;
+    if(year==2018)
+    {
+        if(electron.pt()<=10){
+            if(fSCeta < 0.8) cutVal = 0.8955937602;
+            if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = 0.91106464032;
+            if(fSCeta >= 1.479) cutVal = 0.94067753025;
+        }
+        else {
+            if(fSCeta < 0.8) cutVal = 0.04240620843;
+            if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = 0.0047338429;
+            if(fSCeta >= 1.479) cutVal = -0.60423293572;
+        }
+        mvaVal = electron.userFloat("ElectronMVAEstimatorRun2Autumn18IdIsoValues");
     }
-    else {
-        if(fSCeta < 0.8) cutVal = 2.36464785939;
-        if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = 2.07880614597;
-        if(fSCeta >= 1.479) cutVal = 1.08080644615;
+    if(year==2017)
+    {
+        if(electron.pt()<=10){
+            if(fSCeta < 0.8) cutVal = 0.85216885148;
+            if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = 0.82684550976;
+            if(fSCeta >= 1.479) cutVal = 0.86937630022;
+        }
+        else {
+            if(fSCeta < 0.8) cutVal = 0.98248928759;
+            if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = 0.96919224579;
+            if(fSCeta >= 1.479) cutVal = 0.79349796445;
+        }
+        mvaVal = electron.userFloat("ElectronMVAEstimatorRun2Fall17IsoV2Values");
     }
-
-    if (mvavalue > cutVal ) { return true;}
+    if(year==2016)
+    {
+        if(electron.pt()<=10){
+            if(fSCeta < 0.8) cutVal = 0.95034841889;
+            if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = 0.94606270058;
+            if(fSCeta >= 1.479) cutVal = 0.93872558098;
+        }
+        else {
+            if(fSCeta < 0.8) cutVal = 0.3782357877;
+            if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = 0.35871320305;
+            if(fSCeta >= 1.479) cutVal = -0.57451499543;
+        }
+        mvaVal = electron.userFloat("ElectronMVAEstimatorRun2Summer16IdIsoValues");
+    }
+    if( mvaVal > cutVal ) { return true;}
+    //if (mvavalue > cutVal ) { return true;}
     return false;
 }
 
@@ -680,6 +747,97 @@ bool HZZ4LHelper::passTight_Id(pat::Muon muon, const reco::Vertex *&vertex) {
     }
 }
 
+bool HZZ4LHelper::isTrackerHighPt(pat::Muon muon, const reco::Vertex *&vertex){
+    return ( muon.numberOfMatchedStations() > 1 
+              && (muon.muonBestTrack()->ptError()/muon.muonBestTrack()->pt()) < 0.3 
+              && std::abs(muon.muonBestTrack()->dxy(vertex->position())) < 0.2 
+              && std::abs(muon.muonBestTrack()->dz(vertex->position())) < 0.5 
+              && muon.innerTrack()->hitPattern().numberOfValidPixelHits() > 0 
+              && muon.innerTrack()->hitPattern().trackerLayersWithMeasurement() > 5 );
+}
+
+float HZZ4LHelper::get_Muon_MVA_Value(pat::Muon muon, edm::Handle<reco::VertexCollection> vertices, double rho, int year, const reco::Vertex *&vertex){
+    //MVA Reader
+    MuonGBRForestReader *r;
+    r = new MuonGBRForestReader(year); //for year put 2016,2017, or 2018 to select correct training
+
+    float pt  = muon.pt();
+    float eta = muon.eta();
+    float PFChargedHadIso   = muon.pfIsolationR03().sumChargedHadronPt;
+    float PFNeutralHadIso   = muon.pfIsolationR03().sumNeutralHadronEt;
+    float PFPhotonIso       = muon.pfIsolationR03().sumPhotonEt;
+    float SIP               = getSIP3D(muon);
+
+    float dxy = 999.;
+    float dz  = 999.;
+    //const reco::Vertex* vertex = 0;
+    //if (vertices->size()>0) 
+    //{
+    //    vertex = &(vertices->front());
+    //    dxy = fabs(muon.muonBestTrack()->dxy(vertex->position()));
+    //    dz  = fabs(muon.muonBestTrack()->dz(vertex->position()));
+    //}
+    dxy = fabs(muon.muonBestTrack()->dxy(vertex->position()));
+    dz  = fabs(muon.muonBestTrack()->dz(vertex->position()));
+
+    float mu_N_hits_, mu_chi_square_, mu_N_pixel_hits_, mu_N_tracker_hits_;
+    bool is_global_mu_  = muon.isGlobalMuon();
+    if ( is_global_mu_ )
+    {
+        // Number of muon chamber hits included in the the global muon track fit
+        mu_N_hits_ = (muon.globalTrack()->hitPattern().numberOfValidMuonHits());
+        // Chi2 of the global track fit
+        mu_chi_square_ = (muon.globalTrack()->normalizedChi2());
+    }
+    else
+    {
+        mu_N_hits_     = -1;
+        mu_chi_square_ = -1;
+    }
+
+    // Number of hits in the pixel detector
+    bool valid_KF = false;
+    reco::TrackRef myTrackRef = muon.innerTrack();
+    valid_KF = (myTrackRef.isAvailable());
+    valid_KF = (myTrackRef.isNonnull());  
+      
+    if ( valid_KF )
+    {
+        // Number of pixel hits
+        mu_N_pixel_hits_ = muon.innerTrack()->hitPattern().numberOfValidPixelHits();
+
+        // Number of hits in the tracker layers
+        mu_N_tracker_hits_ = muon.innerTrack()->hitPattern().trackerLayersWithMeasurement();
+    }
+    else
+    {
+        mu_N_pixel_hits_ = -1;
+        mu_N_tracker_hits_ = -1;
+    }
+
+    float BDT = r->Get_MVA_value(pt, eta, mu_N_hits_, mu_N_pixel_hits_, mu_N_tracker_hits_, mu_chi_square_, PFPhotonIso, PFChargedHadIso, PFNeutralHadIso, rho, SIP, dxy, dz);
+    delete r;
+    return BDT;
+}
+
+bool HZZ4LHelper::passTight_BDT_Id(pat::Muon muon, edm::Handle<reco::VertexCollection> vertices, double rho, int year, const reco::Vertex *&vertex){
+    float BDT = get_Muon_MVA_Value(muon, vertices, rho, year, vertex);
+    bool isBDT;
+    if(year==2018)
+        isBDT = ((muon.pt() <= 10 && BDT > 0.9506129026412962) || (muon.pt() > 10  && BDT > -0.3629065185785282));///new WP
+        //isBDT = ((muon.pt() <= 10 && BDT > 2.5212153674837317) || (muon.pt() > 10  && BDT > 1.496530520574132));
+    if(year==2017)
+        isBDT = ((muon.pt() <= 10 && BDT > 0.883555161952972) || (muon.pt() > 10  && BDT > -0.3830992293357821));
+        //isBDT = ((muon.pt() <= 10 && BDT > 2.2993430596975) || (muon.pt() > 10  && BDT > 1.4943015903718289));
+    if(year==2016)
+        isBDT = ((muon.pt() <= 10 && BDT > 0.8847169876098633) || (muon.pt() > 10  && BDT > -0.19389629721641488));
+        //isBDT = ((muon.pt() <= 10 && BDT > 2.1081259567775534) || (muon.pt() > 10  && BDT > 1.3359052488630339));
+    if(isBDT)    return true;
+    else
+        return {isTrackerHighPt(muon, vertex)&&(muon.pt()>200)};
+
+}
+
 bool HZZ4LHelper::passTight_Id_SUS(pat::Muon muon, const reco::Vertex *&vertex) {
     if (muon.isPFMuon() != 1) return false;
     if (muon.isMediumMuon() != 1) return false;
@@ -690,7 +848,7 @@ bool HZZ4LHelper::passTight_Id_SUS(pat::Muon muon, const reco::Vertex *&vertex) 
     return true;
 }
 
-bool HZZ4LHelper::passTight_Id_SUS(pat::Electron electron, std::string elecID, const reco::Vertex *&vertex, const reco::BeamSpot BS, edm::Handle< std::vector<reco::Conversion> > theConversions) {
+bool HZZ4LHelper::passTight_Id_SUS(pat::Electron electron, std::string elecID, const reco::Vertex *&vertex, const reco::BeamSpot BS, edm::Handle< std::vector<reco::Conversion> > theConversions, int year) {
 
     double dxyCut = 0.05;
     double dzCut = 0.1;
@@ -698,19 +856,54 @@ bool HZZ4LHelper::passTight_Id_SUS(pat::Electron electron, std::string elecID, c
     if( fabs(electron.gsfTrack()->dz(vertex->position())) >= dzCut ) return false;
 
     float cutVal=1000;
+    float mvaVal=-1;
     //float fSCeta = fabs(electron.eta());
     float fSCeta = fabs(electron.superCluster()->eta());
-    if(electron.pt()<=10){
-        if(fSCeta < 0.8) cutVal = 1.26402092475;
-        if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = 1.17808089508;
-        if(fSCeta >= 1.479) cutVal = 1.33051972806;
+    if(year==2018)
+    {
+        if(electron.pt()<=10){
+            if(fSCeta < 0.8) cutVal = 0.8955937602;
+            if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = 0.91106464032;
+            if(fSCeta >= 1.479) cutVal = 0.94067753025;
+        }
+        else {
+            if(fSCeta < 0.8) cutVal = 0.04240620843;
+            if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = 0.0047338429;
+            if(fSCeta >= 1.479) cutVal = -0.60423293572;
+        }
+        mvaVal = electron.userFloat("ElectronMVAEstimatorRun2Autumn18IdIsoValues");
     }
-    else {
-        if(fSCeta < 0.8) cutVal = 2.36464785939;
-        if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = 2.07880614597;
-        if(fSCeta >= 1.479) cutVal = 1.08080644615;
+    if(year==2017)
+    {
+        if(electron.pt()<=10){
+            if(fSCeta < 0.8) cutVal = 0.85216885148;
+            if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = 0.82684550976;
+            if(fSCeta >= 1.479) cutVal = 0.86937630022;
+        }
+        else {
+            if(fSCeta < 0.8) cutVal = 0.98248928759;
+            if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = 0.96919224579;
+            if(fSCeta >= 1.479) cutVal = 0.79349796445;
+        }
+        mvaVal = electron.userFloat("ElectronMVAEstimatorRun2Fall17IsoV2Values");
     }
-    if (electron.userFloat("ElectronMVAEstimatorRun2Fall17IsoV2RawValues") <= cutVal ) return false;
+    if(year==2016)
+    {
+        if(electron.pt()<=10){
+            if(fSCeta < 0.8) cutVal = 0.95034841889;
+            if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = 0.94606270058;
+            if(fSCeta >= 1.479) cutVal = 0.93872558098;
+        }
+        else {
+            if(fSCeta < 0.8) cutVal = 0.3782357877;
+            if(fSCeta >= 0.8 && fSCeta < 1.479) cutVal = 0.35871320305;
+            if(fSCeta >= 1.479) cutVal = -0.57451499543;
+        }
+        mvaVal = electron.userFloat("ElectronMVAEstimatorRun2Summer16IdIsoValues");
+    }
+
+    //if (electron.userFloat("ElectronMVAEstimatorRun2Autumn18IdIsoValues") <= cutVal ) return false;
+    if( mvaVal <= cutVal ) return false;
 
     bool vtxFitConversion = ConversionTools::hasMatchedConversion(reco::GsfElectron(electron), theConversions, BS.position());
     if( vtxFitConversion )  return false;
