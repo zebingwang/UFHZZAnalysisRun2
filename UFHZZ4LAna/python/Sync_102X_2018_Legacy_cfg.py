@@ -39,11 +39,7 @@ process.source = cms.Source("PoolSource",fileNames = myfilelist,
                             )
 
 process.TFileService = cms.Service("TFileService",
-#                                   fileName = cms.string("Sync_102X_test.root")
-#                                   fileName = cms.string("Sync_102X.root")
-#                                   fileName = cms.string("Sync_1031_ttH_test2_2.root")##
-#                                   fileName = cms.string("Sync_1031_ttH_test3.root")##
-                                   fileName = cms.string("Sync_1031_2018_ttH_newMuWP_add.root")##
+                                   fileName = cms.string("Sync_102X_2018_v2.root")##
 )
 
 # clean muons by segments 
@@ -127,7 +123,6 @@ process.RandomNumberGeneratorService = cms.Service("RandomNumberGeneratorService
 ###############################################
 #####   mva calcution before calibrated   #####
 ###############################################
-
 process.load("RecoEgamma.EgammaTools.calibratedEgammas_cff")
 #process.calibratedPatElectrons.correctionFile = "EgammaAnalysis/ElectronTools/data/ScalesSmearings/Run2018_Step2Closure_CoarseEtaR9Gain"
 process.calibratedPatElectrons.correctionFile = "EgammaAnalysis/ElectronTools/data/ScalesSmearings/Run2018_Step2Closure_CoarseEtaR9Gain_v2"
@@ -139,13 +134,18 @@ from PhysicsTools.SelectorUtils.tools.vid_id_tools import *
 # turn on VID producer, indicate data format to be DataFormat.MiniAOD, as appropriate
 dataFormat = DataFormat.MiniAOD
 switchOnVIDElectronIdProducer(process, dataFormat)
+switchOnVIDPhotonIdProducer(process, dataFormat)
 #define which IDs we want to produce
 #my_id_modules = ['RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Fall17_iso_V2_cff']
 #my_id_modules = ['RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Autumn18_ID_ISO_cff']
 my_id_modules = ['RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Autumn18_ID_ISO_cff','RecoEgamma.ElectronIdentification.Identification.heepElectronID_HEEPV70_cff']
+my_phoid_modules = ['RecoEgamma.PhotonIdentification.Identification.cutBasedPhotonID_Fall17_94X_V2_cff']
 #add them to the VID producer
 for idmod in my_id_modules:
    setupAllVIDIdsInModule(process,idmod,setupVIDElectronSelection)
+for idmod in my_phoid_modules:
+   setupAllVIDIdsInModule(process,idmod,setupVIDPhotonSelection)
+
 
 #process.electronMVAValueMapProducer.srcMiniAOD = cms.InputTag("calibratedPatElectrons")
 #process.electronMVAValueMapProducer.srcMiniAOD = cms.InputTag("slimmedElectrons")
@@ -156,11 +156,33 @@ for idmod in my_id_modules:
 #process.egmGsfElectronIDs.physicsObjectSrc = cms.InputTag('slimmedElectrons')
 #process.electronMVAVariableHelper.srcMiniAOD = cms.InputTag('slimmedElectrons')
 #process.electronMVAValueMapProducer.srcMiniAOD= cms.InputTag('slimmedElectrons')
+#phoSrc = cms.InputTag('slimmedPhotons',processName=cms.InputTag.skipCurrentProcess())
 process.egmGsfElectronIDs.physicsObjectSrc = cms.InputTag('selectedElectrons')
 process.electronMVAVariableHelper.srcMiniAOD = cms.InputTag('selectedElectrons')
 process.electronMVAValueMapProducer.srcMiniAOD= cms.InputTag('selectedElectrons')
 #process.heepIDVarValueMaps.elesMiniAOD = cms.InputTag('calibratedPatElectrons')
 #process.heepIDVarValueMaps.dataFormat = 2
+process.egmPhotonIDs.physicsObjectSrc = cms.InputTag('slimmedPhotons')
+process.photonIDValueMapProducer.srcMiniAOD = cms.InputTag('slimmedPhotons')
+process.photonMVAValueMapProducer.srcMiniAOD = cms.InputTag('slimmedPhotons')
+process.egmPhotonIsolation.srcToIsolate = cms.InputTag('slimmedPhotons')
+#process.egmPhotonIDs.physicsObjectSrc = phoSrc
+#process.photonMVAValueMapProducer.srcMiniAOD = phoSrc
+#process.photonIDValueMapProducer.srcMiniAOD = phoSrc
+#process.egmPhotonIsolation.srcToIsolate = phoSrc
+
+#process.photonMVAValueMapProducer.src = cms.InputTag("")
+#process.photonIDValueMapProducer.src = cms.InputTag("")
+
+from RecoEgamma.EgammaTools.egammaObjectModificationsInMiniAOD_cff import egamma_modifications
+from RecoEgamma.EgammaTools.egammaObjectModifications_tools import makeVIDBitsModifier, makeVIDinPATIDsModifier
+egamma_modifications.append(makeVIDBitsModifier(process,"egmGsfElectronIDs", "egmPhotonIDs"))
+egamma_modifications.append(makeVIDinPATIDsModifier(process,"egmGsfElectronIDs","egmPhotonIDs"))
+#egamma_modifications.append(makeVIDBitsModifier(process,"", "egmPhotonIDs"))
+#egamma_modifications.append(makeVIDinPATIDsModifier(process,"","egmPhotonIDs"))
+
+from RecoEgamma.EgammaTools.EgammaPostRecoTools import _addMissingMVAValuesToUserData
+_addMissingMVAValuesToUserData(process,egamma_modifications)
 
 process.electronsMVA = cms.EDProducer("SlimmedElectronMvaIDProducer",
                                      #mvaValuesMap = cms.InputTag("electronMVAValueMapProducer:ElectronMVAEstimatorRun2Fall17IsoV2RawValues"),
@@ -172,11 +194,61 @@ process.electronsMVA = cms.EDProducer("SlimmedElectronMvaIDProducer",
                                      idname = cms.string("ElectronMVAEstimatorRun2Autumn18IdIsoValues"),
 )
 
+#process.ModifierPhotons = cms.EDProducer("SlimmedPhotonIDProducer",
+#                                     idValuesMap = cms.InputTag("photonIDValueMapProducer:cutBasedPhotonID-Fall17-94X-V2-loose"),
+#                                     photonsCollection = cms.InputTag("slimmedPhotons"),
+#                                     idname = cms.string("cutBasedPhotonID-Fall17-94X-V2-loose"),
+#)
+
+#process.ModifierPhotons = cms.EDProducer("ModifiedPhotonProducer",
+#                               mvaValuesMap = cms.InputTag("electronMVAValueMapProducer:cutBasedPhotonID-Fall17-94X-V2-loose"), 
+#                               photonsCollection = cms.InputTag("slimmedPhotons"),
+#                               modifierConfig = cms.PSet(
+#                                 modifications = egamma_modifications
+#                                 )
+#                               idname = cms.string("cutBasedPhotonID-Fall17-94X-V2-loose")
+#                              )
+
+for pset in egamma_modifications:
+    pset.overrideExistingValues = cms.bool(True)
+    if hasattr(pset,"photon_config"): pset.photon_config.photonSrc = cms.InputTag('slimmedPhotons',processName=cms.InputTag.skipCurrentProcess())
+
+#process.load("PhysicsTools.PatAlgos.slimming.modifiedPhotons_cfi")
+#process.load("RecoEgamma.PhotonIdentification.photonIDValueMapProducer_cfi")
+#slimmedPhotons.modifierConfig.modifications   = egamma_modifications
+#process.egammaPostRecoPatUpdatorTask = cms.Task()process.slimmedPhotons = cms.EDProducer("ModifiedPhotonProducer",
+#process.slimmedPhotons = cms.EDProducer("ModifiedPhotonProducer",
+#process.ModifierPhotons = cms.EDProducer("ModifiedPhotonProducer",
+#process.ModifierPhotons = cms.EDProducer("photonIDValueMapProducer",
+#process.slimmedPhoton = cms.EDProducer("ModifiedPhotonProducer",
+process.ModifyPhotons = cms.EDProducer("ModifiedPhotonProducer",
+#                                            photonIDValuesMap = cms.InputTag("photonIDValueMapProducer:cutBasedPhotonID-Fall17-94X-V2-loose"),
+#                                            src = phoSrc,
+                                       src = cms.InputTag("slimmedPhotons"),
+                                       modifierConfig = cms.PSet(
+                                           modifications = egamma_modifications
+                                           ),
+#                                            idName = cms.string("cutBasedPhotonID-Fall17-94X-V2-loose"),
+                                       )
+#if egamma_modifications != cms.VPSet():
+#    process.egammaPostRecoPatUpdatorTask.add(process.slimmedPhotons)
+##process.egammaPostRecoPatUpdatorTask.add(process.slimmedPhotons)
+
 #process.electronsheepID = cms.EDProducer("SlimmedElectronMvaIDProducer",
 #                                        mvaValuesMap = cms.InputTag("heepIDVarValueMaps:heepElectronID-HEEPV70"),
 #                                        electronsCollection = cms.InputTag("calibratedPatElectrons"),
 #                                        idname = cms.string("heepElectronID-HEEPV70"),
 #)
+
+#process.load('RecoEgamma.PhotonIdentification.Identification.cutBasedPhotonID_Fall17_94X_V2_cff')
+#IDConfigsForEleProducer = cms.VPSet( )
+#process.load('RecoEgamma.PhotonIdentification.egmPhotonIDs_cff')
+#from RecoEgamma.PhotonIdentification.Identification.cutBasedPhotonID_Fall17_94X_V2_cff \
+#    import cutBasedPhotonID_Fall17_94X_V2_loose
+#IDConfigsForEleProducer.append(cutBasedPhotonID_Fall17_94X_V2_loose)
+#process.egmPhotonIDs.physicsObjectSrc = cms.InputTag('slimmedPhotons')
+#process.egmPhotonIDs.physicsObjectIDs = IDConfigsForEleProducer 
+
 
 # FSR Photons
 process.load('UFHZZAnalysisRun2.FSRPhotons.fsrPhotons_cff')
@@ -350,7 +422,10 @@ process.rivetProducerHZZFid = cms.EDProducer('HZZRivetProducer',
 
 # Analyzer
 process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
-                              photonSrc    = cms.untracked.InputTag("slimmedPhotons"),
+                              #photonSrc    = cms.untracked.InputTag("slimmedPhotons"),
+                              #photonSrc    = cms.untracked.InputTag("egmPhotonIDs"),
+                              #photonSrc    = cms.untracked.InputTag("ModifierPhotons"),
+                              photonSrc    = cms.untracked.InputTag("ModifyPhotons"),
                               electronSrc  = cms.untracked.InputTag("calibratedPatElectrons"),
                               electronUnSSrc  = cms.untracked.InputTag("electronsMVA"),
                               muonSrc      = cms.untracked.InputTag("calibratedMuons"),
@@ -440,10 +515,18 @@ process.p = cms.Path(process.fsrPhotonSequence*
 #                     process.calibratedPatElectrons*
                      process.egmGsfElectronIDSequence*
                      process.electronMVAValueMapProducer*
+                     #process.egmGsfElectronIDs*
 #                     process.heepIDVarValueMaps*
 #                     process.electronsMVA*process.electronsheepID* 
                      process.electronsMVA* 
                      process.calibratedPatElectrons*
+                     process.egmPhotonIDSequence*
+                     #process.photonIDValueMapProducer*
+                     process.egmPhotonIDs*
+                     #process.egammaPostRecoPatUpdatorTask*
+                     #process.slimmedPhotons*
+                     #process.ModifierPhotons*
+                     process.ModifyPhotons*
                      process.jetCorrFactors*
                      process.pileupJetIdUpdated*
                      process.slimmedJetsJEC*
