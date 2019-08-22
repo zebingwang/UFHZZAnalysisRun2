@@ -19,10 +19,9 @@ process.Timing = cms.Service("Timing",
                              )
 
 
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(10) )
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
 
 myfilelist = cms.untracked.vstring(
-
 '/store/mc/RunIIAutumn18MiniAOD/ttH_HToZZ_4LFilter_M125_13TeV_powheg2_JHUGenV7011_pythia8/MINIAODSIM/102X_upgrade2018_realistic_v15-v2/60000/DCB7927B-269F-3B4B-9DA3-EFE07A37FC9E.root',
 #'/store/mc/RunIIAutumn18MiniAOD/GluGluHToZZTo4L_M125_13TeV_powheg2_JHUGenV7011_pythia8/MINIAODSIM/102X_upgrade2018_realistic_v15-v2/270000/E5E2F122-AA57-5248-8177-594EC87DD494.root',
 #'/store/mc/RunIIAutumn18MiniAOD/VBF_HToZZTo4L_M125_13TeV_powheg2_JHUGenV7011_pythia8/MINIAODSIM/102X_upgrade2018_realistic_v15-v2/90000/96A5F68D-DCB8-3D4E-8615-919D86D1534F.root',
@@ -39,11 +38,7 @@ process.source = cms.Source("PoolSource",fileNames = myfilelist,
                             )
 
 process.TFileService = cms.Service("TFileService",
-#                                   fileName = cms.string("Sync_102X_test.root")
-#                                   fileName = cms.string("Sync_102X.root")
-#                                   fileName = cms.string("Sync_1031_ttH_test2_2.root")##
-#                                   fileName = cms.string("Sync_1031_ttH_test3.root")##
-                                   fileName = cms.string("Sync_1031_2018_ttH_newMuWP_add.root")##
+                                  fileName = cms.string("Sync_1031_2018_ttH_v2.root")##
 )
 
 # clean muons by segments 
@@ -115,68 +110,72 @@ process.RandomNumberGeneratorService = cms.Service("RandomNumberGeneratorService
 #                       era='2018-Prompt')  
 #a sequence egammaPostRecoSeq has now been created and should be added to your path, eg process.p=cms.Path(process.egammaPostRecoSeq)
 
-###### new added
-#from RecoEgamma.EgammaTools.EgammaPostRecoTools import setupEgammaPostRecoSeq
-#setupEgammaPostRecoSeq(process,
-#                       runEnergyCorrections=True,
-#                       runVID=True,
-#                       eleIDModules=['RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Autumn18_ID_ISO_cff','RecoEgamma.ElectronIdentification.Identification.heepElectronID_HEEPV70_cff'],
-#                       era='2018-Prompt')
+####### new added
+from RecoEgamma.EgammaTools.EgammaPostRecoTools import setupEgammaPostRecoSeq
+setupEgammaPostRecoSeq(process,
+                       #runEnergyCorrections=True,
+                       runEnergyCorrections=False,
+                       runVID=True,
+                       #eleIDModules=[],
+                       eleIDModules=['RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Autumn18_ID_ISO_cff','RecoEgamma.ElectronIdentification.Identification.heepElectronID_HEEPV70_cff'],
+                       phoIDModules=['RecoEgamma.PhotonIdentification.Identification.cutBasedPhotonID_Fall17_94X_V2_cff'],
+                       #applyEnergyCorrections=True,
+                       #applyVIDOnCorrectedEgamma=True,
+                       era='2018-Prompt')
 # and don't forget to add the producer 'process.egmGsfElectronIDSequence' to the path, i.e. process.electrons
+
+#process.TFileService = cms.Service("TFileService",
+#                                  fileName = cms.string("Sync_1031_2018_ttH_newMuWP_add.root")##
+#)
 
 ###############################################
 #####   mva calcution before calibrated   #####
 ###############################################
 
 process.load("RecoEgamma.EgammaTools.calibratedEgammas_cff")
-#process.calibratedPatElectrons.correctionFile = "EgammaAnalysis/ElectronTools/data/ScalesSmearings/Run2018_Step2Closure_CoarseEtaR9Gain"
+##process.calibratedPatElectrons.correctionFile = "EgammaAnalysis/ElectronTools/data/ScalesSmearings/Run2018_Step2Closure_CoarseEtaR9Gain"
 process.calibratedPatElectrons.correctionFile = "EgammaAnalysis/ElectronTools/data/ScalesSmearings/Run2018_Step2Closure_CoarseEtaR9Gain_v2"
 #process.calibratedPatElectrons.src = cms.InputTag("selectedElectrons")
-process.calibratedPatElectrons.src = cms.InputTag("electronsMVA")
-
-
-from PhysicsTools.SelectorUtils.tools.vid_id_tools import *
-# turn on VID producer, indicate data format to be DataFormat.MiniAOD, as appropriate
-dataFormat = DataFormat.MiniAOD
-switchOnVIDElectronIdProducer(process, dataFormat)
-#define which IDs we want to produce
-#my_id_modules = ['RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Fall17_iso_V2_cff']
-#my_id_modules = ['RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Autumn18_ID_ISO_cff']
-my_id_modules = ['RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Autumn18_ID_ISO_cff','RecoEgamma.ElectronIdentification.Identification.heepElectronID_HEEPV70_cff']
-#add them to the VID producer
-for idmod in my_id_modules:
-   setupAllVIDIdsInModule(process,idmod,setupVIDElectronSelection)
-
-#process.electronMVAValueMapProducer.srcMiniAOD = cms.InputTag("calibratedPatElectrons")
-#process.electronMVAValueMapProducer.srcMiniAOD = cms.InputTag("slimmedElectrons")
-
-#process.egmGsfElectronIDs.physicsObjectSrc = cms.InputTag('calibratedPatElectrons')
-#process.electronMVAVariableHelper.srcMiniAOD = cms.InputTag('calibratedPatElectrons')
-#process.electronMVAValueMapProducer.srcMiniAOD= cms.InputTag('calibratedPatElectrons')
-#process.egmGsfElectronIDs.physicsObjectSrc = cms.InputTag('slimmedElectrons')
-#process.electronMVAVariableHelper.srcMiniAOD = cms.InputTag('slimmedElectrons')
-#process.electronMVAValueMapProducer.srcMiniAOD= cms.InputTag('slimmedElectrons')
-process.egmGsfElectronIDs.physicsObjectSrc = cms.InputTag('selectedElectrons')
-process.electronMVAVariableHelper.srcMiniAOD = cms.InputTag('selectedElectrons')
-process.electronMVAValueMapProducer.srcMiniAOD= cms.InputTag('selectedElectrons')
-#process.heepIDVarValueMaps.elesMiniAOD = cms.InputTag('calibratedPatElectrons')
-#process.heepIDVarValueMaps.dataFormat = 2
-
-process.electronsMVA = cms.EDProducer("SlimmedElectronMvaIDProducer",
-                                     #mvaValuesMap = cms.InputTag("electronMVAValueMapProducer:ElectronMVAEstimatorRun2Fall17IsoV2RawValues"),
-                                     mvaValuesMap = cms.InputTag("electronMVAValueMapProducer:ElectronMVAEstimatorRun2Autumn18IdIsoValues"),
-                                     #electronsCollection = cms.InputTag("calibratedPatElectrons"),
-                                     #electronsCollection = cms.InputTag("slimmedElectrons"),
-                                     electronsCollection = cms.InputTag("selectedElectrons"),
-                                     #idname = cms.string("ElectronMVAEstimatorRun2Fall17IsoV2RawValues"),
-                                     idname = cms.string("ElectronMVAEstimatorRun2Autumn18IdIsoValues"),
-)
-
-#process.electronsheepID = cms.EDProducer("SlimmedElectronMvaIDProducer",
-#                                        mvaValuesMap = cms.InputTag("heepIDVarValueMaps:heepElectronID-HEEPV70"),
-#                                        electronsCollection = cms.InputTag("calibratedPatElectrons"),
-#                                        idname = cms.string("heepElectronID-HEEPV70"),
-#)
+#process.calibratedPatElectrons.src = cms.InputTag("electronsMVA")
+process.calibratedPatElectrons.src = cms.InputTag("slimmedElectrons")
+##  
+##  
+##  from PhysicsTools.SelectorUtils.tools.vid_id_tools import *
+##  # turn on VID producer, indicate data format to be DataFormat.MiniAOD, as appropriate
+##  dataFormat = DataFormat.MiniAOD
+##  switchOnVIDElectronIdProducer(process, dataFormat)
+##  #define which IDs we want to produce
+##  #my_id_modules = ['RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Fall17_iso_V2_cff']
+##  #my_id_modules = ['RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Autumn18_ID_ISO_cff']
+##  my_id_modules = ['RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Autumn18_ID_ISO_cff','RecoEgamma.ElectronIdentification.Identification.heepElectronID_HEEPV70_cff']
+##  #add them to the VID producer
+##  for idmod in my_id_modules:
+##     setupAllVIDIdsInModule(process,idmod,setupVIDElectronSelection)
+##  #
+##  #process.electronMVAValueMapProducer.srcMiniAOD = cms.InputTag("calibratedPatElectrons")
+##  #process.electronMVAValueMapProducer.srcMiniAOD = cms.InputTag("slimmedElectrons")
+##  #
+##  #process.egmGsfElectronIDs.physicsObjectSrc = cms.InputTag('calibratedPatElectrons')
+##  #process.electronMVAVariableHelper.srcMiniAOD = cms.InputTag('calibratedPatElectrons')
+##  #process.electronMVAValueMapProducer.srcMiniAOD= cms.InputTag('calibratedPatElectrons')
+##  #process.egmGsfElectronIDs.physicsObjectSrc = cms.InputTag('slimmedElectrons')
+##  #process.electronMVAVariableHelper.srcMiniAOD = cms.InputTag('slimmedElectrons')
+##  #process.electronMVAValueMapProducer.srcMiniAOD= cms.InputTag('slimmedElectrons')
+##  process.egmGsfElectronIDs.physicsObjectSrc = cms.InputTag('selectedElectrons')
+##  process.electronMVAVariableHelper.srcMiniAOD = cms.InputTag('selectedElectrons')
+##  process.electronMVAValueMapProducer.srcMiniAOD= cms.InputTag('selectedElectrons')
+##  #process.heepIDVarValueMaps.elesMiniAOD = cms.InputTag('calibratedPatElectrons')
+##  #process.heepIDVarValueMaps.dataFormat = 2
+##  #
+##  process.electronsMVA = cms.EDProducer("SlimmedElectronMvaIDProducer",
+##                                       #mvaValuesMap = cms.InputTag("electronMVAValueMapProducer:ElectronMVAEstimatorRun2Fall17IsoV2RawValues"),
+##                                       mvaValuesMap = cms.InputTag("electronMVAValueMapProducer:ElectronMVAEstimatorRun2Autumn18IdIsoValues"),
+##                                       #electronsCollection = cms.InputTag("calibratedPatElectrons"),
+##                                       #electronsCollection = cms.InputTag("slimmedElectrons"),
+##                                       electronsCollection = cms.InputTag("selectedElectrons"),
+##                                       #idname = cms.string("ElectronMVAEstimatorRun2Fall17IsoV2RawValues"),
+##                                       idname = cms.string("ElectronMVAEstimatorRun2Autumn18IdIsoValues"),
+##  )
 
 # FSR Photons
 process.load('UFHZZAnalysisRun2.FSRPhotons.fsrPhotons_cff')
@@ -351,8 +350,11 @@ process.rivetProducerHZZFid = cms.EDProducer('HZZRivetProducer',
 # Analyzer
 process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
                               photonSrc    = cms.untracked.InputTag("slimmedPhotons"),
+                              #electronSrc  = cms.untracked.InputTag("calibratedPatElectrons"),
+			      #electronUnSSrc  = cms.untracked.InputTag("electronsMVA"),
+                              #electronSrc  = cms.untracked.InputTag("slimmedElectrons"),
+                              electronUnSSrc  = cms.untracked.InputTag("slimmedElectrons"),
                               electronSrc  = cms.untracked.InputTag("calibratedPatElectrons"),
-                              electronUnSSrc  = cms.untracked.InputTag("electronsMVA"),
                               muonSrc      = cms.untracked.InputTag("calibratedMuons"),
 #                              muonSrc      = cms.untracked.InputTag("boostedMuons"),
                               tauSrc      = cms.untracked.InputTag("slimmedTaus"),
@@ -436,13 +438,18 @@ process.p = cms.Path(process.fsrPhotonSequence*
                      process.boostedMuons*
                      process.calibratedMuons*
 #                     process.regressionApplication*
-                     process.selectedElectrons*
+    #                 process.selectedElectrons*
 #                     process.calibratedPatElectrons*
                      process.egmGsfElectronIDSequence*
-                     process.electronMVAValueMapProducer*
+    #                 process.electronMVAValueMapProducer*
 #                     process.heepIDVarValueMaps*
 #                     process.electronsMVA*process.electronsheepID* 
-                     process.electronsMVA* 
+    #                 process.electronsMVA* 
+    #                 process.calibratedPatElectrons*
+                     process.egmPhotonIDSequence*
+                     #process.slimmedPhotons*
+                     process.egammaPostRecoSeq*
+                     #process.egammaScaleSmearSeq*
                      process.calibratedPatElectrons*
                      process.jetCorrFactors*
                      process.pileupJetIdUpdated*

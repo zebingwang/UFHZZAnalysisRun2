@@ -1,6 +1,7 @@
 git cms-init
-git cms-merge-topic mkovac:Electron_XGBoost_MVA_2016_and_2018_CMSSW_10_3_1
+git cms-merge-topic mkovac:Electron_XGBoost_MVA_2016_and_2018_CMSSW_10_2_15
 git cms-merge-topic cms-egamma:EgammaPostRecoTools 
+git cms-merge-topic cms-egamma:PhotonIDValueMapSpeedup1029
 #git clone git@github.com:cms-egamma/EgammaAnalysis-ElectronTools.git EgammaAnalysis/ElectronTools/data
 git clone git@github.com:cms-data/EgammaAnalysis-ElectronTools.git EgammaAnalysis/ElectronTools/data
 cd EgammaAnalysis/ElectronTools/data
@@ -15,7 +16,7 @@ cp /raid/raid7/dsperka/Run2/HZZ4l/CMSSW_10_2_5/src/GeneratorInterface/RivetInter
 cp /raid/raid7/dsperka/Run2/HZZ4l/CMSSW_10_2_5/src/GeneratorInterface/RivetInterface/plugins/HTXSRivetProducer.cc GeneratorInterface/RivetInterface/plugins/
 git clone https://github.com/mkovac/MuonMVAReader.git MuonMVAReader
 git clone https://github.com/bachtis/Analysis.git -b KaMuCa_V4 KaMuCa
-git clone -b 2018_L https://github.com/qyguo/UFHZZAnalysisRun2.git
+git clone -b FullRun_II https://github.com/VBF-HZZ/UFHZZAnalysisRun2.git
 #MELA Analytics
 git clone https://github.com/usarica/MelaAnalytics.git
 (cd MelaAnalytics; git checkout -b from-v14 v1.4)

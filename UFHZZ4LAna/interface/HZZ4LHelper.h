@@ -392,9 +392,9 @@ std::vector<pat::Photon> HZZ4LHelper::goodLoosePhotons2015(edm::Handle<edm::View
     using namespace std;    
     vector<pat::Photon> bestPhotons;    
     for(edm::View<pat::Photon>::const_iterator photon=Photons->begin(); photon != Photons->end(); ++photon) {
-        if( fabs(photon->eta()) < 2.3 && photon->pt() > phoPtCut) {
+        //if( fabs(photon->eta()) < 2.3 && photon->pt() > phoPtCut) {
             bestPhotons.push_back(*photon);
-        }
+        //}
     }
     return bestPhotons;    
 }
@@ -494,14 +494,17 @@ std::vector<pat::Photon> HZZ4LHelper::goodPhotons2015(std::vector<pat::Photon> P
   
     for(unsigned int i = 0; i < Photons.size(); i++) {
 
+        /*
         if ( Photons[i].pt()<photonPtCut ) continue;
 
         float phoid;
         try {
             if(year == 2016)
                 phoid=Photons[i].photonID("mvaPhoID-Spring15-25ns-nonTrig-V2p1-wp90");
-            else
-                phoid=Photons[i].userFloat("PhotonMVAEstimatorRun2Spring16NonTrigV1Values");
+            else if(year == 2017)
+                phoid=Photons[i].photonID("PhotonMVAEstimatorRun2Spring16NonTrigV1Values");
+            else if(year == 2018)
+                phoid=Photons[i].photonID("cutBasedPhotonID-Fall17-94X-V2-loose");
         }
         catch(...) {
             std::cout<<"photon ID  missing!"<<std::endl;
@@ -510,6 +513,7 @@ std::vector<pat::Photon> HZZ4LHelper::goodPhotons2015(std::vector<pat::Photon> P
         if ( phoid < 0.5) continue;
 
         if ( Photons[i].hasPixelSeed() ) continue; 
+        */ 
         bestPhotons.push_back(Photons[i]);
 
     }
