@@ -14,8 +14,12 @@ git cms-init
 
 git clone -b FullRun_II https://github.com/VBF-HZZ/UFHZZAnalysisRun2.git
 
-cp UFHZZAnalysisRun2/install.sh .
+cp UFHZZAnalysisRun2/install*.sh .
 
+you can choose to run install.sh or run install_2.sh
+
+./install_2.sh
+------or------
 ./install.sh
 
 cmsRun UFHZZAnalysisRun2/UFHZZ4LAna/python/Sync_102X_2018_Legacy_cfg.py
