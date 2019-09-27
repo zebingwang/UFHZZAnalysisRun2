@@ -255,7 +255,8 @@ private:
     int posNNPDF;
     float pdfRMSup, pdfRMSdown, pdfENVup, pdfENVdown;
     // lepton variables
-    vector<double> lep_pt; vector<double> lep_pterr; vector<double> lep_pterrold;
+    vector<double> lep_pt; vector<double> lep_pterr; vector<double> lep_pterrold; 
+    vector<double> lep_p; vector<double> lep_ecalEnergy; vector<int> lep_isEB; vector<int> lep_isEE;
     vector<double> lep_eta; vector<double> lep_phi; vector<double> lep_mass;
     vector<double> lepFSR_pt; vector<double> lepFSR_eta; vector<double> lepFSR_phi; vector<double> lepFSR_mass;
     int lep_Hindex[4];//position of Higgs candidate leptons in lep_p4: 0 = Z1 lead, 1 = Z1 sub, 2 = Z2 lead, 3 = Z2 sub
@@ -482,6 +483,7 @@ private:
 
     // a vector<float> for each vector<double>
     vector<float> lep_pt_float, lep_pterr_float, lep_pterrold_float;
+    vector<float> lep_p_float, lep_ecalEnergy_float;
     vector<float> lep_eta_float, lep_phi_float, lep_mass_float;
     vector<float> lepFSR_pt_float, lepFSR_eta_float;
     vector<float> lepFSR_phi_float, lepFSR_mass_float;
@@ -982,7 +984,9 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     pdfRMSup=1.0; pdfRMSdown=1.0; pdfENVup=1.0; pdfENVdown=1.0;
 
     //lepton variables
-    lep_pt.clear(); lep_pterr.clear(); lep_pterrold.clear(); lep_eta.clear(); lep_phi.clear(); lep_mass.clear(); 
+    lep_pt.clear(); lep_pterr.clear(); lep_pterrold.clear(); 
+    lep_p.clear(); lep_ecalEnergy.clear(); lep_isEB.clear(); lep_isEE.clear();
+    lep_eta.clear(); lep_phi.clear(); lep_mass.clear(); 
     lepFSR_pt.clear(); lepFSR_eta.clear(); lepFSR_phi.clear(); lepFSR_mass.clear(); 
     for (int i=0; i<4; ++i) {lep_Hindex[i]=-1;}
     pTL1=-1.0; pTL2=-1.0; pTL3=-1.0; pTL4=-1.0;
@@ -1196,7 +1200,9 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     jet1pt=-1.0; jet2pt=-1.0;
 
     // Float vectors
-    lep_pt_float.clear(); lep_pterr_float.clear(); lep_pterrold_float.clear(); lep_eta_float.clear(); lep_phi_float.clear(); lep_mass_float.clear();
+    lep_pt_float.clear(); lep_pterr_float.clear(); lep_pterrold_float.clear(); 
+    lep_p_float.clear(); lep_ecalEnergy_float.clear();  
+    lep_eta_float.clear(); lep_phi_float.clear(); lep_mass_float.clear();
     lepFSR_pt_float.clear(); lepFSR_eta_float.clear(); lepFSR_phi_float.clear(); lepFSR_mass_float.clear();
     tau_pt_float.clear(); tau_eta_float.clear(); tau_phi_float.clear(); tau_mass_float.clear();    
     pho_pt_float.clear(); pho_eta_float.clear(); pho_phi_float.clear(); photonCutBasedIDLoose_float.clear();
@@ -1467,6 +1473,10 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                     lep_id.push_back(recoElectrons[lep_ptindex[i]].pdgId());
                     lep_pt.push_back(recoElectrons[lep_ptindex[i]].pt());
                     lep_pterrold.push_back(recoElectrons[lep_ptindex[i]].p4Error(reco::GsfElectron::P4_COMBINATION));
+                    lep_isEB.push_back(recoElectrons[lep_ptindex[i]].isEB());
+                    lep_isEE.push_back(recoElectrons[lep_ptindex[i]].isEE());
+                    lep_p.push_back(recoElectrons[lep_ptindex[i]].p());
+                    lep_ecalEnergy.push_back(recoElectrons[lep_ptindex[i]].correctedEcalEnergy());
                     double perr = 0.0;
                     if (recoElectrons[lep_ptindex[i]].ecalDriven()) {
                         perr = recoElectrons[lep_ptindex[i]].p4Error(reco::GsfElectron::P4_COMBINATION);
@@ -1534,6 +1544,10 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                     lep_id.push_back(recoMuons[lep_ptindex[i]].pdgId());
                     lep_pt.push_back(recoMuons[lep_ptindex[i]].pt());
                     lep_pterrold.push_back(recoMuons[lep_ptindex[i]].muonBestTrack()->ptError());
+                    lep_isEB.push_back(0);
+                    lep_isEE.push_back(0);
+                    lep_p.push_back(recoMuons[lep_ptindex[i]].p());
+                    lep_ecalEnergy.push_back(0);
                     if (recoMuons[lep_ptindex[i]].hasUserFloat("correctedPtError")) {
                         lep_pterr.push_back(recoMuons[lep_ptindex[i]].userFloat("correctedPtError"));
                     } else {
@@ -2543,6 +2557,8 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 lep_pt_float.assign(lep_pt.begin(),lep_pt.end());
                 lep_pterr_float.assign(lep_pterr.begin(),lep_pterr.end());
                 lep_pterrold_float.assign(lep_pterrold.begin(),lep_pterrold.end());
+                lep_p_float.assign(lep_p.begin(),lep_p.end());
+                lep_ecalEnergy_float.assign(lep_ecalEnergy.begin(),lep_ecalEnergy.end());
                 lep_eta_float.assign(lep_eta.begin(),lep_eta.end());
                 lep_phi_float.assign(lep_phi.begin(),lep_phi.end());
                 lep_mass_float.assign(lep_mass.begin(),lep_mass.end());
@@ -3361,6 +3377,10 @@ void UFHZZ4LAna::bookPassedEventTree(TString treeName, TTree *tree)
     tree->Branch("lep_pt",&lep_pt_float);
     tree->Branch("lep_pterr",&lep_pterr_float);
     tree->Branch("lep_pterrold",&lep_pterrold_float);
+    tree->Branch("lep_p",&lep_p_float);
+    tree->Branch("lep_ecalEnergy",&lep_ecalEnergy_float);
+    tree->Branch("lep_isEB",&lep_isEB);
+    tree->Branch("lep_isEE",&lep_isEE);
     tree->Branch("lep_eta",&lep_eta_float);
     tree->Branch("lep_phi",&lep_phi_float);
     tree->Branch("lep_mass",&lep_mass_float);
