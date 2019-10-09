@@ -263,6 +263,9 @@ private:
     float pTL1, pTL2, pTL3, pTL4;
     float etaL1, etaL2, etaL3, etaL4;
     int idL1, idL2, idL3, idL4;
+    float mL1, mL2, mL3, mL4;
+    float pTErrL1, pTErrL2, pTErrL3, pTErrL4;
+    float phiL1, phiL2, phiL3, phiL4;
     float pTL1FSR, pTL2FSR, pTL3FSR, pTL4FSR;
     vector<float> lep_dataMC; vector<float> lep_dataMCErr;
     vector<int> lep_genindex; //position of lepton in GENlep_p4 (if gen matched, -1 if not gen matched)
@@ -992,6 +995,9 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     pTL1=-1.0; pTL2=-1.0; pTL3=-1.0; pTL4=-1.0;
     etaL1=9999.0; etaL2=9999.0; etaL3=9999.0; etaL4=9999.0;
     idL1=9999; idL2=9999; idL3=9999; idL4=9999;
+    mL1=-1.0; mL2=-1.0; mL3=-1.0; mL4=-1.0;
+    pTErrL1=-1.0; pTErrL2=-1.0; pTErrL3=-1.0; pTErrL4=-1.0;
+    phiL1=9999.0; phiL2=9999.0; phiL3=9999.0; phiL4=9999.0;
     pTL1FSR=-1.0; pTL2FSR=-1.0; pTL3FSR=-1.0; pTL4FSR=-1.0;
     lep_genindex.clear(); lep_id.clear(); lep_dataMC.clear(); lep_dataMCErr.clear();
     lep_matchedR03_PdgId.clear(); lep_matchedR03_MomId.clear(); lep_matchedR03_MomMomId.clear();
@@ -3430,6 +3436,18 @@ void UFHZZ4LAna::bookPassedEventTree(TString treeName, TTree *tree)
     tree->Branch("etaL2",&etaL2,"etaL2/F");
     tree->Branch("etaL3",&etaL3,"etaL3/F");
     tree->Branch("etaL4",&etaL4,"etaL4/F");
+    tree->Branch("mL1",&mL1,"mL1/F");
+    tree->Branch("mL2",&mL2,"mL2/F");
+    tree->Branch("mL3",&mL3,"mL3/F");
+    tree->Branch("mL4",&mL4,"mL4/F");
+    tree->Branch("pTErrL1",&pTErrL1,"pTErrL1/F");
+    tree->Branch("pTErrL2",&pTErrL2,"pTErrL2/F");
+    tree->Branch("pTErrL3",&pTErrL3,"pTErrL3/F");
+    tree->Branch("pTErrL4",&pTErrL4,"pTErrL4/F");
+    tree->Branch("phiL1",&phiL1,"phiL1/F");
+    tree->Branch("phiL2",&phiL2,"phiL2/F");
+    tree->Branch("phiL3",&phiL3,"phiL3/F");
+    tree->Branch("phiL4",&phiL4,"phiL4/F");
     tree->Branch("pTL1FSR",&pTL1FSR,"pTL1FSR/F");
     tree->Branch("pTL2FSR",&pTL2FSR,"pTL2FSR/F");
     tree->Branch("pTL3FSR",&pTL3FSR,"pTL3FSR/F");
@@ -4169,10 +4187,14 @@ void UFHZZ4LAna::setTreeVariables( const edm::Event& iEvent, const edm::EventSet
         Lep3.SetPtEtaPhiM(lep_pt[lep_Hindex[2]],lep_eta[lep_Hindex[2]],lep_phi[lep_Hindex[2]],lep_mass[lep_Hindex[2]]);
         Lep4.SetPtEtaPhiM(lep_pt[lep_Hindex[3]],lep_eta[lep_Hindex[3]],lep_phi[lep_Hindex[3]],lep_mass[lep_Hindex[3]]);
 
-        idL1 = lep_id[lep_Hindex[0]]; pTL1 = Lep1.Pt(); etaL1 = Lep1.Eta();
-        idL2 = lep_id[lep_Hindex[1]]; pTL2 = Lep2.Pt(); etaL2 = Lep2.Eta();
-        idL3 = lep_id[lep_Hindex[2]]; pTL3 = Lep3.Pt(); etaL3 = Lep3.Eta();       
-        idL4 = lep_id[lep_Hindex[3]]; pTL4 = Lep4.Pt(); etaL4 = Lep4.Eta();
+        //idL1 = lep_id[lep_Hindex[0]]; pTL1 = Lep1.Pt(); etaL1 = Lep1.Eta();
+        //idL2 = lep_id[lep_Hindex[1]]; pTL2 = Lep2.Pt(); etaL2 = Lep2.Eta();
+        //idL3 = lep_id[lep_Hindex[2]]; pTL3 = Lep3.Pt(); etaL3 = Lep3.Eta();       
+        //idL4 = lep_id[lep_Hindex[3]]; pTL4 = Lep4.Pt(); etaL4 = Lep4.Eta();
+        idL1 = lep_id[lep_Hindex[0]]; pTL1 = Lep1.Pt(); etaL1 = Lep1.Eta(); pTErrL1 = lep_pterr[lep_Hindex[0]]; mL1 = lep_mass[lep_Hindex[0]]; phiL1 = lep_phi[lep_Hindex[0]];
+        idL2 = lep_id[lep_Hindex[1]]; pTL2 = Lep2.Pt(); etaL2 = Lep2.Eta(); pTErrL2 = lep_pterr[lep_Hindex[1]]; mL2 = lep_mass[lep_Hindex[1]]; phiL2 = lep_phi[lep_Hindex[1]];
+        idL3 = lep_id[lep_Hindex[2]]; pTL3 = Lep3.Pt(); etaL3 = Lep3.Eta(); pTErrL3 = lep_pterr[lep_Hindex[2]]; mL3 = lep_mass[lep_Hindex[2]]; phiL3 = lep_phi[lep_Hindex[2]];
+        idL4 = lep_id[lep_Hindex[3]]; pTL4 = Lep4.Pt(); etaL4 = Lep4.Eta(); pTErrL4 = lep_pterr[lep_Hindex[3]]; mL4 = lep_mass[lep_Hindex[3]]; phiL4 = lep_phi[lep_Hindex[3]];
 
     }
 
