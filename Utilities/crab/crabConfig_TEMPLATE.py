@@ -10,7 +10,7 @@ config.General.workArea = 'resultsAna_JOBTAG/'
 config.General.requestName = 'OUTFILENAME'
 config.General.transferOutputs = True
 config.General.transferLogs=True
-config.General.failureLimit=1
+#config.General.failureLimit=1
 
 import os
 config.section_('JobType')
