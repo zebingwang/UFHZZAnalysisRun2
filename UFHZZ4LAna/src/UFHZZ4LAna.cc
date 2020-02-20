@@ -1635,39 +1635,41 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
                 n = n + 1;
 
-                pho_pt.push_back(recoPhotons[i].pt());
-                pho_eta.push_back(recoPhotons[i].eta());
-                pho_phi.push_back(recoPhotons[i].phi());
-                if(year == 2016){pho_mva90.push_back(recoPhotons[i].photonID("mvaPhoID-Spring16-nonTrig-V1-wp90"));}
-                if(year == 2017 || year == 2018){pho_mva90.push_back(recoPhotons[i].photonID("mvaPhoID-RunIIFall17-v2-wp90"));}
+                pat::Photon pho_corr = helper.Photon_corr(recoPhotons[i], vertex->at(theVertex));
 
-                pho_mva.push_back(recoPhotons[i].userFloat(PhoMVA_name_161718.c_str()));
-                //photonCutBasedIDMedium.push_back(recoPhotons[i].photonID("cutBasedPhotonID-Fall17-94X-V2-medium"));
-                //photonCutBasedIDTight.push_back(recoPhotons[i].photonID("cutBasedPhotonID-Fall17-94X-V2-tight"));
-                //pho_MVA.push_back(recoPhotons[i].pfMVA());
+                pho_pt.push_back(pho_corr.pt());
+                pho_eta.push_back(pho_corr.eta());
+                pho_phi.push_back(pho_corr.phi());
+                if(year == 2016){pho_mva90.push_back(pho_corr.photonID("mvaPhoID-Spring16-nonTrig-V1-wp90"));}
+                if(year == 2017 || year == 2018){pho_mva90.push_back(pho_corr.photonID("mvaPhoID-RunIIFall17-v2-wp90"));}
+
+                pho_mva.push_back(pho_corr.userFloat(PhoMVA_name_161718.c_str()));
+                //photonCutBasedIDMedium.push_back(pho_corr.photonID("cutBasedPhotonID-Fall17-94X-V2-medium"));
+                //photonCutBasedIDTight.push_back(pho_corr.photonID("cutBasedPhotonID-Fall17-94X-V2-tight"));
+                //pho_MVA.push_back(pho_corr.pfMVA());
 
 
-                pho_sigmaEtaEta.push_back(recoPhotons[i].sigmaEtaEta());
-                pho_R9.push_back(recoPhotons[i].r9());
-                pho_chargedHadronIso.push_back(recoPhotons[i].chargedHadronIso());
-                pho_neutralHadronIso.push_back(recoPhotons[i].neutralHadronIso());
-                pho_photonIso.push_back(recoPhotons[i].photonIso());
+                pho_sigmaEtaEta.push_back(pho_corr.sigmaEtaEta());
+                pho_R9.push_back(pho_corr.r9());
+                pho_chargedHadronIso.push_back(pho_corr.chargedHadronIso());
+                pho_neutralHadronIso.push_back(pho_corr.neutralHadronIso());
+                pho_photonIso.push_back(pho_corr.photonIso());
 
-                pho_sigmaIetaIeta.push_back(recoPhotons[i].sigmaIetaIeta());
-                pho_e1x5.push_back(recoPhotons[i].e1x5());
-                pho_e2x5.push_back(recoPhotons[i].e2x5());
-                pho_e3x3.push_back(recoPhotons[i].e3x3());
-                pho_e5x5.push_back(recoPhotons[i].e5x5());
-                pho_maxEnergyXtal.push_back(recoPhotons[i].maxEnergyXtal());
-                pho_hadronicOverEm.push_back(recoPhotons[i].hadronicOverEm());
-                pho_e2nd.push_back(recoPhotons[i].e2nd());
-                pho_eTop.push_back(recoPhotons[i].eTop());
-                pho_eLeft.push_back(recoPhotons[i].eLeft());
-                pho_eRight.push_back(recoPhotons[i].eRight());
-                pho_eBottom.push_back(recoPhotons[i].eBottom());
+                pho_sigmaIetaIeta.push_back(pho_corr.sigmaIetaIeta());
+                pho_e1x5.push_back(pho_corr.e1x5());
+                pho_e2x5.push_back(pho_corr.e2x5());
+                pho_e3x3.push_back(pho_corr.e3x3());
+                pho_e5x5.push_back(pho_corr.e5x5());
+                pho_maxEnergyXtal.push_back(pho_corr.maxEnergyXtal());
+                pho_hadronicOverEm.push_back(pho_corr.hadronicOverEm());
+                pho_e2nd.push_back(pho_corr.e2nd());
+                pho_eTop.push_back(pho_corr.eTop());
+                pho_eLeft.push_back(pho_corr.eLeft());
+                pho_eRight.push_back(pho_corr.eRight());
+                pho_eBottom.push_back(pho_corr.eBottom());
 
-                pho_hasPixelSeed.push_back((Int_t)recoPhotons[i].hasPixelSeed());
-                pho_EleVote.push_back((Int_t)recoPhotons[i].passElectronVeto());
+                pho_hasPixelSeed.push_back((Int_t)pho_corr.hasPixelSeed());
+                pho_EleVote.push_back((Int_t)pho_corr.passElectronVeto());
             }
             pho_n.push_back(n);
 
