@@ -95,12 +95,11 @@ void CorrJetsProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup
 
         //float corrMass   = jet.userFloat("ak8PFJetsCHSValueMap:ak8PFJetsCHSPrunedMass") * jecAK8->getCorrection();
         float corrMass;
-        /*if (isData_){
+        if (isData_){
            if (year_ == 2016)    corrMass   = jet.userFloat("ak8PFJetsCHSPrunedMass") * jecAK8->getCorrection();
            else    corrMass   = jet.userFloat("ak8PFJetsCHSPrunedMass") * jecAK8->getCorrection();
         }
-        else*/    
-	corrMass   = jet.userFloat("ak8PFJetsCHSPrunedMass") * jecAK8->getCorrection();
+        else    corrMass   = jet.userFloat("ak8PFJetsCHSValueMap:ak8PFJetsCHSPrunedMass") * jecAK8->getCorrection();
 	pat::Jet* cloneJet = jet.clone();
         cloneJet->addUserFloat("ak8PFJetsCHSCorrPrunedMass", corrMass );
         corrJets->push_back( *cloneJet );
