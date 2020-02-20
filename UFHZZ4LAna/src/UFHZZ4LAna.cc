@@ -401,6 +401,10 @@ private:
     int GENlep_Hindex[4];//position of Higgs candidate leptons in lep_p4: 0 = Z1 lead, 1 = Z1 sub, 2 = Z2 lead, 3 = Z3 sub
     vector<float> GENlep_isoCH; vector<float> GENlep_isoNH; vector<float> GENlep_isoPhot; vector<float> GENlep_RelIso;
 
+    // photon variables
+    vector<int> GENpho_id; vector<int> GENpho_status; vector<double> GENpho_pt; 
+    vector<double> GENpho_eta; vector<double> GENpho_phi; vector<double> GENpho_energy;	
+
     // Higgs candidate variables (calculated using selected gen leptons)
     vector<double> GENH_pt; vector<double> GENH_eta; vector<double> GENH_phi; vector<double> GENH_mass;
     float GENmass4l, GENmass4e, GENmass4mu, GENmass2e2mu, GENpT4l, GENeta4l, GENrapidity4l;
@@ -520,6 +524,8 @@ private:
     vector<float> GENjet_pt_float, GENjet_eta_float;
     vector<float> GENjet_phi_float, GENjet_mass_float;
 
+    vector<float> GENpho_pt_float, GENpho_eta_float, GENpho_phi_float, GENpho_energy_float;
+	
     // Global Variables but not stored in the tree
     vector<double> lep_ptreco;
     vector<int> lep_ptid; vector<int> lep_ptindex;
@@ -1126,6 +1132,11 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     // lepton variables
     GENlep_pt.clear(); GENlep_eta.clear(); GENlep_phi.clear(); GENlep_mass.clear();
     GENlep_id.clear(); GENlep_status.clear(); GENlep_MomId.clear(); GENlep_MomMomId.clear();
+	
+    // photon variables
+    GENpho_pt.clear(); GENpho_eta.clear(); GENpho_phi.clear(); GENpho_energy.clear();
+    GENpho_id.clear(); GENpho_status.clear();
+	
     for (int i=0; i<4; ++i) {GENlep_Hindex[i]=-1;};//position of Higgs candidate leptons in lep_p4: 0 = Z1 lead, 1 = Z1 sub, 2 = Z2 lead, 3 = Z3 sub
     GENlep_isoCH.clear(); GENlep_isoNH.clear(); GENlep_isoPhot.clear(); GENlep_RelIso.clear();
 
@@ -2718,7 +2729,10 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     GENjet_phi_float.clear(); GENjet_phi_float.assign(GENjet_phi.begin(),GENjet_phi.end());
     GENjet_mass_float.clear(); GENjet_mass_float.assign(GENjet_mass.begin(),GENjet_mass.end());
 
-
+    GENpho_pt_float.clear(); GENpho_pt_float.assign(GENpho_pt.begin(),GENpho_pt.end());
+    GENpho_eta_float.clear(); GENpho_eta_float.assign(GENpho_eta.begin(),GENpho_eta.end());
+    GENpho_phi_float.clear(); GENpho_phi_float.assign(GENpho_phi.begin(),GENpho_phi.end());
+    GENpho_energy_float.clear(); GENpho_energy_float.assign(GENpho_energy.begin(),GENpho_energy.end());
 
     if (isMC) passedEventsTree_All->Fill();
 
@@ -3771,6 +3785,13 @@ void UFHZZ4LAna::bookPassedEventTree(TString treeName, TTree *tree)
     tree->Branch("GENlep_isoPhot",&GENlep_isoPhot);
     tree->Branch("GENlep_RelIso",&GENlep_RelIso);
 
+    tree->Branch("GENpho_pt",&GENpho_pt_float);
+    tree->Branch("GENpho_eta",&GENpho_eta_float);
+    tree->Branch("GENpho_phi",&GENpho_phi_float);
+    tree->Branch("GENpho_energy",&GENpho_energy_float);
+    tree->Branch("GENpho_id",&GENpho_id);
+    tree->Branch("GENpho_status",&GENpho_status);
+	
     // Higgs candidate variables (calculated using selected gen leptons)
     tree->Branch("GENH_pt",&GENH_pt_float);
     tree->Branch("GENH_eta",&GENH_eta_float);
@@ -4391,6 +4412,14 @@ void UFHZZ4LAna::setGENVariables(edm::Handle<reco::GenParticleCollection> pruned
             GENH_mass.push_back(genPart->mass());
         }
 
+	if (genPart->pdgId()==22){
+            GENpho_id.push_back( genPart->pdgId() );
+            GENpho_status.push_back(genPart->status());
+            GENpho_pt.push_back( genPart->pt() );
+            GENpho_eta.push_back( genPart->eta() );
+            GENpho_phi.push_back( genPart->phi() );
+            GENpho_energy.push_back( genPart->energy() );
+        }
 
         if (genPart->pdgId()==23 && (genPart->status()>=20 && genPart->status()<30) ) {
             const reco::Candidate *Zdau0=genPart->daughter(0);
