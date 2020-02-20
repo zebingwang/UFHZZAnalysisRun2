@@ -99,6 +99,9 @@ public:
     std::vector<pat::Tau> goodTaus2015(std::vector<pat::Tau> Taus, double tauPtCut);
     std::vector<pat::Photon> goodPhotons2015(std::vector<pat::Photon> Photons, double phoPtCut, int year);
 
+    // Photon Energy correction
+    pat::Photon Photon_corr(pat::Photon Photons, reco::Vertex vtx);
+	
     void cleanOverlappingLeptons(std::vector<pat::Muon> &Muons, std::vector<pat::Electron> &Electrons,const reco::Vertex *&vertex);
     void cleanOverlappingTaus(std::vector<pat::Muon> &Muons, std::vector<pat::Electron> &Electrons, std::vector<pat::Tau> &Taus, double isoCutMu, double IsoCutEl, double muRho, double elRho);
 
@@ -521,6 +524,31 @@ std::vector<pat::Photon> HZZ4LHelper::goodPhotons2015(std::vector<pat::Photon> P
     return bestPhotons;
 }
 
+// Photon Energy correction
+pat::Photon HZZ4LHelper::Photon_corr(pat::Photon photon, reco::Vertex vtx)
+{
+  using namespace edm;
+  using namespace pat;
+  using namespace std;
+
+  float vtx_X = vtx.x();
+  float vtx_Y = vtx.y();
+  float vtx_Z = vtx.z();
+
+  float sc_X = photon.superCluster()->x();
+  float sc_Y = photon.superCluster()->y();
+  float sc_Z = photon.superCluster()->z();
+
+  math::XYZVector vtx_Pos( vtx_X, vtx_Y, vtx_Z );
+  math::XYZVector sc_Pos( sc_X, sc_Y, sc_Z );
+
+  math::XYZVector direction = sc_Pos - vtx_Pos;
+  math::XYZVector p = ( direction.Unit() ) * ( photon.energy() );
+  math::XYZTLorentzVector corrected_p4( p.x(), p.y(), p.z(), photon.energy() );
+  pat::Photon p4CorrPho = photon;
+  p4CorrPho.setP4( corrected_p4 );
+  return p4CorrPho;
+}
 
 double HZZ4LHelper::miniIsolation(edm::Handle<pat::PackedCandidateCollection> pfcands, const reco::Candidate* ptcl, double r_iso_min, double r_iso_max, double kt_scale, double rho, bool charged_only) {
 
