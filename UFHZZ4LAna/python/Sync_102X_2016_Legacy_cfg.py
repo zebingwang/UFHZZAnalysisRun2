@@ -417,8 +417,8 @@ process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
                                    'HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_v',
                               ),
                               verbose = cms.untracked.bool(False),
-                              skimLooseLeptons = cms.untracked.int32(2),
-                              skimTightLeptons = cms.untracked.int32(2),
+                              skimLooseLeptons = cms.untracked.int32(0),
+                              skimTightLeptons = cms.untracked.int32(0),
 #                              verbose = cms.untracked.bool(True),
                               year = cms.untracked.int32(2016),####for year put 2016,2017, or 2018 to select correct Muon training and electron MVA
                               #BTagCut = cms.untracked.double(0.4184)####2016: 0.6321; 2017: 0.4941; 2018: 0.4184
