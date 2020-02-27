@@ -19,11 +19,11 @@ process.Timing = cms.Service("Timing",
                              )
 
 
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(10000) )
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(5000) )
 
 myfilelist = cms.untracked.vstring(
-'/store/mc/RunIISummer16MiniAODv3/VBFHToZG_M-125_13TeV_powheg_pythia8/MINIAODSIM/PUMoriond17_94X_mcRun2_asymptotic_v3_ext1-v2/250000/4690D374-5E6A-E911-83EA-0CC47A6C1874.root'
-#'/store/mc/RunIISummer16MiniAODv3/GluGluHToZG_M-125_13TeV_powheg_pythia8/MINIAODSIM/PUMoriond17_94X_mcRun2_asymptotic_v3_ext1-v2/20000/D65E1C67-D3F6-E911-A95D-001E67DDC254.root'
+#'/store/mc/RunIISummer16MiniAODv3/VBFHToZG_M-125_13TeV_powheg_pythia8/MINIAODSIM/PUMoriond17_94X_mcRun2_asymptotic_v3_ext1-v2/250000/4690D374-5E6A-E911-83EA-0CC47A6C1874.root'
+'/store/mc/RunIISummer16MiniAODv3/GluGluHToZG_M-125_13TeV_powheg_pythia8/MINIAODSIM/PUMoriond17_94X_mcRun2_asymptotic_v3_ext1-v2/20000/D65E1C67-D3F6-E911-A95D-001E67DDC254.root'
                                     #'/store/mc/RunIISummer16MiniAODv3/GluGluHToZG_M-125_13TeV_powheg_pythia8/MINIAODSIM/PUMoriond17_94X_mcRun2_asymptotic_v3_ext1-v2/20000/B62CFEDF-ACF6-E911-8BCD-EC0D9A0B3290.root'
                                     #'/store/mc/RunIISummer16MiniAODv3/GluGluHToZG_M-125_13TeV_powheg_pythia8/MINIAODSIM/PUMoriond17_94X_mcRun2_asymptotic_v3_ext1-v2/20000/D65E1C67-D3F6-E911-A95D-001E67DDC254.root'
                                     #'/store/mc/RunIISummer16MiniAODv3/GluGluHToZG_M-125_13TeV_powheg_pythia8/MINIAODSIM/PUMoriond17_94X_mcRun2_asymptotic_v3_ext1-v2/20000/F8E998FD-CCF6-E911-ABA3-001E67A3F49D.root'
@@ -46,7 +46,7 @@ process.source = cms.Source("PoolSource",fileNames = myfilelist,
                             )
 
 process.TFileService = cms.Service("TFileService",
-                                   fileName = cms.string("Sync_102X_2016_VBFZG.root")
+                                   fileName = cms.string("Sync_102X_2016_ggHZG.root")
 )
 
 # clean muons by segments

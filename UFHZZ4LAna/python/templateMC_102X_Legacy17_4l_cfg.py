@@ -95,7 +95,7 @@ from RecoEgamma.EgammaTools.EgammaPostRecoTools import setupEgammaPostRecoSeq
 setupEgammaPostRecoSeq(process,
                        runEnergyCorrections=False,
                        runVID=True,
-                       phoIDModules=['RecoEgamma.PhotonIdentification.Identification.cutBasedPhotonID_Fall17_94X_V2_cff'],
+                       phoIDModules=['RecoEgamma.PhotonIdentification.Identification.mvaPhotonID_Fall17_94X_V2_cff'],
                        era='2017-Nov17ReReco')
 
 process.load("RecoEgamma.EgammaTools.calibratedEgammas_cff")
@@ -260,7 +260,8 @@ process.corrJets = cms.EDProducer ( "CorrJetsProducer",
                                     vertex  = cms.InputTag( "offlineSlimmedPrimaryVertices" ), 
                                     rho     = cms.InputTag( "fixedGridRhoFastjetAll"   ),
                                     payload = cms.string  ( "AK8PFchs" ),
-                                    isData  = cms.bool    (  False ))
+                                    isData  = cms.bool    (  False ),
+				    year = cms.untracked.int32(2017))
 
 
 # Recompute MET
@@ -332,31 +333,16 @@ process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
                               doJEC = cms.untracked.bool(True),
                               doTriggerMatching = cms.untracked.bool(True),
                               triggerList = cms.untracked.vstring(
-                                  # Single Lepton:
-                                  'HLT_Ele35_WPTight_Gsf_v',
-                                  'HLT_Ele38_WPTight_Gsf_v',
-                                  'HLT_Ele40_WPTight_Gsf_v',
-                                  'HLT_IsoMu27_v',
-                                  # Dilepton
+				  'HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v',
                                   'HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_v',
-                                  'HLT_DoubleEle33_CaloIdL_MW_v',
-                                  'HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8_v',
-                                  'HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass8_v',
-                                  'HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_v',
-                                  'HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ_v',
-                                  'HLT_Mu12_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ_v',
-                                  'HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v',
-                                  'HLT_DiMu9_Ele9_CaloIdL_TrackIdL_DZ_v',
-                                  'HLT_Mu8_DiEle12_CaloIdL_TrackIdL_v',
-                                  'HLT_Mu8_DiEle12_CaloIdL_TrackIdL_DZ_v',
-                                  # TriLepton
-                                  'HLT_Ele16_Ele12_Ele8_CaloIdL_TrackIdL_v',
-                                  'HLT_TripleMu_10_5_5_DZ_v',
-                                  'HLT_TripleMu_12_10_5_v',
+                                  'HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL_DZ_v',
+                                  'HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL_v',
+                                  'HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_v',
+                                  'HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_v',
                               ),
                               verbose = cms.untracked.bool(False),              
-                              skimLooseLeptons = cms.untracked.int32(4),              
-                              skimTightLeptons = cms.untracked.int32(4),              
+                              skimLooseLeptons = cms.untracked.int32(0),              
+                              skimTightLeptons = cms.untracked.int32(0),              
                               #bestCandMela = cms.untracked.bool(False),
 #                              verbose = cms.untracked.bool(True),
                               year = cms.untracked.int32(2017)              

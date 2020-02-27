@@ -23,7 +23,8 @@ process.Timing = cms.Service("Timing",
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
 
 myfilelist = cms.untracked.vstring(
-'/store/mc/RunIIFall17MiniAODv2/VBF_HToZZTo4L_M125_13TeV_powheg2_JHUGenV7011_pythia8/MINIAODSIM/PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/60000/3450B123-E8BF-E811-B895-FA163E9604CF.root',
+'/store/user/klo/ALP_HToZaTo2l2g/MINIAODSIM/ALP_HToZaTo2l2g_M1_GENSIM/MINIAODSIM-PUMoriond17-Realistic25ns13TeVEarly2017Collision-93X_mc2017_realistic_v3/191110_034843/0000/ALP_MINIAODSIM_97.root'
+#'/store/mc/RunIIFall17MiniAODv2/VBF_HToZZTo4L_M125_13TeV_powheg2_JHUGenV7011_pythia8/MINIAODSIM/PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/60000/3450B123-E8BF-E811-B895-FA163E9604CF.root',
 #'/store/mc/RunIIFall17MiniAOD/GluGluHToZZTo4L_M125_13TeV_powheg2_JHUGenV7011_pythia8/MINIAODSIM/94X_mc2017_realistic_v10-v1/40000/205E2EB6-2600-E811-A8D9-A0369FC5E090.root',
 #'/store/mc/RunIIFall17MiniAOD/VBF_HToZZTo4L_M125_13TeV_powheg2_JHUGenV7011_pythia8/MINIAODSIM/94X_mc2017_realistic_v10-v2/00000/E8505BB6-5F07-E811-B009-002590DE6E88.root',
 #'/store/mc/RunIIFall17MiniAOD/WminusH_HToZZTo4L_M125_13TeV_powheg2-minlo-HWJ_JHUGenV7011_pythia8/MINIAODSIM/94X_mc2017_realistic_v10-v1/10000/80B92986-8501-E811-99BB-002590200900.root'
@@ -36,7 +37,7 @@ process.source = cms.Source("PoolSource",fileNames = myfilelist,
                             )
 
 process.TFileService = cms.Service("TFileService",
-                                   fileName = cms.string("Sync_102X_2017_v2.root")
+                                   fileName = cms.string("Sync_102X_2017_HZA.root")
 )
 
 # clean muons by segments 
@@ -100,7 +101,7 @@ from RecoEgamma.EgammaTools.EgammaPostRecoTools import setupEgammaPostRecoSeq
 setupEgammaPostRecoSeq(process,
                        runEnergyCorrections=False,
                        runVID=True,
-                       phoIDModules=['RecoEgamma.PhotonIdentification.Identification.cutBasedPhotonID_Fall17_94X_V2_cff'],
+                       phoIDModules=['RecoEgamma.PhotonIdentification.Identification.mvaPhotonID_Fall17_94X_V2_cff'],
                        era='2017-Nov17ReReco')
 # and don't forget to add the producer 'process.egmGsfElectronIDSequence' to the path, i.e. process.electrons
 
@@ -348,31 +349,16 @@ process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
                               doJEC = cms.untracked.bool(True),
                               doTriggerMatching = cms.untracked.bool(False),
                               triggerList = cms.untracked.vstring(
-                                  # Single Lepton:
-                                  'HLT_Ele35_WPTight_Gsf_v',
-                                  'HLT_Ele38_WPTight_Gsf_v',
-                                  'HLT_Ele40_WPTight_Gsf_v',
-                                  'HLT_IsoMu27_v',
-                                  # Dilepton
+				  'HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v',
                                   'HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_v',
-                                  'HLT_DoubleEle33_CaloIdL_MW_v',
-                                  'HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8_v',
-                                  'HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass8_v',
-                                  'HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_v',
-                                  'HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ_v',
-                                  'HLT_Mu12_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ_v',
-                                  'HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v',
-                                  'HLT_DiMu9_Ele9_CaloIdL_TrackIdL_DZ_v',
-                                  'HLT_Mu8_DiEle12_CaloIdL_TrackIdL_v',
-                                  'HLT_Mu8_DiEle12_CaloIdL_TrackIdL_DZ_v',
-                                  # TriLepton
-                                  'HLT_Ele16_Ele12_Ele8_CaloIdL_TrackIdL_v',
-                                  'HLT_TripleMu_10_5_5_DZ_v',
-                                  'HLT_TripleMu_12_10_5_v',
+                                  'HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL_DZ_v',
+                                  'HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL_v',
+                                  'HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_v',
+                                  'HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_v',
                               ),
                               verbose = cms.untracked.bool(False),              
-                              skimLooseLeptons = cms.untracked.int32(4),              
-                              skimTightLeptons = cms.untracked.int32(4),              
+                              skimLooseLeptons = cms.untracked.int32(0),              
+                              skimTightLeptons = cms.untracked.int32(0),              
 #                              verbose = cms.untracked.bool(True),              
                               year = cms.untracked.int32(2017)
                              )
