@@ -287,10 +287,13 @@ private:
     vector<double> tau_pt, tau_eta, tau_phi, tau_mass;
 
     // photon variables
-    vector<double> pho_pt, pho_eta, pho_phi, pho_mva90, pho_mva, photonCutBasedIDMedium, photonCutBasedIDTight, pho_MVA, pho_sigmaEtaEta, pho_R9, pho_chargedHadronIso, pho_neutralHadronIso, pho_photonIso, pho_sigmaIetaIeta, pho_e1x5, pho_e2x5, pho_e3x3, pho_e5x5, pho_maxEnergyXtal, pho_hadronicOverEm, pho_e2nd, pho_eTop, pho_eLeft, pho_eRight, pho_eBottom, pho_E_corr;
+    vector<double> pho_pt, pho_eta, pho_phi, pho_mva90, pho_mva, photonCutBasedIDMedium, photonCutBasedIDTight, pho_MVA, pho_sigmaEtaEta, pho_R9, pho_chargedHadronIso, pho_neutralHadronIso, pho_photonIso, pho_sigmaIetaIeta, pho_e1x5, pho_e2x5, pho_e3x3, pho_e5x5, pho_maxEnergyXtal, pho_hadronicOverEm, pho_e2nd, pho_eTop, pho_eLeft, pho_eRight, pho_eBottom, pho_E_corr, pho_full5x5_sigmaIetaIeta;
 
     vector<int> pho_n, pho_hasPixelSeed, pho_EleVote;
 
+    vector<double> pfpho_et, pfpho_eta, pfpho_phi, pfpho_chargedHadronIso, pfpho_neutralHadronIso, pfpho_photonIso;
+    float chiso, phoiso, neuiso;
+    vector<int> pfpho_n;
     // Higgs candidate variables
     vector<double> H_pt; vector<double> H_eta; vector<double> H_phi; vector<double> H_mass;
     vector<double> H_noFSR_pt; vector<double> H_noFSR_eta; vector<double> H_noFSR_phi; vector<double> H_noFSR_mass;
@@ -402,7 +405,7 @@ private:
     vector<float> GENlep_isoCH; vector<float> GENlep_isoNH; vector<float> GENlep_isoPhot; vector<float> GENlep_RelIso;
 
     // photon variables
-    vector<int> GENpho_id; vector<int> GENpho_status; vector<double> GENpho_pt; vector<double> GENpho_eta; vector<double> GENpho_phi; vector<double> GENpho_energy;
+    vector<int> GENpho_id; vector<int> GENpho_status; vector<double> GENpho_pt; vector<double> GENpho_eta; vector<double> GENpho_phi; vector<double> GENpho_energy; vector<int> GENpho_MomId; vector<int> GENpho_MomMomId;
 
     // Higgs candidate variables (calculated using selected gen leptons)
     vector<double> GENH_pt; vector<double> GENH_eta; vector<double> GENH_phi; vector<double> GENH_mass;
@@ -496,7 +499,10 @@ private:
     vector<float> lepFSR_pt_float, lepFSR_eta_float;
     vector<float> lepFSR_phi_float, lepFSR_mass_float;
     vector<float> tau_pt_float, tau_eta_float, tau_phi_float, tau_mass_float;
-    vector<float> pho_pt_float, pho_eta_float, pho_phi_float, pho_mva90_float, pho_mva_float, photonCutBasedIDMedium_float, photonCutBasedIDTight_float, pho_MVA_float, pho_sigmaEtaEta_float, pho_R9_float, pho_chargedHadronIso_float, pho_neutralHadronIso_float, pho_photonIso_float, pho_sigmaIetaIeta_float, pho_e1x5_float, pho_e2x5_float, pho_e3x3_float, pho_e5x5_float, pho_maxEnergyXtal_float, pho_hadronicOverEm_float,  pho_e2nd_float, pho_eTop_float, pho_eLeft_float, pho_eRight_float, pho_eBottom_float, pho_E_corr_float;
+    vector<float> pho_pt_float, pho_eta_float, pho_phi_float, pho_mva90_float, pho_mva_float, photonCutBasedIDMedium_float, photonCutBasedIDTight_float, pho_MVA_float, pho_sigmaEtaEta_float, pho_R9_float, pho_chargedHadronIso_float, pho_neutralHadronIso_float, pho_photonIso_float, pho_sigmaIetaIeta_float, pho_e1x5_float, pho_e2x5_float, pho_e3x3_float, pho_e5x5_float, pho_maxEnergyXtal_float, pho_hadronicOverEm_float,  pho_e2nd_float, pho_eTop_float, pho_eLeft_float, pho_eRight_float, pho_eBottom_float, pho_E_corr_float, pho_full5x5_sigmaIetaIeta_float;
+    
+    vector<float> pfpho_et_float, pfpho_eta_float, pfpho_phi_float, pfpho_chargedHadronIso_float, pfpho_neutralHadronIso_float, pfpho_photonIso_float;
+
     vector<float> H_pt_float, H_eta_float, H_phi_float, H_mass_float;
     vector<float> H_noFSR_pt_float, H_noFSR_eta_float;
     vector<float> H_noFSR_phi_float, H_noFSR_mass_float;
@@ -1024,9 +1030,12 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     tau_id.clear(); tau_pt.clear(); tau_eta.clear(); tau_phi.clear(); tau_mass.clear();
 
     // photon variables
-    pho_pt.clear(); pho_eta.clear(); pho_phi.clear(); pho_mva90.clear(); pho_mva.clear(); photonCutBasedIDMedium.clear(); photonCutBasedIDTight.clear(); pho_MVA.clear(); pho_sigmaEtaEta.clear(); pho_R9.clear(); pho_chargedHadronIso.clear(); pho_neutralHadronIso.clear(); pho_photonIso.clear(); pho_sigmaIetaIeta.clear(); pho_e1x5.clear(); pho_e2x5.clear(); pho_e3x3.clear(); pho_e5x5.clear(); pho_maxEnergyXtal.clear(); pho_hadronicOverEm.clear(); pho_e2nd.clear(); pho_eTop.clear(); pho_eLeft.clear(); pho_eRight.clear(); pho_eBottom.clear(); pho_E_corr.clear();
+    pho_pt.clear(); pho_eta.clear(); pho_phi.clear(); pho_mva90.clear(); pho_mva.clear(); photonCutBasedIDMedium.clear(); photonCutBasedIDTight.clear(); pho_MVA.clear(); pho_sigmaEtaEta.clear(); pho_R9.clear(); pho_chargedHadronIso.clear(); pho_neutralHadronIso.clear(); pho_photonIso.clear(); pho_sigmaIetaIeta.clear(); pho_e1x5.clear(); pho_e2x5.clear(); pho_e3x3.clear(); pho_e5x5.clear(); pho_maxEnergyXtal.clear(); pho_hadronicOverEm.clear(); pho_e2nd.clear(); pho_eTop.clear(); pho_eLeft.clear(); pho_eRight.clear(); pho_eBottom.clear(); pho_E_corr.clear(); pho_full5x5_sigmaIetaIeta.clear();
 
     pho_n.clear(); pho_hasPixelSeed.clear(); pho_EleVote.clear();
+    pfpho_n.clear();
+
+    pfpho_et.clear(); pfpho_eta.clear(); pfpho_phi.clear(); pfpho_chargedHadronIso.clear(); pfpho_neutralHadronIso.clear(); pfpho_photonIso.clear();
 
     // Higgs candidate variables
     H_pt.clear(); H_eta.clear(); H_phi.clear(); H_mass.clear();
@@ -1133,7 +1142,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     GENlep_id.clear(); GENlep_status.clear(); GENlep_MomId.clear(); GENlep_MomMomId.clear();
 
     GENpho_pt.clear(); GENpho_eta.clear(); GENpho_phi.clear(); GENpho_energy.clear();
-    GENpho_id.clear(); GENpho_status.clear();
+    GENpho_id.clear(); GENpho_status.clear(); GENpho_MomId.clear(); GENpho_MomMomId.clear();
 
     for (int i=0; i<4; ++i) {GENlep_Hindex[i]=-1;};//position of Higgs candidate leptons in lep_p4: 0 = Z1 lead, 1 = Z1 sub, 2 = Z2 lead, 3 = Z3 sub
     GENlep_isoCH.clear(); GENlep_isoNH.clear(); GENlep_isoPhot.clear(); GENlep_RelIso.clear();
@@ -1226,7 +1235,10 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     lep_eta_float.clear(); lep_phi_float.clear(); lep_mass_float.clear();
     lepFSR_pt_float.clear(); lepFSR_eta_float.clear(); lepFSR_phi_float.clear(); lepFSR_mass_float.clear();
     tau_pt_float.clear(); tau_eta_float.clear(); tau_phi_float.clear(); tau_mass_float.clear();
-    pho_pt_float.clear(); pho_eta_float.clear(); pho_phi_float.clear(); pho_mva90_float.clear(); pho_mva_float.clear(); photonCutBasedIDMedium_float.clear(); photonCutBasedIDTight_float.clear(); pho_MVA_float.clear(); pho_sigmaEtaEta_float.clear(); pho_R9_float.clear(); pho_chargedHadronIso_float.clear(); pho_neutralHadronIso_float.clear(); pho_photonIso_float.clear(); pho_sigmaIetaIeta_float.clear(); pho_e1x5_float.clear(); pho_e2x5_float.clear(); pho_e3x3_float.clear(); pho_e5x5_float.clear(); pho_maxEnergyXtal_float.clear(); pho_hadronicOverEm_float.clear(); pho_e2nd_float.clear(); pho_eTop_float.clear(); pho_eLeft_float.clear(); pho_eRight_float.clear(); pho_eBottom_float.clear(); pho_E_corr_float.clear();
+    pho_pt_float.clear(); pho_eta_float.clear(); pho_phi_float.clear(); pho_mva90_float.clear(); pho_mva_float.clear(); photonCutBasedIDMedium_float.clear(); photonCutBasedIDTight_float.clear(); pho_MVA_float.clear(); pho_sigmaEtaEta_float.clear(); pho_R9_float.clear(); pho_chargedHadronIso_float.clear(); pho_neutralHadronIso_float.clear(); pho_photonIso_float.clear(); pho_sigmaIetaIeta_float.clear(); pho_e1x5_float.clear(); pho_e2x5_float.clear(); pho_e3x3_float.clear(); pho_e5x5_float.clear(); pho_maxEnergyXtal_float.clear(); pho_hadronicOverEm_float.clear(); pho_e2nd_float.clear(); pho_eTop_float.clear(); pho_eLeft_float.clear(); pho_eRight_float.clear(); pho_eBottom_float.clear(); pho_E_corr_float.clear(); pho_full5x5_sigmaIetaIeta_float.clear();
+    
+    pfpho_et_float.clear(); pfpho_eta_float.clear(); pfpho_phi_float.clear(); pfpho_chargedHadronIso_float.clear(); pfpho_neutralHadronIso_float.clear(); pfpho_photonIso_float.clear();
+
     H_pt_float.clear(); H_eta_float.clear(); H_phi_float.clear(); H_mass_float.clear();
     H_noFSR_pt_float.clear(); H_noFSR_eta_float.clear(); H_noFSR_phi_float.clear(); H_noFSR_mass_float.clear();
     Z_pt_float.clear(); Z_eta_float.clear(); Z_phi_float.clear(); Z_mass_float.clear();
@@ -1645,7 +1657,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 n = n + 1;
 
 		pat::Photon pho_corr = helper.Photon_corr(recoPhotons[i], vertex->at(theVertex));
-		//pho_E_corr.push_back(recoPhotons[i].userFloat("ecalEnergyPostCorr"));
+		//pho_E_corr.push_back(pho_corr.userFloat("ecalEnergyPostCorr"));
                 pho_pt.push_back(pho_corr.pt());
                 pho_eta.push_back(pho_corr.eta());
                 pho_phi.push_back(pho_corr.phi());
@@ -1665,6 +1677,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 pho_photonIso.push_back(pho_corr.photonIso());
 
                 pho_sigmaIetaIeta.push_back(pho_corr.sigmaIetaIeta());
+		pho_full5x5_sigmaIetaIeta.push_back(pho_corr.full5x5_sigmaIetaIeta());
                 pho_e1x5.push_back(pho_corr.e1x5());
                 pho_e2x5.push_back(pho_corr.e2x5());
                 pho_e3x3.push_back(pho_corr.e3x3());
@@ -1681,6 +1694,47 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 pho_EleVote.push_back((Int_t)pho_corr.passElectronVeto());
             }
             pho_n.push_back(n);
+
+	    int pfn = 0;
+	    for (unsigned int i = 0; i< pfCands->size(); i++){
+
+	    const pat::PackedCandidate &pf = (*pfCands)[i];
+
+	    if (pf.pdgId() == 22 && pf.pt() > 1.5 && fabs(pf.eta()) < 2.5){
+		float chiso = 0.;
+      		float phoiso = 0.;
+      		float neuiso = 0.;
+      		float dR = 0.;
+		pfn = pfn + 1;
+		for (unsigned int j = 0; j< pfCands->size(); ++j) {
+			const pat::PackedCandidate &pff = (*pfCands)[j];
+
+			if (abs(pff.pdgId()) == 211 && pff.pt() > 0.2) {
+	 		dR = reco::deltaR(pf.p4(), pff.p4());
+	  		if (dR < 0.3 && dR > 0.0001) chiso += pff.pt(); 	    
+			}
+
+			if (abs(pff.pdgId()) == 22  && pff.pt() > 0.5) {
+	  		dR = reco::deltaR(pf.p4(), pff.p4());
+	  		if (dR < 0.3 && dR > 0.01) phoiso += pff.pt(); 	    
+			}
+
+			if (abs(pff.pdgId()) == 130 && pff.pt() > 0.5) {
+	  		dR = reco::deltaR(pf.p4(), pff.p4());
+	  		if (dR < 0.3 && dR > 0.01) neuiso += pff.pt(); 	    
+			}
+
+      		}	
+
+	    pfpho_et.push_back(pf.pt());
+	    pfpho_eta.push_back(pf.eta());
+	    pfpho_phi.push_back(pf.phi());
+	    pfpho_chargedHadronIso.push_back(chiso);
+	    pfpho_photonIso.push_back(phoiso);
+	    pfpho_neutralHadronIso.push_back(neuiso);
+	    }
+	    }
+	    pfpho_n.push_back(pfn);
 
             if (doTriggerMatching) {
                 if (verbose) cout<<"start trigger matching"<<endl;
@@ -2644,6 +2698,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 pho_photonIso_float.assign(pho_photonIso.begin(),pho_photonIso.end());
 
                 pho_sigmaIetaIeta_float.assign(pho_sigmaIetaIeta.begin(),pho_sigmaIetaIeta.end());
+		pho_full5x5_sigmaIetaIeta_float.assign(pho_full5x5_sigmaIetaIeta.begin(),pho_full5x5_sigmaIetaIeta.end());
                 pho_e1x5_float.assign(pho_e1x5.begin(),pho_e1x5.end());
                 pho_e2x5_float.assign(pho_e2x5.begin(),pho_e2x5.end());
                 pho_e3x3_float.assign(pho_e3x3.begin(),pho_e3x3.end());
@@ -2655,6 +2710,13 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 pho_eLeft_float.assign(pho_eLeft.begin(),pho_eLeft.end());
                 pho_eRight_float.assign(pho_eRight.begin(),pho_eRight.end());
                 pho_eBottom_float.assign(pho_eBottom.begin(),pho_eBottom.end());
+
+		pfpho_et_float.assign(pfpho_et.begin(),pfpho_et.end());
+                pfpho_eta_float.assign(pfpho_eta.begin(),pfpho_eta.end());
+                pfpho_phi_float.assign(pfpho_phi.begin(),pfpho_phi.end());
+                pfpho_chargedHadronIso_float.assign(pfpho_chargedHadronIso.begin(),pfpho_chargedHadronIso.end());
+                pfpho_photonIso_float.assign(pfpho_photonIso.begin(),pfpho_photonIso.end());
+                pfpho_neutralHadronIso_float.assign(pfpho_neutralHadronIso.begin(),pfpho_neutralHadronIso.end());
 
 
                 H_pt_float.assign(H_pt.begin(),H_pt.end());
@@ -3562,6 +3624,7 @@ void UFHZZ4LAna::bookPassedEventTree(TString treeName, TTree *tree)
     //tree->Branch("pho_MVA",&pho_MVA_float);
 
     tree->Branch("pho_sigmaIetaIeta",&pho_sigmaIetaIeta_float);
+    tree->Branch("pho_full5x5_sigmaIetaIeta",&pho_full5x5_sigmaIetaIeta_float);
     tree->Branch("pho_e1x5",&pho_e1x5_float);
     tree->Branch("pho_e2x5",&pho_e2x5_float);
     tree->Branch("pho_e3x3",&pho_e3x3_float);
@@ -3573,6 +3636,14 @@ void UFHZZ4LAna::bookPassedEventTree(TString treeName, TTree *tree)
     tree->Branch("pho_eLeft",&pho_eLeft_float);
     tree->Branch("pho_eRight",&pho_eRight_float);
     tree->Branch("pho_eBottom",&pho_eBottom_float);
+
+    tree->Branch("pfpho_n",&pfpho_n);
+    tree->Branch("pfpho_et",&pfpho_et_float);
+    tree->Branch("pfpho_eta",&pfpho_eta_float);
+    tree->Branch("pfpho_phi",&pfpho_phi_float);
+    tree->Branch("pfpho_chargedHadronIso",&pfpho_chargedHadronIso_float);
+    tree->Branch("pfpho_photonIso",&pfpho_photonIso_float);
+    tree->Branch("pfpho_neutralHadronIso",&pfpho_neutralHadronIso_float);
 
     //Higgs Candidate Variables
     tree->Branch("H_pt",&H_pt_float);
@@ -3791,6 +3862,8 @@ void UFHZZ4LAna::bookPassedEventTree(TString treeName, TTree *tree)
     tree->Branch("GENpho_energy",&GENpho_energy_float);
     tree->Branch("GENpho_id",&GENpho_id);
     tree->Branch("GENpho_status",&GENpho_status);
+    tree->Branch("GENpho_MomId",&GENpho_MomId);
+    tree->Branch("GENpho_MomMomId",&GENpho_MomMomId);
 
     // Higgs candidate variables (calculated using selected gen leptons)
     tree->Branch("GENH_pt",&GENH_pt_float);
@@ -4405,12 +4478,15 @@ void UFHZZ4LAna::setGENVariables(edm::Handle<reco::GenParticleCollection> pruned
         } // leptons
 
 	if (genPart->pdgId()==22){
+	    if (!(genPart->isHardProcess())) continue;
 	    GENpho_id.push_back( genPart->pdgId() );
 	    GENpho_status.push_back(genPart->status());
 	    GENpho_pt.push_back( genPart->pt() );
             GENpho_eta.push_back( genPart->eta() );
             GENpho_phi.push_back( genPart->phi() );
 	    GENpho_energy.push_back( genPart->energy() );
+	    GENpho_MomId.push_back(genAna.MotherID(&prunedgenParticles->at(j)));
+            GENpho_MomMomId.push_back(genAna.MotherMotherID(&prunedgenParticles->at(j)));
 	}
 
         if (genPart->pdgId()==25) {
