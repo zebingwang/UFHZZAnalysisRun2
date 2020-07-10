@@ -32,7 +32,7 @@ process.TFileService = cms.Service("TFileService",
                                    fileName = cms.string("DUMMYFILENAME.root")
 )
 
-# clean muons by segments 
+# clean muons by segments
 process.boostedMuons = cms.EDProducer("PATMuonCleanerBySegments",
 				     src = cms.InputTag("slimmedMuons"),
 				     preselection = cms.string("track.isNonnull"),
@@ -116,7 +116,7 @@ process.calibratedPatElectrons.src = cms.InputTag("slimmedElectrons")
 ##  process.egmGsfElectronIDs.physicsObjectSrc = cms.InputTag('selectedElectrons')
 ##  process.electronMVAVariableHelper.srcMiniAOD = cms.InputTag('selectedElectrons')
 ##  process.electronMVAValueMapProducer.srcMiniAOD = cms.InputTag("selectedElectrons")
-##  
+##
 ##  process.electronsMVA = cms.EDProducer("SlimmedElectronMvaIDProducer",
 ##                                        mvaValuesMap = cms.InputTag("electronMVAValueMapProducer:ElectronMVAEstimatorRun2Fall17IsoV2Values"),
 ##                                        #electronsCollection = cms.InputTag("calibratedPatElectrons"),
@@ -165,10 +165,10 @@ process.load("PhysicsTools.PatAlgos.producersLayer1.jetUpdater_cff")
 
 process.jetCorrFactors = process.updatedPatJetCorrFactors.clone(
     src = cms.InputTag("slimmedJets"),
-    levels = ['L1FastJet', 
-              'L2Relative', 
+    levels = ['L1FastJet',
+              'L2Relative',
               'L3Absolute'],
-    payload = 'AK4PFchs' ) 
+    payload = 'AK4PFchs' )
 
 process.AK8PFJetCorrFactors = process.updatedPatJetCorrFactors.clone(
     src = cms.InputTag("slimmedJetsAK8"),
@@ -257,7 +257,7 @@ process.QGTagger.srcVertexCollection=cms.InputTag("offlinePrimaryVertices")
 # compute corrected pruned jet mass
 process.corrJets = cms.EDProducer ( "CorrJetsProducer",
                                     jets    = cms.InputTag( "slimmedJetsAK8JEC" ),
-                                    vertex  = cms.InputTag( "offlineSlimmedPrimaryVertices" ), 
+                                    vertex  = cms.InputTag( "offlineSlimmedPrimaryVertices" ),
                                     rho     = cms.InputTag( "fixedGridRhoFastjetAll"   ),
                                     payload = cms.string  ( "AK8PFchs" ),
                                     isData  = cms.bool    (  False ),
@@ -315,6 +315,7 @@ process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
                               CrossSection = cms.untracked.double(DUMMYCROSSSECTION),
                               FilterEff    = cms.untracked.double(1),
                               weightEvents = cms.untracked.bool(True),
+                              phoRhoSrc    = cms.InputTag("fixedGridRhoAll"),
                               elRhoSrc     = cms.untracked.InputTag("fixedGridRhoFastjetAll"),
                               muRhoSrc     = cms.untracked.InputTag("fixedGridRhoFastjetAll"),
                               rhoSrcSUS    = cms.untracked.InputTag("fixedGridRhoFastjetCentralNeutral"),
@@ -333,7 +334,7 @@ process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
                               doJEC = cms.untracked.bool(True),
                               doTriggerMatching = cms.untracked.bool(True),
                               triggerList = cms.untracked.vstring(
-                              
+
 							  # Single Lepton:
 							  'HLT_Ele35_WPTight_Gsf_v',
 							  'HLT_Ele38_WPTight_Gsf_v',
@@ -356,12 +357,12 @@ process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
 							  'HLT_TripleMu_10_5_5_DZ_v',
 							  'HLT_TripleMu_12_10_5_v',
 							  ),
-                              verbose = cms.untracked.bool(False),              
-                              skimLooseLeptons = cms.untracked.int32(0),              
-                              skimTightLeptons = cms.untracked.int32(0),              
+                              verbose = cms.untracked.bool(False),
+                              skimLooseLeptons = cms.untracked.int32(0),
+                              skimTightLeptons = cms.untracked.int32(0),
                               #bestCandMela = cms.untracked.bool(False),
 #                              verbose = cms.untracked.bool(True),
-                              year = cms.untracked.int32(2017)              
+                              year = cms.untracked.int32(2017)
                              )
 
 process.p = cms.Path(process.fsrPhotonSequence*
