@@ -53,3 +53,23 @@ UFHZZ4LAna/python/templateMC_102X_Legacy18_4l_cfg.py
 UFHZZ4LAna/python/templateData_102X_Legacy16_3l_cfg.py
 UFHZZ4LAna/python/templateData_102X_Legacy17_3l_cfg.py
 UFHZZ4LAna/python/templateData_102X_Legacy18_3l_cfg.py
+
+
+
+
+------
+Add photon MVA vars:
+
+  Add vars from /DataFormats/EgammaCandidates/interface/Photon.h
+  
+Grab the deposit energy in each craystal:
+
+  1. add energy calculate function from /RecoEcal/EgammaCoreTools/interface/EcalClusterTools.h, which is same as e2x2.
+  
+  2. add varables to /DataFormats/EgammaCandidates/interface/Photon.h.
+  
+  3. change /DataFormats/EgammaCandidates/src/classes_def.xml, use the prompt from the out put of scram commond.
+  
+  4. grab these valuse in .cc file.
+  
+  
