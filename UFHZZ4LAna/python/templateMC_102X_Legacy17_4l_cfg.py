@@ -95,7 +95,7 @@ from RecoEgamma.EgammaTools.EgammaPostRecoTools import setupEgammaPostRecoSeq
 setupEgammaPostRecoSeq(process,
                        runEnergyCorrections=False,
                        runVID=True,
-                       phoIDModules=['RecoEgamma.PhotonIdentification.Identification.mvaPhotonID_Fall17_94X_V2_cff'],
+                       phoIDModules=['RecoEgamma.PhotonIdentification.Identification.mvaPhotonID_Fall17_94X_V2_cff','RecoEgamma.PhotonIdentification.Identification.cutBasedPhotonID_Fall17_94X_V2_cff'],
                        era='2017-Nov17ReReco')
 
 process.load("RecoEgamma.EgammaTools.calibratedEgammas_cff")
@@ -315,7 +315,12 @@ process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
                               CrossSection = cms.untracked.double(DUMMYCROSSSECTION),
                               FilterEff    = cms.untracked.double(1),
                               weightEvents = cms.untracked.bool(True),
-                              phoRhoSrc    = cms.InputTag("fixedGridRhoAll"),
+                              ###  FIXED
+                              phoRhoSrc    = cms.InputTag("fixedGridRhoFastjetAll"),
+                              phoCIsoeffAreasConfigFile = cms.FileInPath("RecoEgamma/PhotonIdentification/data/Fall17/effAreaPhotons_cone03_pfChargedHadrons_90percentBased_V2.txt"),
+                              phoNIsoeffAreasConfigFile = cms.FileInPath("RecoEgamma/PhotonIdentification/data/Fall17/effAreaPhotons_cone03_pfNeutralHadrons_90percentBased_V2.txt"),
+                              phoPIsoeffAreasConfigFile = cms.FileInPath("RecoEgamma/PhotonIdentification/data/Fall17/effAreaPhotons_cone03_pfPhotons_90percentBased_V2.txt"),
+                              #####
                               elRhoSrc     = cms.untracked.InputTag("fixedGridRhoFastjetAll"),
                               muRhoSrc     = cms.untracked.InputTag("fixedGridRhoFastjetAll"),
                               rhoSrcSUS    = cms.untracked.InputTag("fixedGridRhoFastjetCentralNeutral"),
@@ -358,7 +363,7 @@ process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
 							  'HLT_TripleMu_12_10_5_v',
 							  ),
                               verbose = cms.untracked.bool(False),
-                              skimLooseLeptons = cms.untracked.int32(0),
+                              skimLooseLeptons = cms.untracked.int32(1),
                               skimTightLeptons = cms.untracked.int32(0),
                               #bestCandMela = cms.untracked.bool(False),
 #                              verbose = cms.untracked.bool(True),

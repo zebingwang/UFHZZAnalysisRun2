@@ -20,7 +20,7 @@ process.Timing = cms.Service("Timing",
                              )
 
 
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(2000) )
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(5000) )
 
 myfilelist = cms.untracked.vstring(
 #'/store/mc/RunIIFall17MiniAODv2/DYJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/MINIAODSIM/PU2017RECOSIMstep_12Apr2018_94X_mc2017_realistic_v14-v1/910000/C20C891B-F647-E811-A46A-001E67792600.root',
@@ -334,7 +334,12 @@ process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
                               CrossSection = cms.untracked.double(1.0),
                               FilterEff    = cms.untracked.double(1),
                               weightEvents = cms.untracked.bool(True),
-                              phoRhoSrc    = cms.InputTag("fixedGridRhoAll"),
+                              ###  FIXED
+                              phoRhoSrc    = cms.InputTag("fixedGridRhoFastjetAll"),
+                              phoCIsoeffAreasConfigFile = cms.FileInPath("RecoEgamma/PhotonIdentification/data/Fall17/effAreaPhotons_cone03_pfChargedHadrons_90percentBased_V2.txt"),
+                              phoNIsoeffAreasConfigFile = cms.FileInPath("RecoEgamma/PhotonIdentification/data/Fall17/effAreaPhotons_cone03_pfNeutralHadrons_90percentBased_V2.txt"),
+                              phoPIsoeffAreasConfigFile = cms.FileInPath("RecoEgamma/PhotonIdentification/data/Fall17/effAreaPhotons_cone03_pfPhotons_90percentBased_V2.txt"),
+                              #####
                               elRhoSrc     = cms.untracked.InputTag("fixedGridRhoFastjetAll"),
                               muRhoSrc     = cms.untracked.InputTag("fixedGridRhoFastjetAll"),
                               rhoSrcSUS    = cms.untracked.InputTag("fixedGridRhoFastjetCentralNeutral"),
@@ -378,7 +383,7 @@ process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
 
 							  ),
                               verbose = cms.untracked.bool(False),
-                              skimLooseLeptons = cms.untracked.int32(0),
+                              skimLooseLeptons = cms.untracked.int32(1),
                               skimTightLeptons = cms.untracked.int32(0),
 #                              verbose = cms.untracked.bool(True),
                               year = cms.untracked.int32(2017)

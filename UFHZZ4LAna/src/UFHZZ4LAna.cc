@@ -116,6 +116,7 @@
 #include "UFHZZAnalysisRun2/UFHZZ4LAna/interface/HZZ4LElectronTree.h"
 //Photons
 #include "UFHZZAnalysisRun2/UFHZZ4LAna/interface/HZZ4LPhotonTree.h"
+#include "RecoEgamma/EgammaTools/interface/EffectiveAreas.h"
 //Jets
 #include "UFHZZAnalysisRun2/UFHZZ4LAna/interface/HZZ4LJetTree.h"
 //Final Leps
@@ -287,7 +288,7 @@ private:
     vector<double> tau_pt, tau_eta, tau_phi, tau_mass;
 
     // photon variables
-    vector<double> pho_pt, pho_eta, pho_phi, pho_mva90, pho_mva, photonCutBasedIDMedium, photonCutBasedIDTight, pho_MVA, pho_sigmaEtaEta, pho_R9, pho_trackIso, pho_chargedHadronIso, pho_chgIsoWrtWorstVtx, pho_neutralHadronIso, pho_photonIso, pho_sigmaIetaIeta, pho_e1x5, pho_e2x5, pho_e3x3, pho_e2x2, pho_e5x5, pho_maxEnergyXtal, pho_hadronicOverEm, pho_e2nd, pho_eTop, pho_eLeft, pho_eRight, pho_eBottom, pho_E_corr, pho_full5x5_sigmaIetaIeta, pho_SCRawE, pho_etaWidth, pho_phiWidth, pho_covIEtaIPhi, pho_scEta, pho_esEffSigmaRR, pho_esEnergyOverRawE, pho_rho;
+    vector<double> pho_pt, pho_eta, pho_phi, pho_mva90, pho_mva, photonCutBasedIDMedium, photonCutBasedIDTight, pho_MVA, pho_sigmaEtaEta, pho_R9, pho_full5x5_R9, pho_trackIso, pho_chargedHadronIso, pho_chgIsoWrtWorstVtx, pho_neutralHadronIso, pho_photonIso, pho_sigmaIetaIeta, pho_e1x5, pho_e2x5, pho_e3x3, pho_e2x2, pho_e5x5, pho_full5x5_e2x2, pho_full5x5_e5x5, pho_maxEnergyXtal, pho_hadronicOverEm, pho_e2nd, pho_eTop, pho_eLeft, pho_eRight, pho_eBottom, pho_E_corr, pho_full5x5_sigmaIetaIeta, pho_SCRawE, pho_etaWidth, pho_phiWidth, pho_covIEtaIPhi, pho_scEta, pho_esEffSigmaRR, pho_esEnergyOverRawE, pho_rho;
 
     vector<int> pho_n, pho_hasPixelSeed, pho_EleVote;
 
@@ -502,7 +503,7 @@ private:
     vector<float> lepFSR_pt_float, lepFSR_eta_float;
     vector<float> lepFSR_phi_float, lepFSR_mass_float;
     vector<float> tau_pt_float, tau_eta_float, tau_phi_float, tau_mass_float;
-    vector<float> pho_pt_float, pho_eta_float, pho_phi_float, pho_mva90_float, pho_mva_float, photonCutBasedIDMedium_float, photonCutBasedIDTight_float, pho_MVA_float, pho_sigmaEtaEta_float, pho_R9_float, pho_trackIso_float, pho_chargedHadronIso_float, pho_chgIsoWrtWorstVtx_float, pho_neutralHadronIso_float, pho_photonIso_float, pho_sigmaIetaIeta_float, pho_e1x5_float, pho_e2x5_float, pho_e3x3_float, pho_e2x2_float, pho_e5x5_float, pho_maxEnergyXtal_float, pho_hadronicOverEm_float,  pho_e2nd_float, pho_eTop_float, pho_eLeft_float, pho_eRight_float, pho_eBottom_float, pho_E_corr_float, pho_full5x5_sigmaIetaIeta_float, pho_SCRawE_float, pho_etaWidth_float, pho_phiWidth_float, pho_covIEtaIPhi_float, pho_scEta_float, pho_esEffSigmaRR_float, pho_esEnergyOverRawE_float, pho_rho_float;
+    vector<float> pho_pt_float, pho_eta_float, pho_phi_float, pho_mva90_float, pho_mva_float, photonCutBasedIDMedium_float, photonCutBasedIDTight_float, pho_MVA_float, pho_sigmaEtaEta_float, pho_R9_float, pho_full5x5_R9_float, pho_trackIso_float, pho_chargedHadronIso_float, pho_chgIsoWrtWorstVtx_float, pho_neutralHadronIso_float, pho_photonIso_float, pho_sigmaIetaIeta_float, pho_e1x5_float, pho_e2x5_float, pho_e3x3_float, pho_e2x2_float, pho_e5x5_float, pho_full5x5_e2x2_float, pho_full5x5_e5x5_float, pho_maxEnergyXtal_float, pho_hadronicOverEm_float,  pho_e2nd_float, pho_eTop_float, pho_eLeft_float, pho_eRight_float, pho_eBottom_float, pho_E_corr_float, pho_full5x5_sigmaIetaIeta_float, pho_SCRawE_float, pho_etaWidth_float, pho_phiWidth_float, pho_covIEtaIPhi_float, pho_scEta_float, pho_esEffSigmaRR_float, pho_esEnergyOverRawE_float, pho_rho_float;
 
     vector<float> pfpho_et_float, pfpho_eta_float, pfpho_phi_float, pfpho_chargedHadronIso_float, pfpho_neutralHadronIso_float, pfpho_photonIso_float;
 
@@ -551,6 +552,9 @@ private:
 
     //Input edm
     edm::EDGetTokenT<double> phoRhoSrc_;//FIXED
+    EffectiveAreas chHadIsolationEffAreas;
+    EffectiveAreas neuHadIsolationEffAreas;
+    EffectiveAreas phoIsolationEffAreas;
 
     edm::EDGetTokenT<edm::View<pat::Electron> > elecSrc_;
     edm::EDGetTokenT<edm::View<pat::Electron> > elecUnSSrc_;
@@ -639,6 +643,9 @@ private:
 UFHZZ4LAna::UFHZZ4LAna(const edm::ParameterSet& iConfig) :
     histContainer_(),
     phoRhoSrc_(consumes<double>(iConfig.getParameter<edm::InputTag>("phoRhoSrc"))),//FIXED
+    chHadIsolationEffAreas((iConfig.getParameter<edm::FileInPath>("phoCIsoeffAreasConfigFile")).fullPath()),
+    neuHadIsolationEffAreas((iConfig.getParameter<edm::FileInPath>("phoNIsoeffAreasConfigFile")).fullPath()),
+    phoIsolationEffAreas((iConfig.getParameter<edm::FileInPath>("phoPIsoeffAreasConfigFile")).fullPath()),
     elecSrc_(consumes<edm::View<pat::Electron> >(iConfig.getUntrackedParameter<edm::InputTag>("electronSrc"))),
     elecUnSSrc_(consumes<edm::View<pat::Electron> >(iConfig.getUntrackedParameter<edm::InputTag>("electronUnSSrc"))),
     muonSrc_(consumes<edm::View<pat::Muon> >(iConfig.getUntrackedParameter<edm::InputTag>("muonSrc"))),
@@ -1041,7 +1048,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     tau_id.clear(); tau_pt.clear(); tau_eta.clear(); tau_phi.clear(); tau_mass.clear();
 
     // photon variables
-    pho_pt.clear(); pho_eta.clear(); pho_phi.clear(); pho_mva90.clear(); pho_mva.clear(); photonCutBasedIDMedium.clear(); photonCutBasedIDTight.clear(); pho_MVA.clear(); pho_sigmaEtaEta.clear(); pho_R9.clear(); pho_trackIso.clear(); pho_chargedHadronIso.clear(); pho_chgIsoWrtWorstVtx.clear(); pho_neutralHadronIso.clear(); pho_photonIso.clear(); pho_sigmaIetaIeta.clear(); pho_e1x5.clear(); pho_e2x5.clear(); pho_e3x3.clear(); pho_e2x2.clear(); pho_e5x5.clear(); pho_maxEnergyXtal.clear(); pho_hadronicOverEm.clear(); pho_e2nd.clear(); pho_eTop.clear(); pho_eLeft.clear(); pho_eRight.clear(); pho_eBottom.clear(); pho_E_corr.clear(); pho_full5x5_sigmaIetaIeta.clear(); pho_SCRawE.clear(); pho_etaWidth.clear(); pho_phiWidth.clear(); pho_covIEtaIPhi.clear(); pho_scEta.clear(); pho_esEffSigmaRR.clear(); pho_esEnergyOverRawE.clear(); pho_rho.clear();
+    pho_pt.clear(); pho_eta.clear(); pho_phi.clear(); pho_mva90.clear(); pho_mva.clear(); photonCutBasedIDMedium.clear(); photonCutBasedIDTight.clear(); pho_MVA.clear(); pho_sigmaEtaEta.clear(); pho_R9.clear(); pho_full5x5_R9.clear(); pho_trackIso.clear(); pho_chargedHadronIso.clear(); pho_chgIsoWrtWorstVtx.clear(); pho_neutralHadronIso.clear(); pho_photonIso.clear(); pho_sigmaIetaIeta.clear(); pho_e1x5.clear(); pho_e2x5.clear(); pho_e3x3.clear(); pho_e2x2.clear(); pho_e5x5.clear(); pho_full5x5_e2x2.clear(); pho_full5x5_e5x5.clear(); pho_maxEnergyXtal.clear(); pho_hadronicOverEm.clear(); pho_e2nd.clear(); pho_eTop.clear(); pho_eLeft.clear(); pho_eRight.clear(); pho_eBottom.clear(); pho_E_corr.clear(); pho_full5x5_sigmaIetaIeta.clear(); pho_SCRawE.clear(); pho_etaWidth.clear(); pho_phiWidth.clear(); pho_covIEtaIPhi.clear(); pho_scEta.clear(); pho_esEffSigmaRR.clear(); pho_esEnergyOverRawE.clear(); pho_rho.clear();
 
     pho_n.clear(); pho_hasPixelSeed.clear(); pho_EleVote.clear();
 
@@ -1250,7 +1257,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     lep_eta_float.clear(); lep_phi_float.clear(); lep_mass_float.clear();
     lepFSR_pt_float.clear(); lepFSR_eta_float.clear(); lepFSR_phi_float.clear(); lepFSR_mass_float.clear();
     tau_pt_float.clear(); tau_eta_float.clear(); tau_phi_float.clear(); tau_mass_float.clear();
-    pho_pt_float.clear(); pho_eta_float.clear(); pho_phi_float.clear(); pho_mva90_float.clear(); pho_mva_float.clear(); photonCutBasedIDMedium_float.clear(); photonCutBasedIDTight_float.clear(); pho_MVA_float.clear(); pho_sigmaEtaEta_float.clear(); pho_R9_float.clear(); pho_trackIso_float.clear(); pho_chargedHadronIso_float.clear(); pho_chgIsoWrtWorstVtx_float.clear(); pho_neutralHadronIso_float.clear(); pho_photonIso_float.clear(); pho_sigmaIetaIeta_float.clear(); pho_e1x5_float.clear(); pho_e2x5_float.clear(); pho_e3x3_float.clear(); pho_e2x2_float.clear(); pho_e5x5_float.clear(); pho_maxEnergyXtal_float.clear(); pho_hadronicOverEm_float.clear(); pho_e2nd_float.clear(); pho_eTop_float.clear(); pho_eLeft_float.clear(); pho_eRight_float.clear(); pho_eBottom_float.clear(); pho_E_corr_float.clear(); pho_full5x5_sigmaIetaIeta_float.clear(); pho_SCRawE_float.clear(); pho_etaWidth_float.clear(); pho_phiWidth_float.clear(); pho_covIEtaIPhi_float.clear(); pho_scEta_float.clear(); pho_esEffSigmaRR_float.clear(); pho_esEnergyOverRawE_float.clear(); pho_rho_float.clear();
+    pho_pt_float.clear(); pho_eta_float.clear(); pho_phi_float.clear(); pho_mva90_float.clear(); pho_mva_float.clear(); photonCutBasedIDMedium_float.clear(); photonCutBasedIDTight_float.clear(); pho_MVA_float.clear(); pho_sigmaEtaEta_float.clear(); pho_R9_float.clear(); pho_full5x5_R9_float.clear(); pho_trackIso_float.clear(); pho_chargedHadronIso_float.clear(); pho_chgIsoWrtWorstVtx_float.clear(); pho_neutralHadronIso_float.clear(); pho_photonIso_float.clear(); pho_sigmaIetaIeta_float.clear(); pho_e1x5_float.clear(); pho_e2x5_float.clear(); pho_e3x3_float.clear(); pho_e2x2_float.clear(); pho_e5x5_float.clear(); pho_full5x5_e2x2_float.clear(); pho_full5x5_e5x5_float.clear(); pho_maxEnergyXtal_float.clear(); pho_hadronicOverEm_float.clear(); pho_e2nd_float.clear(); pho_eTop_float.clear(); pho_eLeft_float.clear(); pho_eRight_float.clear(); pho_eBottom_float.clear(); pho_E_corr_float.clear(); pho_full5x5_sigmaIetaIeta_float.clear(); pho_SCRawE_float.clear(); pho_etaWidth_float.clear(); pho_phiWidth_float.clear(); pho_covIEtaIPhi_float.clear(); pho_scEta_float.clear(); pho_esEffSigmaRR_float.clear(); pho_esEnergyOverRawE_float.clear(); pho_rho_float.clear();
 
     pfpho_et_float.clear(); pfpho_eta_float.clear(); pfpho_phi_float.clear(); pfpho_chargedHadronIso_float.clear(); pfpho_neutralHadronIso_float.clear(); pfpho_photonIso_float.clear();
 
@@ -1680,19 +1687,31 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 if(year == 2017 || year == 2018){pho_mva90.push_back(pho_corr.photonID("mvaPhoID-RunIIFall17-v2-wp90"));}
 
                 pho_mva.push_back(pho_corr.userFloat(PhoMVA_name_161718.c_str()));
-                //photonCutBasedIDMedium.push_back(pho_corr.photonID("cutBasedPhotonID-Fall17-94X-V2-medium"));
-                //photonCutBasedIDTight.push_back(pho_corr.photonID("cutBasedPhotonID-Fall17-94X-V2-tight"));
+                photonCutBasedIDMedium.push_back(pho_corr.photonID("cutBasedPhotonID-Fall17-94X-V2-medium"));
+                photonCutBasedIDTight.push_back(pho_corr.photonID("cutBasedPhotonID-Fall17-94X-V2-tight"));
                 //pho_MVA.push_back(pho_corr.pfMVA());
 
 
                 pho_sigmaEtaEta.push_back(pho_corr.sigmaEtaEta());
                 pho_R9.push_back(pho_corr.r9());
+                pho_full5x5_R9.push_back(pho_corr.full5x5_r9());
                 pho_trackIso.push_back(pho_corr.trkSumPtSolidConeDR03());
-                pho_chargedHadronIso.push_back(pho_corr.chargedHadronIso());
                 pho_chgIsoWrtWorstVtx.push_back(pho_corr.chargedHadronIsoWrongVtx());
-                pho_neutralHadronIso.push_back(pho_corr.neutralHadronIso());
-                pho_photonIso.push_back(pho_corr.photonIso());
-		            pho_hadronicOverEm.push_back(pho_corr.hadronicOverEm());
+
+                double absEta = std::abs(pho_corr.scEta());
+                double eA_CIso = chHadIsolationEffAreas.getEffectiveArea(absEta);
+                double eA_NIso = neuHadIsolationEffAreas.getEffectiveArea(absEta);
+                double eA_PIso = phoIsolationEffAreas.getEffectiveArea(absEta);
+
+                //pho_chargedHadronIso.push_back(std::max(0.0, pho_corr.userFloat("phoChargedIsolation") - phoRho * eA_CIso));
+                //pho_neutralHadronIso.push_back(std::max(0.0, pho_corr.userFloat("phoNeutralHadronIsolation") - phoRho * eA_NIso));
+                //pho_photonIso.push_back(std::max(0.0, pho_corr.userFloat("phoPhotonIsolation") - phoRho * eA_PIso));
+
+                pho_chargedHadronIso.push_back(std::max(0.0, pho_corr.chargedHadronIso() - phoRho * eA_CIso));
+                pho_neutralHadronIso.push_back(std::max(0.0, pho_corr.neutralHadronIso() - phoRho * eA_NIso));
+                pho_photonIso.push_back(std::max(0.0, pho_corr.photonIso() - phoRho * eA_PIso));
+
+		            pho_hadronicOverEm.push_back(pho_corr.hadTowOverEm());
                 pho_sigmaIetaIeta.push_back(pho_corr.sigmaIetaIeta());
 		            pho_full5x5_sigmaIetaIeta.push_back(pho_corr.full5x5_sigmaIetaIeta());
                 pho_e1x5.push_back(pho_corr.e1x5());
@@ -1700,6 +1719,8 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 pho_e3x3.push_back(pho_corr.e3x3());
                 pho_e2x2.push_back(pho_corr.e2x2());
                 pho_e5x5.push_back(pho_corr.e5x5());
+                pho_full5x5_e2x2.push_back(pho_corr.full5x5_e2x2());
+                pho_full5x5_e5x5.push_back(pho_corr.full5x5_e5x5());
                 pho_maxEnergyXtal.push_back(pho_corr.maxEnergyXtal());
                 pho_e2nd.push_back(pho_corr.e2nd());
                 pho_eTop.push_back(pho_corr.eTop());
@@ -2756,12 +2777,13 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 pho_phi_float.assign(pho_phi.begin(),pho_phi.end());
                 pho_mva90_float.assign(pho_mva90.begin(),pho_mva90.end());
                 pho_mva_float.assign(pho_mva.begin(),pho_mva.end());
-                //photonCutBasedIDMedium_float.assign(photonCutBasedIDMedium.begin(),photonCutBasedIDMedium.end());
-                //photonCutBasedIDTight_float.assign(photonCutBasedIDTight.begin(),photonCutBasedIDTight.end());
+                photonCutBasedIDMedium_float.assign(photonCutBasedIDMedium.begin(),photonCutBasedIDMedium.end());
+                photonCutBasedIDTight_float.assign(photonCutBasedIDTight.begin(),photonCutBasedIDTight.end());
                 //pho_MVA_float.assign(pho_MVA.begin(),pho_MVA.end());
 		pho_E_corr_float.assign(pho_E_corr.begin(),pho_E_corr.end());
                 pho_sigmaEtaEta_float.assign(pho_sigmaEtaEta.begin(),pho_sigmaEtaEta.end());
                 pho_R9_float.assign(pho_R9.begin(),pho_R9.end());
+                pho_full5x5_R9_float.assign(pho_full5x5_R9.begin(),pho_full5x5_R9.end());
                 pho_trackIso_float.assign(pho_trackIso.begin(),pho_trackIso.end());
                 pho_chargedHadronIso_float.assign(pho_chargedHadronIso.begin(),pho_chargedHadronIso.end());
                 pho_chgIsoWrtWorstVtx_float.assign(pho_chgIsoWrtWorstVtx.begin(),pho_chgIsoWrtWorstVtx.end());
@@ -2775,6 +2797,8 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 pho_e3x3_float.assign(pho_e3x3.begin(),pho_e3x3.end());
                 pho_e2x2_float.assign(pho_e2x2.begin(),pho_e2x2.end());
                 pho_e5x5_float.assign(pho_e5x5.begin(),pho_e5x5.end());
+                pho_full5x5_e2x2_float.assign(pho_full5x5_e2x2.begin(),pho_full5x5_e2x2.end());
+                pho_full5x5_e5x5_float.assign(pho_full5x5_e5x5.begin(),pho_full5x5_e5x5.end());
                 pho_maxEnergyXtal_float.assign(pho_maxEnergyXtal.begin(),pho_maxEnergyXtal.end());
                 pho_e2nd_float.assign(pho_e2nd.begin(),pho_e2nd.end());
                 pho_eTop_float.assign(pho_eTop.begin(),pho_eTop.end());
@@ -3695,6 +3719,7 @@ void UFHZZ4LAna::bookPassedEventTree(TString treeName, TTree *tree)
     tree->Branch("pho_phi",&pho_phi_float);
     tree->Branch("pho_sigmaEtaEta",&pho_sigmaEtaEta_float);
     tree->Branch("pho_R9",&pho_R9_float);
+    tree->Branch("pho_full5x5_R9",&pho_full5x5_R9_float);
     tree->Branch("pho_trackIso",&pho_trackIso_float);
     tree->Branch("pho_hadronicOverEm",&pho_hadronicOverEm_float);
     tree->Branch("pho_chargedHadronIso",&pho_chargedHadronIso_float);
@@ -3706,8 +3731,8 @@ void UFHZZ4LAna::bookPassedEventTree(TString treeName, TTree *tree)
     tree->Branch("pho_EleVote",&pho_EleVote);
     tree->Branch("pho_mva90",&pho_mva90_float);
     tree->Branch("pho_mva",&pho_mva_float);
-    //tree->Branch("photonCutBasedIDMedium",&photonCutBasedIDMedium_float);
-    //tree->Branch("photonCutBasedIDTight",&photonCutBasedIDTight_float);
+    tree->Branch("photonCutBasedIDMedium",&photonCutBasedIDMedium_float);
+    tree->Branch("photonCutBasedIDTight",&photonCutBasedIDTight_float);
     //tree->Branch("pho_MVA",&pho_MVA_float);
 
     tree->Branch("pho_sigmaIetaIeta",&pho_sigmaIetaIeta_float);
@@ -3717,6 +3742,8 @@ void UFHZZ4LAna::bookPassedEventTree(TString treeName, TTree *tree)
     tree->Branch("pho_e3x3",&pho_e3x3_float);
     tree->Branch("pho_e2x2",&pho_e2x2_float);
     tree->Branch("pho_e5x5",&pho_e5x5_float);
+    tree->Branch("pho_full5x5_e2x2",&pho_full5x5_e2x2_float);
+    tree->Branch("pho_full5x5_e5x5",&pho_full5x5_e5x5_float);
     tree->Branch("pho_maxEnergyXtal",&pho_maxEnergyXtal_float);
 
     tree->Branch("pho_e2nd",&pho_e2nd_float);
