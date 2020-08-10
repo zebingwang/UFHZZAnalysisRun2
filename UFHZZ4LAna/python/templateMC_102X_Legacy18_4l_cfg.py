@@ -110,6 +110,10 @@ process.calibratedPatElectrons.correctionFile = "EgammaAnalysis/ElectronTools/da
 #process.calibratedPatElectrons.src = cms.InputTag("electronsMVA")
 process.calibratedPatElectrons.src = cms.InputTag("slimmedElectrons")
 
+## photon calibration
+process.calibratedPatPhotons.correctionFile = "EgammaAnalysis/ElectronTools/data/ScalesSmearings/Run2018_Step2Closure_CoarseEtaR9Gain_v2"
+process.calibratedPatPhotons.src = cms.InputTag("slimmedPhotons")
+
 ##  from PhysicsTools.SelectorUtils.tools.vid_id_tools import *
 ##  dataFormat = DataFormat.MiniAOD
 ##  switchOnVIDElectronIdProducer(process, dataFormat)
@@ -305,7 +309,7 @@ process.rivetProducerHZZFid = cms.EDProducer('HZZRivetProducer',
 
 # Analyzer
 process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
-                              photonSrc    = cms.untracked.InputTag("slimmedPhotons"),
+                              photonSrc    = cms.untracked.InputTag("calibratedPatPhotons"),
                               #electronSrc  = cms.untracked.InputTag("electronsMVA"),
                               #electronUnSSrc  = cms.untracked.InputTag("electronsMVA"),
                               electronUnSSrc  = cms.untracked.InputTag("slimmedElectrons"),
@@ -403,6 +407,7 @@ process.p = cms.Path(process.fsrPhotonSequence*
                      process.egmPhotonIDSequence*
                      process.egammaPostRecoSeq*
                      process.calibratedPatElectrons*
+                     process.calibratedPatPhotons*
                      process.jetCorrFactors*
                      process.pileupJetIdUpdated*
                      process.slimmedJetsJEC*

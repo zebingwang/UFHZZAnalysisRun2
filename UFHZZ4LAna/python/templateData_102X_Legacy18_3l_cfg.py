@@ -78,6 +78,10 @@ process.calibratedPatElectrons.correctionFile = "EgammaAnalysis/ElectronTools/da
 #process.calibratedPatElectrons.src = cms.InputTag("electronsMVA")
 process.calibratedPatElectrons.src = cms.InputTag("slimmedElectrons")
 
+## photon calibration
+process.calibratedPatPhotons.correctionFile = "EgammaAnalysis/ElectronTools/data/ScalesSmearings/Run2018_Step2Closure_CoarseEtaR9Gain_v2"
+process.calibratedPatPhotons.src = cms.InputTag("slimmedPhotons")
+
 ##  from PhysicsTools.SelectorUtils.tools.vid_id_tools import *
 ##  dataFormat = DataFormat.MiniAOD
 ##  switchOnVIDElectronIdProducer(process, dataFormat)
@@ -277,7 +281,7 @@ process.rivetProducerHZZFid = cms.EDProducer('HZZRivetProducer',
 
 # Analyzer
 process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
-                              photonSrc    = cms.untracked.InputTag("slimmedPhotons"),
+                              photonSrc    = cms.untracked.InputTag("calibratedPatPhotons"),
                               #electronSrc  = cms.untracked.InputTag("electronsMVA"),
                               #electronUnSSrc  = cms.untracked.InputTag("electronsMVA"),
                               electronUnSSrc  = cms.untracked.InputTag("slimmedElectrons"),
@@ -337,8 +341,8 @@ process.Ana = cms.EDAnalyzer('UFHZZ4LAna',
                                   'HLT_Mu8_DiEle12_CaloIdL_TrackIdL_DZ_v',
                               ),
                               verbose = cms.untracked.bool(False),
-                              skimLooseLeptons = cms.untracked.int32(3),
-                              skimTightLeptons = cms.untracked.int32(2),
+                              skimLooseLeptons = cms.untracked.int32(1),
+                              skimTightLeptons = cms.untracked.int32(0),
                               #bestCandMela = cms.untracked.bool(False),
                               year = cms.untracked.int32(2018),
                              )
@@ -355,6 +359,7 @@ process.p = cms.Path(process.fsrPhotonSequence*
                      process.egmPhotonIDSequence*
                      process.egammaPostRecoSeq*
                      process.calibratedPatElectrons*
+                     process.calibratedPatPhotons*
                      process.jetCorrFactors*
                      process.pileupJetIdUpdated*
                      process.slimmedJetsJEC*
