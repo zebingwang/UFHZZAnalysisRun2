@@ -1716,7 +1716,7 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                   const pat::PackedCandidate &pff = (*pfCands)[j];
                   if (abs(pff.pdgId()) == 22) {
             	  		dR = reco::deltaR(recoPhotons[i].p4(), pff.p4());
-            	  		if (dR < 0.3 && dR > 0.08) {
+            	  		if (dR < 0.5) {
                       pho_PF_Id.push_back(j);
                       pho_PF_pt.push_back(pff.pt());
                       pho_PF_eta.push_back(pff.eta());
