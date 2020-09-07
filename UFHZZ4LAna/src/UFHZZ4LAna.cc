@@ -1742,13 +1742,13 @@ UFHZZ4LAna::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 pho_eRight.push_back(pho_corr.eRight());
                 pho_eBottom.push_back(pho_corr.eBottom());
 
-                pho_SCRawE.push_back(pho_corr.SCRawE());
-                pho_etaWidth.push_back(pho_corr.etaWidth());
-                pho_phiWidth.push_back(pho_corr.phiWidth());
-                pho_covIEtaIPhi.push_back(pho_corr.covIEtaIPhi());
-                pho_scEta.push_back(pho_corr.scEta());
-                pho_esEffSigmaRR.push_back(pho_corr.esEffSigmaRR());
-                pho_esEnergyOverRawE.push_back(pho_corr.esEnergyOverRawE());
+                //pho_SCRawE.push_back(pho_corr.SCRawE());
+                //pho_etaWidth.push_back(pho_corr.etaWidth());
+                //pho_phiWidth.push_back(pho_corr.phiWidth());
+                //pho_covIEtaIPhi.push_back(pho_corr.covIEtaIPhi());
+                //pho_scEta.push_back(pho_corr.scEta());
+                //pho_esEffSigmaRR.push_back(pho_corr.esEffSigmaRR());
+                //pho_esEnergyOverRawE.push_back(pho_corr.esEnergyOverRawE());
                 pho_rho.push_back(phoRho);
 
                 pho_hasPixelSeed.push_back((Int_t)pho_corr.hasPixelSeed());
